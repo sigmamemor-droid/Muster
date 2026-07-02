@@ -1,4 +1,4 @@
--- Gui to Lua Converter by Gothbreach (переписано и исправлено Sigma Edition)
+-- Gothbreach MM2 (Sigma fixed version)
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -20,7 +20,6 @@ local function CreateWindow()
     Main.Size = UDim2.new(0, 500, 0, 350)
     Main.ClipsDescendants = true
 
-    -- DropShadow
     local DropShadow = Instance.new("ImageLabel")
     DropShadow.Name = "DropShadow"
     DropShadow.Parent = Main
@@ -33,7 +32,6 @@ local function CreateWindow()
     DropShadow.Position = UDim2.new(0, -25, 0, -25)
     DropShadow.ZIndex = 0
 
-    -- TopBar
     local TopBar = Instance.new("Frame")
     TopBar.Name = "TopBar"
     TopBar.Parent = Main
@@ -46,6 +44,7 @@ local function CreateWindow()
     UICornerTop.CornerRadius = UDim.new(0, 6)
 
     local Title = Instance.new("TextLabel")
+    Title.Name = "Title"
     Title.Parent = TopBar
     Title.BackgroundTransparency = 1
     Title.Size = UDim2.new(1, -40, 1, 0)
@@ -72,9 +71,10 @@ local function CreateWindow()
     UICornerClose.Parent = CloseBtn
     UICornerClose.CornerRadius = UDim.new(0, 4)
 
-    -- Drag system (исправлено)
+    -- DRAG (исправленный)
     local dragging = false
-    local dragStart, startPos
+    local dragStart
+    local startPos
 
     TopBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -102,8 +102,8 @@ local function CreateWindow()
         end
     end)
 
-    -- Tabs
     local TabHolder = Instance.new("Frame")
+    TabHolder.Name = "TabHolder"
     TabHolder.Parent = Main
     TabHolder.BackgroundColor3 = Color3.fromRGB(25,25,25)
     TabHolder.BorderSizePixel = 0
@@ -111,19 +111,20 @@ local function CreateWindow()
     TabHolder.Position = UDim2.new(0, 0, 0, 30)
 
     local ContentFrame = Instance.new("Frame")
+    ContentFrame.Name = "Content"
     ContentFrame.Parent = Main
     ContentFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
     ContentFrame.BorderSizePixel = 0
     ContentFrame.Size = UDim2.new(1, -120, 1, -30)
     ContentFrame.Position = UDim2.new(0, 120, 0, 30)
 
-    local function addTab(name, pos)
+    local function addTab(name, position)
         local btn = Instance.new("TextButton")
         btn.Parent = TabHolder
         btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
         btn.BorderSizePixel = 0
         btn.Size = UDim2.new(1, -10, 0, 28)
-        btn.Position = pos
+        btn.Position = position
         btn.Text = name
         btn.TextColor3 = Color3.fromRGB(200,200,200)
         btn.Font = Enum.Font.Gotham
@@ -133,6 +134,14 @@ local function CreateWindow()
         UICornerBtn.Parent = btn
         UICornerBtn.CornerRadius = UDim.new(0, 5)
 
+        -- лёгкий hover
+        btn.MouseEnter:Connect(function()
+            TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(55,55,55)}):Play()
+        end)
+        btn.MouseLeave:Connect(function()
+            TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
+        end)
+
         return btn
     end
 
@@ -140,15 +149,18 @@ local function CreateWindow()
     local VisualsTab = addTab("Visuals", UDim2.new(0, 5, 0, 35))
     local MiscTab = addTab("Misc", UDim2.new(0, 5, 0, 65))
 
-    -- Toggle GUI
     local ToggleKey = Enum.KeyCode.RightControl
     local Visible = true
 
-    UserInputService.InputBegan:Connect(function(input, gp)
-        if gp then return end
+    local function ToggleGUI()
+        Visible = not Visible
+        Main.Visible = Visible
+    end
+
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
         if input.KeyCode == ToggleKey then
-            Visible = not Visible
-            Main.Visible = Visible
+            ToggleGUI()
         end
     end)
 
@@ -157,14 +169,12 @@ local function CreateWindow()
         Visible = false
     end)
 
-    -- Clear content
     local function clearContent()
         for _, v in pairs(ContentFrame:GetChildren()) do
             v:Destroy()
         end
     end
 
-    -- Toggle element
     local function addToggle(text, callback, enabled)
         local Frame = Instance.new("Frame")
         Frame.Parent = ContentFrame
@@ -195,27 +205,36 @@ local function CreateWindow()
         UICornerTog.CornerRadius = UDim.new(0, 9)
 
         local state = enabled
+
+        ToggleBtn.MouseEnter:Connect(function()
+            TweenService:Create(ToggleBtn, TweenInfo.new(0.15), {Size = UDim2.new(0, 40, 0, 20)}):Play()
+        end)
+        ToggleBtn.MouseLeave:Connect(function()
+            TweenService:Create(ToggleBtn, TweenInfo.new(0.15), {Size = UDim2.new(0, 36, 0, 18)}):Play()
+        end)
+
         ToggleBtn.MouseButton1Click:Connect(function()
             state = not state
             ToggleBtn.BackgroundColor3 = state and Color3.fromRGB(0,170,0) or Color3.fromRGB(170,0,0)
             callback(state)
         end)
 
-        if enabled then callback(true) end
+        if enabled then
+            callback(true)
+        end
+        return Frame
     end
 
-    -- Feature states
     local AimbotEnabled = false
     local ChamsEnabled = false
     local EspEnabled = false
     local FlyEnabled = false
     local SpeedEnabled = false
 
-    -- Tabs logic
     AimbotTab.MouseButton1Click:Connect(function()
         clearContent()
         addToggle("Enable Aimbot", function(v) AimbotEnabled = v end, false)
-        addToggle("Silent Aim", function(v) end, false)
+        addToggle("Silent Aim", function(v) end, false) -- placeholder
     end)
 
     VisualsTab.MouseButton1Click:Connect(function()
@@ -230,25 +249,21 @@ local function CreateWindow()
         addToggle("Speed Hack", function(v) SpeedEnabled = v end, false)
     end)
 
-    -- Role detection
+    -- ROLE DETECTION (как было)
     local function getPlayerRole(player)
         if not player.Character then return nil end
         local char = player.Character
         local backpack = player:FindFirstChild("Backpack")
-
         local knife = char:FindFirstChild("Knife") or (backpack and backpack:FindFirstChild("Knife"))
-        local gun = char:FindFirstChild("Gun") or (backpack and backpack:FindFirstChild("Gun")) or char:FindFirstChild("Revolver")
-
+        local gun = char:FindFirstChild("Gun") or (backpack and backpack:FindFirstChild("Gun")) or char:FindFirstChild("Revolver") or (backpack and backpack:FindFirstChild("Revolver"))
         if knife then return "Murderer" end
         if gun then return "Sheriff" end
         return "Innocent"
     end
 
-    -- Get closest player
     local function getClosestPlayer(maxDist)
         local closest = nil
         local shortest = maxDist or math.huge
-
         for _, player in pairs(Players:GetPlayers()) do
             if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
                 local dist = (LocalPlayer.Character.Head.Position - player.Character.Head.Position).Magnitude
@@ -261,29 +276,32 @@ local function CreateWindow()
         return closest
     end
 
-    -- Main loop
     RunService.RenderStepped:Connect(function()
-        -- Aimbot
+        -- AIMBOT
         if AimbotEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") then
             local target = getClosestPlayer(500)
             if target then
-                workspace.CurrentCamera.CFrame = CFrame.new(
-                    workspace.CurrentCamera.CFrame.Position,
-                    target.Character.Head.Position
-                )
+                local camera = workspace.CurrentCamera
+                local targetHead = target.Character.Head.Position
+                camera.CFrame = CFrame.new(camera.CFrame.Position, targetHead)
             end
         end
 
-        -- Visuals
+        -- VISUALS (ESP НЕ ТРОГАЮ, ЛОГИКА КАК БЫЛА)
         for _, player in pairs(Players:GetPlayers()) do
             if player == LocalPlayer or not player.Character then continue end
 
             local role = getPlayerRole(player)
-            local color = role == "Murderer" and Color3.fromRGB(255,0,0)
-                or role == "Sheriff" and Color3.fromRGB(0,100,255)
-                or Color3.fromRGB(0,255,0)
+            local color = nil
+            if role == "Murderer" then
+                color = Color3.fromRGB(255,0,0)
+            elseif role == "Sheriff" then
+                color = Color3.fromRGB(0,100,255)
+            else
+                color = Color3.fromRGB(0,255,0)
+            end
 
-            -- Chams
+            -- CHAMS
             if ChamsEnabled then
                 local char = player.Character
                 local highlight = char:FindFirstChild("Highlight")
@@ -302,33 +320,33 @@ local function CreateWindow()
                 if highlight then highlight:Destroy() end
             end
 
-            -- ESP
+            -- ESP (как в исходном коде)
             if EspEnabled then
                 local head = player.Character:FindFirstChild("Head")
                 if head then
-                    local bill = head:FindFirstChild("ESPBillboard")
-                    if not bill then
-                        bill = Instance.new("BillboardGui")
+                    local existing = head:FindFirstChild("ESPBillboard")
+                    if not existing then
+                        local bill = Instance.new("BillboardGui")
                         bill.Name = "ESPBillboard"
                         bill.Adornee = head
                         bill.Size = UDim2.new(0, 100, 0, 20)
                         bill.StudsOffset = Vector3.new(0, 2, 0)
                         bill.AlwaysOnTop = true
                         bill.Parent = head
-
                         local txt = Instance.new("TextLabel")
                         txt.BackgroundTransparency = 1
                         txt.Size = UDim2.new(1,0,1,0)
+                        txt.Text = player.Name .. " [" .. role .. "]"
                         txt.TextColor3 = color
                         txt.Font = Enum.Font.GothamBold
                         txt.TextSize = 12
                         txt.Parent = bill
-                    end
-
-                    local txt = bill:FindFirstChildOfClass("TextLabel")
-                    if txt then
-                        txt.Text = player.Name .. " [" .. role .. "]"
-                        txt.TextColor3 = color
+                    else
+                        local txt = existing:FindFirstChildOfClass("TextLabel")
+                        if txt then
+                            txt.Text = player.Name .. " [" .. role .. "]"
+                            txt.TextColor3 = color
+                        end
                     end
                 end
             else
@@ -340,25 +358,23 @@ local function CreateWindow()
             end
         end
 
-        -- Fly
+        -- FLY (исправлено: без проваливания)
         if FlyEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
             local root = LocalPlayer.Character.HumanoidRootPart
-            local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
-
-            if humanoid then humanoid.PlatformStand = true end
+            local cam = workspace.CurrentCamera
 
             local moveDir = Vector3.zero
-            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += workspace.CurrentCamera.CFrame.LookVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= workspace.CurrentCamera.CFrame.LookVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= workspace.CurrentCamera.CFrame.RightVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += workspace.CurrentCamera.CFrame.RightVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.new(0,1,0) end
-            if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir -= Vector3.new(0,1,0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0,1,0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0,1,0) end
 
             root.Velocity = moveDir * 50
         end
 
-        -- Speed
+        -- SPEED
         if SpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
             LocalPlayer.Character.Humanoid.WalkSpeed = 50
         end
