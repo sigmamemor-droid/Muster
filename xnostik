@@ -1,289 +1,429 @@
--- Sigma Pulse-Style Menu (MM2)
-
-local UIS = game:GetService("UserInputService")
-local TS = game:GetService("TweenService")
-local RS = game:GetService("RunService")
+-- Gothbreach MM2 (RAGE fixed)
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
-local LP = Players.LocalPlayer
+local LocalPlayer = Players.LocalPlayer
 
 local function CreateWindow()
-    local gui = Instance.new("ScreenGui", game.CoreGui)
-    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Parent = game.CoreGui
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-    -- MAIN WINDOW
-    local main = Instance.new("Frame", gui)
-    main.Size = UDim2.new(0, 360, 0, 420)
-    main.Position = UDim2.new(0.5, -180, 0.5, -210)
-    main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    main.BorderSizePixel = 0
+    local Main = Instance.new("Frame")
+    Main.Name = "Main"
+    Main.Parent = ScreenGui
+    Main.BackgroundColor3 = Color3.fromRGB(12,12,18)
+    Main.BorderSizePixel = 0
+    Main.Position = UDim2.new(0.5, -280, 0.5, -200)
+    Main.Size = UDim2.new(0, 560, 0, 400)
+    Main.ClipsDescendants = true
 
-    local corner = Instance.new("UICorner", main)
-    corner.CornerRadius = UDim.new(0, 8)
+    local MainCorner = Instance.new("UICorner")
+    MainCorner.Parent = Main
+    MainCorner.CornerRadius = UDim.new(0, 10)
 
-    -- TOP BAR
-    local top = Instance.new("Frame", main)
-    top.Size = UDim2.new(1, 0, 0, 36)
-    top.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    top.BorderSizePixel = 0
-    Instance.new("UICorner", top).CornerRadius = UDim.new(0, 8)
+    local DropShadow = Instance.new("ImageLabel")
+    DropShadow.Name = "DropShadow"
+    DropShadow.Parent = Main
+    DropShadow.BackgroundTransparency = 1
+    DropShadow.Image = "rbxassetid://6014261993"
+    DropShadow.ImageTransparency = 0.4
+    DropShadow.ScaleType = Enum.ScaleType.Slice
+    DropShadow.SliceCenter = Rect.new(49,49,49,49)
+    DropShadow.Size = UDim2.new(1, 50, 1, 50)
+    DropShadow.Position = UDim2.new(0, -25, 0, -25)
+    DropShadow.ZIndex = 0
 
-    local title = Instance.new("TextLabel", top)
-    title.Size = UDim2.new(1, -40, 1, 0)
-    title.Position = UDim2.new(0, 12, 0, 0)
-    title.BackgroundTransparency = 1
-    title.Text = "Sigma Hub — MM2"
-    title.TextColor3 = Color3.fromRGB(255,255,255)
-    title.Font = Enum.Font.GothamBold
-    title.TextSize = 15
-    title.TextXAlignment = Enum.TextXAlignment.Left
+    local TopBar = Instance.new("Frame")
+    TopBar.Name = "TopBar"
+    TopBar.Parent = Main
+    TopBar.BackgroundColor3 = Color3.fromRGB(22,22,32)
+    TopBar.BorderSizePixel = 0
+    TopBar.Size = UDim2.new(1, 0, 0, 36)
 
-    local close = Instance.new("TextButton", top)
-    close.Size = UDim2.new(0, 28, 0, 28)
-    close.Position = UDim2.new(1, -32, 0, 4)
-    close.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-    close.Text = "X"
-    close.TextColor3 = Color3.fromRGB(255,255,255)
-    close.Font = Enum.Font.GothamBold
-    close.TextSize = 14
-    Instance.new("UICorner", close).CornerRadius = UDim.new(0, 6)
+    local TopCorner = Instance.new("UICorner")
+    TopCorner.Parent = TopBar
+    TopCorner.CornerRadius = UDim.new(0, 10)
 
-    close.MouseButton1Click:Connect(function()
-        main.Visible = false
-    end)
+    local Title = Instance.new("TextLabel")
+    Title.Name = "Title"
+    Title.Parent = TopBar
+    Title.BackgroundTransparency = 1
+    Title.Size = UDim2.new(1, -50, 1, 0)
+    Title.Position = UDim2.new(0, 15, 0, 0)
+    Title.Text = "⚡ Gothbreach MM2"
+    Title.TextColor3 = Color3.fromRGB(220,220,255)
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 16
+    Title.TextXAlignment = Enum.TextXAlignment.Left
 
-    -- DRAGGING
-    local dragging = false
-    local dragStart, startPos
+    local CloseBtn = Instance.new("TextButton")
+    CloseBtn.Name = "Close"
+    CloseBtn.Parent = TopBar
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(200,40,40)
+    CloseBtn.BorderSizePixel = 0
+    CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+    CloseBtn.Position = UDim2.new(1, -34, 0, 4)
+    CloseBtn.Text = "✕"
+    CloseBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    CloseBtn.Font = Enum.Font.GothamBold
+    CloseBtn.TextSize = 16
 
-    top.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = i.Position
-            startPos = main.Position
+    local CloseCorner = Instance.new("UICorner")
+    CloseCorner.Parent = CloseBtn
+    CloseCorner.CornerRadius = UDim.new(0, 6)
+
+    -- DRAG (FIXED)
+    local dragStartPos = nil
+    local dragStartMouse = nil
+
+    TopBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragStartPos = Main.Position
+            dragStartMouse = input.Position
         end
     end)
 
-    top.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-
-    UIS.InputChanged:Connect(function(i)
-        if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = i.Position - dragStart
-            main.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
+    UserInputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement and dragStartPos and dragStartMouse then
+            local delta = input.Position - dragStartMouse
+            Main.Position = UDim2.new(
+                dragStartPos.X.Scale,
+                dragStartPos.X.Offset + delta.X,
+                dragStartPos.Y.Scale,
+                dragStartPos.Y.Offset + delta.Y
             )
         end
     end)
 
-    -- CONTENT AREA
-    local content = Instance.new("Frame", main)
-    content.Size = UDim2.new(1, 0, 1, -36)
-    content.Position = UDim2.new(0, 0, 0, 36)
-    content.BackgroundColor3 = Color3.fromRGB(32,32,32)
-    content.BorderSizePixel = 0
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragStartPos = nil
+            dragStartMouse = nil
+        end
+    end)
 
-    -- SECTION CREATOR
-    local function Section(name)
-        local sec = Instance.new("Frame", content)
-        sec.Size = UDim2.new(1, -20, 0, 40)
-        sec.Position = UDim2.new(0, 10, 0, #content:GetChildren()*45)
-        sec.BackgroundTransparency = 1
+    local TabHolder = Instance.new("Frame")
+    TabHolder.Name = "TabHolder"
+    TabHolder.Parent = Main
+    TabHolder.BackgroundColor3 = Color3.fromRGB(18,18,26)
+    TabHolder.BorderSizePixel = 0
+    TabHolder.Size = UDim2.new(0, 130, 1, -36)
+    TabHolder.Position = UDim2.new(0, 0, 0, 36)
 
-        local label = Instance.new("TextLabel", sec)
-        label.Size = UDim2.new(1, 0, 1, 0)
-        label.BackgroundTransparency = 1
-        label.Text = name
-        label.TextColor3 = Color3.fromRGB(200,200,200)
-        label.Font = Enum.Font.GothamBold
-        label.TextSize = 15
-        label.TextXAlignment = Enum.TextXAlignment.Left
+    local ContentFrame = Instance.new("Frame")
+    ContentFrame.Name = "Content"
+    ContentFrame.Parent = Main
+    ContentFrame.BackgroundColor3 = Color3.fromRGB(28,28,38)
+    ContentFrame.BorderSizePixel = 0
+    ContentFrame.Size = UDim2.new(1, -130, 1, -36)
+    ContentFrame.Position = UDim2.new(0, 130, 0, 36)
 
-        return sec
-    end
+    local ContentCorner = Instance.new("UICorner")
+    ContentCorner.Parent = ContentFrame
+    ContentCorner.CornerRadius = UDim.new(0, 0)
 
-    -- TOGGLE CREATOR
-    local function Toggle(parent, text, callback)
-        local frame = Instance.new("Frame", parent)
-        frame.Size = UDim2.new(1, 0, 0, 32)
-        frame.Position = UDim2.new(0, 0, 0, (#parent:GetChildren()-1)*34)
-        frame.BackgroundTransparency = 1
+    local function addTab(name, position, icon)
+        local btn = Instance.new("TextButton")
+        btn.Parent = TabHolder
+        btn.BackgroundColor3 = Color3.fromRGB(30,30,42)
+        btn.BorderSizePixel = 0
+        btn.Size = UDim2.new(1, -12, 0, 34)
+        btn.Position = position
+        btn.Text = icon .. " " .. name
+        btn.TextColor3 = Color3.fromRGB(180,180,200)
+        btn.Font = Enum.Font.GothamBold
+        btn.TextSize = 14
+        btn.TextXAlignment = Enum.TextXAlignment.Left
 
-        local label = Instance.new("TextLabel", frame)
-        label.Size = UDim2.new(0.7, 0, 1, 0)
-        label.BackgroundTransparency = 1
-        label.Text = text
-        label.TextColor3 = Color3.fromRGB(255,255,255)
-        label.Font = Enum.Font.Gotham
-        label.TextSize = 13
-        label.TextXAlignment = Enum.TextXAlignment.Left
+        local BtnCorner = Instance.new("UICorner")
+        BtnCorner.Parent = btn
+        BtnCorner.CornerRadius = UDim.new(0, 6)
 
-        local btn = Instance.new("TextButton", frame)
-        btn.Size = UDim2.new(0, 40, 0, 20)
-        btn.Position = UDim2.new(1, -50, 0.5, -10)
-        btn.BackgroundColor3 = Color3.fromRGB(170,0,0)
-        btn.Text = ""
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
-
-        local state = false
-
-        btn.MouseButton1Click:Connect(function()
-            state = not state
-            btn.BackgroundColor3 = state and Color3.fromRGB(0,170,0) or Color3.fromRGB(170,0,0)
-            callback(state)
+        btn.MouseEnter:Connect(function()
+            TweenService:Create(btn, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(45,45,60)}):Play()
         end)
+        btn.MouseLeave:Connect(function()
+            TweenService:Create(btn, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(30,30,42)}):Play()
+        end)
+
+        return btn
     end
 
-    -- FEATURES
-    local Aimbot = false
-    local Chams = false
-    local ESP = false
-    local Fly = false
-    local Speed = false
+    local AimbotTab = addTab("Aimbot", UDim2.new(0, 6, 0, 6), "🎯")
+    local VisualsTab = addTab("Visuals", UDim2.new(0, 6, 0, 44), "👁")
+    local MiscTab = addTab("Misc", UDim2.new(0, 6, 0, 82), "⚙")
 
-    -- SECTIONS LIKE PULSE HUB
-    local secAimbot = Section("Aimbot")
-    Toggle(secAimbot, "Enable Aimbot", function(v) Aimbot = v end)
+    local ToggleKey = Enum.KeyCode.RightControl
+    local Visible = true
 
-    local secVisuals = Section("Visuals")
-    Toggle(secVisuals, "Chams", function(v) Chams = v end)
-    Toggle(secVisuals, "ESP", function(v) ESP = v end)
+    local function ToggleGUI()
+        Visible = not Visible
+        Main.Visible = Visible
+    end
 
-    local secMisc = Section("Misc")
-    Toggle(secMisc, "Fly", function(v) Fly = v end)
-    Toggle(secMisc, "Speed Hack", function(v) Speed = v end)
-
-    -- ROLE DETECTION (как было)
-    local function getRole(plr)
-        if not plr.Character then return "Innocent" end
-        local char = plr.Character
-        local bp = plr:FindFirstChild("Backpack")
-
-        if char:FindFirstChild("Knife") or (bp and bp:FindFirstChild("Knife")) then
-            return "Murderer"
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if input.KeyCode == ToggleKey then
+            ToggleGUI()
         end
-        if char:FindFirstChild("Gun") or (bp and bp:FindFirstChild("Gun")) then
-            return "Sheriff"
+    end)
+
+    CloseBtn.MouseButton1Click:Connect(function()
+        Main.Visible = false
+        Visible = false
+    end)
+
+    local function clearContent()
+        for _, v in pairs(ContentFrame:GetChildren()) do
+            v:Destroy()
         end
+    end
+
+    local function addToggle(text, callback, enabled)
+        local Frame = Instance.new("Frame")
+        Frame.Parent = ContentFrame
+        Frame.BackgroundTransparency = 1
+        Frame.Size = UDim2.new(1, -24, 0, 38)
+        Frame.Position = UDim2.new(0, 12, 0, (#ContentFrame:GetChildren()-1)*40 + 12)
+
+        local Label = Instance.new("TextLabel")
+        Label.Parent = Frame
+        Label.BackgroundTransparency = 1
+        Label.Size = UDim2.new(0.7, 0, 1, 0)
+        Label.Text = text
+        Label.TextColor3 = Color3.fromRGB(235,235,255)
+        Label.Font = Enum.Font.Gotham
+        Label.TextSize = 14
+        Label.TextXAlignment = Enum.TextXAlignment.Left
+
+        local ToggleBtn = Instance.new("Frame")
+        ToggleBtn.Parent = Frame
+        ToggleBtn.Size = UDim2.new(0, 44, 0, 24)
+        ToggleBtn.Position = UDim2.new(1, -48, 0.5, -12)
+        ToggleBtn.BackgroundColor3 = enabled and Color3.fromRGB(0,200,80) or Color3.fromRGB(60,60,70)
+        ToggleBtn.BorderSizePixel = 0
+
+        local TogCorner = Instance.new("UICorner")
+        TogCorner.Parent = ToggleBtn
+        TogCorner.CornerRadius = UDim.new(0, 12)
+
+        local Knob = Instance.new("Frame")
+        Knob.Parent = ToggleBtn
+        Knob.Size = UDim2.new(0, 18, 0, 18)
+        Knob.Position = enabled and UDim2.new(1, -22, 0.5, -9) or UDim2.new(0, 4, 0.5, -9)
+        Knob.BackgroundColor3 = Color3.fromRGB(255,255,255)
+        Knob.BorderSizePixel = 0
+
+        local KnobCorner = Instance.new("UICorner")
+        KnobCorner.Parent = Knob
+        KnobCorner.CornerRadius = UDim.new(0, 9)
+
+        local state = enabled
+
+        local function updateToggle(newState)
+            state = newState
+            ToggleBtn.BackgroundColor3 = state and Color3.fromRGB(0,200,80) or Color3.fromRGB(60,60,70)
+            local targetPos = state and UDim2.new(1, -22, 0.5, -9) or UDim2.new(0, 4, 0.5, -9)
+            TweenService:Create(Knob, TweenInfo.new(0.15), {Position = targetPos}):Play()
+            callback(state)
+        end
+
+        ToggleBtn.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                updateToggle(not state)
+            end
+        end)
+
+        if enabled then
+            callback(true)
+        end
+
+        local Divider = Instance.new("Frame")
+        Divider.Parent = ContentFrame
+        Divider.BackgroundColor3 = Color3.fromRGB(50,50,65)
+        Divider.BorderSizePixel = 0
+        Divider.Size = UDim2.new(1, -24, 0, 1)
+        Divider.Position = UDim2.new(0, 12, 0, (#ContentFrame:GetChildren()-1)*40 + 46)
+
+        return Frame
+    end
+
+    local AimbotEnabled = false
+    local ChamsEnabled = false
+    local EspEnabled = false
+    local FlyEnabled = false
+    local SpeedEnabled = false
+
+    AimbotTab.MouseButton1Click:Connect(function()
+        clearContent()
+        addToggle("Enable Aimbot", function(v) AimbotEnabled = v end, false)
+        addToggle("Silent Aim", function(v) end, false)
+    end)
+
+    VisualsTab.MouseButton1Click:Connect(function()
+        clearContent()
+        addToggle("Chams", function(v) ChamsEnabled = v end, false)
+        addToggle("ESP", function(v) EspEnabled = v end, false)
+    end)
+
+    MiscTab.MouseButton1Click:Connect(function()
+        clearContent()
+        addToggle("Fly", function(v) FlyEnabled = v end, false)
+        addToggle("Speed Hack", function(v) SpeedEnabled = v end, false)
+    end)
+
+    local flyBodyVelocity = nil
+
+    local function getPlayerRole(player)
+        if not player.Character then return nil end
+        local char = player.Character
+        local backpack = player:FindFirstChild("Backpack")
+        local knife = char:FindFirstChild("Knife") or (backpack and backpack:FindFirstChild("Knife"))
+        local gun = char:FindFirstChild("Gun") or (backpack and backpack:FindFirstChild("Gun")) or char:FindFirstChild("Revolver") or (backpack and backpack:FindFirstChild("Revolver"))
+        if knife then return "Murderer" end
+        if gun then return "Sheriff" end
         return "Innocent"
     end
 
-    local function closestPlayer()
-        local best, dist = nil, math.huge
-        if not LP.Character or not LP.Character:FindFirstChild("Head") then return nil end
-
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= LP and p.Character and p.Character:FindFirstChild("Head") then
-                local d = (LP.Character.Head.Position - p.Character.Head.Position).Magnitude
-                if d < dist then
-                    dist = d
-                    best = p
+    local function getClosestPlayer(maxDist)
+        local closest = nil
+        local shortest = maxDist or math.huge
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+                local dist = (LocalPlayer.Character.Head.Position - player.Character.Head.Position).Magnitude
+                if dist < shortest then
+                    shortest = dist
+                    closest = player
                 end
             end
         end
-        return best
+        return closest
     end
 
-    -- MAIN LOOP
-    RS.RenderStepped:Connect(function()
-        -- AIMBOT
-        if Aimbot then
-            local t = closestPlayer()
-            if t and t.Character and t.Character:FindFirstChild("Head") then
-                workspace.CurrentCamera.CFrame = CFrame.new(
-                    workspace.CurrentCamera.CFrame.Position,
-                    t.Character.Head.Position
-                )
+    RunService.RenderStepped:Connect(function()
+        if AimbotEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") then
+            local target = getClosestPlayer(500)
+            if target then
+                local camera = workspace.CurrentCamera
+                local targetHead = target.Character.Head.Position
+                camera.CFrame = CFrame.new(camera.CFrame.Position, targetHead)
             end
         end
 
-        -- CHAMS + ESP (как было, не трогаю)
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= LP and p.Character then
-                local role = getRole(p)
-                local color = role == "Murderer" and Color3.fromRGB(255,0,0)
-                    or role == "Sheriff" and Color3.fromRGB(0,100,255)
-                    or Color3.fromRGB(0,255,0)
+        for _, player in pairs(Players:GetPlayers()) do
+            if player == LocalPlayer or not player.Character then continue end
 
-                -- CHAMS
-                if Chams then
-                    local h = p.Character:FindFirstChild("Highlight")
-                    if not h then
-                        h = Instance.new("Highlight", p.Character)
-                        h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                        h.FillTransparency = 0.5
-                    end
-                    h.FillColor = color
-                    h.OutlineColor = color
-                else
-                    local h = p.Character:FindFirstChild("Highlight")
-                    if h then h:Destroy() end
+            local role = getPlayerRole(player)
+            local color = nil
+            if role == "Murderer" then
+                color = Color3.fromRGB(255,50,50)
+            elseif role == "Sheriff" then
+                color = Color3.fromRGB(50,150,255)
+            else
+                color = Color3.fromRGB(50,255,100)
+            end
+
+            if ChamsEnabled then
+                local char = player.Character
+                local highlight = char:FindFirstChild("Highlight")
+                if not highlight then
+                    highlight = Instance.new("Highlight")
+                    highlight.Name = "Highlight"
+                    highlight.Parent = char
+                    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                    highlight.FillTransparency = 0.4
                 end
+                highlight.FillColor = color
+                highlight.OutlineColor = color
+            else
+                local char = player.Character
+                local highlight = char:FindFirstChild("Highlight")
+                if highlight then highlight:Destroy() end
+            end
 
-                -- ESP (оригинал)
-                if ESP then
-                    local head = p.Character:FindFirstChild("Head")
-                    if head then
-                        local bill = head:FindFirstChild("ESPBillboard")
-                        if not bill then
-                            bill = Instance.new("BillboardGui", head)
-                            bill.Name = "ESPBillboard"
-                            bill.Adornee = head
-                            bill.Size = UDim2.new(0, 100, 0, 20)
-                            bill.StudsOffset = Vector3.new(0, 2, 0)
-                            bill.AlwaysOnTop = true
-
-                            local txt = Instance.new("TextLabel", bill)
-                            txt.BackgroundTransparency = 1
-                            txt.Size = UDim2.new(1,0,1,0)
-                            txt.Font = Enum.Font.GothamBold
-                            txt.TextSize = 12
+            if EspEnabled then
+                local head = player.Character:FindFirstChild("Head")
+                if head then
+                    local existing = head:FindFirstChild("ESPBillboard")
+                    if not existing then
+                        local bill = Instance.new("BillboardGui")
+                        bill.Name = "ESPBillboard"
+                        bill.Adornee = head
+                        bill.Size = UDim2.new(0, 120, 0, 24)
+                        bill.StudsOffset = Vector3.new(0, 2.5, 0)
+                        bill.AlwaysOnTop = true
+                        bill.Parent = head
+                        local txt = Instance.new("TextLabel")
+                        txt.BackgroundTransparency = 1
+                        txt.Size = UDim2.new(1,0,1,0)
+                        txt.Text = player.Name .. " [" .. role .. "]"
+                        txt.TextColor3 = color
+                        txt.Font = Enum.Font.GothamBold
+                        txt.TextSize = 14
+                        txt.TextStrokeTransparency = 0.3
+                        txt.Parent = bill
+                    else
+                        local txt = existing:FindFirstChildOfClass("TextLabel")
+                        if txt then
+                            txt.Text = player.Name .. " [" .. role .. "]"
                             txt.TextColor3 = color
-                            txt.Text = p.Name .. " [" .. role .. "]"
-                        else
-                            local txt = bill:FindFirstChildOfClass("TextLabel")
-                            if txt then
-                                txt.Text = p.Name .. " [" .. role .. "]"
-                                txt.TextColor3 = color
-                            end
                         end
                     end
-                else
-                    local head = p.Character:FindFirstChild("Head")
-                    if head then
-                        local bill = head:FindFirstChild("ESPBillboard")
-                        if bill then bill:Destroy() end
-                    end
+                end
+            else
+                local head = player.Character:FindFirstChild("Head")
+                if head then
+                    local bill = head:FindFirstChild("ESPBillboard")
+                    if bill then bill:Destroy() end
                 end
             end
         end
 
-        -- FLY (исправленный)
-        if Fly and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
-            local root = LP.Character.HumanoidRootPart
+        -- FLY FIXED
+        if FlyEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local root = LocalPlayer.Character.HumanoidRootPart
             local cam = workspace.CurrentCamera
-            local dir = Vector3.zero
+            local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
 
-            if UIS:IsKeyDown(Enum.KeyCode.W) then dir += cam.CFrame.LookVector end
-            if UIS:IsKeyDown(Enum.KeyCode.S) then dir -= cam.CFrame.LookVector end
-            if UIS:IsKeyDown(Enum.KeyCode.A) then dir -= cam.CFrame.RightVector end
-            if UIS:IsKeyDown(Enum.KeyCode.D) then dir += cam.CFrame.RightVector end
-            if UIS:IsKeyDown(Enum.KeyCode.Space) then dir += Vector3.new(0,1,0) end
-            if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then dir -= Vector3.new(0,1,0) end
+            if not flyBodyVelocity then
+                flyBodyVelocity = Instance.new("BodyVelocity")
+                flyBodyVelocity.MaxForce = Vector3.new(10000, 10000, 10000)
+                flyBodyVelocity.Parent = root
+            end
 
-            root.Velocity = dir * 50
+            local moveDir = Vector3.zero
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0,1,0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0,1,0) end
+
+            moveDir = moveDir.Unit * 80
+
+            flyBodyVelocity.Velocity = moveDir
+
+            if humanoid then
+                humanoid.PlatformStand = true
+            end
+        else
+            if flyBodyVelocity then
+                flyBodyVelocity:Destroy()
+                flyBodyVelocity = nil
+            end
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                LocalPlayer.Character.Humanoid.PlatformStand = false
+            end
         end
 
-        -- SPEED
-        if Speed and LP.Character and LP.Character:FindFirstChild("Humanoid") then
-            LP.Character.Humanoid.WalkSpeed = 50
+        if SpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = 50
         end
     end)
+
+    print("⚡ Gothbreach MM2 RAGE loaded. Toggle: RightControl")
 end
 
 CreateWindow()
