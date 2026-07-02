@@ -178,6 +178,7 @@ local function CreateWindow()
     end
 
     local AimbotEnabled = false
+    local ChamsEnabled = false
     local EspEnabled = false
     local FlyEnabled = false
     local SpeedEnabled = false
@@ -190,6 +191,7 @@ local function CreateWindow()
 
     Visuals.MouseButton1Click:Connect(function()
         clearContent()
+        addToggle("Chams", function(v) ChamsEnabled = v end, false)
         addToggle("ESP", function(v) EspEnabled = v end, false)
     end)
 
@@ -198,6 +200,22 @@ local function CreateWindow()
         addToggle("Fly", function(v) FlyEnabled = v end, false)
         addToggle("Speed Hack", function(v) SpeedEnabled = v end, false)
     end)
+
+    -- ===================== ROLE DETECTION =====================
+    local function getPlayerRole(player)
+        -- Attempt to detect role via common MM2 internals
+        -- Murderer usually holds knife in backpack or character
+        -- Sheriff usually has gun
+        -- Innocent has nothing special
+        if not player.Character then return nil end
+        local char = player.Character
+        local backpack = player:FindFirstChild("Backpack")
+        local knife = char:FindFirstChild("Knife") or (backpack and backpack:FindFirstChild("Knife"))
+        local gun = char:FindFirstChild("Gun") or (backpack and backpack:FindFirstChild("Gun")) or char:FindFirstChild("Revolver") or (backpack and backpack:FindFirstChild("Revolver"))
+        if knife then return "Murderer" end
+        if gun then return "Sheriff" end
+        return "Innocent"
+    end
 
     -- ===================== REAL FUNCTIONS =====================
     local function getClosestPlayer(maxDist)
@@ -225,11 +243,44 @@ local function CreateWindow()
             end
         end
 
-        if EspEnabled then
-            for _, player in pairs(Players:GetPlayers()) do
-                if player ~= LocalPlayer and player.Character then
-                    local head = player.Character:FindFirstChild("Head")
-                    if head and not head:FindFirstChild("ESPBillboard") then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player == LocalPlayer or not player.Character then continue end
+
+            local role = getPlayerRole(player)
+            local color = nil
+            if role == "Murderer" then
+                color = Color3.fromRGB(255,0,0) -- Красный
+            elseif role == "Sheriff" then
+                color = Color3.fromRGB(0,100,255) -- Синий
+            else
+                color = Color3.fromRGB(0,255,0) -- Зелёный
+            end
+
+            -- CHAMS (Highlight)
+            if ChamsEnabled then
+                local char = player.Character
+                local highlight = char:FindFirstChild("Highlight")
+                if not highlight then
+                    highlight = Instance.new("Highlight")
+                    highlight.Name = "Highlight"
+                    highlight.Parent = char
+                    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                    highlight.FillTransparency = 0.5
+                end
+                highlight.FillColor = color
+                highlight.OutlineColor = color
+            else
+                local char = player.Character
+                local highlight = char:FindFirstChild("Highlight")
+                if highlight then highlight:Destroy() end
+            end
+
+            -- ESP (BillboardGui)
+            if EspEnabled then
+                local head = player.Character:FindFirstChild("Head")
+                if head then
+                    local existing = head:FindFirstChild("ESPBillboard")
+                    if not existing then
                         local bill = Instance.new("BillboardGui")
                         bill.Name = "ESPBillboard"
                         bill.Adornee = head
@@ -240,12 +291,24 @@ local function CreateWindow()
                         local txt = Instance.new("TextLabel")
                         txt.BackgroundTransparency = 1
                         txt.Size = UDim2.new(1,0,1,0)
-                        txt.Text = player.Name .. (player.Backpack:FindFirstChild("Knife") and " [M]" or " [I]")
-                        txt.TextColor3 = Color3.new(1,0,0)
+                        txt.Text = player.Name .. " [" .. role .. "]"
+                        txt.TextColor3 = color
                         txt.Font = Enum.Font.GothamBold
                         txt.TextSize = 12
                         txt.Parent = bill
+                    else
+                        local txt = existing:FindFirstChildOfClass("TextLabel")
+                        if txt then
+                            txt.Text = player.Name .. " [" .. role .. "]"
+                            txt.TextColor3 = color
+                        end
                     end
+                end
+            else
+                local head = player.Character:FindFirstChild("Head")
+                if head then
+                    local bill = head:FindFirstChild("ESPBillboard")
+                    if bill then bill:Destroy() end
                 end
             end
         end
