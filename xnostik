@@ -1,15 +1,3 @@
--- ===================================================================================
---   AURORA HUB | MM2
---   Полностью переработанная версия для максимальной производительности и стиля.
---
---   Особенности:
---   - Новый GUI в стиле "Aurora" (эффект размытого стекла).
---   - Критическая оптимизация: нет лагов, FPS стабилен.
---   - Исправлены все баги предыдущей версии.
---   - Надежная работа всех функций в Murder Mystery 2.
--- ===================================================================================
-
--- // СЕРВИСЫ И ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -24,12 +12,8 @@ local Camera = workspace.CurrentCamera
 pcall(function() CoreGui:FindFirstChild("AuroraHub"):Destroy() end)
 pcall(function() Lighting:FindFirstChild("AuroraBlur"):Destroy() end)
 
--- ===================================================================================
---   БИБЛИОТЕКА И НАСТРОЙКИ
--- ===================================================================================
 local Library = {}
 
--- // ЦВЕТОВАЯ ПАЛИТРА "AURORA"
 Library.Colors = {
     BG          = Color3.fromRGB(20, 18, 32),
     BG_Trans    = 0.7,
@@ -47,27 +31,18 @@ Library.Colors = {
 }
 local C = Library.Colors
 
--- // СОСТОЯНИЕ ФУНКЦИЙ
 Library.State = {
-    -- ESP
     PlayerESP = true, MurdererESP = true, SheriffESP = true, InnocentESP = false,
     GunESP = true, CoinESP = false,
-    -- Combat
-    SilentAim = false, FOV = 150, Prediction = 0.12, ShowFOV = true,
+    SilentAim = false, FOV = 150, Prediction = 12, ShowFOV = true,
     KillAll = false, KillRange = 20,
-    -- Player
     WalkSpeed = 16, JumpPower = 50, InfJump = false,
     Fly = false, FlySpeed = 60, Noclip = false,
-    -- World
     Fullbright = false, Chams = false, FogRemove = false,
-    -- Farm
     AutoCoin = false, CoinFarmDelay = 100,
 }
 local State = Library.State
 
--- ===================================================================================
---   СИСТЕМА ESP (ОПТИМИЗИРОВАННАЯ)
--- ===================================================================================
 local ESPManager = { PlayerCache = {}, ItemCache = {} }
 
 function ESPManager:GetRole(player)
@@ -89,25 +64,26 @@ function ESPManager:GetRole(player)
 end
 
 function ESPManager:Create(obj, type, text, color)
-    if self.ItemCache[obj] or self.PlayerCache[obj] then return end
+    if not obj or not obj.Parent or self.ItemCache[obj] or self.PlayerCache[obj] then return end
     
-    local data = {}
-    data.Type = type
-    
-    data.HL = Instance.new("Highlight", obj)
+    local data = { Type = type }
+    data.HL = Instance.new("Highlight")
+    data.HL.Parent = obj
     data.HL.FillColor = color
     data.HL.OutlineColor = color
     data.HL.FillTransparency = 0.6
     data.HL.OutlineTransparency = 0.1
     data.HL.Enabled = false
     
-    data.Bill = Instance.new("BillboardGui", obj)
+    data.Bill = Instance.new("BillboardGui")
+    data.Bill.Parent = obj
     data.Bill.AlwaysOnTop = true
     data.Bill.Size = UDim2.new(0, 120, 0, 20)
     data.Bill.StudsOffset = Vector3.new(0, 2.5, 0)
     data.Bill.Enabled = false
     
-    data.Label = Instance.new("TextLabel", data.Bill)
+    data.Label = Instance.new("TextLabel")
+    data.Label.Parent = data.Bill
     data.Label.Size = UDim2.new(1, 0, 1, 0)
     data.Label.Text = text
     data.Label.Font = Enum.Font.GothamSemibold
@@ -136,26 +112,21 @@ function ESPManager:Destroy(obj)
     end
 end
 
--- // ИНИЦИАЛИЗАЦИЯ ОТСЛЕЖИВАНИЯ
 local function onChildAdded(child)
-    if child:IsA("Tool") then
-        if child.Name == "Gun" then ESPManager:Create(child, "Gun", "🔫 Gun", C.Gold) end
-        if child.Name == "Knife" then ESPManager:Create(child, "Knife", "🔪 Knife", C.Red) end
+    if child:IsA("Tool") and (child.Name == "Gun" or child.Name == "Knife") then
+        local itemName = child.Name
+        local itemText = (itemName == "Gun" and "🔫 Gun" or "🔪 Knife")
+        local itemColor = (itemName == "Gun" and C.Gold or C.Red)
+        ESPManager:Create(child, itemName, itemText, itemColor)
     elseif child.Name == "Coin" and child:IsA("BasePart") then
         ESPManager:Create(child, "Coin", "🪙 Coin", C.Accent)
     end
 end
-
 workspace.ChildAdded:Connect(onChildAdded)
 for _, v in pairs(workspace:GetDescendants()) do onChildAdded(v) end
-Players.PlayerAdded:Connect(function(p) ESPManager:Create(p, "Player", p.Name, C.Text) end)
+Players.PlayerAdded:Connect(function(p) if p ~= LP then ESPManager:Create(p, "Player", p.Name, C.Text) end end)
 Players.PlayerRemoving:Connect(function(p) ESPManager:Destroy(p) end)
 for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then ESPManager:Create(p, "Player", p.Name, C.Text) end end
-
-
--- ===================================================================================
---   UI: СОЗДАНИЕ И КОМПОНЕНТЫ
--- ===================================================================================
 
 local function Tw(...) TweenService:Create(...):Play() end
 local function Corner(p, r) local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, r or 8); c.Parent = p; return c end
@@ -165,7 +136,7 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "AuroraHub"
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 ScreenGui.ResetOnSpawn = false
-pcall(function() syn.protect_gui(ScreenGui) end)
+if syn and syn.protect_gui then pcall(function() syn.protect_gui(ScreenGui) end) end
 
 local Blur = Instance.new("BlurEffect")
 Blur.Name = "AuroraBlur"
@@ -177,18 +148,20 @@ Main.Name = "Main"
 Main.Size = UDim2.new(0, 600, 0, 420)
 Main.Position = UDim2.new(0.5, -300, 0.5, -210)
 Main.BackgroundColor3 = C.BG
-Main.BackgroundTransparency = C.BG_Trans
+Main.BackgroundTransparency = 1
 Main.BorderSizePixel = 0
 Main.ClipsDescendants = true
+Main.Parent = ScreenGui
 Corner(Main, 12)
 Stroke(Main, C.Divider, 1.5)
 
 local Header = Instance.new("Frame")
+Header.Parent = Main
 Header.Size = UDim2.new(1, 0, 0, 45)
 Header.BackgroundTransparency = 1
-Header.Parent = Main
 
-local Title = Instance.new("TextLabel", Header)
+local Title = Instance.new("TextLabel")
+Title.Parent = Header
 Title.Size = UDim2.new(0, 200, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.Text = "AURORA"
@@ -198,16 +171,19 @@ Title.TextColor3 = C.Text
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BackgroundTransparency = 1
 
-local TabContainer = Instance.new("Frame", Header)
+local TabContainer = Instance.new("Frame")
+TabContainer.Parent = Header
 TabContainer.Size = UDim2.new(1, -150, 1, -10)
 TabContainer.Position = UDim2.new(0, 140, 0, 5)
 TabContainer.BackgroundTransparency = 1
-local TabLayout = Instance.new("UIListLayout", TabContainer)
+local TabLayout = Instance.new("UIListLayout")
+TabLayout.Parent = TabContainer
 TabLayout.FillDirection = Enum.FillDirection.Horizontal
 TabLayout.Padding = UDim.new(0, 5)
 TabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 
 local ContentArea = Instance.new("ScrollingFrame")
+ContentArea.Parent = Main
 ContentArea.Size = UDim2.new(1, -20, 1, -55)
 ContentArea.Position = UDim2.new(0, 10, 0, 50)
 ContentArea.BackgroundTransparency = 1
@@ -215,20 +191,17 @@ ContentArea.BorderSizePixel = 0
 ContentArea.ScrollBarThickness = 4
 ContentArea.ScrollBarImageColor3 = C.Accent
 ContentArea.CanvasSize = UDim2.new()
-ContentArea.Parent = Main
-local ContentLayout = Instance.new("UIListLayout", ContentArea)
+local ContentLayout = Instance.new("UIListLayout")
+ContentLayout.Parent = ContentArea
 ContentLayout.Padding = UDim.new(0, 8)
 ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    ContentArea.CanvasSize = UDim2.new(0, 0, 0, ContentLayout.AbsoluteContentSize.Y + 20)
-end)
+ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() ContentArea.CanvasSize = UDim2.new(0, 0, 0, ContentLayout.AbsoluteContentSize.Y + 20) end)
 
-local Pages = {}
-local CurrentTab = nil
+local Pages, CurrentTab = {}, nil
 
--- // ФУНКЦИИ-КОМПОНЕНТЫ
-function Library:CreateTab(id, name, icon)
-    local page = Instance.new("Frame", ContentArea)
+function Library:CreateTab(id, icon)
+    local page = Instance.new("Frame")
+    page.Parent = ContentArea
     page.Name = id
     page.Size = UDim2.new(1, 0, 0, 0)
     page.AutomaticSize = Enum.AutomaticSize.Y
@@ -239,7 +212,8 @@ function Library:CreateTab(id, name, icon)
     PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
     Pages[id] = page
 
-    local btn = Instance.new("TextButton", TabContainer)
+    local btn = Instance.new("TextButton")
+    btn.Parent = TabContainer
     btn.Size = UDim2.new(0, 35, 1, 0)
     btn.Text = icon
     btn.Font = Enum.Font.GothamBold
@@ -250,7 +224,8 @@ function Library:CreateTab(id, name, icon)
     btn.AutoButtonColor = false
     Corner(btn, 8)
 
-    local highlight = Instance.new("Frame", btn)
+    local highlight = Instance.new("Frame")
+    highlight.Parent = btn
     highlight.Size = UDim2.new(1, 0, 0, 3)
     highlight.Position = UDim2.new(0, 0, 1, 0)
     highlight.BackgroundColor3 = C.Accent
@@ -278,7 +253,8 @@ function Library:SwitchTab(id)
 end
 
 function Library:Section(parent, text)
-    local label = Instance.new("TextLabel", parent)
+    local label = Instance.new("TextLabel")
+    label.Parent = parent
     label.Size = UDim2.new(1, 0, 0, 25)
     label.Text = "      " .. text:upper()
     label.Font = Enum.Font.GothamBold
@@ -289,13 +265,15 @@ function Library:Section(parent, text)
 end
 
 function Library:Toggle(parent, text, key, callback)
-    local holder = Instance.new("Frame", parent)
+    local holder = Instance.new("Frame")
+    holder.Parent = parent
     holder.Size = UDim2.new(1, 0, 0, 45)
     holder.BackgroundColor3 = C.Element
     holder.BackgroundTransparency = C.Element_Trans
     Corner(holder, 8); Stroke(holder)
     
-    local label = Instance.new("TextLabel", holder)
+    local label = Instance.new("TextLabel")
+    label.Parent = holder
     label.Size = UDim2.new(1, -70, 1, 0)
     label.Position = UDim2.new(0, 15, 0, 0)
     label.Text = text
@@ -305,38 +283,43 @@ function Library:Toggle(parent, text, key, callback)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.BackgroundTransparency = 1
     
-    local switch = Instance.new("Frame", holder)
+    local switch = Instance.new("Frame")
+    switch.Parent = holder
     switch.Size = UDim2.new(0, 44, 0, 22)
     switch.Position = UDim2.new(1, -60, 0.5, -11)
     switch.BackgroundColor3 = State[key] and C.Accent or C.BG
     Corner(switch, 11); Stroke(switch, C.Divider, 1.5)
     
-    local knob = Instance.new("Frame", switch)
+    local knob = Instance.new("Frame")
+    knob.Parent = switch
     knob.Size = UDim2.new(0, 16, 0, 16)
     knob.Position = State[key] and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
     knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Corner(knob, 8)
     
-    local btn = Instance.new("TextButton", holder)
+    local btn = Instance.new("TextButton")
+    btn.Parent = holder
     btn.Size = UDim2.new(1, 0, 1, 0)
     btn.BackgroundTransparency = 1
     btn.Text = ""
     btn.MouseButton1Click:Connect(function()
         State[key] = not State[key]
-        Tw(switch, {BackgroundColor3 = State[key] and C.Accent or C.BG}, 0.2)
-        Tw(knob, {Position = State[key] and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)}, 0.2)
+        Tw(switch, TweenInfo.new(0.2), {BackgroundColor3 = State[key] and C.Accent or C.BG})
+        Tw(knob, TweenInfo.new(0.2), {Position = State[key] and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)})
         if callback then callback(State[key]) end
     end)
 end
 
 function Library:Slider(parent, text, min, max, key, suffix, callback)
-    local holder = Instance.new("Frame", parent)
+    local holder = Instance.new("Frame")
+    holder.Parent = parent
     holder.Size = UDim2.new(1, 0, 0, 65)
     holder.BackgroundColor3 = C.Element
     holder.BackgroundTransparency = C.Element_Trans
     Corner(holder, 8); Stroke(holder)
     
-    local label = Instance.new("TextLabel", holder)
+    local label = Instance.new("TextLabel")
+    label.Parent = holder
     label.Size = UDim2.new(0.7, 0, 0, 30)
     label.Position = UDim2.new(0, 15, 0, 0)
     label.Text = text
@@ -346,28 +329,32 @@ function Library:Slider(parent, text, min, max, key, suffix, callback)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.BackgroundTransparency = 1
     
-    local valueLabel = Instance.new("TextLabel", holder)
+    local valueLabel = Instance.new("TextLabel")
+    valueLabel.Parent = holder
     valueLabel.Size = UDim2.new(0.3, -15, 0, 30)
     valueLabel.Position = UDim2.new(0.7, 0, 0, 0)
-    valueLabel.Text = State[key] .. (suffix or "")
+    valueLabel.Text = tostring(State[key]) .. (suffix or "")
     valueLabel.Font = Enum.Font.GothamBold
     valueLabel.TextSize = 13
     valueLabel.TextColor3 = C.Accent
     valueLabel.TextXAlignment = Enum.TextXAlignment.Right
     valueLabel.BackgroundTransparency = 1
     
-    local track = Instance.new("Frame", holder)
+    local track = Instance.new("Frame")
+    track.Parent = holder
     track.Size = UDim2.new(1, -30, 0, 6)
     track.Position = UDim2.new(0, 15, 0, 40)
     track.BackgroundColor3 = C.BG
     Corner(track, 3)
     
-    local fill = Instance.new("Frame", track)
-    fill.Size = UDim2.new((State[key]-min)/(max-min), 0, 1, 0)
+    local fill = Instance.new("Frame")
+    fill.Parent = track
+    fill.Size = UDim2.new(math.clamp((State[key]-min)/(max-min),0,1), 0, 1, 0)
     fill.BackgroundColor3 = C.Accent
     Corner(fill, 3)
     
-    local knob = Instance.new("Frame", fill)
+    local knob = Instance.new("Frame")
+    knob.Parent = fill
     knob.Size = UDim2.new(0, 14, 0, 14)
     knob.AnchorPoint = Vector2.new(0.5, 0.5)
     knob.Position = UDim2.new(1, 0, 0.5, 0)
@@ -380,7 +367,7 @@ function Library:Slider(parent, text, min, max, key, suffix, callback)
         local newValue = math.floor(min + (max-min) * relX + 0.5)
         State[key] = newValue
         fill.Size = UDim2.new(relX, 0, 1, 0)
-        valueLabel.Text = newValue .. (suffix or "")
+        valueLabel.Text = tostring(newValue) .. (suffix or "")
         if callback then callback(newValue) end
     end
     
@@ -390,7 +377,8 @@ function Library:Slider(parent, text, min, max, key, suffix, callback)
 end
 
 function Library:Button(parent, text, callback)
-    local holder = Instance.new("TextButton", parent)
+    local holder = Instance.new("TextButton")
+    holder.Parent = parent
     holder.Size = UDim2.new(1, 0, 0, 38)
     holder.Text = text
     holder.Font = Enum.Font.GothamBold
@@ -401,18 +389,15 @@ function Library:Button(parent, text, callback)
     holder.AutoButtonColor = false
     Corner(holder, 8); Stroke(holder)
     
-    holder.MouseEnter:Connect(function() Tw(holder, { BackgroundColor3 = C.Divider }, 0.2) end)
-    holder.MouseLeave:Connect(function() Tw(holder, { BackgroundColor3 = C.Element }, 0.2) end)
+    holder.MouseEnter:Connect(function() Tw(holder, TweenInfo.new(0.2), {BackgroundColor3=C.Divider}) end)
+    holder.MouseLeave:Connect(function() Tw(holder, TweenInfo.new(0.2), {BackgroundColor3=C.Element}) end)
     holder.MouseButton1Click:Connect(function()
-        Tw(holder, { Size = UDim2.new(1, 0, 0, 34) }, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, true)
+        Tw(holder, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, true), {Size=UDim2.new(1,0,0,34)})
         if callback then pcall(callback) end
     end)
 end
 
--- ===================================================================================
---   НАПОЛНЕНИЕ GUI
--- ===================================================================================
-local TabESP = Library:CreateTab("esp", "ESP", "")
+local TabESP = Library:CreateTab("esp", "")
 Library:Section(TabESP, "Игроки")
 Library:Toggle(TabESP, "ESP на игроков", "PlayerESP")
 Library:Toggle(TabESP, "Убийца", "MurdererESP")
@@ -422,17 +407,17 @@ Library:Section(TabESP, "Мир")
 Library:Toggle(TabESP, "Пистолет", "GunESP")
 Library:Toggle(TabESP, "Монеты", "CoinESP")
 
-local TabCombat = Library:CreateTab("combat", "Бой", "")
+local TabCombat = Library:CreateTab("combat", "")
 Library:Section(TabCombat, "Silent Aim")
 Library:Toggle(TabCombat, "Включить Silent Aim", "SilentAim")
 Library:Toggle(TabCombat, "Показывать радиус (FOV)", "ShowFOV")
 Library:Slider(TabCombat, "Радиус (FOV)", 10, 500, "FOV", "px")
-Library:Slider(TabCombat, "Предсказание", 0, 30, "Prediction", "", function(v) State.Prediction = v / 100 end)
+Library:Slider(TabCombat, "Предсказание", 0, 30, "Prediction")
 Library:Section(TabCombat, "Kill Aura")
 Library:Toggle(TabCombat, "Kill All (Aura)", "KillAll")
 Library:Slider(TabCombat, "Дистанция", 5, 40, "KillRange", " studs")
 
-local TabPlayer = Library:CreateTab("player", "Игрок", "")
+local TabPlayer = Library:CreateTab("player", "")
 Library:Section(TabPlayer, "Передвижение")
 Library:Slider(TabPlayer, "Скорость ходьбы", 16, 100, "WalkSpeed", "", function(v) if LP.Character and LP.Character.Humanoid then LP.Character.Humanoid.WalkSpeed = v end end)
 Library:Slider(TabPlayer, "Сила прыжка", 50, 250, "JumpPower", "", function(v) if LP.Character and LP.Character.Humanoid then LP.Character.Humanoid.JumpPower = v end end)
@@ -442,7 +427,7 @@ Library:Toggle(TabPlayer, "Режим полёта", "Fly")
 Library:Toggle(TabPlayer, "Noclip (проход сквозь стены)", "Noclip")
 Library:Slider(TabPlayer, "Скорость полёта", 10, 300, "FlySpeed")
 
-local TabWorld = Library:CreateTab("world", "Мир", "")
+local TabWorld = Library:CreateTab("world", "")
 Library:Section(TabWorld, "Визуал")
 Library:Toggle(TabWorld, "Fullbright (светло)", "Fullbright", function(v) Lighting.Brightness = v and 2 or 0.5; Lighting.Ambient = v and Color3.new(1,1,1) or Color3.new(0.5,0.5,0.5) end)
 Library:Toggle(TabWorld, "Убрать туман", "FogRemove", function(v) Lighting.FogEnd = v and 100000 or 1000 end)
@@ -451,7 +436,7 @@ Library:Section(TabWorld, "Телепорт")
 Library:Button(TabWorld, "Телепорт к пистолету", function() Library:TeleportToItem("Gun") end)
 Library:Button(TabWorld, "Телепорт к ножу", function() Library:TeleportToItem("Knife") end)
 
-local TabFarm = Library:CreateTab("farm", "Фарм", "")
+local TabFarm = Library:CreateTab("farm", "")
 Library:Section(TabFarm, "Монеты")
 Library:Toggle(TabFarm, "Авто-сбор монет", "AutoCoin")
 Library:Slider(TabFarm, "Задержка сбора", 50, 500, "CoinFarmDelay", "ms")
@@ -464,77 +449,64 @@ Library:Button(TabFarm, "Собрать все монеты (1 раз)", functio
     end
 end)
 
-ScreenGui.Parent = CoreGui
--- ===================================================================================
---   ОСНОВНАЯ ЛОГИКА ФУНКЦИЙ
--- ===================================================================================
-
--- // ТЕЛЕПОРТ
 function Library:TeleportToItem(itemName)
     if not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then return end
     for item, data in pairs(ESPManager.ItemCache) do
         if item and data.Type == itemName then
-            local targetCFrame = item:IsA("BasePart") and item.CFrame or item:GetPivot()
-            if targetCFrame then
-                LP.Character.HumanoidRootPart.CFrame = targetCFrame + Vector3.new(0, 3, 0)
+            local cframe = item:IsA("BasePart") and item.CFrame or item:GetPivot()
+            if cframe then
+                LP.Character.HumanoidRootPart.CFrame = cframe + Vector3.new(0, 3, 0)
                 return
             end
         end
     end
 end
 
--- // SILENT AIM
--- ПРЕДУПРЕЖДЕНИЕ: hookmetamethod - самый обнаруживаемый способ создания аимбота.
-local OldNC; OldNC = hookmetamethod(game, "__namecall", function(self, ...)
-    local method = getnamecallmethod()
-    if State.SilentAim and method == "FireServer" and tostring(self):find("Gun") then
-        local args = {...}
-        local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-        local bestTarget, bestDist = nil, State.FOV
-        
-        for p, data in pairs(ESPManager.PlayerCache) do
-            if p.Character and p.Character:FindFirstChild("Head") then
-                local head = p.Character.Head
-                local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
-                if onScreen then
-                    local dist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
-                    if dist < bestDist then
-                        bestDist = dist; bestTarget = head
+if hookmetamethod then
+    local old; old = hookmetamethod(game, "__namecall", function(self, ...)
+        if State.SilentAim and getnamecallmethod() == "FireServer" and tostring(self):find("Gun") then
+            local args = {...}
+            local center, bestTarget, bestDist = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2), nil, State.FOV
+            for p, data in pairs(ESPManager.PlayerCache) do
+                if p.Character and p.Character.Head then
+                    local head = p.Character.Head
+                    local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
+                    if onScreen then
+                        local dist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
+                        if dist < bestDist then
+                            bestDist = dist
+                            bestTarget = head
+                        end
                     end
                 end
             end
+            if bestTarget then
+                args[2] = bestTarget.Position + (bestTarget.AssemblyLinearVelocity * (State.Prediction / 100))
+                return old(self, unpack(args))
+            end
         end
-        
-        if bestTarget then
-            args[2] = bestTarget.Position + (bestTarget.AssemblyLinearVelocity * State.Prediction)
-            return OldNC(self, unpack(args))
-        end
-    end
-    return OldNC(self, ...)
-end)
+        return old(self, ...)
+    end)
+end
 
--- // FOV КРУГ
-local FOV_Circle = Drawing.new("Circle")
-FOV_Circle.Thickness = 1.5
-FOV_Circle.NumSides = 64
-FOV_Circle.Color = C.Accent
-FOV_Circle.Transparency = 0.5
-FOV_Circle.Filled = false
+local FOV_Circle
+if Drawing then
+    FOV_Circle = Drawing.new("Circle")
+    FOV_Circle.Thickness = 1.5
+    FOV_Circle.NumSides = 64
+    FOV_Circle.Color = C.Accent
+    FOV_Circle.Transparency = 0.5
+    FOV_Circle.Filled = false
+end
 
--- // ИГРОВЫЕ ЦИКЛЫ (ВЫПОЛНЯЮТСЯ ПОСТОЯННО)
 RunService.RenderStepped:Connect(function()
-    -- ESP
     for obj, data in pairs(ESPManager.PlayerCache) do
-        if not obj or not obj.Character or not obj.Character:FindFirstChild("HumanoidRootPart") then
+        if not obj or not obj.Character or not obj.Character.Head then
             data.HL.Enabled, data.Bill.Enabled = false, false
             continue
         end
         local role, color = ESPManager:GetRole(obj)
-        local show = State.PlayerESP and (
-            (role == "MURDERER" and State.MurdererESP) or
-            (role == "SHERIFF" and State.SheriffESP) or
-            (role == "INNOCENT" and State.InnocentESP)
-        )
+        local show = State.PlayerESP and ((role=="MURDERER" and State.MurdererESP) or (role=="SHERIFF" and State.SheriffESP) or (role=="INNOCENT" and State.InnocentESP))
         data.HL.Enabled, data.Bill.Enabled = show, show
         if show then
             data.Bill.Adornee = obj.Character.Head
@@ -542,43 +514,36 @@ RunService.RenderStepped:Connect(function()
             data.Label.TextColor3 = color
         end
     end
-    
     for item, data in pairs(ESPManager.ItemCache) do
         if item and data then
             local show = (data.Type == "Gun" and State.GunESP) or (data.Type == "Coin" and State.CoinESP)
             data.HL.Enabled, data.Bill.Enabled = show, show
         end
     end
-    
-    -- FOV
-    FOV_Circle.Visible = State.SilentAim and State.ShowFOV
-    if FOV_Circle.Visible then
-        FOV_Circle.Radius = State.FOV
-        FOV_Circle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    if FOV_Circle then
+        FOV_Circle.Visible = State.SilentAim and State.ShowFOV
+        if FOV_Circle.Visible then
+            FOV_Circle.Radius = State.FOV
+            FOV_Circle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+        end
     end
-    
-    -- Noclip
     if State.Noclip and LP.Character then
         for _, part in ipairs(LP.Character:GetDescendants()) do
             if part:IsA("BasePart") and part.CanCollide then part.CanCollide = false end
         end
     end
-    
-    -- Fly
-    if State.Fly and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+    if State.Fly and LP.Character and LP.Character.HumanoidRootPart then
         local root, hum = LP.Character.HumanoidRootPart, LP.Character.Humanoid
         hum.PlatformStand = true
         local dir = Vector3.zero
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir += Camera.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir -= Camera.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir -= Camera.CFrame.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir += Camera.CFrame.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir += Vector3.yAxis end
-        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then dir -= Vector3.yAxis end
-        root.CFrame = root.CFrame + dir.Unit * State.FlySpeed / 10
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir = dir + Camera.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir = dir - Camera.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir = dir - Camera.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir = dir + Camera.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.yAxis end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then dir = dir - Vector3.yAxis end
+        if dir.Magnitude > 0 then root.CFrame = root.CFrame + dir.Unit * State.FlySpeed / 10 end
     end
-    
-    -- Chams
     if State.Chams then
         for p, data in pairs(ESPManager.PlayerCache) do
             if p.Character then
@@ -592,55 +557,54 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Бесконечные прыжки
 UserInputService.JumpRequest:Connect(function()
-    if State.InfJump and LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
+    if State.InfJump and LP.Character and LP.Character.Humanoid then
         LP.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
     end
 end)
 
--- Kill All и AutoCoin в отдельных потоках
 task.spawn(function()
-    while task.wait() do
-        if State.KillAll and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
-            local hasKnife = LP.Backpack:FindFirstChild("Knife") or LP.Character:FindFirstChild("Knife")
-            if hasKnife then
-                for p, data in pairs(ESPManager.PlayerCache) do
-                    if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                        if (LP.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude <= State.KillRange then
-                            pcall(function() ReplicatedStorage.Remotes.Gameplay.KnifeHit:FireServer(p.Character) end)
-                        end
-                    end
+    while true do
+        if State.KillAll and LP.Character and LP.Character.HumanoidRootPart and (LP.Backpack:FindFirstChild("Knife") or LP.Character:FindFirstChild("Knife")) then
+            for p, data in pairs(ESPManager.PlayerCache) do
+                if p.Character and p.Character.HumanoidRootPart and (LP.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude <= State.KillRange then
+                    pcall(function() ReplicatedStorage.Remotes.Gameplay.KnifeHit:FireServer(p.Character) end)
                 end
             end
+            task.wait(0.1)
+        else
+            task.wait(0.5)
         end
-        
+    end
+end)
+
+task.spawn(function()
+    while true do
         if State.AutoCoin then
-            task.wait(State.CoinFarmDelay / 1000)
             for item, data in pairs(ESPManager.ItemCache) do
                 if item and data.Type == "Coin" then
                     pcall(function() ReplicatedStorage.Remotes.Gameplay.CollectCoin:FireServer(item) end)
                 end
             end
+            task.wait(State.CoinFarmDelay/1000)
+        else
+            task.wait(1)
         end
     end
 end)
 
-
--- ===================================================================================
---   ИНИЦИАЛИЗАЦИЯ И ГОРЯЧИЕ КЛАВИШИ
--- ===================================================================================
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.RightShift then
         Main.Visible = not Main.Visible
-        Tw(Blur, { Size = Main.Visible and 16 or 0 }, 0.3)
+        Tw(Main, TweenInfo.new(0.3), {BackgroundTransparency = Main.Visible and C.BG_Trans or 1})
+        Tw(Blur, TweenInfo.new(0.3), {Size = Main.Visible and 16 or 0})
     end
 end)
 
-Library:SwitchTab("esp") -- Устанавливаем первую вкладку активной
-Main.Visible = false; Blur.Size = 0
-Tw(Main, { Position = UDim2.new(0.5, -300, 0.5, -210) }, 0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-task.wait(0.1)
-Main.Visible = true; Tw(Blur, { Size = 16 }, 0.3)
-print("Aurora Hub | Загружен. Нажмите [RightShift] для скрытия/отображения.")
+Library:SwitchTab("esp")
+Main.Visible = false
+task.wait()
+Main.Visible = true
+Tw(Main, TweenInfo.new(0.4), {BackgroundTransparency = C.BG_Trans})
+Tw(Blur, TweenInfo.new(0.4), {Size = 16})
