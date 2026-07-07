@@ -1,313 +1,240 @@
--- MINI PHANTOM HUB (Material Mini)
+--// Modern Mini GUI (Template)
 
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 
-local LP = Players.LocalPlayer
-
 pcall(function()
-    local old = CoreGui:FindFirstChild("MiniPhantomHub")
-    if old then old:Destroy() end
+	local old = CoreGui:FindFirstChild("MiniGUI")
+	if old then
+		old:Destroy()
+	end
 end)
 
--- Theme
-local T = {
-    Bg = Color3.fromRGB(30, 30, 35),
-    Bg2 = Color3.fromRGB(40, 40, 48),
-    Accent = Color3.fromRGB(120, 140, 255),
-    Text = Color3.fromRGB(240, 240, 255),
-    Sub = Color3.fromRGB(160, 160, 180),
-    Sheriff = Color3.fromRGB(80, 150, 255),
-    Murder = Color3.fromRGB(255, 80, 80),
-    Innocent = Color3.fromRGB(255, 255, 255),
+local Theme = {
+	Background = Color3.fromRGB(18,18,22),
+	Sidebar = Color3.fromRGB(24,25,31),
+	Card = Color3.fromRGB(32,34,42),
+
+	Accent = Color3.fromRGB(98,120,255),
+
+	Text = Color3.fromRGB(245,245,255),
+	Sub = Color3.fromRGB(170,175,190),
+
+	Stroke = Color3.fromRGB(55,60,75)
 }
 
-local function Tw(o, props, t)
-    TweenService:Create(o, TweenInfo.new(t or 0.15), props):Play()
+local function Round(obj,r)
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0,r)
+	c.Parent = obj
 end
 
-local function Corner(p, r)
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, r or 8)
-    c.Parent = p
+local function Stroke(obj)
+	local s = Instance.new("UIStroke")
+	s.Color = Theme.Stroke
+	s.Transparency = .35
+	s.Thickness = 1
+	s.Parent = obj
 end
 
-local function Text(parent, txt, size, color)
-    local l = Instance.new("TextLabel")
-    l.BackgroundTransparency = 1
-    l.Text = txt
-    l.TextSize = size or 14
-    l.TextColor3 = color or T.Text
-    l.Font = Enum.Font.Gotham
-    l.TextXAlignment = Enum.TextXAlignment.Left
-    l.Parent = parent
-    return l
+local function Tween(obj,props,t)
+	TweenService:Create(obj,TweenInfo.new(t or .15,Enum.EasingStyle.Quart),props):Play()
 end
 
-local function Button(parent, txt, callback)
-    local b = Instance.new("TextButton")
-    b.Size = UDim2.new(1, -20, 0, 32)
-    b.BackgroundColor3 = T.Bg2
-    b.Text = txt
-    b.TextColor3 = T.Text
-    b.Font = Enum.Font.GothamSemibold
-    b.TextSize = 13
-    b.Parent = parent
-    Corner(b, 6)
+----------------------------------------------------
 
-    b.MouseEnter:Connect(function()
-        Tw(b, {BackgroundColor3 = T.Accent}, 0.15)
-    end)
-    b.MouseLeave:Connect(function()
-        Tw(b, {BackgroundColor3 = T.Bg2}, 0.15)
-    end)
-
-    b.MouseButton1Click:Connect(function()
-        if callback then callback() end
-    end)
-end
-
-local function Toggle(parent, txt, default, callback)
-    local f = Instance.new("Frame")
-    f.Size = UDim2.new(1, -20, 0, 32)
-    f.BackgroundColor3 = T.Bg2
-    f.Parent = parent
-    Corner(f, 6)
-
-    local l = Text(f, txt, 13, T.Text)
-    l.Position = UDim2.new(0, 10, 0, 0)
-    l.Size = UDim2.new(1, -60, 1, 0)
-
-    local sw = Instance.new("Frame")
-    sw.Size = UDim2.new(0, 40, 0, 20)
-    sw.Position = UDim2.new(1, -50, 0.5, -10)
-    sw.BackgroundColor3 = default and T.Accent or T.Sub
-    sw.Parent = f
-    Corner(sw, 10)
-
-    local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 16, 0, 16)
-    knob.Position = default and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
-    knob.BackgroundColor3 = Color3.fromRGB(255,255,255)
-    knob.Parent = sw
-    Corner(knob, 8)
-
-    local state = default
-
-    f.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
-            state = not state
-            Tw(sw, {BackgroundColor3 = state and T.Accent or T.Sub}, 0.15)
-            Tw(knob, {Position = state and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)}, 0.15)
-            if callback then callback(state) end
-        end
-    end)
-end
-
--- GUI
 local Gui = Instance.new("ScreenGui")
-Gui.Name = "MiniPhantomHub"
+Gui.Name = "MiniGUI"
+Gui.ResetOnSpawn = false
 Gui.Parent = CoreGui
 
+local Shadow = Instance.new("Frame")
+Shadow.Size = UDim2.new(0,505,0,355)
+Shadow.Position = UDim2.new(.5,-252,.5,-177)
+Shadow.BackgroundColor3 = Color3.new()
+Shadow.BackgroundTransparency = .55
+Shadow.Parent = Gui
+Round(Shadow,18)
+
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 350, 0, 300)
-Main.Position = UDim2.new(0.5, -175, 0.5, -150)
-Main.BackgroundColor3 = T.Bg
+Main.Size = UDim2.new(0,500,0,350)
+Main.Position = UDim2.new(.5,-250,.5,-175)
+Main.BackgroundColor3 = Theme.Background
 Main.Parent = Gui
-Corner(Main, 12)
+Round(Main,18)
+Stroke(Main)
 
--- Drag
-do
-    local drag = false
-    local start, pos
+----------------------------------------------------
+-- TOPBAR
 
-    Main.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
-            drag = true
-            start = i.Position
-            pos = Main.Position
-        end
-    end)
+local Top = Instance.new("Frame")
+Top.Size = UDim2.new(1,0,0,52)
+Top.BackgroundTransparency = 1
+Top.Parent = Main
 
-    Main.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
-            drag = false
-        end
-    end)
+local Title = Instance.new("TextLabel")
+Title.BackgroundTransparency = 1
+Title.Position = UDim2.new(0,20,0,0)
+Title.Size = UDim2.new(1,-40,1,0)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "Mini GUI"
+Title.TextColor3 = Theme.Text
+Title.TextSize = 20
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = Top
 
-    UserInputService.InputChanged:Connect(function(i)
-        if drag and i.UserInputType == Enum.UserInputType.MouseMovement then
-            local d = i.Position - start
-            Main.Position = UDim2.new(pos.X.Scale, pos.X.Offset + d.X, pos.Y.Scale, pos.Y.Offset + d.Y)
-        end
-    end)
-end
+----------------------------------------------------
+-- SIDEBAR
 
--- Tabs
-local Tabs = Instance.new("Frame")
-Tabs.Size = UDim2.new(0, 90, 1, 0)
-Tabs.BackgroundColor3 = T.Bg2
-Tabs.Parent = Main
-Corner(Tabs, 12)
+local Side = Instance.new("Frame")
+Side.Size = UDim2.new(0,135,1,-52)
+Side.Position = UDim2.new(0,0,0,52)
+Side.BackgroundColor3 = Theme.Sidebar
+Side.Parent = Main
+Round(Side,18)
+Stroke(Side)
+
+local Padding = Instance.new("UIPadding")
+Padding.PaddingTop = UDim.new(0,12)
+Padding.PaddingLeft = UDim.new(0,10)
+Padding.PaddingRight = UDim.new(0,10)
+Padding.Parent = Side
+
+local Layout = Instance.new("UIListLayout")
+Layout.Padding = UDim.new(0,8)
+Layout.Parent = Side
+
+----------------------------------------------------
+-- CONTENT
 
 local Content = Instance.new("Frame")
-Content.Size = UDim2.new(1, -90, 1, 0)
-Content.Position = UDim2.new(0, 90, 0, 0)
-Content.BackgroundColor3 = T.Bg
+Content.BackgroundTransparency = 1
+Content.Position = UDim2.new(0,145,0,62)
+Content.Size = UDim2.new(1,-155,1,-72)
 Content.Parent = Main
 
-local TabList = {
-    {id="esp", name="ESP"},
-    {id="combat", name="Combat"},
-    {id="misc", name="Misc"},
-}
+----------------------------------------------------
+-- BUTTON CREATOR
 
-local Pages = {}
-local Buttons = {}
-local Current = nil
+local function CreateTab(Name)
 
-local function Switch(id)
-    Current = id
-    for i,v in pairs(Pages) do
-        v.Visible = (i == id)
-    end
-    for i,v in pairs(Buttons) do
-        v.TextColor3 = (i == id) and T.Accent or T.Sub
-    end
+	local Button = Instance.new("TextButton")
+	Button.Size = UDim2.new(1,0,0,40)
+	Button.BackgroundColor3 = Theme.Card
+	Button.Text = Name
+	Button.Font = Enum.Font.GothamSemibold
+	Button.TextSize = 14
+	Button.TextColor3 = Theme.Sub
+	Button.AutoButtonColor = false
+	Button.Parent = Side
+
+	Round(Button,10)
+	Stroke(Button)
+
+	Button.MouseEnter:Connect(function()
+		Tween(Button,{BackgroundColor3=Color3.fromRGB(42,44,56)})
+	end)
+
+	Button.MouseLeave:Connect(function()
+		Tween(Button,{BackgroundColor3=Theme.Card})
+	end)
+
+	Button.MouseButton1Down:Connect(function()
+		Tween(Button,{
+			BackgroundColor3=Theme.Accent,
+			TextColor3=Theme.Text
+		},.12)
+	end)
+
+	return Button
 end
 
-local layout = Instance.new("UIListLayout")
-layout.Parent = Tabs
-layout.Padding = UDim.new(0, 4)
+----------------------------------------------------
 
-for _,tab in ipairs(TabList) do
-    local b = Text(Tabs, tab.name, 14, T.Sub)
-    b.Size = UDim2.new(1, -10, 0, 28)
-    b.Position = UDim2.new(0, 5, 0, 0)
+CreateTab("Home")
+CreateTab("Visual")
+CreateTab("Settings")
+CreateTab("About")
 
-    local click = Instance.new("TextButton")
-    click.BackgroundTransparency = 1
-    click.Size = UDim2.new(1, 0, 1, 0)
-    click.Text = ""
-    click.Parent = b
+----------------------------------------------------
+-- CARD EXAMPLE
 
-    Buttons[tab.id] = b
+local Card = Instance.new("Frame")
+Card.Size = UDim2.new(1,0,0,120)
+Card.BackgroundColor3 = Theme.Card
+Card.Parent = Content
+Round(Card,14)
+Stroke(Card)
 
-    local page = Instance.new("Frame")
-    page.Size = UDim2.new(1, 0, 1, 0)
-    page.BackgroundTransparency = 1
-    page.Parent = Content
-    page.Visible = false
+local Text = Instance.new("TextLabel")
+Text.BackgroundTransparency = 1
+Text.Position = UDim2.new(0,18,0,18)
+Text.Size = UDim2.new(1,-36,0,30)
+Text.Font = Enum.Font.GothamBold
+Text.Text = "Welcome!"
+Text.TextColor3 = Theme.Text
+Text.TextSize = 22
+Text.TextXAlignment = Enum.TextXAlignment.Left
+Text.Parent = Card
 
-    Pages[tab.id] = page
+local Sub = Instance.new("TextLabel")
+Sub.BackgroundTransparency = 1
+Sub.Position = UDim2.new(0,18,0,50)
+Sub.Size = UDim2.new(1,-36,0,50)
+Sub.Font = Enum.Font.Gotham
+Sub.Text = "Modern Roblox UI Template"
+Sub.TextWrapped = true
+Sub.TextColor3 = Theme.Sub
+Sub.TextSize = 14
+Sub.TextXAlignment = Enum.TextXAlignment.Left
+Sub.Parent = Card
 
-    click.MouseButton1Click:Connect(function()
-        Switch(tab.id)
-    end)
-end
+----------------------------------------------------
+-- DRAG
 
-Switch("esp")
+local Drag = false
+local Start
+local StartPos
 
--- ESP LOGIC
-local ESPEnabled = true
-
-local function GetRole(plr)
-    local backpack = plr:FindFirstChild("Backpack")
-    local char = plr.Character
-
-    if char and char:FindFirstChild("Knife") then
-        return "Murder"
-    end
-    if backpack and backpack:FindFirstChild("Knife") then
-        return "Murder"
-    end
-
-    if char and char:FindFirstChild("Gun") then
-        return "Sheriff"
-    end
-    if backpack and backpack:FindFirstChild("Gun") then
-        return "Sheriff"
-    end
-
-    return "Innocent"
-end
-
-local function RoleColor(role)
-    if role == "Sheriff" then return T.Sheriff end
-    if role == "Murder" then return T.Murder end
-    return T.Innocent
-end
-
-local function CreateESP(plr)
-    if plr == LP then return end
-
-    local function attach(char)
-        local head = char:FindFirstChild("Head")
-        if not head then return end
-
-        local gui = Instance.new("BillboardGui")
-        gui.Size = UDim2.new(0, 150, 0, 30)
-        gui.Adornee = head
-        gui.AlwaysOnTop = true
-        gui.Parent = head
-
-        local label = Text(gui, "", 14, T.Text)
-        label.Size = UDim2.new(1, 0, 1, 0)
-        label.TextXAlignment = Enum.TextXAlignment.Center
-
-        local conn
-        conn = RunService.RenderStepped:Connect(function()
-            if not ESPEnabled then
-                gui.Enabled = false
-                return
-            else
-                gui.Enabled = true
-            end
-
-            if not plr.Character or not plr.Character:FindFirstChild("Head") then
-                conn:Disconnect()
-                gui:Destroy()
-                return
-            end
-
-            local dist = (LP.Character.Head.Position - plr.Character.Head.Position).Magnitude
-            local role = GetRole(plr)
-            label.TextColor3 = RoleColor(role)
-            label.Text = plr.Name .. " [" .. math.floor(dist) .. "м]"
-        end)
-    end
-
-    if plr.Character then attach(plr.Character) end
-    plr.CharacterAdded:Connect(attach)
-end
-
-for _,p in ipairs(Players:GetPlayers()) do
-    CreateESP(p)
-end
-Players.PlayerAdded:Connect(CreateESP)
-
--- ESP TAB
-Toggle(Pages.esp, "ESP включить", true, function(v)
-    ESPEnabled = v
+Top.InputBegan:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then
+		Drag = true
+		Start = i.Position
+		StartPos = Main.Position
+	end
 end)
 
--- COMBAT TAB
-Button(Pages.combat, "Kill All", function()
-    for _,plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LP and plr.Character and LP.Character then
-            local root = plr.Character:FindFirstChild("HumanoidRootPart")
-            local myroot = LP.Character:FindFirstChild("HumanoidRootPart")
-            if root and myroot then
-                myroot.CFrame = root.CFrame
-            end
-        end
-    end
+UserInputService.InputEnded:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then
+		Drag = false
+	end
 end)
 
--- MISC TAB
-Button(Pages.misc, "Перезагрузить хаб", function()
-    Gui:Destroy()
+UserInputService.InputChanged:Connect(function(i)
+	if Drag and i.UserInputType == Enum.UserInputType.MouseMovement then
+		local Delta = i.Position - Start
+		Main.Position = UDim2.new(
+			StartPos.X.Scale,
+			StartPos.X.Offset + Delta.X,
+			StartPos.Y.Scale,
+			StartPos.Y.Offset + Delta.Y
+		)
+		Shadow.Position = UDim2.new(
+			Main.Position.X.Scale,
+			Main.Position.X.Offset - 2,
+			Main.Position.Y.Scale,
+			Main.Position.Y.Offset - 2
+		)
+	end
 end)
+
+----------------------------------------------------
+-- OPEN ANIMATION
+
+Main.Size = UDim2.new(0,0,0,0)
+
+Tween(Main,{
+	Size = UDim2.new(0,500,0,350)
+},0.25)
