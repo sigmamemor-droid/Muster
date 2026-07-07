@@ -1,240 +1,180 @@
---// Modern Mini GUI (Template)
+-- idk MM2 PREMIUM MENU v4.3 (РОБОЧИЙ + BOOMBOX
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+local camera = workspace.CurrentCamera
 
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local CoreGui = game:GetService("CoreGui")
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "StableMM2Menu"
+ScreenGui.Parent = player.PlayerGui
+ScreenGui.ResetOnSpawn = false
 
-pcall(function()
-	local old = CoreGui:FindFirstChild("MiniGUI")
-	if old then
-		old:Destroy()
-	end
-end)
+---------------------------------------------------------
+-- 1. КРУГЛА КНОПКА (Перемикач)
+---------------------------------------------------------
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
+ToggleBtn.Position = UDim2.new(0.5, -25, 0.02, 0)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(80, 30, 120)
+ToggleBtn.Text = "MM2"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.TextSize = 14
+ToggleBtn.Font = Enum.Font.SourceSansBold
+ToggleBtn.Parent = ScreenGui
 
-local Theme = {
-	Background = Color3.fromRGB(18,18,22),
-	Sidebar = Color3.fromRGB(24,25,31),
-	Card = Color3.fromRGB(32,34,42),
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(1, 0)
+ToggleCorner.Parent = ToggleBtn
 
-	Accent = Color3.fromRGB(98,120,255),
+---------------------------------------------------------
+-- 2. ГОЛОВНЕ ВІКНО
+---------------------------------------------------------
+local MainWindow = Instance.new("Frame")
+MainWindow.Size = UDim2.new(0, 340, 0, 300)
+MainWindow.Position = UDim2.new(0.3, 0, 0.25, 0)
+MainWindow.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
+MainWindow.BorderSizePixel = 0
+MainWindow.Active = true
+MainWindow.Draggable = true
+MainWindow.Visible = false
+MainWindow.Parent = ScreenGui
 
-	Text = Color3.fromRGB(245,245,255),
-	Sub = Color3.fromRGB(170,175,190),
-
-	Stroke = Color3.fromRGB(55,60,75)
-}
-
-local function Round(obj,r)
-	local c = Instance.new("UICorner")
-	c.CornerRadius = UDim.new(0,r)
-	c.Parent = obj
-end
-
-local function Stroke(obj)
-	local s = Instance.new("UIStroke")
-	s.Color = Theme.Stroke
-	s.Transparency = .35
-	s.Thickness = 1
-	s.Parent = obj
-end
-
-local function Tween(obj,props,t)
-	TweenService:Create(obj,TweenInfo.new(t or .15,Enum.EasingStyle.Quart),props):Play()
-end
-
-----------------------------------------------------
-
-local Gui = Instance.new("ScreenGui")
-Gui.Name = "MiniGUI"
-Gui.ResetOnSpawn = false
-Gui.Parent = CoreGui
-
-local Shadow = Instance.new("Frame")
-Shadow.Size = UDim2.new(0,505,0,355)
-Shadow.Position = UDim2.new(.5,-252,.5,-177)
-Shadow.BackgroundColor3 = Color3.new()
-Shadow.BackgroundTransparency = .55
-Shadow.Parent = Gui
-Round(Shadow,18)
-
-local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0,500,0,350)
-Main.Position = UDim2.new(.5,-250,.5,-175)
-Main.BackgroundColor3 = Theme.Background
-Main.Parent = Gui
-Round(Main,18)
-Stroke(Main)
-
-----------------------------------------------------
--- TOPBAR
-
-local Top = Instance.new("Frame")
-Top.Size = UDim2.new(1,0,0,52)
-Top.BackgroundTransparency = 1
-Top.Parent = Main
+local WindowCorner = Instance.new("UICorner")
+WindowCorner.CornerRadius = UDim.new(0, 8)
+WindowCorner.Parent = MainWindow
 
 local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 35)
 Title.BackgroundTransparency = 1
-Title.Position = UDim2.new(0,20,0,0)
-Title.Size = UDim2.new(1,-40,1,0)
-Title.Font = Enum.Font.GothamBold
-Title.Text = "Mini GUI"
-Title.TextColor3 = Theme.Text
-Title.TextSize = 20
+Title.Text = "   idk MM2 Cheat Menu v4.3"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 16
+Title.Font = Enum.Font.SourceSansBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = Top
+Title.Parent = MainWindow
 
-----------------------------------------------------
--- SIDEBAR
+ToggleBtn.MouseButton1Click:Connect(function()
+    MainWindow.Visible = not MainWindow.Visible
+end)
 
-local Side = Instance.new("Frame")
-Side.Size = UDim2.new(0,135,1,-52)
-Side.Position = UDim2.new(0,0,0,52)
-Side.BackgroundColor3 = Theme.Sidebar
-Side.Parent = Main
-Round(Side,18)
-Stroke(Side)
+local ScrollHolder = Instance.new("ScrollingFrame")
+ScrollHolder.Size = UDim2.new(1, 0, 1, -40)
+ScrollHolder.Position = UDim2.new(0, 0, 0, 40)
+ScrollHolder.BackgroundTransparency = 1
+ScrollHolder.BorderSizePixel = 0
+ScrollHolder.ScrollBarThickness = 6
+ScrollHolder.ScrollBarImageColor3 = Color3.fromRGB(80, 30, 120)
+ScrollHolder.CanvasSize = UDim2.new(0, 0, 0, 650)
+ScrollHolder.Parent = MainWindow
+
+local ListLayout = Instance.new("UIListLayout")
+ListLayout.Parent = ScrollHolder
+ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ListLayout.Padding = UDim.new(0, 6)
 
 local Padding = Instance.new("UIPadding")
-Padding.PaddingTop = UDim.new(0,12)
-Padding.PaddingLeft = UDim.new(0,10)
-Padding.PaddingRight = UDim.new(0,10)
-Padding.Parent = Side
+Padding.PaddingTop = UDim.new(0, 5)
+Padding.PaddingLeft = UDim.new(0, 12)
+Padding.PaddingRight = UDim.new(0, 12)
+Padding.Parent = ScrollHolder
 
-local Layout = Instance.new("UIListLayout")
-Layout.Padding = UDim.new(0,8)
-Layout.Parent = Side
-
-----------------------------------------------------
--- CONTENT
-
-local Content = Instance.new("Frame")
-Content.BackgroundTransparency = 1
-Content.Position = UDim2.new(0,145,0,62)
-Content.Size = UDim2.new(1,-155,1,-72)
-Content.Parent = Main
-
-----------------------------------------------------
--- BUTTON CREATOR
-
-local function CreateTab(Name)
-
-	local Button = Instance.new("TextButton")
-	Button.Size = UDim2.new(1,0,0,40)
-	Button.BackgroundColor3 = Theme.Card
-	Button.Text = Name
-	Button.Font = Enum.Font.GothamSemibold
-	Button.TextSize = 14
-	Button.TextColor3 = Theme.Sub
-	Button.AutoButtonColor = false
-	Button.Parent = Side
-
-	Round(Button,10)
-	Stroke(Button)
-
-	Button.MouseEnter:Connect(function()
-		Tween(Button,{BackgroundColor3=Color3.fromRGB(42,44,56)})
-	end)
-
-	Button.MouseLeave:Connect(function()
-		Tween(Button,{BackgroundColor3=Theme.Card})
-	end)
-
-	Button.MouseButton1Down:Connect(function()
-		Tween(Button,{
-			BackgroundColor3=Theme.Accent,
-			TextColor3=Theme.Text
-		},.12)
-	end)
-
-	return Button
+---------------------------------------------------------
+-- ФУНКЦІЇ ДЛЯ СТВОРЕННЯ ЕЛЕМЕНТІВ
+---------------------------------------------------------
+local function AddSeparator(text, order)
+    local Sep = Instance.new("TextLabel")
+    Sep.Size = UDim2.new(1, 0, 0, 20)
+    Sep.BackgroundTransparency = 1
+    Sep.Text = "ーー  " .. text .. "  ーー"
+    Sep.TextColor3 = Color3.fromRGB(160, 130, 200)
+    Sep.TextSize = 12
+    Sep.Font = Enum.Font.SourceSansBold
+    Sep.LayoutOrder = order
+    Sep.Parent = ScrollHolder
 end
 
-----------------------------------------------------
+local function AddCheatButton(text, order, callback)
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(1, 0, 0, 32)
+    Btn.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
+    Btn.Text = text
+    Btn.TextColor3 = Color3.fromRGB(235, 235, 235)
+    Btn.TextSize = 14
+    Btn.Font = Enum.Font.SourceSans
+    Btn.LayoutOrder = order
+    Btn.Parent = ScrollHolder
 
-CreateTab("Home")
-CreateTab("Visual")
-CreateTab("Settings")
-CreateTab("About")
+    local SubCorner = Instance.new("UICorner")
+    SubCorner.CornerRadius = UDim.new(0, 5)
+    SubCorner.Parent = Btn
 
-----------------------------------------------------
--- CARD EXAMPLE
+    Btn.MouseButton1Click:Connect(function()
+        callback(Btn)
+    end)
+end
 
-local Card = Instance.new("Frame")
-Card.Size = UDim2.new(1,0,0,120)
-Card.BackgroundColor3 = Theme.Card
-Card.Parent = Content
-Round(Card,14)
-Stroke(Card)
+---------------------------------------------------------
+-- 3. НАПОВНЕННЯ ТА ЛОГІКА ХАКІВ
+---------------------------------------------------------
 
-local Text = Instance.new("TextLabel")
-Text.BackgroundTransparency = 1
-Text.Position = UDim2.new(0,18,0,18)
-Text.Size = UDim2.new(1,-36,0,30)
-Text.Font = Enum.Font.GothamBold
-Text.Text = "Welcome!"
-Text.TextColor3 = Theme.Text
-Text.TextSize = 22
-Text.TextXAlignment = Enum.TextXAlignment.Left
-Text.Parent = Card
+-- ПОЛИЧКА 1: ОСНОВНІ ЧИТИ
+AddSeparator("MAIN CHEATS", 1)
 
-local Sub = Instance.new("TextLabel")
-Sub.BackgroundTransparency = 1
-Sub.Position = UDim2.new(0,18,0,50)
-Sub.Size = UDim2.new(1,-36,0,50)
-Sub.Font = Enum.Font.Gotham
-Sub.Text = "Modern Roblox UI Template"
-Sub.TextWrapped = true
-Sub.TextColor3 = Theme.Sub
-Sub.TextSize = 14
-Sub.TextXAlignment = Enum.TextXAlignment.Left
-Sub.Parent = Card
-
-----------------------------------------------------
--- DRAG
-
-local Drag = false
-local Start
-local StartPos
-
-Top.InputBegan:Connect(function(i)
-	if i.UserInputType == Enum.UserInputType.MouseButton1 then
-		Drag = true
-		Start = i.Position
-		StartPos = Main.Position
-	end
+local speedActive = false
+AddCheatButton("Speed Hack: OFF", 2, function(button)
+    speedActive = not speedActive
+    if speedActive then
+        button.Text = "Speed Hack: ON"
+        button.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
+    else
+        button.Text = "Speed Hack: OFF"
+        button.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
+        if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+            player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = 16
+        end
+    end
 end)
 
-UserInputService.InputEnded:Connect(function(i)
-	if i.UserInputType == Enum.UserInputType.MouseButton1 then
-		Drag = false
-	end
+task.spawn(function()
+    while true do
+        task.wait(0.1)
+        if speedActive and player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+            player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = 45
+        end
+    end
 end)
 
-UserInputService.InputChanged:Connect(function(i)
-	if Drag and i.UserInputType == Enum.UserInputType.MouseMovement then
-		local Delta = i.Position - Start
-		Main.Position = UDim2.new(
-			StartPos.X.Scale,
-			StartPos.X.Offset + Delta.X,
-			StartPos.Y.Scale,
-			StartPos.Y.Offset + Delta.Y
-		)
-		Shadow.Position = UDim2.new(
-			Main.Position.X.Scale,
-			Main.Position.X.Offset - 2,
-			Main.Position.Y.Scale,
-			Main.Position.Y.Offset - 2
-		)
-	end
+local infJumpActive = false
+AddCheatButton("Infinite Jump: OFF", 3, function(button)
+    infJumpActive = not infJumpActive
+    if infJumpActive then
+        button.Text = "Infinite Jump: ON"
+        button.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
+    else
+        button.Text = "Infinite Jump: OFF"
+        button.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
+    end
 end)
 
-----------------------------------------------------
--- OPEN ANIMATION
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if infJumpActive and player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+        player.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+    end
+end)
 
-Main.Size = UDim2.new(0,0,0,0)
+---------------------------------------------------------
+-- ANTI-FLING
+---------------------------------------------------------
+local antiFlingActive = true
 
-Tween(Main,{
-	Size = UDim2.new(0,500,0,350)
-},0.25)
+AddCheatButton("Anti-Fling: ON", 4, function(button)
+    antiFlingActive = not antiFlingActive
+    if antiFlingActive then
+        button.Text = "Anti-Fling: ON"
+        button.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
+    else
+        button.Text = "Anti-Fling: OFF"
+        button.BackgroundColor3 = Color3.fromRGB(140, 0, 0)
+    end
+end)
+
+gam
