@@ -12,15 +12,15 @@ local Camera = workspace.CurrentCamera
 pcall(function() CoreGui:FindFirstChild("AuroraFixed"):Destroy() end)
 
 local T = {
-	BG = Color3.fromRGB(12, 12, 20),
-	BG2 = Color3.fromRGB(22, 22, 34),
-	BG3 = Color3.fromRGB(32, 32, 48),
-	Accent = Color3.fromRGB(136, 84, 255),
-	Accent2 = Color3.fromRGB(56, 189, 248),
-	Text = Color3.fromRGB(244, 244, 244),
-	Sub = Color3.fromRGB(140, 140, 170),
-	Danger = Color3.fromRGB(248, 113, 113),
-	Good = Color3.fromRGB(52, 211, 153),
+	BG = Color3.fromRGB(12, 12, 20), -- Темный фон
+	BG2 = Color3.fromRGB(22, 22, 34), -- Чуть светлее фон для элементов
+	BG3 = Color3.fromRGB(32, 32, 48), -- Еще светлее
+	Accent = Color3.fromRGB(136, 84, 255), -- Фиолетовый акцент
+	Accent2 = Color3.fromRGB(56, 189, 248), -- Голубой акцент
+	Text = Color3.fromRGB(244, 244, 244), -- Белый текст
+	Sub = Color3.fromRGB(140, 140, 170), -- Серый текст
+	Danger = Color3.fromRGB(248, 113, 113), -- Красный (опасность/выход)
+	Good = Color3.fromRGB(52, 211, 153), -- Зеленый (успех/активно)
 }
 
 local State = {
@@ -61,12 +61,12 @@ SG.Parent = CoreGui
 
 local Main = Instance.new("Frame")
 Main.Name = "Main"
-Main.Size = UDim2.new(0, 520, 0, 340)
+Main.Size = UDim2.new(0, 520, 0, 340) -- Уменьшенный размер меню
 Main.Position = UDim2.new(0.5, -260, 0.5, -170)
 Main.BackgroundColor3 = T.BG
 Main.BackgroundTransparency = 0.15
 Main.BorderSizePixel = 0
-Main.Active = true
+Main.Active = true -- !!! Сделали меню активным для Drag
 Main.Parent = SG
 Corner(Main, 14)
 Stroke(Main, T.BG3, 1.2)
@@ -78,7 +78,8 @@ Top.Size = UDim2.new(1, 0, 0, 34)
 Top.BackgroundColor3 = T.BG2
 Top.BackgroundTransparency = 0.3
 Top.BorderSizePixel = 0
-Top.Active = true
+Top.Active = true -- !!! Сделали верхнюю панель активной для Drag
+Top.ZIndex = 2 -- !!! Увеличили ZIndex для Drag Handle
 Corner(Top, 14)
 
 local TopFix = Instance.new("Frame")
@@ -252,20 +253,20 @@ for _, def in ipairs(TabDefs) do
 	ind.Visible = false
 	Corner(ind, 2)
 
-	btn.MouseButton1Click:Connect(function()
+	btn.MouseButton1Click:Connect(function() -- !!! Логика переключения вкладок
 		if ActiveTab == def.Id then return end
 		ActiveTab = def.Id
-		for id, data in pairs(Pages) do
-			local active = id == def.Id
-			data.Visible = active
+		for id, pageData in pairs(Pages) do
+			pageData.Visible = (id == def.Id)
 		end
 		for _, d in ipairs(TabDefs) do
 			local b = TabList:FindFirstChild(d.Id)
 			if b then
-				local active = d.Id == def.Id
-				Tw(b, nil, {BackgroundTransparency = active and 0 or 1})
-				b:FindFirstChildOfClass("TextLabel").TextColor3 = active and T.Text or T.Sub
-				b:FindFirstChildOfClass("Frame").Visible = active
+				local isActive = (d.Id == def.Id)
+				Tw(b, nil, {BackgroundTransparency = isActive and 0 or 1})
+				b:FindFirstChildOfClass("TextLabel").TextColor3 = isActive and T.Text or T.Sub
+				b:FindFirstChild("icon").TextColor3 = isActive and T.Text or T.Sub -- Изменен икон
+				b:FindFirstChild("Frame").Visible = isActive
 			end
 		end
 	end)
@@ -429,7 +430,6 @@ local function Slider(parent, text, min, max, key, suffix, cb)
 		local nval = math.floor(min + (max - min) * rel + 0.5)
 		State[key] = nval
 		vl.Text = tostring(nval) .. (suffix or "")
-		fill.Size = UDim2.new(rel, 0, 1, 0)
 		if cb then pcall(cb, nval) end
 	end
 
@@ -464,14 +464,29 @@ local function Button(parent, text, cb)
 	end)
 end
 
+-- ============================ Вкладки ============================
 local P_Main = Pages.Main
 Section(P_Main, "Character")
-Toggle(P_Main, "Speed Mod", "SpeedMod")
 Slider(P_Main, "Speed", 16, 100, "WalkSpeed", "", function(v) if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then LP.Character.Humanoid.WalkSpeed = v end end)
 Slider(P_Main, "Jump", 50, 250, "JumpPower", "", function(v) if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then LP.Character.Humanoid.JumpPower = v end end)
 Toggle(P_Main, "Inf Jump", "InfJump")
 Toggle(P_Main, "Fly", "Fly")
-Toggle(P_Main, "Noclip", "Noclip")
+Toggle(P_Main, "Noclip", "Noclip", function(v)
+	-- !!! Оптимизированный Noclip
+	if v then
+		if LP.Character then
+			for _, part in pairs(LP.Character:GetDescendants()) do
+				if part:IsA("BasePart") then part.CanCollide = false end
+			end
+		end
+	else
+		if LP.Character then
+			for _, part in pairs(LP.Character:GetDescendants()) do
+				if part:IsA("BasePart") then part.CanCollide = true end -- Восстанавливаем коллизию
+			end
+		end
+	end
+end)
 Slider(P_Main, "Fly Speed", 10, 200, "FlySpeed")
 
 local P_ESP = Pages.ESP
@@ -539,7 +554,8 @@ Button(P_Misc, "Collect All", function()
 	end
 end)
 
-local drag, dInput, dStart, sPos = false, nil, nil, nil
+-- ============================ Drag ============================
+local drag, dStart, sPos = false, nil, nil
 Top.InputBegan:Connect(function(i)
 	if i.UserInputType == Enum.UserInputType.MouseButton1 then
 		drag = true
@@ -557,16 +573,16 @@ UserInputService.InputChanged:Connect(function(i)
 	end
 end)
 
+-- ============================ Свернуть/Развернуть ============================
 local Minimized = false
-local SavedSize = UDim2.new(0, 520, 0, 340)
+local SavedSize = UDim2.new(0, 520, 0, 340) -- Сохраняем исходный размер
 HideBtn.MouseButton1Click:Connect(function()
 	Minimized = not Minimized
 	if Minimized then
-		SavedSize = Main.Size
-		Tw(Main, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 520, 0, 0)}):Play()
-		task.delay(0.3, function() Main.Visible = false end)
+		-- Свернуть
+		Tw(Main, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 520, 0, 34)}):Play()
 	else
-		Main.Visible = true
+		-- Развернуть
 		Tw(Main, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = SavedSize}):Play()
 	end
 end)
@@ -574,19 +590,11 @@ end)
 UserInputService.InputBegan:Connect(function(i, gp)
 	if gp then return end
 	if i.KeyCode == Enum.KeyCode.RightShift then
-		if Minimized then
-			Minimized = false
-			Main.Visible = true
-			Tw(Main, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = SavedSize}):Play()
-		else
-			Minimized = true
-			SavedSize = Main.Size
-			Tw(Main, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 520, 0, 0)}):Play()
-			task.delay(0.3, function() Main.Visible = false end)
-		end
+		HideBtn.MouseButton1Click:Fire() -- Имитируем клик по кнопке
 	end
 end)
 
+-- ============================ Логика ESP ============================
 local ESP_Data = {}
 local function GetRole(p)
 	if not p.Character then return "Innocent", T.Good end
@@ -804,12 +812,6 @@ RunService.RenderStepped:Connect(function()
 		pcall(function() d.HL.Enabled = en; d.Bill.Enabled = en end)
 	end
 
-	if State.Noclip and LP.Character then
-		for _, part in pairs(LP.Character:GetDescendants()) do
-			if part:IsA("BasePart") then part.CanCollide = false end
-		end
-	end
-
 	if State.Fly and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
 		local r = LP.Character.HumanoidRootPart
 		local h = LP.Character:FindFirstChildOfClass("Humanoid")
@@ -858,14 +860,32 @@ task.spawn(function()
 	end
 end)
 
+-- ============================ Инициализация ============================
 ActiveTab = "Main"
 Pages.Main.Visible = true
 for _, d in ipairs(TabDefs) do
 	local b = TabList:FindFirstChild(d.Id)
 	if b then
-		local active = d.Id == "Main"
-		b.BackgroundTransparency = active and 0 or 1
-		b:FindFirstChildOfClass("TextLabel").TextColor3 = active and T.Text or T.Sub
-		b:FindFirstChildOfClass("Frame").Visible = active
+		local isActive = (d.Id == "Main")
+		b.BackgroundTransparency = isActive and 0 or 1
+		b:FindFirstChildOfClass("TextLabel").TextColor3 = isActive and T.Text or T.Sub
+		b:FindFirstChild("icon").TextColor3 = isActive and T.Text or T.Sub
+		b:FindFirstChild("Frame").Visible = isActive
 	end
 end
+
+-- !!! Анимация появления меню (чтобы не было резкого "прыжка")
+Main.Visible = false
+Main.Size = UDim2.new(0, 0, 0, 0) -- Начинаем с нулевого размера
+Main.Position = UDim2.new(0.5, 0, 0.5, 0) -- В центре для эффекта "раскрытия"
+
+task.delay(0.1, function() -- Небольшая задержка перед началом анимации
+	Main.Visible = true
+	Tw(Main, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+		Size = UDim2.new(0, 520, 0, 340),
+		Position = UDim2.new(0.5, -260, 0.5, -170) -- В конечное положение
+	})
+	Tw(Main, TweenInfo.new(0.3), {BackgroundTransparency = 0.15})
+end)
+
+print("Aurora Fixed UI Loaded! Press RightShift to Toggle.")
