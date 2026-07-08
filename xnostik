@@ -1,180 +1,177 @@
--- idk MM2 PREMIUM MENU v4.3 (РОБОЧИЙ + BOOMBOX
-local player = game.Players.LocalPlayer
-local mouse = player:GetMouse()
-local camera = workspace.CurrentCamera
+-- SWILL MM2 Hub
+-- Дата создания: 26.09.2025
+-- Разработчик: Swill Way
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "StableMM2Menu"
-ScreenGui.Parent = player.PlayerGui
-ScreenGui.ResetOnSpawn = false
+-- Загрузка библиотеки GUI (Orion)
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
 
----------------------------------------------------------
--- 1. КРУГЛА КНОПКА (Перемикач)
----------------------------------------------------------
-local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
-ToggleBtn.Position = UDim2.new(0.5, -25, 0.02, 0)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(80, 30, 120)
-ToggleBtn.Text = "MM2"
-ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleBtn.TextSize = 14
-ToggleBtn.Font = Enum.Font.SourceSansBold
-ToggleBtn.Parent = ScreenGui
+-- Настройки окна
+local Window = OrionLib:MakeWindow({
+    Name = "SWILL MM2 Hub",
+    HidePremium = false,
+    IntroText = "SWILL MM2",
+    SaveConfig = true,
+    ConfigFolder = "SWILL_MM2_Config"
+})
 
-local ToggleCorner = Instance.new("UICorner")
-ToggleCorner.CornerRadius = UDim.new(1, 0)
-ToggleCorner.Parent = ToggleBtn
+-- Вкладки
+local MM2Tab = Window:MakeTab({
+    Name = "Основные функции",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
 
----------------------------------------------------------
--- 2. ГОЛОВНЕ ВІКНО
----------------------------------------------------------
-local MainWindow = Instance.new("Frame")
-MainWindow.Size = UDim2.new(0, 340, 0, 300)
-MainWindow.Position = UDim2.new(0.3, 0, 0.25, 0)
-MainWindow.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
-MainWindow.BorderSizePixel = 0
-MainWindow.Active = true
-MainWindow.Draggable = true
-MainWindow.Visible = false
-MainWindow.Parent = ScreenGui
+local SettingsTab = Window:MakeTab({
+    Name = "Настройки",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
 
-local WindowCorner = Instance.new("UICorner")
-WindowCorner.CornerRadius = UDim.new(0, 8)
-WindowCorner.Parent = MainWindow
+-- Сервисы Roblox
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
 
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 35)
-Title.BackgroundTransparency = 1
-Title.Text = "   idk MM2 Cheat Menu v4.3"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 16
-Title.Font = Enum.Font.SourceSansBold
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = MainWindow
+-- Переменные состояния
+local espConnection = nil
+local espActive = false
 
-ToggleBtn.MouseButton1Click:Connect(function()
-    MainWindow.Visible = not MainWindow.Visible
-end)
-
-local ScrollHolder = Instance.new("ScrollingFrame")
-ScrollHolder.Size = UDim2.new(1, 0, 1, -40)
-ScrollHolder.Position = UDim2.new(0, 0, 0, 40)
-ScrollHolder.BackgroundTransparency = 1
-ScrollHolder.BorderSizePixel = 0
-ScrollHolder.ScrollBarThickness = 6
-ScrollHolder.ScrollBarImageColor3 = Color3.fromRGB(80, 30, 120)
-ScrollHolder.CanvasSize = UDim2.new(0, 0, 0, 650)
-ScrollHolder.Parent = MainWindow
-
-local ListLayout = Instance.new("UIListLayout")
-ListLayout.Parent = ScrollHolder
-ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ListLayout.Padding = UDim.new(0, 6)
-
-local Padding = Instance.new("UIPadding")
-Padding.PaddingTop = UDim.new(0, 5)
-Padding.PaddingLeft = UDim.new(0, 12)
-Padding.PaddingRight = UDim.new(0, 12)
-Padding.Parent = ScrollHolder
-
----------------------------------------------------------
--- ФУНКЦІЇ ДЛЯ СТВОРЕННЯ ЕЛЕМЕНТІВ
----------------------------------------------------------
-local function AddSeparator(text, order)
-    local Sep = Instance.new("TextLabel")
-    Sep.Size = UDim2.new(1, 0, 0, 20)
-    Sep.BackgroundTransparency = 1
-    Sep.Text = "ーー  " .. text .. "  ーー"
-    Sep.TextColor3 = Color3.fromRGB(160, 130, 200)
-    Sep.TextSize = 12
-    Sep.Font = Enum.Font.SourceSansBold
-    Sep.LayoutOrder = order
-    Sep.Parent = ScrollHolder
+-- Функция создания подсветки (Highlight)
+local function createHighlight(player, color)
+    if player.Character and not player.Character:FindFirstChild("SWILL_ESP") then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "SWILL_ESP"
+        highlight.FillColor = color
+        highlight.OutlineColor = Color3.new(1, 1, 1)
+        highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
+        highlight.Parent = player.Character
+    end
 end
 
-local function AddCheatButton(text, order, callback)
-    local Btn = Instance.new("TextButton")
-    Btn.Size = UDim2.new(1, 0, 0, 32)
-    Btn.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
-    Btn.Text = text
-    Btn.TextColor3 = Color3.fromRGB(235, 235, 235)
-    Btn.TextSize = 14
-    Btn.Font = Enum.Font.SourceSans
-    Btn.LayoutOrder = order
-    Btn.Parent = ScrollHolder
-
-    local SubCorner = Instance.new("UICorner")
-    SubCorner.CornerRadius = UDim.new(0, 5)
-    SubCorner.Parent = Btn
-
-    Btn.MouseButton1Click:Connect(function()
-        callback(Btn)
-    end)
+-- Функция удаления подсветки
+local function removeHighlight(player)
+    if player.Character then
+        local esp = player.Character:FindFirstChild("SWILL_ESP")
+        if esp then
+            esp:Destroy()
+        end
+    end
 end
 
----------------------------------------------------------
--- 3. НАПОВНЕННЯ ТА ЛОГІКА ХАКІВ
----------------------------------------------------------
+-- Логика ESP для Убийцы и Шерифа
+local function toggleESP(state)
+    espActive = state
+    if espActive then
+        espConnection = RunService.RenderStepped:Connect(function()
+            for _, player in pairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character then
+                    -- Проверка оружия в руках или инвентаре
+                    local hasKnife = player.Character:FindFirstChild("Knife") or player.Backpack:FindFirstChild("Knife")
+                    local hasGun = player.Character:FindFirstChild("Gun") or player.Backpack:FindFirstChild("Gun") or player.Character:FindFirstChild("Revolver") or player.Backpack:FindFirstChild("Revolver")
 
--- ПОЛИЧКА 1: ОСНОВНІ ЧИТИ
-AddSeparator("MAIN CHEATS", 1)
-
-local speedActive = false
-AddCheatButton("Speed Hack: OFF", 2, function(button)
-    speedActive = not speedActive
-    if speedActive then
-        button.Text = "Speed Hack: ON"
-        button.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
+                    if hasKnife then
+                        createHighlight(player, Color3.fromRGB(255, 0, 0)) -- Красный для Убийцы
+                    elseif hasGun then
+                        createHighlight(player, Color3.fromRGB(0, 0, 255)) -- Синий для Шерифа
+                    else
+                        removeHighlight(player)
+                    end
+                end
+            end
+        end)
     else
-        button.Text = "Speed Hack: OFF"
-        button.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
-        if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-            player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = 16
+        if espConnection then
+            espConnection:Disconnect()
+        end
+        for _, player in pairs(Players:GetPlayers()) do
+            removeHighlight(player)
         end
     end
-end)
+end
 
-task.spawn(function()
-    while true do
-        task.wait(0.1)
-        if speedActive and player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-            player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = 45
+-- Кнопка и Тогл для ESP
+MM2Tab:AddToggle({
+    Name = "ESP (Убийца / Шериф)",
+    Default = false,
+    Callback = function(Value)
+        toggleESP(Value)
+    end    
+})
+
+-- Функция телепорта к монетам
+MM2Tab:AddButton({
+    Name = "Собрать все монеты",
+    Callback = function()
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            local rootPart = character.HumanoidRootPart
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and (obj.Name == "Coin" or obj.Name == "CoinContainer") then
+                    rootPart.CFrame = obj.CFrame
+                    task.wait(0.1)
+                end
+            end
         end
-    end
-end)
+    end    
+})
 
-local infJumpActive = false
-AddCheatButton("Infinite Jump: OFF", 3, function(button)
-    infJumpActive = not infJumpActive
-    if infJumpActive then
-        button.Text = "Infinite Jump: ON"
-        button.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
-    else
-        button.Text = "Infinite Jump: OFF"
-        button.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
-    end
-end)
+-- Функция получения роли (Gun, Knife, Hero)
+MM2Tab:AddButton({
+    Name = "Узнать свою роль",
+    Callback = function()
+        local backpack = LocalPlayer.Backpack
+        local character = LocalPlayer.Character
+        if character:FindFirstChild("Knife") or backpack:FindFirstChild("Knife") then
+            OrionLib:MakeNotification({
+                Name = "Роль",
+                Content = "Ты Убийца!",
+                Image = "rbxassetid://4483345998",
+                Time = 5
+            })
+        elseif character:FindFirstChild("Gun") or backpack:FindFirstChild("Gun") or character:FindFirstChild("Revolver") or backpack:FindFirstChild("Revolver") then
+            OrionLib:MakeNotification({
+                Name = "Роль",
+                Content = "Ты Шериф!",
+                Image = "rbxassetid://4483345998",
+                Time = 5
+            })
+        else
+            OrionLib:MakeNotification({
+                Name = "Роль",
+                Content = "Ты Невинный!",
+                Image = "rbxassetid://4483345998",
+                Time = 5
+            })
+        end
+    end    
+})
 
-game:GetService("UserInputService").JumpRequest:Connect(function()
-    if infJumpActive and player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-        player.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
-    end
-end)
+-- Настройка скорости ходьбы
+MM2Tab:AddSlider({
+    Name = "Скорость ходьбы",
+    Min = 16,
+    Max = 200,
+    Default = 16,
+    Color = Color3.fromRGB(255,255,255),
+    Increment = 1,
+    ValueName = "WalkSpeed",
+    Callback = function(Value)
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("Humanoid") then
+            character.Humanoid.WalkSpeed = Value
+        end
+    end    
+})
 
----------------------------------------------------------
--- ANTI-FLING
----------------------------------------------------------
-local antiFlingActive = true
+-- Кнопка уничтожения GUI
+SettingsTab:AddButton({
+    Name = "Закрыть SWILL Hub",
+    Callback = function()
+        toggleESP(false)
+        OrionLib:Destroy()
+    end    
+})
 
-AddCheatButton("Anti-Fling: ON", 4, function(button)
-    antiFlingActive = not antiFlingActive
-    if antiFlingActive then
-        button.Text = "Anti-Fling: ON"
-        button.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
-    else
-        button.Text = "Anti-Fling: OFF"
-        button.BackgroundColor3 = Color3.fromRGB(140, 0, 0)
-    end
-end)
-
-gam
+-- Инициализация GUI
+OrionLib:Init()
