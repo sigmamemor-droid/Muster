@@ -1,79 +1,266 @@
--- SWILL MM2 Hub
--- Дата создания: 26.09.2025
--- Разработчик: Swill Way
+-- [[ SWILL MM2 CUSTOM GUI ]]
 
--- Загрузка библиотеки GUI (Orion)
-local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
-
--- Настройки окна
-local Window = OrionLib:MakeWindow({
-    Name = "SWILL MM2 Hub",
-    HidePremium = false,
-    IntroText = "SWILL MM2",
-    SaveConfig = true,
-    ConfigFolder = "SWILL_MM2_Config"
-})
-
--- Вкладки
-local MM2Tab = Window:MakeTab({
-    Name = "Основные функции",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-local SettingsTab = Window:MakeTab({
-    Name = "Настройки",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
--- Сервисы Roblox
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
 
--- Переменные состояния
+-- Очистка старого GUI
+if game.CoreGui:FindFirstChild("SWILL_HUB") then
+    game.CoreGui:FindFirstChild("SWILL_HUB"):Destroy()
+end
+
+-- Цветовая палитра
+local Colors = {
+    Background = Color3.fromRGB(20, 20, 25),
+    Header = Color3.fromRGB(30, 30, 38),
+    Accent = Color3.fromRGB(138, 43, 226), -- Яркий фиолетовый
+    Text = Color3.fromRGB(255, 255, 255),
+    SubText = Color3.fromRGB(180, 180, 190),
+    ElementBG = Color3.fromRGB(35, 35, 45),
+    Border = Color3.fromRGB(60, 60, 75)
+}
+
+-- Создание главного экрана
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "SWILL_HUB"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Главная рамка
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Colors.Background
+MainFrame.Position = UDim2.new(0.5, -250, 0.5, -175)
+MainFrame.Size = UDim2.new(0, 500, 0, 350)
+MainFrame.ClipsDescendants = true
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.Parent = MainFrame
+
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Color = Colors.Border
+MainStroke.Thickness = 1.5
+MainStroke.Parent = MainFrame
+
+-- Шапка (Header)
+local Header = Instance.new("Frame")
+Header.Name = "Header"
+Header.Parent = MainFrame
+Header.BackgroundColor3 = Colors.Header
+Header.Size = UDim2.new(1, 0, 0, 45)
+Header.BorderSizePixel = 0
+
+local HeaderCorner = Instance.new("UICorner")
+HeaderCorner.CornerRadius = UDim.new(0, 12)
+HeaderCorner.Parent = Header
+
+-- Нижняя граница шапки (закругление только сверху)
+local HeaderFix = Instance.new("Frame")
+HeaderFix.Parent = Header
+HeaderFix.BackgroundColor3 = Colors.Header
+HeaderFix.Position = UDim2.new(0, 0, 0.5, 0)
+HeaderFix.Size = UDim2.new(1, 0, 0.5, 0)
+HeaderFix.BorderSizePixel = 0
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Parent = Header
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Size = UDim2.new(1, -50, 1, 0)
+TitleLabel.Position = UDim2.new(0, 15, 0, 0)
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.Text = "SWILL MM2 // CUSTOM UI"
+TitleLabel.TextColor3 = Colors.Text
+TitleLabel.TextSize = 16
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Кнопка закрытия
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Parent = Header
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+CloseBtn.Size = UDim2.new(0, 25, 0, 25)
+CloseBtn.Position = UDim2.new(1, -35, 0.5, -12.5)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Colors.Text
+CloseBtn.TextSize = 14
+CloseBtn.AutoButtonColor = true
+
+local CloseBtnCorner = Instance.new("UICorner")
+CloseBtnCorner.CornerRadius = UDim.new(1, 0)
+CloseBtnCorner.Parent = CloseBtn
+
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+    if espConnection then espConnection:Disconnect() end
+end)
+
+-- Область контента (Скроллинг)
+local ContentFrame = Instance.new("ScrollingFrame")
+ContentFrame.Parent = MainFrame
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.Size = UDim2.new(1, -20, 1, -55)
+ContentFrame.Position = UDim2.new(0, 10, 0, 50)
+ContentFrame.ScrollBarThickness = 4
+ContentFrame.ScrollBarImageColor3 = Colors.Accent
+ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+ContentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+local ContentLayout = Instance.new("UIListLayout")
+ContentLayout.Parent = ContentFrame
+ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ContentLayout.Padding = UDim.new(0, 10)
+
+-- Функции для создания элементов GUI
+local function CreateSection(name)
+    local Section = Instance.new("Frame")
+    Section.Parent = ContentFrame
+    Section.BackgroundTransparency = 1
+    Section.Size = UDim2.new(1, 0, 0, 25)
+    
+    local Label = Instance.new("TextLabel")
+    Label.Parent = Section
+    Label.BackgroundTransparency = 1
+    Label.Size = UDim2.new(1, 0, 1, 0)
+    Label.Font = Enum.Font.GothamBold
+    Label.Text = name:upper()
+    Label.TextColor3 = Colors.Accent
+    Label.TextSize = 14
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    
+    return Section
+end
+
+local function CreateToggle(name, callback)
+    local ToggleFrame = Instance.new("Frame")
+    ToggleFrame.Parent = ContentFrame
+    ToggleFrame.BackgroundColor3 = Colors.ElementBG
+    ToggleFrame.Size = UDim2.new(1, 0, 0, 45)
+    
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 8)
+    Corner.Parent = ToggleFrame
+    
+    local Stroke = Instance.new("UIStroke")
+    Stroke.Color = Colors.Border
+    Stroke.Thickness = 1
+    Stroke.Parent = ToggleFrame
+    
+    local Label = Instance.new("TextLabel")
+    Label.Parent = ToggleFrame
+    Label.BackgroundTransparency = 1
+    Label.Size = UDim2.new(0.7, -10, 1, 0)
+    Label.Position = UDim2.new(0, 15, 0, 0)
+    Label.Font = Enum.Font.Gotham
+    Label.Text = name
+    Label.TextColor3 = Colors.Text
+    Label.TextSize = 14
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local Switch = Instance.new("Frame")
+    Switch.Parent = ToggleFrame
+    Switch.BackgroundColor3 = Colors.Background
+    Switch.Size = UDim2.new(0, 40, 0, 20)
+    Switch.Position = UDim2.new(1, -55, 0.5, -10)
+    
+    local SwitchCorner = Instance.new("UICorner")
+    SwitchCorner.CornerRadius = UDim.new(1, 0)
+    SwitchCorner.Parent = Switch
+    
+    local Circle = Instance.new("Frame")
+    Circle.Parent = Switch
+    Circle.BackgroundColor3 = Colors.SubText
+    Circle.Size = UDim2.new(0, 16, 0, 16)
+    Circle.Position = UDim2.new(0, 2, 0.5, -8)
+    
+    local CircleCorner = Instance.new("UICorner")
+    CircleCorner.CornerRadius = UDim.new(1, 0)
+    CircleCorner.Parent = Circle
+    
+    local toggled = false
+    local btn = Instance.new("TextButton")
+    btn.Parent = ToggleFrame
+    btn.BackgroundTransparency = 1
+    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.Text = ""
+    
+    btn.MouseButton1Click:Connect(function()
+        toggled = not toggled
+        local goalPos = toggled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+        local goalColor = toggled and Colors.Accent or Colors.SubText
+        local goalBg = toggled and Color3.fromRGB(75, 25, 120) or Colors.Background
+        
+        TweenService:Create(Circle, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Position = goalPos, BackgroundColor3 = goalColor}):Play()
+        TweenService:Create(Switch, TweenInfo.new(0.3), {BackgroundColor3 = goalBg}):Play()
+        
+        callback(toggled)
+    end)
+end
+
+local function CreateButton(name, callback)
+    local Btn = Instance.new("TextButton")
+    Btn.Parent = ContentFrame
+    Btn.BackgroundColor3 = Colors.ElementBG
+    Btn.Size = UDim2.new(1, 0, 0, 40)
+    Btn.Font = Enum.Font.GothamBold
+    Btn.Text = name
+    Btn.TextColor3 = Colors.Text
+    Btn.TextSize = 14
+    Btn.AutoButtonColor = true
+    
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 8)
+    Corner.Parent = Btn
+    
+    local Stroke = Instance.new("UIStroke")
+    Stroke.Color = Colors.Border
+    Stroke.Thickness = 1
+    Stroke.Parent = Btn
+    
+    Btn.MouseButton1Click:Connect(callback)
+end
+
+-- ЛОГИКА ЧИТА
+
 local espConnection = nil
 local espActive = false
 
--- Функция создания подсветки (Highlight)
 local function createHighlight(player, color)
     if player.Character and not player.Character:FindFirstChild("SWILL_ESP") then
         local highlight = Instance.new("Highlight")
         highlight.Name = "SWILL_ESP"
         highlight.FillColor = color
-        highlight.OutlineColor = Color3.new(1, 1, 1)
-        highlight.FillTransparency = 0.5
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.FillTransparency = 0.6
         highlight.OutlineTransparency = 0
         highlight.Parent = player.Character
     end
 end
 
--- Функция удаления подсветки
 local function removeHighlight(player)
     if player.Character then
         local esp = player.Character:FindFirstChild("SWILL_ESP")
-        if esp then
-            esp:Destroy()
-        end
+        if esp then esp:Destroy() end
     end
 end
 
--- Логика ESP для Убийцы и Шерифа
 local function toggleESP(state)
     espActive = state
     if espActive then
         espConnection = RunService.RenderStepped:Connect(function()
             for _, player in pairs(Players:GetPlayers()) do
                 if player ~= LocalPlayer and player.Character then
-                    -- Проверка оружия в руках или инвентаре
                     local hasKnife = player.Character:FindFirstChild("Knife") or player.Backpack:FindFirstChild("Knife")
                     local hasGun = player.Character:FindFirstChild("Gun") or player.Backpack:FindFirstChild("Gun") or player.Character:FindFirstChild("Revolver") or player.Backpack:FindFirstChild("Revolver")
 
                     if hasKnife then
-                        createHighlight(player, Color3.fromRGB(255, 0, 0)) -- Красный для Убийцы
+                        createHighlight(player, Color3.fromRGB(255, 0, 0))
                     elseif hasGun then
-                        createHighlight(player, Color3.fromRGB(0, 0, 255)) -- Синий для Шерифа
+                        createHighlight(player, Color3.fromRGB(0, 85, 255))
                     else
                         removeHighlight(player)
                     end
@@ -81,97 +268,105 @@ local function toggleESP(state)
             end
         end)
     else
-        if espConnection then
-            espConnection:Disconnect()
-        end
+        if espConnection then espConnection:Disconnect() end
         for _, player in pairs(Players:GetPlayers()) do
             removeHighlight(player)
         end
     end
 end
 
--- Кнопка и Тогл для ESP
-MM2Tab:AddToggle({
-    Name = "ESP (Убийца / Шериф)",
-    Default = false,
-    Callback = function(Value)
-        toggleESP(Value)
-    end    
-})
-
--- Функция телепорта к монетам
-MM2Tab:AddButton({
-    Name = "Собрать все монеты",
-    Callback = function()
-        local character = LocalPlayer.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            local rootPart = character.HumanoidRootPart
-            for _, obj in pairs(workspace:GetDescendants()) do
-                if obj:IsA("BasePart") and (obj.Name == "Coin" or obj.Name == "CoinContainer") then
-                    rootPart.CFrame = obj.CFrame
-                    task.wait(0.1)
-                end
+local function teleportCoins()
+    local character = LocalPlayer.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        local rootPart = character.HumanoidRootPart
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and (obj.Name == "Coin" or obj.Name == "CoinContainer") then
+                rootPart.CFrame = obj.CFrame
+                task.wait(0.1)
             end
         end
-    end    
-})
+    end
+end
 
--- Функция получения роли (Gun, Knife, Hero)
-MM2Tab:AddButton({
-    Name = "Узнать свою роль",
-    Callback = function()
-        local backpack = LocalPlayer.Backpack
-        local character = LocalPlayer.Character
-        if character:FindFirstChild("Knife") or backpack:FindFirstChild("Knife") then
-            OrionLib:MakeNotification({
-                Name = "Роль",
-                Content = "Ты Убийца!",
-                Image = "rbxassetid://4483345998",
-                Time = 5
-            })
-        elseif character:FindFirstChild("Gun") or backpack:FindFirstChild("Gun") or character:FindFirstChild("Revolver") or backpack:FindFirstChild("Revolver") then
-            OrionLib:MakeNotification({
-                Name = "Роль",
-                Content = "Ты Шериф!",
-                Image = "rbxassetid://4483345998",
-                Time = 5
-            })
-        else
-            OrionLib:MakeNotification({
-                Name = "Роль",
-                Content = "Ты Невинный!",
-                Image = "rbxassetid://4483345998",
-                Time = 5
-            })
-        end
-    end    
-})
+local function checkRole()
+    local backpack = LocalPlayer.Backpack
+    local character = LocalPlayer.Character
+    local msg = "Невинный"
+    
+    if character:FindFirstChild("Knife") or backpack:FindFirstChild("Knife") then
+        msg = "Убийца 🔪"
+    elseif character:FindFirstChild("Gun") or backpack:FindFirstChild("Gun") or character:FindFirstChild("Revolver") or backpack:FindFirstChild("Revolver") then
+        msg = "Шериф 🔫"
+    end
+    
+    -- Вывод уведомления прямо в интерфейс
+    TitleLabel.Text = "SWILL MM2 // Роль: " .. msg
+    task.delay(3, function()
+        TitleLabel.Text = "SWILL MM2 // CUSTOM UI"
+    end)
+end
 
--- Настройка скорости ходьбы
-MM2Tab:AddSlider({
-    Name = "Скорость ходьбы",
-    Min = 16,
-    Max = 200,
-    Default = 16,
-    Color = Color3.fromRGB(255,255,255),
-    Increment = 1,
-    ValueName = "WalkSpeed",
-    Callback = function(Value)
-        local character = LocalPlayer.Character
-        if character and character:FindFirstChild("Humanoid") then
-            character.Humanoid.WalkSpeed = Value
-        end
-    end    
-})
+local function setSpeed(speed)
+    local character = LocalPlayer.Character
+    if character and character:FindFirstChild("Humanoid") then
+        character.Humanoid.WalkSpeed = speed
+    end
+end
 
--- Кнопка уничтожения GUI
-SettingsTab:AddButton({
-    Name = "Закрыть SWILL Hub",
-    Callback = function()
-        toggleESP(false)
-        OrionLib:Destroy()
-    end    
-})
+-- НАПОЛНЕНИЕ GUI
 
--- Инициализация GUI
-OrionLib:Init()
+CreateSection("Визуал и Отслеживание")
+CreateToggle("ESP (Убийца / Шериф)", toggleESP)
+
+CreateSection("Телепортация и Фарм")
+CreateButton("Собрать все монеты", teleportCoins)
+
+CreateSection("Персонаж")
+CreateButton("Узнать свою роль", checkRole)
+CreateButton("Скорость: Норма (16)", function() setSpeed(16) end)
+CreateButton("Скорость: Быстро (50)", function() setSpeed(50) end)
+CreateButton("Скорость: Безумие (150)", function() setSpeed(150) end)
+
+-- СИСТЕМА ПЕРЕТАСКИВАНИЯ (Draggable)
+local dragging
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+Header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+Header.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+-- Скрытие GUI по клавише (Right Control)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.RightControl then
+        MainFrame.Visible = not MainFrame.Visible
+    end
+end)
