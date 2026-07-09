@@ -1,4 +1,4 @@
--- idk MM2 PREMIUM MENU v4.4 (УЛУЧШЕННЫЙ + ESP С ДИСТАНЦИЕЙ)
+-- idk MM2 PREMIUM MENU v4.5 [ESP УЛУЧШЕН + ИНТЕРФЕЙС]
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local RunService = game:GetService("RunService")
@@ -9,59 +9,60 @@ ScreenGui.Name = "StableMM2Menu"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = player.PlayerGui
 
--- ==================== ГЛАВНОЕ МЕНЮ ====================
+-- ==================== СТИЛЬНЫЙ ИНТЕРФЕЙС ====================
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
-ToggleBtn.Position = UDim2.new(0.5, -25, 0.02, 0)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(80, 30, 120)
+ToggleBtn.Size = UDim2.new(0, 56, 0, 56)
+ToggleBtn.Position = UDim2.new(0.5, -28, 0.03, 0)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(90, 20, 140)
 ToggleBtn.Text = "MM2"
 ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleBtn.TextSize = 14
-ToggleBtn.Font = Enum.Font.SourceSansBold
+ToggleBtn.TextSize = 15
+ToggleBtn.Font = Enum.Font.GothamBold
 ToggleBtn.Parent = ScreenGui
 
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 
 local MainWindow = Instance.new("Frame")
-MainWindow.Size = UDim2.new(0, 360, 0, 420)
-MainWindow.Position = UDim2.new(0.3, 0, 0.2, 0)
-MainWindow.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
+MainWindow.Size = UDim2.new(0, 380, 0, 460)
+MainWindow.Position = UDim2.new(0.28, 0, 0.18, 0)
+MainWindow.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+MainWindow.BorderSizePixel = 0
 MainWindow.Active = true
 MainWindow.Draggable = true
 MainWindow.Visible = false
 MainWindow.Parent = ScreenGui
 
-Instance.new("UICorner", MainWindow).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", MainWindow).CornerRadius = UDim.new(0, 10)
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.BackgroundTransparency = 1
-Title.Text = "   idk MM2 Cheat Menu v4.4"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 16
-Title.Font = Enum.Font.SourceSansBold
+Title.Size = UDim2.new(1, 0, 0, 45)
+Title.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+Title.Text = "   idk MM2 Premium Menu v4.5"
+Title.TextColor3 = Color3.fromRGB(255, 200, 255)
+Title.TextSize = 17
+Title.Font = Enum.Font.GothamBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = MainWindow
+
+Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 10)
 
 ToggleBtn.MouseButton1Click:Connect(function()
     MainWindow.Visible = not MainWindow.Visible
 end)
 
 local ScrollHolder = Instance.new("ScrollingFrame")
-ScrollHolder.Size = UDim2.new(1, 0, 1, -40)
-ScrollHolder.Position = UDim2.new(0, 0, 0, 40)
+ScrollHolder.Size = UDim2.new(1, -20, 1, -55)
+ScrollHolder.Position = UDim2.new(0, 10, 0, 50)
 ScrollHolder.BackgroundTransparency = 1
-ScrollHolder.ScrollBarThickness = 6
-ScrollHolder.ScrollBarImageColor3 = Color3.fromRGB(80, 30, 120)
-ScrollHolder.CanvasSize = UDim2.new(0, 0, 0, 680)
+ScrollHolder.ScrollBarThickness = 5
+ScrollHolder.ScrollBarImageColor3 = Color3.fromRGB(120, 60, 180)
+ScrollHolder.CanvasSize = UDim2.new(0, 0, 0, 720)
 ScrollHolder.Parent = MainWindow
 
 local ListLayout = Instance.new("UIListLayout")
 ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ListLayout.Padding = UDim.new(0, 6)
+ListLayout.Padding = UDim.new(0, 8)
 ListLayout.Parent = ScrollHolder
-
-Instance.new("UIPadding", ScrollHolder).PaddingLeft = UDim.new(0, 12)
 
 -- ==================== СОСТОЯНИЯ ====================
 local states = {
@@ -73,175 +74,146 @@ local states = {
     espRoles = false,
 }
 
--- ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
-local function AddSeparator(text, order)
-    local Sep = Instance.new("TextLabel")
-    Sep.Size = UDim2.new(1, 0, 0, 22)
-    Sep.BackgroundTransparency = 1
-    Sep.Text = "ーー  " .. text .. "  ーー"
-    Sep.TextColor3 = Color3.fromRGB(160, 130, 200)
-    Sep.TextSize = 13
-    Sep.Font = Enum.Font.SourceSansBold
-    Sep.LayoutOrder = order
-    Sep.Parent = ScrollHolder
-end
-
-local function AddCheatButton(text, order, callback)
-    local Btn = Instance.new("TextButton")
-    Btn.Size = UDim2.new(1, 0, 0, 34)
-    Btn.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
-    Btn.Text = text
-    Btn.TextColor3 = Color3.fromRGB(235, 235, 235)
-    Btn.TextSize = 14
-    Btn.Font = Enum.Font.SourceSans
-    Btn.LayoutOrder = order
-    Btn.Parent = ScrollHolder
-
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
-
-    Btn.MouseButton1Click:Connect(function()
-        callback(Btn)
-    end)
-end
-
-local function GetMurdererHead()
-    for _, p in pairs(game.Players:GetPlayers()) do
-        if p ~= player and p.Character and p.Character:FindFirstChild("Head") then
-            if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
-                return p.Character.Head
-            end
-        end
-    end
-    return nil
-end
-
--- ==================== ESP (ДИСТАНЦИЯ + ИМЕНА + ЦВЕТА) ====================
+-- ==================== ESP УЛУЧШЕННЫЙ ====================
 local espObjects = {}
 
 local function GetRoleColor(plr)
-    local char = plr.Character
-    if not char then return Color3.fromRGB(255, 255, 255) end
-    if plr.Backpack:FindFirstChild("Knife") or char:FindFirstChild("Knife") then
-        return Color3.fromRGB(255, 0, 0)
-    elseif plr.Backpack:FindFirstChild("Gun") or char:FindFirstChild("Gun") then
-        return Color3.fromRGB(0, 100, 255)
+    if not plr.Character then return Color3.fromRGB(200, 200, 200) end
+    if plr.Backpack:FindFirstChild("Knife") or plr.Character:FindFirstChild("Knife") then
+        return Color3.fromRGB(255, 40, 40)   -- Murderer
+    elseif plr.Backpack:FindFirstChild("Gun") or plr.Character:FindFirstChild("Gun") then
+        return Color3.fromRGB(40, 120, 255)  -- Sheriff
     else
-        return Color3.fromRGB(0, 255, 100)
+        return Color3.fromRGB(40, 255, 120)  -- Innocent
     end
 end
 
 local function CreateESP(plr)
     if plr == player then return end
-    local function apply(char)
+    
+    local function updateESP(char)
         if not char then return end
-        if espObjects[plr] then return end
+        if espObjects[plr] then
+            for _, v in pairs(espObjects[plr]) do 
+                if v and v.Parent then v:Destroy() end 
+            end
+        end
 
         local color = GetRoleColor(plr)
 
-        local highlight = Instance.new("Highlight")
-        highlight.FillColor = color
-        highlight.FillTransparency = 0.35
-        highlight.OutlineColor = Color3.fromRGB(255,255,255)
-        highlight.Adornee = char
-        highlight.Parent = char
+        -- Highlight
+        local hl = Instance.new("Highlight")
+        hl.FillColor = color
+        hl.FillTransparency = 0.4
+        hl.OutlineColor = Color3.fromRGB(255,255,255)
+        hl.Adornee = char
+        hl.Parent = char
 
-        local billboard = Instance.new("BillboardGui")
-        billboard.Adornee = char:FindFirstChild("Head")
-        billboard.Size = UDim2.new(0, 220, 0, 60)
-        billboard.StudsOffset = Vector3.new(0, 4, 0)
-        billboard.AlwaysOnTop = true
-        billboard.Parent = char
+        -- Billboard
+        local bb = Instance.new("BillboardGui")
+        bb.Adornee = char:FindFirstChild("Head")
+        bb.Size = UDim2.new(0, 240, 0, 70)
+        bb.StudsOffset = Vector3.new(0, 4.5, 0)
+        bb.AlwaysOnTop = true
+        bb.Parent = char
 
         local label = Instance.new("TextLabel")
         label.Size = UDim2.new(1,0,1,0)
         label.BackgroundTransparency = 1
         label.TextColor3 = color
-        label.TextStrokeTransparency = 0.4
-        label.Font = Enum.Font.SourceSansBold
-        label.TextSize = 14
-        label.Parent = billboard
+        label.TextStrokeTransparency = 0.3
+        label.Font = Enum.Font.GothamBold
+        label.TextSize = 15
+        label.Parent = bb
 
-        espObjects[plr] = {highlight, billboard, label}
+        espObjects[plr] = {hl, bb, label}
 
+        -- Реал-тайм обновление
         local conn = RunService.RenderStepped:Connect(function()
-            if not (char:FindFirstChild("Head") and player.Character and player.Character:FindFirstChild("HumanoidRootPart")) then return end
+            if not char:FindFirstChild("Head") or not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
             local dist = (char.Head.Position - player.Character.HumanoidRootPart.Position).Magnitude
-            label.Text = plr.Name .. "\n[" .. math.floor(dist) .. " studs]"
+            label.Text = string.format("%s\n[%d studs]", plr.Name, math.floor(dist))
         end)
 
         table.insert(espObjects[plr], conn)
     end
 
-    if plr.Character then apply(plr.Character) end
-    plr.CharacterAdded:Connect(apply)
+    if plr.Character then updateESP(plr.Character) end
+    plr.CharacterAdded:Connect(updateESP)
+    
+    -- Обновление цвета при смене роли
+    plr.CharacterAdded:Connect(function()
+        task.wait(0.5)
+        if espObjects[plr] then updateESP(plr.Character) end
+    end)
 end
 
 local function ClearESP()
     for _, objs in pairs(espObjects) do
         for _, obj in ipairs(objs) do
             if typeof(obj) == "RBXScriptConnection" then obj:Disconnect()
-            elseif obj then obj:Destroy() end
+            elseif obj and obj.Parent then obj:Destroy() end
         end
     end
     espObjects = {}
 end
 
--- ==================== ОСНОВНЫЕ ЧИТЫ ====================
-AddSeparator("MAIN CHEATS", 1)
+-- ==================== КНОПКИ ====================
+AddSeparator("ОСНОВНЫЕ ЧИТЫ", 1)
 
-AddCheatButton("Speed Hack: OFF", 2, function(btn)
+AddCheatButton("Speed Hack: OFF", 2, function(b) 
     states.speed = not states.speed
-    btn.Text = "Speed Hack: " .. (states.speed and "ON" or "OFF")
-    btn.BackgroundColor3 = states.speed and Color3.fromRGB(0,140,0) or Color3.fromRGB(35,25,50)
+    b.Text = "Speed Hack: " .. (states.speed and "ON" or "OFF")
+    b.BackgroundColor3 = states.speed and Color3.fromRGB(0,170,0) or Color3.fromRGB(45,35,60)
 end)
 
-AddCheatButton("Infinite Jump: OFF", 3, function(btn)
+AddCheatButton("Infinite Jump: OFF", 3, function(b) 
     states.infJump = not states.infJump
-    btn.Text = "Infinite Jump: " .. (states.infJump and "ON" or "OFF")
-    btn.BackgroundColor3 = states.infJump and Color3.fromRGB(0,140,0) or Color3.fromRGB(35,25,50)
+    b.Text = "Infinite Jump: " .. (states.infJump and "ON" or "OFF")
+    b.BackgroundColor3 = states.infJump and Color3.fromRGB(0,170,0) or Color3.fromRGB(45,35,60)
 end)
 
-AddCheatButton("Anti-Fling: ON", 4, function(btn)
+AddCheatButton("Anti-Fling: ON", 4, function(b) 
     states.antiFling = not states.antiFling
-    btn.Text = "Anti-Fling: " .. (states.antiFling and "ON" or "OFF")
-    btn.BackgroundColor3 = states.antiFling and Color3.fromRGB(0,140,0) or Color3.fromRGB(140,0,0)
+    b.Text = "Anti-Fling: " .. (states.antiFling and "ON" or "OFF")
+    b.BackgroundColor3 = states.antiFling and Color3.fromRGB(0,170,0) or Color3.fromRGB(170,0,0)
 end)
 
-AddSeparator("COMBAT", 5)
+AddSeparator("КОМБАТ", 5)
 
-AddCheatButton("Aim Murderer: OFF", 6, function(btn)
+AddCheatButton("Aim Murderer: OFF", 6, function(b) 
     states.aimMurderer = not states.aimMurderer
-    btn.Text = "Aim Murderer: " .. (states.aimMurderer and "ON" or "OFF")
-    btn.BackgroundColor3 = states.aimMurderer and Color3.fromRGB(0,140,0) or Color3.fromRGB(35,25,50)
+    b.Text = "Aim Murderer: " .. (states.aimMurderer and "ON" or "OFF")
+    b.BackgroundColor3 = states.aimMurderer and Color3.fromRGB(0,170,0) or Color3.fromRGB(45,35,60)
 end)
 
 AddSeparator("ESP VISUALS", 7)
 
-AddCheatButton("ESP All Players: OFF", 8, function(btn)
+AddCheatButton("ESP All Players: OFF", 8, function(b)
     states.espAll = not states.espAll
-    btn.Text = "ESP All Players: " .. (states.espAll and "ON" or "OFF")
-    btn.BackgroundColor3 = states.espAll and Color3.fromRGB(0,140,0) or Color3.fromRGB(35,25,50)
+    b.Text = "ESP All Players: " .. (states.espAll and "ON" or "OFF")
+    b.BackgroundColor3 = states.espAll and Color3.fromRGB(0,170,0) or Color3.fromRGB(45,35,60)
     if states.espAll then
         ClearESP()
-        for _, p in pairs(game.Players:GetPlayers()) do CreateESP(p) end
+        for _, p in ipairs(game.Players:GetPlayers()) do CreateESP(p) end
     else
         ClearESP()
     end
 end)
 
-AddCheatButton("ESP Roles (MM2): OFF", 9, function(btn)
+AddCheatButton("ESP Roles (Murderer/Sheriff): OFF", 9, function(b)
     states.espRoles = not states.espRoles
-    btn.Text = "ESP Roles (MM2): " .. (states.espRoles and "ON" or "OFF")
-    btn.BackgroundColor3 = states.espRoles and Color3.fromRGB(0,140,0) or Color3.fromRGB(35,25,50)
+    b.Text = "ESP Roles: " .. (states.espRoles and "ON" or "OFF")
+    b.BackgroundColor3 = states.espRoles and Color3.fromRGB(0,170,0) or Color3.fromRGB(45,35,60)
     if states.espRoles then
         ClearESP()
-        for _, p in pairs(game.Players:GetPlayers()) do CreateESP(p) end
+        for _, p in ipairs(game.Players:GetPlayers()) do CreateESP(p) end
     else
         ClearESP()
     end
 end)
 
--- ==================== ГЛАВНЫЙ ЦИКЛ ====================
+-- ==================== ГЛАВНЫЙ ЛУП ====================
 RunService.RenderStepped:Connect(function()
     local char = player.Character
     if not char then return end
@@ -250,18 +222,12 @@ RunService.RenderStepped:Connect(function()
     if not root or not hum then return end
 
     if states.speed then hum.WalkSpeed = 45 end
-    if states.antiFling then
-        if root.Velocity.Magnitude > 250 then root.Velocity = Vector3.new() end
-        if root.Position.Y < -40 then
-            root.CFrame = CFrame.new(0, 30, 0)
-            root.Velocity = Vector3.new()
-        end
+    if states.antiFling and root.Velocity.Magnitude > 250 then
+        root.Velocity = Vector3.new(0,0,0)
     end
     if states.aimMurderer then
         local head = GetMurdererHead()
-        if head then
-            camera.CFrame = CFrame.new(camera.CFrame.Position, head.Position)
-        end
+        if head then camera.CFrame = CFrame.new(camera.CFrame.Position, head.Position) end
     end
 end)
 
@@ -272,4 +238,4 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
-print("✅ MM2 Menu v4.4 загружено")
+print("✅ MM2 Menu v4.5 загружено")
