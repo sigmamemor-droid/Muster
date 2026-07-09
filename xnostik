@@ -1,5 +1,5 @@
--- idk MM2 PREMIUM MENU v5.0 (ПОЛНЫЙ РЕРАЙТ)
--- Все баги v4.3 исправлены
+-- idk MM2 PREMIUM MENU v5.1 (FULL REWRITE + PREMIUM LOADING SCREEN)
+-- Все баги исправлены, новый интерфейс, анимированная загрузка
 
 ---------------------------------------------------------
 -- СЕРВИСЫ
@@ -8,22 +8,397 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local ContentProvider = game:GetService("ContentProvider")
 
 local player = Players.LocalPlayer
 if not player then
-    player = Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
+    Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
     player = Players.LocalPlayer
 end
 
 local camera = workspace.CurrentCamera
 
 ---------------------------------------------------------
--- ХРАНИЛИЩЕ СОЕДИНЕНИЙ (чтобы всё можно было отключить)
+-- УДАЛИТЬ СТАРОЕ МЕНЮ (при повторном запуске)
+---------------------------------------------------------
+local oldGui = player.PlayerGui:FindFirstChild("MM2PremiumV5")
+if oldGui then oldGui:Destroy() end
+
+---------------------------------------------------------
+-- СОЗДАНИЕ GUI
+---------------------------------------------------------
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MM2PremiumV5"
+ScreenGui.Parent = player.PlayerGui
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.IgnoreGuiInset = true
+
+---------------------------------------------------------
+-- ЦВЕТОВАЯ ПАЛИТРА
+---------------------------------------------------------
+local Colors = {
+    bg = Color3.fromRGB(10, 8, 16),
+    surface = Color3.fromRGB(18, 14, 28),
+    elevated = Color3.fromRGB(28, 22, 42),
+    card = Color3.fromRGB(24, 19, 36),
+    accent = Color3.fromRGB(130, 60, 230),
+    accentDark = Color3.fromRGB(90, 40, 170),
+    accentLight = Color3.fromRGB(170, 120, 255),
+    accentGlow = Color3.fromRGB(150, 80, 255),
+    green = Color3.fromRGB(40, 200, 90),
+    greenDark = Color3.fromRGB(25, 60, 35),
+    red = Color3.fromRGB(220, 50, 60),
+    redDark = Color3.fromRGB(60, 20, 25),
+    orange = Color3.fromRGB(240, 150, 30),
+    cyan = Color3.fromRGB(40, 200, 220),
+    text = Color3.fromRGB(245, 242, 250),
+    textDim = Color3.fromRGB(130, 120, 155),
+    textMuted = Color3.fromRGB(80, 70, 100),
+    separator = Color3.fromRGB(90, 70, 140),
+    black = Color3.fromRGB(0, 0, 0),
+    white = Color3.fromRGB(255, 255, 255),
+}
+
+---------------------------------------------------------
+-- ============ LOADING SCREEN ============
+---------------------------------------------------------
+
+local LoadingScreen = Instance.new("Frame")
+LoadingScreen.Name = "LoadingScreen"
+LoadingScreen.Size = UDim2.new(1, 0, 1, 0)
+LoadingScreen.Position = UDim2.new(0, 0, 0, 0)
+LoadingScreen.BackgroundColor3 = Colors.black
+LoadingScreen.ZIndex = 100
+LoadingScreen.Parent = ScreenGui
+
+-- Фоновый градиент
+local LoadBG_Gradient = Instance.new("UIGradient")
+LoadBG_Gradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(8, 5, 18)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(20, 10, 40)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 5, 18)),
+})
+LoadBG_Gradient.Rotation = 45
+LoadBG_Gradient.Parent = LoadingScreen
+
+-- Центральный контейнер
+local LoadCenter = Instance.new("Frame")
+LoadCenter.Size = UDim2.new(0, 320, 0, 380)
+LoadCenter.Position = UDim2.new(0.5, -160, 0.5, -190)
+LoadCenter.BackgroundTransparency = 1
+LoadCenter.ZIndex = 101
+LoadCenter.Parent = LoadingScreen
+
+-- Свечение за логотипом (большой размытый круг)
+local GlowOuter = Instance.new("ImageLabel")
+GlowOuter.Name = "GlowOuter"
+GlowOuter.Size = UDim2.new(0, 280, 0, 280)
+GlowOuter.Position = UDim2.new(0.5, -140, 0, -20)
+GlowOuter.BackgroundTransparency = 1
+GlowOuter.Image = "rbxassetid://5028857084"
+GlowOuter.ImageColor3 = Colors.accent
+GlowOuter.ImageTransparency = 0.85
+GlowOuter.ZIndex = 101
+GlowOuter.Parent = LoadCenter
+
+-- Внутреннее свечение
+local GlowInner = Instance.new("ImageLabel")
+GlowInner.Name = "GlowInner"
+GlowInner.Size = UDim2.new(0, 180, 0, 180)
+GlowInner.Position = UDim2.new(0.5, -90, 0, 30)
+GlowInner.BackgroundTransparency = 1
+GlowInner.Image = "rbxassetid://5028857084"
+GlowInner.ImageColor3 = Colors.accentGlow
+GlowInner.ImageTransparency = 0.7
+GlowInner.ZIndex = 102
+GlowInner.Parent = LoadCenter
+
+-- Логотип — щит / иконка
+local LogoFrame = Instance.new("Frame")
+LogoFrame.Size = UDim2.new(0, 100, 0, 100)
+LogoFrame.Position = UDim2.new(0.5, -50, 0, 70)
+LogoFrame.BackgroundColor3 = Colors.accent
+LogoFrame.BackgroundTransparency = 0
+LogoFrame.ZIndex = 103
+LogoFrame.Parent = LoadCenter
+LogoFrame.Rotation = 45
+
+local LogoCorner = Instance.new("UICorner")
+LogoCorner.CornerRadius = UDim.new(0, 18)
+LogoCorner.Parent = LogoFrame
+
+local LogoGradient = Instance.new("UIGradient")
+LogoGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Colors.accent),
+    ColorSequenceKeypoint.new(1, Colors.accentDark),
+})
+LogoGradient.Rotation = 135
+LogoGradient.Parent = LogoFrame
+
+local LogoStroke = Instance.new("UIStroke")
+LogoStroke.Color = Colors.accentLight
+LogoStroke.Thickness = 2
+LogoStroke.Transparency = 0.3
+LogoStroke.Parent = LogoFrame
+
+-- Текст внутри логотипа
+local LogoText = Instance.new("TextLabel")
+LogoText.Size = UDim2.new(1, 0, 1, 0)
+LogoText.BackgroundTransparency = 1
+LogoText.Text = "idk"
+LogoText.TextColor3 = Colors.white
+LogoText.TextSize = 28
+LogoText.Font = Enum.Font.GothamBlack
+LogoText.ZIndex = 104
+LogoText.Rotation = -45
+LogoText.Parent = LogoFrame
+
+-- Название
+local LoadTitle = Instance.new("TextLabel")
+LoadTitle.Size = UDim2.new(1, 0, 0, 30)
+LoadTitle.Position = UDim2.new(0, 0, 0, 195)
+LoadTitle.BackgroundTransparency = 1
+LoadTitle.Text = "MM2 PREMIUM"
+LoadTitle.TextColor3 = Colors.text
+LoadTitle.TextSize = 26
+LoadTitle.Font = Enum.Font.GothamBlack
+LoadTitle.TextTransparency = 1
+LoadTitle.ZIndex = 103
+LoadTitle.Parent = LoadCenter
+
+-- Подзаголовок
+local LoadSubtitle = Instance.new("TextLabel")
+LoadSubtitle.Size = UDim2.new(1, 0, 0, 20)
+LoadSubtitle.Position = UDim2.new(0, 0, 0, 225)
+LoadSubtitle.BackgroundTransparency = 1
+LoadSubtitle.Text = "v5.1 • Premium Edition"
+LoadSubtitle.TextColor3 = Colors.accentLight
+LoadSubtitle.TextSize = 13
+LoadSubtitle.Font = Enum.Font.GothamSemibold
+LoadSubtitle.TextTransparency = 1
+LoadSubtitle.ZIndex = 103
+LoadSubtitle.Parent = LoadCenter
+
+-- Прогресс-бар (фон)
+local ProgressBG = Instance.new("Frame")
+ProgressBG.Size = UDim2.new(0.7, 0, 0, 4)
+ProgressBG.Position = UDim2.new(0.15, 0, 0, 268)
+ProgressBG.BackgroundColor3 = Colors.elevated
+ProgressBG.BorderSizePixel = 0
+ProgressBG.ZIndex = 103
+ProgressBG.Parent = LoadCenter
+Instance.new("UICorner", ProgressBG).CornerRadius = UDim.new(1, 0)
+
+-- Прогресс-бар (заполнение)
+local ProgressFill = Instance.new("Frame")
+ProgressFill.Size = UDim2.new(0, 0, 1, 0)
+ProgressFill.BackgroundColor3 = Colors.accent
+ProgressFill.BorderSizePixel = 0
+ProgressFill.ZIndex = 104
+ProgressFill.Parent = ProgressBG
+Instance.new("UICorner", ProgressFill).CornerRadius = UDim.new(1, 0)
+
+local ProgressGradient = Instance.new("UIGradient")
+ProgressGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Colors.accentDark),
+    ColorSequenceKeypoint.new(0.5, Colors.accentLight),
+    ColorSequenceKeypoint.new(1, Colors.accent),
+})
+ProgressGradient.Parent = ProgressFill
+
+-- Текст статуса загрузки
+local LoadStatus = Instance.new("TextLabel")
+LoadStatus.Size = UDim2.new(1, 0, 0, 18)
+LoadStatus.Position = UDim2.new(0, 0, 0, 280)
+LoadStatus.BackgroundTransparency = 1
+LoadStatus.Text = ""
+LoadStatus.TextColor3 = Colors.textDim
+LoadStatus.TextSize = 11
+LoadStatus.Font = Enum.Font.Gotham
+LoadStatus.TextTransparency = 1
+LoadStatus.ZIndex = 103
+LoadStatus.Parent = LoadCenter
+
+-- Процент
+local LoadPercent = Instance.new("TextLabel")
+LoadPercent.Size = UDim2.new(1, 0, 0, 20)
+LoadPercent.Position = UDim2.new(0, 0, 0, 296)
+LoadPercent.BackgroundTransparency = 1
+LoadPercent.Text = "0%"
+LoadPercent.TextColor3 = Colors.accent
+LoadPercent.TextSize = 12
+LoadPercent.Font = Enum.Font.GothamBold
+LoadPercent.TextTransparency = 1
+LoadPercent.ZIndex = 103
+LoadPercent.Parent = LoadCenter
+
+-- Нижний текст
+local LoadFooter = Instance.new("TextLabel")
+LoadFooter.Size = UDim2.new(1, 0, 0, 16)
+LoadFooter.Position = UDim2.new(0, 0, 0, 340)
+LoadFooter.BackgroundTransparency = 1
+LoadFooter.Text = "by idk team • 2025"
+LoadFooter.TextColor3 = Colors.textMuted
+LoadFooter.TextSize = 10
+LoadFooter.Font = Enum.Font.Gotham
+LoadFooter.TextTransparency = 1
+LoadFooter.ZIndex = 103
+LoadFooter.Parent = LoadCenter
+
+-- Частицы / звёзды на фоне
+local particles = {}
+for i = 1, 25 do
+    local particle = Instance.new("Frame")
+    particle.Size = UDim2.new(0, math.random(2, 4), 0, math.random(2, 4))
+    particle.Position = UDim2.new(math.random() * 0.9 + 0.05, 0, math.random() * 0.9 + 0.05, 0)
+    particle.BackgroundColor3 = Colors.accentLight
+    particle.BackgroundTransparency = math.random(60, 90) / 100
+    particle.BorderSizePixel = 0
+    particle.ZIndex = 101
+    particle.Parent = LoadingScreen
+    Instance.new("UICorner", particle).CornerRadius = UDim.new(1, 0)
+    table.insert(particles, particle)
+end
+
+---------------------------------------------------------
+-- АНИМАЦИЯ ЗАГРУЗКИ
+---------------------------------------------------------
+local function AnimateLoading()
+    -- Фаза 1: Появление свечения (0.0s - 0.5s)
+    TweenService:Create(GlowOuter, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        ImageTransparency = 0.6
+    }):Play()
+    TweenService:Create(GlowInner, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        ImageTransparency = 0.4
+    }):Play()
+
+    -- Анимация частиц
+    for _, p in ipairs(particles) do
+        local targetY = p.Position.Y.Scale - 0.3 - math.random() * 0.4
+        TweenService:Create(p, TweenInfo.new(
+            3 + math.random() * 4,
+            Enum.EasingStyle.Linear,
+            Enum.EasingDirection.InOut,
+            -1, true
+        ), {
+            Position = UDim2.new(p.Position.X.Scale + (math.random() - 0.5) * 0.1, 0, targetY, 0),
+            BackgroundTransparency = math.random(40, 95) / 100
+        }):Play()
+    end
+
+    task.wait(0.3)
+
+    -- Фаза 2: Появление логотипа (вращение + масштаб)
+    LogoFrame.Size = UDim2.new(0, 0, 0, 0)
+    LogoFrame.Position = UDim2.new(0.5, 0, 0, 120)
+    TweenService:Create(LogoFrame, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 100, 0, 100),
+        Position = UDim2.new(0.5, -50, 0, 70),
+        Rotation = 45
+    }):Play()
+
+    task.wait(0.5)
+
+    -- Пульсация свечения логотипа
+    task.spawn(function()
+        while LoadingScreen.Parent do
+            TweenService:Create(LogoStroke, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+                Transparency = 0.1
+            }):Play()
+            TweenService:Create(GlowInner, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+                ImageTransparency = 0.3,
+                Size = UDim2.new(0, 200, 0, 200),
+                Position = UDim2.new(0.5, -100, 0, 20)
+            }):Play()
+            task.wait(1)
+            TweenService:Create(LogoStroke, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+                Transparency = 0.6
+            }):Play()
+            TweenService:Create(GlowInner, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+                ImageTransparency = 0.6,
+                Size = UDim2.new(0, 180, 0, 180),
+                Position = UDim2.new(0.5, -90, 0, 30)
+            }):Play()
+            task.wait(1)
+        end
+    end)
+
+    -- Фаза 3: Появление текста
+    TweenService:Create(LoadTitle, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
+    task.wait(0.2)
+    TweenService:Create(LoadSubtitle, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
+    task.wait(0.2)
+    TweenService:Create(LoadStatus, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
+    TweenService:Create(LoadPercent, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
+    TweenService:Create(LoadFooter, TweenInfo.new(0.5), {TextTransparency = 0.4}):Play()
+
+    task.wait(0.2)
+
+    -- Фаза 4: Прогресс-бар с этапами
+    local stages = {
+        {progress = 0.15, text = "Initializing core modules...", time = 0.4},
+        {progress = 0.30, text = "Loading UI framework...", time = 0.3},
+        {progress = 0.45, text = "Configuring ESP system...", time = 0.35},
+        {progress = 0.55, text = "Setting up combat module...", time = 0.25},
+        {progress = 0.70, text = "Loading boombox engine...", time = 0.3},
+        {progress = 0.80, text = "Applying anti-detection...", time = 0.4},
+        {progress = 0.90, text = "Connecting to services...", time = 0.3},
+        {progress = 1.00, text = "Ready!", time = 0.3},
+    }
+
+    for _, stage in ipairs(stages) do
+        TweenService:Create(ProgressFill, TweenInfo.new(stage.time, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(stage.progress, 0, 1, 0)
+        }):Play()
+        LoadStatus.Text = stage.text
+        LoadPercent.Text = math.floor(stage.progress * 100) .. "%"
+        task.wait(stage.time + 0.05)
+    end
+
+    -- Фаза 5: Пауза на "Ready!"
+    LoadStatus.TextColor3 = Colors.green
+    LoadPercent.TextColor3 = Colors.green
+    task.wait(0.6)
+
+    -- Фаза 6: Fade out
+    TweenService:Create(LoadingScreen, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        BackgroundTransparency = 1
+    }):Play()
+
+    for _, child in ipairs(LoadCenter:GetDescendants()) do
+        if child:IsA("TextLabel") then
+            TweenService:Create(child, TweenInfo.new(0.4), {TextTransparency = 1}):Play()
+        elseif child:IsA("Frame") then
+            TweenService:Create(child, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play()
+        elseif child:IsA("ImageLabel") then
+            TweenService:Create(child, TweenInfo.new(0.4), {ImageTransparency = 1}):Play()
+        end
+    end
+
+    for _, p in ipairs(particles) do
+        TweenService:Create(p, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+    end
+
+    -- Логотип уходит вверх
+    TweenService:Create(LogoFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+        Size = UDim2.new(0, 0, 0, 0),
+        Position = UDim2.new(0.5, 0, 0, 80)
+    }):Play()
+
+    task.wait(0.7)
+    LoadingScreen:Destroy()
+end
+
+---------------------------------------------------------
+-- ХРАНИЛИЩЕ СОЕДИНЕНИЙ
 ---------------------------------------------------------
 local connections = {}
 local function ClearConnection(name)
     if connections[name] then
-        connections[name]:Disconnect()
+        if typeof(connections[name]) == "RBXScriptConnection" then
+            connections[name]:Disconnect()
+        end
         connections[name] = nil
     end
 end
@@ -45,21 +420,16 @@ local function GetRoot()
     return char and char:FindFirstChild("HumanoidRootPart")
 end
 
----------------------------------------------------------
--- ОПРЕДЕЛЕНИЕ РОЛЕЙ MM2
----------------------------------------------------------
 local function IsMurderer(p)
     if p == player then return false end
     if not p.Character then return false end
-    local found = p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife")
-    return found ~= nil
+    return (p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife")) ~= nil
 end
 
 local function IsSheriff(p)
     if p == player then return false end
     if not p.Character then return false end
-    local found = p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun")
-    return found ~= nil
+    return (p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun")) ~= nil
 end
 
 local function GetMurdererHead()
@@ -81,39 +451,12 @@ local function GetMurdererRoot()
 end
 
 ---------------------------------------------------------
--- УДАЛИТЬ СТАРОЕ МЕНЮ (при повторном запуске)
+-- ============ ЗАПУСК ЗАГРУЗКИ ============
 ---------------------------------------------------------
-local oldGui = player.PlayerGui:FindFirstChild("MM2PremiumV5")
-if oldGui then oldGui:Destroy() end
+AnimateLoading()
 
 ---------------------------------------------------------
--- СОЗДАНИЕ GUI
----------------------------------------------------------
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "MM2PremiumV5"
-ScreenGui.Parent = player.PlayerGui
-ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
----------------------------------------------------------
--- ЦВЕТОВАЯ ПАЛИТРА
----------------------------------------------------------
-local Colors = {
-    bg = Color3.fromRGB(12, 10, 18),
-    surface = Color3.fromRGB(22, 18, 32),
-    elevated = Color3.fromRGB(32, 26, 48),
-    accent = Color3.fromRGB(130, 60, 230),
-    accentLight = Color3.fromRGB(160, 100, 255),
-    green = Color3.fromRGB(40, 180, 80),
-    red = Color3.fromRGB(200, 50, 60),
-    orange = Color3.fromRGB(230, 130, 40),
-    text = Color3.fromRGB(240, 240, 245),
-    textDim = Color3.fromRGB(140, 130, 160),
-    separator = Color3.fromRGB(100, 80, 150),
-}
-
----------------------------------------------------------
--- 1. КНОПКА-ПЕРЕМИКАЧ (кругла, с анимацией)
+-- 1. КНОПКА-ПЕРЕМИКАЧ
 ---------------------------------------------------------
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "ToggleBtn"
@@ -127,9 +470,7 @@ ToggleBtn.Font = Enum.Font.GothamBold
 ToggleBtn.AutoButtonColor = false
 ToggleBtn.Parent = ScreenGui
 
-local ToggleCorner = Instance.new("UICorner")
-ToggleCorner.CornerRadius = UDim.new(1, 0)
-ToggleCorner.Parent = ToggleBtn
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 
 local ToggleStroke = Instance.new("UIStroke")
 ToggleStroke.Color = Colors.accentLight
@@ -137,12 +478,19 @@ ToggleStroke.Thickness = 2
 ToggleStroke.Transparency = 0.3
 ToggleStroke.Parent = ToggleBtn
 
--- Hover-эффект
 ToggleBtn.MouseEnter:Connect(function()
-    TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 58, 0, 58), Position = UDim2.new(0.5, -29, 0, 5)}):Play()
+    TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {
+        Size = UDim2.new(0, 58, 0, 58),
+        Position = UDim2.new(0.5, -29, 0, 5)
+    }):Play()
+    TweenService:Create(ToggleStroke, TweenInfo.new(0.2), {Transparency = 0}):Play()
 end)
 ToggleBtn.MouseLeave:Connect(function()
-    TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 52, 0, 52), Position = UDim2.new(0.5, -26, 0, 8)}):Play()
+    TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {
+        Size = UDim2.new(0, 52, 0, 52),
+        Position = UDim2.new(0.5, -26, 0, 8)
+    }):Play()
+    TweenService:Create(ToggleStroke, TweenInfo.new(0.2), {Transparency = 0.3}):Play()
 end)
 
 ---------------------------------------------------------
@@ -150,84 +498,114 @@ end)
 ---------------------------------------------------------
 local MainWindow = Instance.new("Frame")
 MainWindow.Name = "MainWindow"
-MainWindow.Size = UDim2.new(0, 380, 0, 420)
-MainWindow.Position = UDim2.new(0.5, -190, 0.5, -210)
+MainWindow.Size = UDim2.new(0, 390, 0, 440)
+MainWindow.Position = UDim2.new(0.5, -195, 0.5, -220)
 MainWindow.BackgroundColor3 = Colors.bg
 MainWindow.BorderSizePixel = 0
 MainWindow.Visible = false
+MainWindow.ClipsDescendants = true
 MainWindow.Parent = ScreenGui
 
-local WindowCorner = Instance.new("UICorner")
-WindowCorner.CornerRadius = UDim.new(0, 12)
-WindowCorner.Parent = MainWindow
+Instance.new("UICorner", MainWindow).CornerRadius = UDim.new(0, 14)
 
 local WindowStroke = Instance.new("UIStroke")
 WindowStroke.Color = Colors.accent
 WindowStroke.Thickness = 1.5
-WindowStroke.Transparency = 0.5
+WindowStroke.Transparency = 0.6
 WindowStroke.Parent = MainWindow
 
 -- Тень
 local Shadow = Instance.new("ImageLabel")
-Shadow.Name = "Shadow"
-Shadow.Size = UDim2.new(1, 30, 1, 30)
-Shadow.Position = UDim2.new(0, -15, 0, -15)
+Shadow.Size = UDim2.new(1, 40, 1, 40)
+Shadow.Position = UDim2.new(0, -20, 0, -20)
 Shadow.BackgroundTransparency = 1
 Shadow.Image = "rbxassetid://6014054562"
 Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
-Shadow.ImageTransparency = 0.5
+Shadow.ImageTransparency = 0.4
 Shadow.ScaleType = Enum.ScaleType.Slice
 Shadow.SliceCenter = Rect.new(49, 49, 450, 450)
 Shadow.ZIndex = -1
 Shadow.Parent = MainWindow
 
+-- Акцентная линия сверху
+local AccentLine = Instance.new("Frame")
+AccentLine.Size = UDim2.new(1, 0, 0, 3)
+AccentLine.Position = UDim2.new(0, 0, 0, 0)
+AccentLine.BorderSizePixel = 0
+AccentLine.ZIndex = 5
+AccentLine.Parent = MainWindow
+
+local AccentGrad = Instance.new("UIGradient")
+AccentGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Colors.accentDark),
+    ColorSequenceKeypoint.new(0.3, Colors.accentLight),
+    ColorSequenceKeypoint.new(0.7, Colors.accent),
+    ColorSequenceKeypoint.new(1, Colors.accentDark),
+})
+AccentGrad.Parent = AccentLine
+
+-- Анимация градиента акцентной линии
+task.spawn(function()
+    local offset = 0
+    while MainWindow.Parent do
+        offset = (offset + 0.005) % 1
+        AccentGrad.Offset = Vector2.new(offset, 0)
+        RunService.RenderStepped:Wait()
+    end
+end)
+
 ---------------------------------------------------------
--- ПЕРЕТАСКИВАНИЕ ОКНА (ручное, без deprecated Draggable)
+-- TOPBAR + DRAG
 ---------------------------------------------------------
 local TopBar = Instance.new("Frame")
-TopBar.Name = "TopBar"
-TopBar.Size = UDim2.new(1, 0, 0, 42)
+TopBar.Size = UDim2.new(1, 0, 0, 44)
+TopBar.Position = UDim2.new(0, 0, 0, 3)
 TopBar.BackgroundColor3 = Colors.surface
 TopBar.BorderSizePixel = 0
 TopBar.Parent = MainWindow
 
-local TopBarCorner = Instance.new("UICorner")
-TopBarCorner.CornerRadius = UDim.new(0, 12)
-TopBarCorner.Parent = TopBar
+-- Мини-логотип в топбаре
+local MiniLogo = Instance.new("Frame")
+MiniLogo.Size = UDim2.new(0, 26, 0, 26)
+MiniLogo.Position = UDim2.new(0, 10, 0.5, -13)
+MiniLogo.BackgroundColor3 = Colors.accent
+MiniLogo.Rotation = 45
+MiniLogo.Parent = TopBar
+Instance.new("UICorner", MiniLogo).CornerRadius = UDim.new(0, 5)
 
--- Нижние углы топбара не скругляем — фикс
-local TopBarFix = Instance.new("Frame")
-TopBarFix.Size = UDim2.new(1, 0, 0, 14)
-TopBarFix.Position = UDim2.new(0, 0, 1, -14)
-TopBarFix.BackgroundColor3 = Colors.surface
-TopBarFix.BorderSizePixel = 0
-TopBarFix.Parent = TopBar
+local MiniLogoText = Instance.new("TextLabel")
+MiniLogoText.Size = UDim2.new(1, 0, 1, 0)
+MiniLogoText.BackgroundTransparency = 1
+MiniLogoText.Text = "i"
+MiniLogoText.TextColor3 = Colors.white
+MiniLogoText.TextSize = 14
+MiniLogoText.Font = Enum.Font.GothamBlack
+MiniLogoText.Rotation = -45
+MiniLogoText.Parent = MiniLogo
 
--- Заголовок
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -50, 1, 0)
-Title.Position = UDim2.new(0, 14, 0, 0)
+Title.Size = UDim2.new(1, -100, 1, 0)
+Title.Position = UDim2.new(0, 46, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "idk MM2 Premium v5.0"
+Title.Text = "idk MM2 Premium"
 Title.TextColor3 = Colors.text
-Title.TextSize = 16
+Title.TextSize = 15
 Title.Font = Enum.Font.GothamBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = TopBar
 
--- Версия / статус
-local StatusLabel = Instance.new("TextLabel")
-StatusLabel.Size = UDim2.new(0, 80, 1, 0)
-StatusLabel.Position = UDim2.new(1, -90, 0, 0)
-StatusLabel.BackgroundTransparency = 1
-StatusLabel.Text = "● Active"
-StatusLabel.TextColor3 = Colors.green
-StatusLabel.TextSize = 11
-StatusLabel.Font = Enum.Font.GothamSemibold
-StatusLabel.TextXAlignment = Enum.TextXAlignment.Right
-StatusLabel.Parent = TopBar
+local VersionTag = Instance.new("TextLabel")
+VersionTag.Size = UDim2.new(0, 50, 0, 18)
+VersionTag.Position = UDim2.new(1, -60, 0.5, -9)
+VersionTag.BackgroundColor3 = Colors.elevated
+VersionTag.TextColor3 = Colors.accentLight
+VersionTag.Text = "v5.1"
+VersionTag.TextSize = 10
+VersionTag.Font = Enum.Font.GothamBold
+VersionTag.Parent = TopBar
+Instance.new("UICorner", VersionTag).CornerRadius = UDim.new(0, 4)
 
--- Drag-логика
+-- Drag
 do
     local dragging = false
     local dragStart, startPos
@@ -260,23 +638,25 @@ do
     end)
 end
 
--- Toggle видимость с анимацией
+-- Toggle с анимацией
+local menuOpen = false
 ToggleBtn.MouseButton1Click:Connect(function()
-    if MainWindow.Visible then
-        local tween = TweenService:Create(MainWindow, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0, 380, 0, 0),
+    menuOpen = not menuOpen
+    if menuOpen then
+        MainWindow.Visible = true
+        MainWindow.Size = UDim2.new(0, 390, 0, 0)
+        TweenService:Create(MainWindow, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 390, 0, 440)
+        }):Play()
+    else
+        local tween = TweenService:Create(MainWindow, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Size = UDim2.new(0, 390, 0, 0)
         })
         tween:Play()
         tween.Completed:Connect(function()
             MainWindow.Visible = false
-            MainWindow.Size = UDim2.new(0, 380, 0, 420)
+            MainWindow.Size = UDim2.new(0, 390, 0, 440)
         end)
-    else
-        MainWindow.Size = UDim2.new(0, 380, 0, 0)
-        MainWindow.Visible = true
-        TweenService:Create(MainWindow, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0, 380, 0, 420),
-        }):Play()
     end
 end)
 
@@ -285,34 +665,33 @@ end)
 ---------------------------------------------------------
 local ScrollHolder = Instance.new("ScrollingFrame")
 ScrollHolder.Name = "Content"
-ScrollHolder.Size = UDim2.new(1, -2, 1, -48)
-ScrollHolder.Position = UDim2.new(0, 1, 0, 46)
+ScrollHolder.Size = UDim2.new(1, -4, 1, -50)
+ScrollHolder.Position = UDim2.new(0, 2, 0, 48)
 ScrollHolder.BackgroundTransparency = 1
 ScrollHolder.BorderSizePixel = 0
-ScrollHolder.ScrollBarThickness = 4
+ScrollHolder.ScrollBarThickness = 3
 ScrollHolder.ScrollBarImageColor3 = Colors.accent
-ScrollHolder.ScrollBarImageTransparency = 0.3
-ScrollHolder.CanvasSize = UDim2.new(0, 0, 0, 0) -- будет динамический
+ScrollHolder.ScrollBarImageTransparency = 0.2
+ScrollHolder.CanvasSize = UDim2.new(0, 0, 0, 0)
 ScrollHolder.AutomaticCanvasSize = Enum.AutomaticSize.Y
 ScrollHolder.Parent = MainWindow
 
 local ListLayout = Instance.new("UIListLayout")
 ListLayout.Parent = ScrollHolder
 ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ListLayout.Padding = UDim.new(0, 5)
+ListLayout.Padding = UDim.new(0, 4)
 
 local ContentPadding = Instance.new("UIPadding")
-ContentPadding.PaddingTop = UDim.new(0, 6)
-ContentPadding.PaddingBottom = UDim.new(0, 10)
-ContentPadding.PaddingLeft = UDim.new(0, 10)
-ContentPadding.PaddingRight = UDim.new(0, 10)
+ContentPadding.PaddingTop = UDim.new(0, 4)
+ContentPadding.PaddingBottom = UDim.new(0, 12)
+ContentPadding.PaddingLeft = UDim.new(0, 8)
+ContentPadding.PaddingRight = UDim.new(0, 8)
 ContentPadding.Parent = ScrollHolder
 
 ---------------------------------------------------------
 -- ФАБРИКИ UI-ЭЛЕМЕНТОВ
 ---------------------------------------------------------
 local layoutCounter = 0
-
 local function NextOrder()
     layoutCounter = layoutCounter + 1
     return layoutCounter
@@ -321,21 +700,22 @@ end
 local function AddSeparator(text)
     local order = NextOrder()
     local Container = Instance.new("Frame")
-    Container.Size = UDim2.new(1, 0, 0, 24)
+    Container.Size = UDim2.new(1, 0, 0, 26)
     Container.BackgroundTransparency = 1
     Container.LayoutOrder = order
     Container.Parent = ScrollHolder
 
-    local Line1 = Instance.new("Frame")
-    Line1.Size = UDim2.new(0.15, 0, 0, 1)
-    Line1.Position = UDim2.new(0, 0, 0.5, 0)
-    Line1.BackgroundColor3 = Colors.separator
-    Line1.BorderSizePixel = 0
-    Line1.Parent = Container
+    local LineL = Instance.new("Frame")
+    LineL.Size = UDim2.new(0.12, 0, 0, 1)
+    LineL.Position = UDim2.new(0, 0, 0.5, 0)
+    LineL.BackgroundColor3 = Colors.separator
+    LineL.BackgroundTransparency = 0.5
+    LineL.BorderSizePixel = 0
+    LineL.Parent = Container
 
     local Label = Instance.new("TextLabel")
-    Label.Size = UDim2.new(0.7, 0, 1, 0)
-    Label.Position = UDim2.new(0.15, 0, 0, 0)
+    Label.Size = UDim2.new(0.76, 0, 1, 0)
+    Label.Position = UDim2.new(0.12, 0, 0, 0)
     Label.BackgroundTransparency = 1
     Label.Text = text
     Label.TextColor3 = Colors.accentLight
@@ -343,12 +723,13 @@ local function AddSeparator(text)
     Label.Font = Enum.Font.GothamBold
     Label.Parent = Container
 
-    local Line2 = Instance.new("Frame")
-    Line2.Size = UDim2.new(0.15, 0, 0, 1)
-    Line2.Position = UDim2.new(0.85, 0, 0.5, 0)
-    Line2.BackgroundColor3 = Colors.separator
-    Line2.BorderSizePixel = 0
-    Line2.Parent = Container
+    local LineR = Instance.new("Frame")
+    LineR.Size = UDim2.new(0.12, 0, 0, 1)
+    LineR.Position = UDim2.new(0.88, 0, 0.5, 0)
+    LineR.BackgroundColor3 = Colors.separator
+    LineR.BackgroundTransparency = 0.5
+    LineR.BorderSizePixel = 0
+    LineR.Parent = Container
 end
 
 local function AddToggleButton(text, defaultState, callback)
@@ -356,29 +737,31 @@ local function AddToggleButton(text, defaultState, callback)
     local active = defaultState or false
 
     local Btn = Instance.new("TextButton")
-    Btn.Size = UDim2.new(1, 0, 0, 34)
-    Btn.BackgroundColor3 = active and Colors.green or Colors.elevated
+    Btn.Size = UDim2.new(1, 0, 0, 36)
+    Btn.BackgroundColor3 = active and Colors.greenDark or Colors.elevated
     Btn.Text = ""
     Btn.AutoButtonColor = false
     Btn.LayoutOrder = order
     Btn.Parent = ScrollHolder
 
-    local BtnCorner = Instance.new("UICorner")
-    BtnCorner.CornerRadius = UDim.new(0, 6)
-    BtnCorner.Parent = Btn
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 7)
 
-    -- Индикатор
+    local BtnStroke = Instance.new("UIStroke")
+    BtnStroke.Color = active and Colors.green or Colors.elevated
+    BtnStroke.Thickness = 1
+    BtnStroke.Transparency = active and 0.5 or 1
+    BtnStroke.Parent = Btn
+
     local Indicator = Instance.new("Frame")
-    Indicator.Size = UDim2.new(0, 4, 0, 18)
-    Indicator.Position = UDim2.new(0, 8, 0.5, -9)
-    Indicator.BackgroundColor3 = active and Colors.green or Colors.textDim
+    Indicator.Size = UDim2.new(0, 3, 0, 16)
+    Indicator.Position = UDim2.new(0, 8, 0.5, -8)
+    Indicator.BackgroundColor3 = active and Colors.green or Colors.textMuted
     Indicator.BorderSizePixel = 0
     Indicator.Parent = Btn
     Instance.new("UICorner", Indicator).CornerRadius = UDim.new(1, 0)
 
-    -- Текст
     local Label = Instance.new("TextLabel")
-    Label.Size = UDim2.new(1, -60, 1, 0)
+    Label.Size = UDim2.new(1, -70, 1, 0)
     Label.Position = UDim2.new(0, 20, 0, 0)
     Label.BackgroundTransparency = 1
     Label.Text = text
@@ -388,34 +771,55 @@ local function AddToggleButton(text, defaultState, callback)
     Label.TextXAlignment = Enum.TextXAlignment.Left
     Label.Parent = Btn
 
-    -- Статус
-    local Status = Instance.new("TextLabel")
-    Status.Size = UDim2.new(0, 40, 1, 0)
-    Status.Position = UDim2.new(1, -48, 0, 0)
-    Status.BackgroundTransparency = 1
-    Status.Text = active and "ON" or "OFF"
-    Status.TextColor3 = active and Colors.green or Colors.textDim
-    Status.TextSize = 12
-    Status.Font = Enum.Font.GothamBold
-    Status.TextXAlignment = Enum.TextXAlignment.Right
-    Status.Parent = Btn
+    -- Переключатель (визуальный тоггл)
+    local ToggleBG = Instance.new("Frame")
+    ToggleBG.Size = UDim2.new(0, 36, 0, 18)
+    ToggleBG.Position = UDim2.new(1, -48, 0.5, -9)
+    ToggleBG.BackgroundColor3 = active and Colors.green or Colors.textMuted
+    ToggleBG.BorderSizePixel = 0
+    ToggleBG.Parent = Btn
+    Instance.new("UICorner", ToggleBG).CornerRadius = UDim.new(1, 0)
+
+    local ToggleCircle = Instance.new("Frame")
+    ToggleCircle.Size = UDim2.new(0, 14, 0, 14)
+    ToggleCircle.Position = active and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+    ToggleCircle.BackgroundColor3 = Colors.white
+    ToggleCircle.BorderSizePixel = 0
+    ToggleCircle.Parent = ToggleBG
+    Instance.new("UICorner", ToggleCircle).CornerRadius = UDim.new(1, 0)
 
     local function UpdateVisual()
-        local targetBg = active and Color3.fromRGB(25, 50, 35) or Colors.elevated
-        local targetInd = active and Colors.green or Colors.textDim
-        TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundColor3 = targetBg}):Play()
-        TweenService:Create(Indicator, TweenInfo.new(0.15), {BackgroundColor3 = targetInd}):Play()
-        Status.Text = active and "ON" or "OFF"
-        Status.TextColor3 = active and Colors.green or Colors.textDim
+        local targetBg = active and Colors.greenDark or Colors.elevated
+        local targetInd = active and Colors.green or Colors.textMuted
+        local targetToggleBg = active and Colors.green or Colors.textMuted
+        local targetCirclePos = active and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+        local targetStrokeColor = active and Colors.green or Colors.elevated
+        local targetStrokeTrans = active and 0.5 or 1
+
+        TweenService:Create(Btn, TweenInfo.new(0.2), {BackgroundColor3 = targetBg}):Play()
+        TweenService:Create(Indicator, TweenInfo.new(0.2), {BackgroundColor3 = targetInd}):Play()
+        TweenService:Create(ToggleBG, TweenInfo.new(0.2), {BackgroundColor3 = targetToggleBg}):Play()
+        TweenService:Create(ToggleCircle, TweenInfo.new(0.2, Enum.EasingStyle.Back), {Position = targetCirclePos}):Play()
+        TweenService:Create(BtnStroke, TweenInfo.new(0.2), {Color = targetStrokeColor, Transparency = targetStrokeTrans}):Play()
     end
+
+    -- Hover
+    Btn.MouseEnter:Connect(function()
+        if not active then
+            TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.card}):Play()
+        end
+    end)
+    Btn.MouseLeave:Connect(function()
+        if not active then
+            TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.elevated}):Play()
+        end
+    end)
 
     Btn.MouseButton1Click:Connect(function()
         active = not active
         UpdateVisual()
         callback(active, Btn)
     end)
-
-    if active then UpdateVisual() end
 
     return function() return active end, function(state)
         active = state
@@ -425,15 +829,17 @@ end
 
 local function AddActionButton(text, color, callback)
     local order = NextOrder()
+    local btnColor = color or Colors.elevated
+
     local Btn = Instance.new("TextButton")
     Btn.Size = UDim2.new(1, 0, 0, 34)
-    Btn.BackgroundColor3 = color or Colors.elevated
+    Btn.BackgroundColor3 = btnColor
     Btn.Text = ""
     Btn.AutoButtonColor = false
     Btn.LayoutOrder = order
     Btn.Parent = ScrollHolder
 
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 7)
 
     local Label = Instance.new("TextLabel")
     Label.Size = UDim2.new(1, -16, 1, 0)
@@ -446,19 +852,23 @@ local function AddActionButton(text, color, callback)
     Label.TextXAlignment = Enum.TextXAlignment.Left
     Label.Parent = Btn
 
-    -- Hover
     Btn.MouseEnter:Connect(function()
-        TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.new(
-            math.min(color.R + 0.08, 1), math.min(color.G + 0.08, 1), math.min(color.B + 0.08, 1)
-        )}):Play()
+        TweenService:Create(Btn, TweenInfo.new(0.15), {
+            BackgroundColor3 = Color3.new(
+                math.min(btnColor.R + 0.06, 1),
+                math.min(btnColor.G + 0.06, 1),
+                math.min(btnColor.B + 0.06, 1)
+            )
+        }):Play()
     end)
     Btn.MouseLeave:Connect(function()
-        TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundColor3 = color}):Play()
+        TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundColor3 = btnColor}):Play()
     end)
 
     Btn.MouseButton1Click:Connect(function()
         callback(Btn, Label)
     end)
+
     return Btn, Label
 end
 
@@ -468,7 +878,7 @@ local function AddTextInput(placeholder, defaultText)
     Box.Size = UDim2.new(1, 0, 0, 32)
     Box.BackgroundColor3 = Colors.elevated
     Box.PlaceholderText = "  " .. placeholder
-    Box.PlaceholderColor3 = Colors.textDim
+    Box.PlaceholderColor3 = Colors.textMuted
     Box.Text = defaultText or ""
     Box.TextColor3 = Colors.text
     Box.TextSize = 13
@@ -477,19 +887,23 @@ local function AddTextInput(placeholder, defaultText)
     Box.LayoutOrder = order
     Box.Parent = ScrollHolder
 
-    Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 7)
+
+    local InputPadding = Instance.new("UIPadding")
+    InputPadding.PaddingLeft = UDim.new(0, 10)
+    InputPadding.Parent = Box
 
     local BoxStroke = Instance.new("UIStroke")
     BoxStroke.Color = Colors.accent
     BoxStroke.Thickness = 0
-    BoxStroke.Transparency = 0.5
+    BoxStroke.Transparency = 0.3
     BoxStroke.Parent = Box
 
     Box.Focused:Connect(function()
-        TweenService:Create(BoxStroke, TweenInfo.new(0.15), {Thickness = 1.5}):Play()
+        TweenService:Create(BoxStroke, TweenInfo.new(0.2), {Thickness = 1.5}):Play()
     end)
     Box.FocusLost:Connect(function()
-        TweenService:Create(BoxStroke, TweenInfo.new(0.15), {Thickness = 0}):Play()
+        TweenService:Create(BoxStroke, TweenInfo.new(0.2), {Thickness = 0}):Play()
     end)
 
     return Box
@@ -505,14 +919,12 @@ end
 AddSeparator("MAIN CHEATS")
 
 -- SPEED HACK
-local getSpeedState, setSpeedState = AddToggleButton("Speed Hack", false, function(active)
+AddToggleButton("Speed Hack", false, function(active)
     ClearConnection("speed")
     if active then
         connections["speed"] = RunService.Heartbeat:Connect(function()
             local hum = GetHumanoid()
-            if hum then
-                hum.WalkSpeed = 45
-            end
+            if hum then hum.WalkSpeed = 45 end
         end)
     else
         local hum = GetHumanoid()
@@ -520,9 +932,8 @@ local getSpeedState, setSpeedState = AddToggleButton("Speed Hack", false, functi
     end
 end)
 
--- INFINITE JUMP (исправлен: Enum вместо строки)
-local getJumpState
-getJumpState = AddToggleButton("Infinite Jump", false, function(active)
+-- INFINITE JUMP
+AddToggleButton("Infinite Jump", false, function(active)
     ClearConnection("infjump")
     if active then
         connections["infjump"] = UserInputService.JumpRequest:Connect(function()
@@ -536,14 +947,14 @@ end)
 
 -- ANTI-FLING
 local getAntiFlingState
-getAntiFlingState, _ = AddToggleButton("Anti-Fling", true, function(active)
+getAntiFlingState = AddToggleButton("Anti-Fling", true, function(active)
     ClearConnection("antifling")
     if active then
         connections["antifling"] = RunService.Heartbeat:Connect(function()
             local root = GetRoot()
             if not root then return end
             if root.AssemblyLinearVelocity.Magnitude > 250 then
-                root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                root.AssemblyLinearVelocity = Vector3.zero
             end
             if root.Position.Y < -50 then
                 root.CFrame = CFrame.new(0, 20, 0)
@@ -553,28 +964,26 @@ getAntiFlingState, _ = AddToggleButton("Anti-Fling", true, function(active)
     end
 end)
 
--- Запуск Anti-Fling сразу (по умолчанию ON)
-do
-    connections["antifling"] = RunService.Heartbeat:Connect(function()
-        if not getAntiFlingState() then return end
-        local root = GetRoot()
-        if not root then return end
-        if root.AssemblyLinearVelocity.Magnitude > 250 then
-            root.AssemblyLinearVelocity = Vector3.zero
-        end
-        if root.Position.Y < -50 then
-            root.CFrame = CFrame.new(0, 20, 0)
-            root.AssemblyLinearVelocity = Vector3.zero
-        end
-    end)
-end
+-- Запуск Anti-Fling сразу
+connections["antifling"] = RunService.Heartbeat:Connect(function()
+    if not getAntiFlingState() then return end
+    local root = GetRoot()
+    if not root then return end
+    if root.AssemblyLinearVelocity.Magnitude > 250 then
+        root.AssemblyLinearVelocity = Vector3.zero
+    end
+    if root.Position.Y < -50 then
+        root.CFrame = CFrame.new(0, 20, 0)
+        root.AssemblyLinearVelocity = Vector3.zero
+    end
+end)
 
 ---------------------------------------------------------
 -- СЕКЦИЯ: COMBAT
 ---------------------------------------------------------
 AddSeparator("COMBAT")
 
--- AIMBOT (камера — локальная, работает корректно)
+-- AIMBOT
 AddToggleButton("Aim at Murderer", false, function(active)
     ClearConnection("aimbot")
     if active then
@@ -587,7 +996,7 @@ AddToggleButton("Aim at Murderer", false, function(active)
     end
 end)
 
--- ФУНКЦИЯ ПОИСКА И СТРЕЛЬБЫ (улучшенная)
+-- GUN FINDER
 local function FindGunTool()
     local char = GetCharacter()
     if not char then return nil end
@@ -618,18 +1027,10 @@ local function AttemptShoot(targetHead)
 
     local success = false
     for _, remote in ipairs(remotes) do
-        local ok = pcall(function()
-            remote:FireServer(targetHead.Position, targetHead)
-        end)
-        if ok then success = true end
-
-        pcall(function()
-            remote:FireServer(targetHead)
-        end)
-
-        pcall(function()
-            remote:FireServer(targetHead.Position)
-        end)
+        local ok1 = pcall(function() remote:FireServer(targetHead.Position, targetHead) end)
+        local ok2 = pcall(function() remote:FireServer(targetHead) end)
+        local ok3 = pcall(function() remote:FireServer(targetHead.Position) end)
+        if ok1 or ok2 or ok3 then success = true end
     end
     return success
 end
@@ -638,20 +1039,22 @@ end
 -- SHOT BUTTON (экранная кнопка)
 ---------------------------------------------------------
 local ShotScreenBtn = Instance.new("TextButton")
-ShotScreenBtn.Size = UDim2.new(0, 110, 0, 44)
-ShotScreenBtn.Position = UDim2.new(1, -120, 0.5, -22)
-ShotScreenBtn.AnchorPoint = Vector2.new(0, 0)
+ShotScreenBtn.Size = UDim2.new(0, 100, 0, 44)
+ShotScreenBtn.Position = UDim2.new(1, -110, 0.5, -22)
 ShotScreenBtn.BackgroundColor3 = Colors.red
 ShotScreenBtn.Text = "⚡ SHOT"
 ShotScreenBtn.TextColor3 = Colors.text
-ShotScreenBtn.TextSize = 18
+ShotScreenBtn.TextSize = 16
 ShotScreenBtn.Font = Enum.Font.GothamBold
 ShotScreenBtn.Visible = false
 ShotScreenBtn.ZIndex = 10
 ShotScreenBtn.AutoButtonColor = false
 ShotScreenBtn.Parent = ScreenGui
 Instance.new("UICorner", ShotScreenBtn).CornerRadius = UDim.new(0, 10)
-Instance.new("UIStroke", ShotScreenBtn).Color = Color3.fromRGB(255, 100, 100)
+local ShotStroke = Instance.new("UIStroke")
+ShotStroke.Color = Color3.fromRGB(255, 100, 100)
+ShotStroke.Thickness = 1
+ShotStroke.Parent = ShotScreenBtn
 
 ShotScreenBtn.MouseButton1Click:Connect(function()
     local head = GetMurdererHead()
@@ -671,16 +1074,15 @@ AddToggleButton("Shot Button (Screen)", false, function(active)
 end)
 
 ---------------------------------------------------------
--- MAGIC SHOT (экранная кнопка)
+-- MAGIC SHOT
 ---------------------------------------------------------
 local MagicScreenBtn = Instance.new("TextButton")
-MagicScreenBtn.Size = UDim2.new(0, 120, 0, 44)
-MagicScreenBtn.Position = UDim2.new(1, -120, 0.5, -72)
-MagicScreenBtn.AnchorPoint = Vector2.new(0, 0)
+MagicScreenBtn.Size = UDim2.new(0, 110, 0, 44)
+MagicScreenBtn.Position = UDim2.new(1, -110, 0.5, -72)
 MagicScreenBtn.BackgroundColor3 = Colors.accent
 MagicScreenBtn.Text = "✦ MAGIC"
 MagicScreenBtn.TextColor3 = Colors.text
-MagicScreenBtn.TextSize = 18
+MagicScreenBtn.TextSize = 16
 MagicScreenBtn.Font = Enum.Font.GothamBold
 MagicScreenBtn.Visible = false
 MagicScreenBtn.ZIndex = 10
@@ -695,25 +1097,17 @@ MagicScreenBtn.MouseButton1Click:Connect(function()
     local root = GetRoot()
     if not root then return end
 
-    -- Временно отключить anti-fling
     local wasAntiFling = getAntiFlingState()
     ClearConnection("antifling")
 
     local savedCFrame = root.CFrame
-
-    -- Телепорт к мардеру
     root.CFrame = CFrame.new(head.Position + Vector3.new(0, -2, 3), head.Position)
     task.wait(0.15)
-
-    -- Стрельба
     AttemptShoot(head)
     task.wait(0.1)
-
-    -- Возврат
     root.CFrame = savedCFrame
     root.AssemblyLinearVelocity = Vector3.zero
 
-    -- Восстановить anti-fling если было включено
     if wasAntiFling then
         connections["antifling"] = RunService.Heartbeat:Connect(function()
             if not getAntiFlingState() then return end
@@ -725,7 +1119,6 @@ MagicScreenBtn.MouseButton1Click:Connect(function()
         end)
     end
 
-    -- Визуальная обратная связь
     TweenService:Create(MagicScreenBtn, TweenInfo.new(0.1), {BackgroundColor3 = Colors.green}):Play()
     task.delay(0.4, function()
         TweenService:Create(MagicScreenBtn, TweenInfo.new(0.2), {BackgroundColor3 = Colors.accent}):Play()
@@ -741,7 +1134,6 @@ end)
 ---------------------------------------------------------
 AddSeparator("ESP VISUALS")
 
--- Хранилище ESP-соединений
 local espConnections = {}
 
 local function ClearAllESP()
@@ -761,25 +1153,22 @@ end
 local function ApplyHighlight(char, color)
     if not char then return end
     if char:FindFirstChild("MenuESP") then char.MenuESP:Destroy() end
-
     local hl = Instance.new("Highlight")
     hl.Name = "MenuESP"
     hl.FillColor = color
-    hl.FillTransparency = 0.35
-    hl.OutlineColor = Color3.new(1, 1, 1)
-    hl.OutlineTransparency = 0.3
+    hl.FillTransparency = 0.3
+    hl.OutlineColor = Colors.white
+    hl.OutlineTransparency = 0.2
     hl.Adornee = char
     hl.Parent = char
 end
 
 local function ApplyESPToPlayer(p, color)
     if p == player then return end
-    if p.Character then
-        ApplyHighlight(p.Character, color)
-    end
-    local connKey = "esp_char_" .. p.UserId
-    if espConnections[connKey] then espConnections[connKey]:Disconnect() end
-    espConnections[connKey] = p.CharacterAdded:Connect(function(char)
+    if p.Character then ApplyHighlight(p.Character, color) end
+    local key = "esp_char_" .. p.UserId
+    if espConnections[key] then espConnections[key]:Disconnect() end
+    espConnections[key] = p.CharacterAdded:Connect(function(char)
         task.wait(0.5)
         ApplyHighlight(char, color)
     end)
@@ -789,12 +1178,12 @@ end
 local getESPAllState
 getESPAllState = AddToggleButton("ESP All Players", false, function(active)
     ClearAllESP()
-    ClearConnection("esp_new_player")
+    ClearConnection("esp_new_all")
     if active then
         for _, p in ipairs(Players:GetPlayers()) do
             ApplyESPToPlayer(p, Color3.fromRGB(220, 220, 255))
         end
-        connections["esp_new_player"] = Players.PlayerAdded:Connect(function(p)
+        connections["esp_new_all"] = Players.PlayerAdded:Connect(function(p)
             if getESPAllState() then
                 ApplyESPToPlayer(p, Color3.fromRGB(220, 220, 255))
             end
@@ -802,12 +1191,16 @@ getESPAllState = AddToggleButton("ESP All Players", false, function(active)
     end
 end)
 
--- ESP ROLES (постоянно обновляется)
+-- ESP ROLES (живое обновление)
 local getESPRolesState
+local espRolesCounter = 0
+
 getESPRolesState = AddToggleButton("ESP Roles (Live)", false, function(active)
     ClearAllESP()
     ClearConnection("esp_roles_loop")
     ClearConnection("esp_roles_new")
+    espRolesCounter = 0
+
     if active then
         local function UpdateRoles()
             for _, p in ipairs(Players:GetPlayers()) do
@@ -825,14 +1218,11 @@ getESPRolesState = AddToggleButton("ESP Roles (Live)", false, function(active)
 
         UpdateRoles()
 
-        -- Обновление каждые 2 секунды
         connections["esp_roles_loop"] = RunService.Heartbeat:Connect(function()
-            -- Throttle: обновляем каждые 120 кадров (~2 секунды)
-            if not connections["_esp_counter"] then connections["_esp_counter"] = 0 end
-            connections["_esp_counter"] = connections["_esp_counter"] + 1
-            if connections["_esp_counter"] >= 120 then
-                connections["_esp_counter"] = 0
-                UpdateRoles()
+            espRolesCounter = espRolesCounter + 1
+            if espRolesCounter >= 120 then
+                espRolesCounter = 0
+                if getESPRolesState() then UpdateRoles() end
             end
         end)
 
@@ -853,11 +1243,12 @@ AddSeparator("🎵 BOOMBOX")
 local AudioInput = AddTextInput("Audio ID...", "")
 local VolumeInput = AddTextInput("Volume (0.5 - 5)", "2")
 
--- Boombox управление
 local currentSound = nil
+local soundWasPlaying = false
+local lastAudioId = ""
+local lastVolume = "2"
 
 local function CreateAndPlaySound(audioId, volume)
-    -- Уничтожить старый звук
     if currentSound then
         pcall(function() currentSound:Stop() end)
         pcall(function() currentSound:Destroy() end)
@@ -881,6 +1272,9 @@ local function CreateAndPlaySound(audioId, volume)
     sound:Play()
 
     currentSound = sound
+    soundWasPlaying = true
+    lastAudioId = audioId
+    lastVolume = volume
     return true
 end
 
@@ -890,6 +1284,7 @@ local function StopCurrentSound()
         pcall(function() currentSound:Destroy() end)
         currentSound = nil
     end
+    soundWasPlaying = false
 end
 
 -- Кнопки Play/Stop
@@ -916,7 +1311,7 @@ do
     PlayBtn.Font = Enum.Font.GothamBold
     PlayBtn.AutoButtonColor = false
     PlayBtn.Parent = BtnContainer
-    Instance.new("UICorner", PlayBtn).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", PlayBtn).CornerRadius = UDim.new(0, 7)
 
     local StopBtn = Instance.new("TextButton")
     StopBtn.Size = UDim2.new(0.48, 0, 1, 0)
@@ -927,7 +1322,7 @@ do
     StopBtn.Font = Enum.Font.GothamBold
     StopBtn.AutoButtonColor = false
     StopBtn.Parent = BtnContainer
-    Instance.new("UICorner", StopBtn).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", StopBtn).CornerRadius = UDim.new(0, 7)
 
     PlayBtn.MouseButton1Click:Connect(function()
         local ok = CreateAndPlaySound(AudioInput.Text, VolumeInput.Text)
@@ -941,25 +1336,23 @@ do
 
     StopBtn.MouseButton1Click:Connect(function()
         StopCurrentSound()
+        TweenService:Create(StopBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(255, 100, 100)}):Play()
+        task.delay(0.3, function()
+            TweenService:Create(StopBtn, TweenInfo.new(0.2), {BackgroundColor3 = Colors.red}):Play()
+        end)
     end)
 end
 
--- При респавне — перезапуск звука
+-- Респавн: пересоздание звука
 player.CharacterAdded:Connect(function()
     task.wait(1.5)
-    if AudioInput.Text ~= "" and currentSound == nil then
-        -- Звук был уничтожен вместе с персонажем — пересоздаём
-        return
-    end
-    -- Если звук играл, пересоздаём
-    local wasPlaying = currentSound ~= nil
-    currentSound = nil -- старый уничтожен с персонажем
-    if wasPlaying and AudioInput.Text ~= "" then
-        CreateAndPlaySound(AudioInput.Text, VolumeInput.Text)
+    if soundWasPlaying and lastAudioId ~= "" then
+        currentSound = nil
+        CreateAndPlaySound(lastAudioId, lastVolume)
     end
 end)
 
--- БЫСТРЫЙ ТРЕК
+-- Быстрый трек
 AddActionButton("🍺 ГОРІЛКА РЕМІКС", Colors.elevated, function(btn, label)
     AudioInput.Text = "88468023940029"
     VolumeInput.Text = "2"
@@ -975,78 +1368,60 @@ AddActionButton("🍺 ГОРІЛКА РЕМІКС", Colors.elevated, function(bt
 end)
 
 ---------------------------------------------------------
--- СЕКЦИЯ: INFO
+-- СЕКЦИЯ: SYSTEM
 ---------------------------------------------------------
-AddSeparator("INFO")
+AddSeparator("SYSTEM")
 
+-- Destroy
+AddActionButton("🗑 Destroy Menu", Colors.redDark, function()
+    for key, conn in pairs(connections) do
+        if typeof(conn) == "RBXScriptConnection" then conn:Disconnect() end
+    end
+    ClearAllESP()
+    StopCurrentSound()
+
+    local hum = GetHumanoid()
+    if hum then hum.WalkSpeed = 16 end
+
+    pcall(function() ShotScreenBtn:Destroy() end)
+    pcall(function() MagicScreenBtn:Destroy() end)
+
+    -- Анимация закрытия
+    TweenService:Create(MainWindow, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+        Size = UDim2.new(0, 0, 0, 0),
+        Position = UDim2.new(0.5, 0, 0.5, 0)
+    }):Play()
+    TweenService:Create(ToggleBtn, TweenInfo.new(0.3), {
+        Size = UDim2.new(0, 0, 0, 0),
+        BackgroundTransparency = 1,
+        TextTransparency = 1
+    }):Play()
+
+    task.delay(0.4, function()
+        ScreenGui:Destroy()
+    end)
+end)
+
+-- Info
 do
     local order = NextOrder()
     local InfoFrame = Instance.new("Frame")
-    InfoFrame.Size = UDim2.new(1, 0, 0, 60)
+    InfoFrame.Size = UDim2.new(1, 0, 0, 50)
     InfoFrame.BackgroundColor3 = Colors.surface
     InfoFrame.LayoutOrder = order
     InfoFrame.Parent = ScrollHolder
-    Instance.new("UICorner", InfoFrame).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", InfoFrame).CornerRadius = UDim.new(0, 7)
 
     local InfoText = Instance.new("TextLabel")
     InfoText.Size = UDim2.new(1, -16, 1, -8)
     InfoText.Position = UDim2.new(0, 8, 0, 4)
     InfoText.BackgroundTransparency = 1
-    InfoText.Text = "v5.0 | Fixed: Draggable, ChangeState, ESP live update,\nconnection management, CharacterAdded sound,\nfling removed (client cant move others)"
-    InfoText.TextColor3 = Colors.textDim
+    InfoText.Text = "v5.1 Premium | All v4.3 bugs fixed\nDrag: manual | ESP: live | Connections: managed"
+    InfoText.TextColor3 = Colors.textMuted
     InfoText.TextSize = 10
     InfoText.Font = Enum.Font.Gotham
     InfoText.TextXAlignment = Enum.TextXAlignment.Left
     InfoText.TextYAlignment = Enum.TextYAlignment.Top
     InfoText.TextWrapped = true
     InfoText.Parent = InfoFrame
-end
-
----------------------------------------------------------
--- DESTROY BUTTON
----------------------------------------------------------
-AddActionButton("🗑 Destroy Menu", Colors.red, function()
-    -- Отключить все соединения
-    for key, conn in pairs(connections) do
-        if typeof(conn) == "RBXScriptConnection" then
-            conn:Disconnect()
-        end
-    end
-    ClearAllESP()
-    StopCurrentSound()
-
-    -- Сбросить скорость
-    local hum = GetHumanoid()
-    if hum then hum.WalkSpeed = 16 end
-
-    -- Убрать экранные кнопки и меню
-    ShotScreenBtn:Destroy()
-    MagicScreenBtn:Destroy()
-    ScreenGui:Destroy()
-end)
-
----------------------------------------------------------
--- УВЕДОМЛЕНИЕ О ЗАГРУЗКЕ
----------------------------------------------------------
-do
-    local Notif = Instance.new("TextLabel")
-    Notif.Size = UDim2.new(0, 260, 0, 36)
-    Notif.Position = UDim2.new(0.5, -130, 1, -50)
-    Notif.BackgroundColor3 = Colors.accent
-    Notif.TextColor3 = Colors.text
-    Notif.Text = "  idk MM2 Premium v5.0 loaded ✓"
-    Notif.TextSize = 13
-    Notif.Font = Enum.Font.GothamBold
-    Notif.TextXAlignment = Enum.TextXAlignment.Center
-    Notif.Parent = ScreenGui
-    Instance.new("UICorner", Notif).CornerRadius = UDim.new(0, 8)
-
-    task.delay(3, function()
-        TweenService:Create(Notif, TweenInfo.new(0.5), {
-            Position = UDim2.new(0.5, -130, 1, 50),
-            BackgroundTransparency = 1,
-            TextTransparency = 1
-        }):Play()
-        task.delay(0.6, function() Notif:Destroy() end)
-    end)
 end
