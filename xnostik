@@ -1,582 +1,1052 @@
--- idk MM2 PREMIUM MENU v4.3 (РОБОЧИЙ + BOOMBOX + ГОРІЛКА)
-local player = game.Players.LocalPlayer
-local mouse = player:GetMouse()
+-- idk MM2 PREMIUM MENU v5.0 (ПОЛНЫЙ РЕРАЙТ)
+-- Все баги v4.3 исправлены
+
+---------------------------------------------------------
+-- СЕРВИСЫ
+---------------------------------------------------------
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+if not player then
+    player = Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
+    player = Players.LocalPlayer
+end
+
 local camera = workspace.CurrentCamera
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "StableMM2Menu"
-ScreenGui.Parent = player.PlayerGui
-ScreenGui.ResetOnSpawn = false
-
 ---------------------------------------------------------
--- 1. КРУГЛА КНОПКА (Перемикач)
+-- ХРАНИЛИЩЕ СОЕДИНЕНИЙ (чтобы всё можно было отключить)
 ---------------------------------------------------------
-local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
-ToggleBtn.Position = UDim2.new(0.5, -25, 0.02, 0)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(80, 30, 120)
-ToggleBtn.Text = "MM2"
-ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleBtn.TextSize = 14
-ToggleBtn.Font = Enum.Font.SourceSansBold
-ToggleBtn.Parent = ScreenGui
-
-local ToggleCorner = Instance.new("UICorner")
-ToggleCorner.CornerRadius = UDim.new(1, 0)
-ToggleCorner.Parent = ToggleBtn
-
----------------------------------------------------------
--- 2. ГОЛОВНЕ ВІКНО
----------------------------------------------------------
-local MainWindow = Instance.new("Frame")
-MainWindow.Size = UDim2.new(0, 340, 0, 300)
-MainWindow.Position = UDim2.new(0.3, 0, 0.25, 0)
-MainWindow.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
-MainWindow.BorderSizePixel = 0
-MainWindow.Active = true
-MainWindow.Draggable = true
-MainWindow.Visible = false
-MainWindow.Parent = ScreenGui
-
-local WindowCorner = Instance.new("UICorner")
-WindowCorner.CornerRadius = UDim.new(0, 8)
-WindowCorner.Parent = MainWindow
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 35)
-Title.BackgroundTransparency = 1
-Title.Text = "   idk MM2 Cheat Menu v4.3"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 16
-Title.Font = Enum.Font.SourceSansBold
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = MainWindow
-
-ToggleBtn.MouseButton1Click:Connect(function()
-    MainWindow.Visible = not MainWindow.Visible
-end)
-
-local ScrollHolder = Instance.new("ScrollingFrame")
-ScrollHolder.Size = UDim2.new(1, 0, 1, -40)
-ScrollHolder.Position = UDim2.new(0, 0, 0, 40)
-ScrollHolder.BackgroundTransparency = 1
-ScrollHolder.BorderSizePixel = 0
-ScrollHolder.ScrollBarThickness = 6
-ScrollHolder.ScrollBarImageColor3 = Color3.fromRGB(80, 30, 120)
-ScrollHolder.CanvasSize = UDim2.new(0, 0, 0, 650)
-ScrollHolder.Parent = MainWindow
-
-local ListLayout = Instance.new("UIListLayout")
-ListLayout.Parent = ScrollHolder
-ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ListLayout.Padding = UDim.new(0, 6)
-
-local Padding = Instance.new("UIPadding")
-Padding.PaddingTop = UDim.new(0, 5)
-Padding.PaddingLeft = UDim.new(0, 12)
-Padding.PaddingRight = UDim.new(0, 12)
-Padding.Parent = ScrollHolder
-
----------------------------------------------------------
--- ФУНКЦІЇ ДЛЯ СТВОРЕННЯ ЕЛЕМЕНТІВ
----------------------------------------------------------
-local function AddSeparator(text, order)
-    local Sep = Instance.new("TextLabel")
-    Sep.Size = UDim2.new(1, 0, 0, 20)
-    Sep.BackgroundTransparency = 1
-    Sep.Text = "ーー  " .. text .. "  ーー"
-    Sep.TextColor3 = Color3.fromRGB(160, 130, 200)
-    Sep.TextSize = 12
-    Sep.Font = Enum.Font.SourceSansBold
-    Sep.LayoutOrder = order
-    Sep.Parent = ScrollHolder
-end
-
-local function AddCheatButton(text, order, callback)
-    local Btn = Instance.new("TextButton")
-    Btn.Size = UDim2.new(1, 0, 0, 32)
-    Btn.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
-    Btn.Text = text
-    Btn.TextColor3 = Color3.fromRGB(235, 235, 235)
-    Btn.TextSize = 14
-    Btn.Font = Enum.Font.SourceSans
-    Btn.LayoutOrder = order
-    Btn.Parent = ScrollHolder
-
-    local SubCorner = Instance.new("UICorner")
-    SubCorner.CornerRadius = UDim.new(0, 5)
-    SubCorner.Parent = Btn
-
-    Btn.MouseButton1Click:Connect(function()
-        callback(Btn)
-    end)
+local connections = {}
+local function ClearConnection(name)
+    if connections[name] then
+        connections[name]:Disconnect()
+        connections[name] = nil
+    end
 end
 
 ---------------------------------------------------------
--- 3. НАПОВНЕННЯ ТА ЛОГІКА ХАКІВ
+-- УТИЛИТЫ
 ---------------------------------------------------------
+local function GetCharacter()
+    return player.Character
+end
 
--- ПОЛИЧКА 1: ОСНОВНІ ЧИТИ
-AddSeparator("MAIN CHEATS", 1)
+local function GetHumanoid()
+    local char = GetCharacter()
+    return char and char:FindFirstChildOfClass("Humanoid")
+end
 
-local speedActive = false
-AddCheatButton("Speed Hack: OFF", 2, function(button)
-    speedActive = not speedActive
-    if speedActive then
-        button.Text = "Speed Hack: ON"
-        button.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
-    else
-        button.Text = "Speed Hack: OFF"
-        button.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
-        if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-            player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = 16
-        end
-    end
-end)
-
-task.spawn(function()
-    while true do
-        task.wait(0.1)
-        if speedActive and player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-            player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = 45
-        end
-    end
-end)
-
-local infJumpActive = false
-AddCheatButton("Infinite Jump: OFF", 3, function(button)
-    infJumpActive = not infJumpActive
-    if infJumpActive then
-        button.Text = "Infinite Jump: ON"
-        button.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
-    else
-        button.Text = "Infinite Jump: OFF"
-        button.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
-    end
-end)
-
-game:GetService("UserInputService").JumpRequest:Connect(function()
-    if infJumpActive and player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-        player.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
-    end
-end)
+local function GetRoot()
+    local char = GetCharacter()
+    return char and char:FindFirstChild("HumanoidRootPart")
+end
 
 ---------------------------------------------------------
--- ANTI-FLING
+-- ОПРЕДЕЛЕНИЕ РОЛЕЙ MM2
 ---------------------------------------------------------
-local antiFlingActive = true
+local function IsMurderer(p)
+    if p == player then return false end
+    if not p.Character then return false end
+    local found = p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife")
+    return found ~= nil
+end
 
-AddCheatButton("Anti-Fling: ON", 4, function(button)
-    antiFlingActive = not antiFlingActive
-    if antiFlingActive then
-        button.Text = "Anti-Fling: ON"
-        button.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
-    else
-        button.Text = "Anti-Fling: OFF"
-        button.BackgroundColor3 = Color3.fromRGB(140, 0, 0)
-    end
-end)
+local function IsSheriff(p)
+    if p == player then return false end
+    if not p.Character then return false end
+    local found = p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun")
+    return found ~= nil
+end
 
-game:GetService("RunService").RenderStepped:Connect(function()
-    if not antiFlingActive then return end
-    local char = player.Character
-    if not char then return end
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not root then return end
-    if root.Velocity.Magnitude > 300 then
-        root.Velocity = Vector3.new(0, 0, 0)
-    end
-    if root.Position.Y < -30 then
-        root.CFrame = CFrame.new(0, 10, 0)
-        root.Velocity = Vector3.new(0, 0, 0)
-    end
-end)
-
----------------------------------------------------------
--- ФУНКЦІЇ ДЛЯ МАРДЕРА
----------------------------------------------------------
 local function GetMurdererHead()
-    for _, p in pairs(game.Players:GetPlayers()) do
-        if p ~= player and p.Character and p.Character:FindFirstChild("Head") then
-            if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
-                return p.Character.Head
-            end
+    for _, p in ipairs(Players:GetPlayers()) do
+        if IsMurderer(p) and p.Character:FindFirstChild("Head") then
+            return p.Character.Head
         end
     end
     return nil
 end
 
 local function GetMurdererRoot()
-    for _, p in pairs(game.Players:GetPlayers()) do
-        if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
-                return p.Character.HumanoidRootPart
+    for _, p in ipairs(Players:GetPlayers()) do
+        if IsMurderer(p) and p.Character:FindFirstChild("HumanoidRootPart") then
+            return p.Character.HumanoidRootPart
+        end
+    end
+    return nil
+end
+
+---------------------------------------------------------
+-- УДАЛИТЬ СТАРОЕ МЕНЮ (при повторном запуске)
+---------------------------------------------------------
+local oldGui = player.PlayerGui:FindFirstChild("MM2PremiumV5")
+if oldGui then oldGui:Destroy() end
+
+---------------------------------------------------------
+-- СОЗДАНИЕ GUI
+---------------------------------------------------------
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MM2PremiumV5"
+ScreenGui.Parent = player.PlayerGui
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+---------------------------------------------------------
+-- ЦВЕТОВАЯ ПАЛИТРА
+---------------------------------------------------------
+local Colors = {
+    bg = Color3.fromRGB(12, 10, 18),
+    surface = Color3.fromRGB(22, 18, 32),
+    elevated = Color3.fromRGB(32, 26, 48),
+    accent = Color3.fromRGB(130, 60, 230),
+    accentLight = Color3.fromRGB(160, 100, 255),
+    green = Color3.fromRGB(40, 180, 80),
+    red = Color3.fromRGB(200, 50, 60),
+    orange = Color3.fromRGB(230, 130, 40),
+    text = Color3.fromRGB(240, 240, 245),
+    textDim = Color3.fromRGB(140, 130, 160),
+    separator = Color3.fromRGB(100, 80, 150),
+}
+
+---------------------------------------------------------
+-- 1. КНОПКА-ПЕРЕМИКАЧ (кругла, с анимацией)
+---------------------------------------------------------
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Name = "ToggleBtn"
+ToggleBtn.Size = UDim2.new(0, 52, 0, 52)
+ToggleBtn.Position = UDim2.new(0.5, -26, 0, 8)
+ToggleBtn.BackgroundColor3 = Colors.accent
+ToggleBtn.Text = "idk"
+ToggleBtn.TextColor3 = Colors.text
+ToggleBtn.TextSize = 15
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.AutoButtonColor = false
+ToggleBtn.Parent = ScreenGui
+
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(1, 0)
+ToggleCorner.Parent = ToggleBtn
+
+local ToggleStroke = Instance.new("UIStroke")
+ToggleStroke.Color = Colors.accentLight
+ToggleStroke.Thickness = 2
+ToggleStroke.Transparency = 0.3
+ToggleStroke.Parent = ToggleBtn
+
+-- Hover-эффект
+ToggleBtn.MouseEnter:Connect(function()
+    TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 58, 0, 58), Position = UDim2.new(0.5, -29, 0, 5)}):Play()
+end)
+ToggleBtn.MouseLeave:Connect(function()
+    TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 52, 0, 52), Position = UDim2.new(0.5, -26, 0, 8)}):Play()
+end)
+
+---------------------------------------------------------
+-- 2. ГЛАВНОЕ ОКНО
+---------------------------------------------------------
+local MainWindow = Instance.new("Frame")
+MainWindow.Name = "MainWindow"
+MainWindow.Size = UDim2.new(0, 380, 0, 420)
+MainWindow.Position = UDim2.new(0.5, -190, 0.5, -210)
+MainWindow.BackgroundColor3 = Colors.bg
+MainWindow.BorderSizePixel = 0
+MainWindow.Visible = false
+MainWindow.Parent = ScreenGui
+
+local WindowCorner = Instance.new("UICorner")
+WindowCorner.CornerRadius = UDim.new(0, 12)
+WindowCorner.Parent = MainWindow
+
+local WindowStroke = Instance.new("UIStroke")
+WindowStroke.Color = Colors.accent
+WindowStroke.Thickness = 1.5
+WindowStroke.Transparency = 0.5
+WindowStroke.Parent = MainWindow
+
+-- Тень
+local Shadow = Instance.new("ImageLabel")
+Shadow.Name = "Shadow"
+Shadow.Size = UDim2.new(1, 30, 1, 30)
+Shadow.Position = UDim2.new(0, -15, 0, -15)
+Shadow.BackgroundTransparency = 1
+Shadow.Image = "rbxassetid://6014054562"
+Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+Shadow.ImageTransparency = 0.5
+Shadow.ScaleType = Enum.ScaleType.Slice
+Shadow.SliceCenter = Rect.new(49, 49, 450, 450)
+Shadow.ZIndex = -1
+Shadow.Parent = MainWindow
+
+---------------------------------------------------------
+-- ПЕРЕТАСКИВАНИЕ ОКНА (ручное, без deprecated Draggable)
+---------------------------------------------------------
+local TopBar = Instance.new("Frame")
+TopBar.Name = "TopBar"
+TopBar.Size = UDim2.new(1, 0, 0, 42)
+TopBar.BackgroundColor3 = Colors.surface
+TopBar.BorderSizePixel = 0
+TopBar.Parent = MainWindow
+
+local TopBarCorner = Instance.new("UICorner")
+TopBarCorner.CornerRadius = UDim.new(0, 12)
+TopBarCorner.Parent = TopBar
+
+-- Нижние углы топбара не скругляем — фикс
+local TopBarFix = Instance.new("Frame")
+TopBarFix.Size = UDim2.new(1, 0, 0, 14)
+TopBarFix.Position = UDim2.new(0, 0, 1, -14)
+TopBarFix.BackgroundColor3 = Colors.surface
+TopBarFix.BorderSizePixel = 0
+TopBarFix.Parent = TopBar
+
+-- Заголовок
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -50, 1, 0)
+Title.Position = UDim2.new(0, 14, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "idk MM2 Premium v5.0"
+Title.TextColor3 = Colors.text
+Title.TextSize = 16
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TopBar
+
+-- Версия / статус
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(0, 80, 1, 0)
+StatusLabel.Position = UDim2.new(1, -90, 0, 0)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "● Active"
+StatusLabel.TextColor3 = Colors.green
+StatusLabel.TextSize = 11
+StatusLabel.Font = Enum.Font.GothamSemibold
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Right
+StatusLabel.Parent = TopBar
+
+-- Drag-логика
+do
+    local dragging = false
+    local dragStart, startPos
+
+    TopBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or
+           input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = MainWindow.Position
+        end
+    end)
+
+    TopBar.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or
+           input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or
+           input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            MainWindow.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+-- Toggle видимость с анимацией
+ToggleBtn.MouseButton1Click:Connect(function()
+    if MainWindow.Visible then
+        local tween = TweenService:Create(MainWindow, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 380, 0, 0),
+        })
+        tween:Play()
+        tween.Completed:Connect(function()
+            MainWindow.Visible = false
+            MainWindow.Size = UDim2.new(0, 380, 0, 420)
+        end)
+    else
+        MainWindow.Size = UDim2.new(0, 380, 0, 0)
+        MainWindow.Visible = true
+        TweenService:Create(MainWindow, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 380, 0, 420),
+        }):Play()
+    end
+end)
+
+---------------------------------------------------------
+-- СКРОЛЛИНГ
+---------------------------------------------------------
+local ScrollHolder = Instance.new("ScrollingFrame")
+ScrollHolder.Name = "Content"
+ScrollHolder.Size = UDim2.new(1, -2, 1, -48)
+ScrollHolder.Position = UDim2.new(0, 1, 0, 46)
+ScrollHolder.BackgroundTransparency = 1
+ScrollHolder.BorderSizePixel = 0
+ScrollHolder.ScrollBarThickness = 4
+ScrollHolder.ScrollBarImageColor3 = Colors.accent
+ScrollHolder.ScrollBarImageTransparency = 0.3
+ScrollHolder.CanvasSize = UDim2.new(0, 0, 0, 0) -- будет динамический
+ScrollHolder.AutomaticCanvasSize = Enum.AutomaticSize.Y
+ScrollHolder.Parent = MainWindow
+
+local ListLayout = Instance.new("UIListLayout")
+ListLayout.Parent = ScrollHolder
+ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ListLayout.Padding = UDim.new(0, 5)
+
+local ContentPadding = Instance.new("UIPadding")
+ContentPadding.PaddingTop = UDim.new(0, 6)
+ContentPadding.PaddingBottom = UDim.new(0, 10)
+ContentPadding.PaddingLeft = UDim.new(0, 10)
+ContentPadding.PaddingRight = UDim.new(0, 10)
+ContentPadding.Parent = ScrollHolder
+
+---------------------------------------------------------
+-- ФАБРИКИ UI-ЭЛЕМЕНТОВ
+---------------------------------------------------------
+local layoutCounter = 0
+
+local function NextOrder()
+    layoutCounter = layoutCounter + 1
+    return layoutCounter
+end
+
+local function AddSeparator(text)
+    local order = NextOrder()
+    local Container = Instance.new("Frame")
+    Container.Size = UDim2.new(1, 0, 0, 24)
+    Container.BackgroundTransparency = 1
+    Container.LayoutOrder = order
+    Container.Parent = ScrollHolder
+
+    local Line1 = Instance.new("Frame")
+    Line1.Size = UDim2.new(0.15, 0, 0, 1)
+    Line1.Position = UDim2.new(0, 0, 0.5, 0)
+    Line1.BackgroundColor3 = Colors.separator
+    Line1.BorderSizePixel = 0
+    Line1.Parent = Container
+
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(0.7, 0, 1, 0)
+    Label.Position = UDim2.new(0.15, 0, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = text
+    Label.TextColor3 = Colors.accentLight
+    Label.TextSize = 11
+    Label.Font = Enum.Font.GothamBold
+    Label.Parent = Container
+
+    local Line2 = Instance.new("Frame")
+    Line2.Size = UDim2.new(0.15, 0, 0, 1)
+    Line2.Position = UDim2.new(0.85, 0, 0.5, 0)
+    Line2.BackgroundColor3 = Colors.separator
+    Line2.BorderSizePixel = 0
+    Line2.Parent = Container
+end
+
+local function AddToggleButton(text, defaultState, callback)
+    local order = NextOrder()
+    local active = defaultState or false
+
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(1, 0, 0, 34)
+    Btn.BackgroundColor3 = active and Colors.green or Colors.elevated
+    Btn.Text = ""
+    Btn.AutoButtonColor = false
+    Btn.LayoutOrder = order
+    Btn.Parent = ScrollHolder
+
+    local BtnCorner = Instance.new("UICorner")
+    BtnCorner.CornerRadius = UDim.new(0, 6)
+    BtnCorner.Parent = Btn
+
+    -- Индикатор
+    local Indicator = Instance.new("Frame")
+    Indicator.Size = UDim2.new(0, 4, 0, 18)
+    Indicator.Position = UDim2.new(0, 8, 0.5, -9)
+    Indicator.BackgroundColor3 = active and Colors.green or Colors.textDim
+    Indicator.BorderSizePixel = 0
+    Indicator.Parent = Btn
+    Instance.new("UICorner", Indicator).CornerRadius = UDim.new(1, 0)
+
+    -- Текст
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(1, -60, 1, 0)
+    Label.Position = UDim2.new(0, 20, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = text
+    Label.TextColor3 = Colors.text
+    Label.TextSize = 13
+    Label.Font = Enum.Font.GothamSemibold
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Parent = Btn
+
+    -- Статус
+    local Status = Instance.new("TextLabel")
+    Status.Size = UDim2.new(0, 40, 1, 0)
+    Status.Position = UDim2.new(1, -48, 0, 0)
+    Status.BackgroundTransparency = 1
+    Status.Text = active and "ON" or "OFF"
+    Status.TextColor3 = active and Colors.green or Colors.textDim
+    Status.TextSize = 12
+    Status.Font = Enum.Font.GothamBold
+    Status.TextXAlignment = Enum.TextXAlignment.Right
+    Status.Parent = Btn
+
+    local function UpdateVisual()
+        local targetBg = active and Color3.fromRGB(25, 50, 35) or Colors.elevated
+        local targetInd = active and Colors.green or Colors.textDim
+        TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundColor3 = targetBg}):Play()
+        TweenService:Create(Indicator, TweenInfo.new(0.15), {BackgroundColor3 = targetInd}):Play()
+        Status.Text = active and "ON" or "OFF"
+        Status.TextColor3 = active and Colors.green or Colors.textDim
+    end
+
+    Btn.MouseButton1Click:Connect(function()
+        active = not active
+        UpdateVisual()
+        callback(active, Btn)
+    end)
+
+    if active then UpdateVisual() end
+
+    return function() return active end, function(state)
+        active = state
+        UpdateVisual()
+    end
+end
+
+local function AddActionButton(text, color, callback)
+    local order = NextOrder()
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(1, 0, 0, 34)
+    Btn.BackgroundColor3 = color or Colors.elevated
+    Btn.Text = ""
+    Btn.AutoButtonColor = false
+    Btn.LayoutOrder = order
+    Btn.Parent = ScrollHolder
+
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
+
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(1, -16, 1, 0)
+    Label.Position = UDim2.new(0, 8, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = text
+    Label.TextColor3 = Colors.text
+    Label.TextSize = 13
+    Label.Font = Enum.Font.GothamSemibold
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Parent = Btn
+
+    -- Hover
+    Btn.MouseEnter:Connect(function()
+        TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.new(
+            math.min(color.R + 0.08, 1), math.min(color.G + 0.08, 1), math.min(color.B + 0.08, 1)
+        )}):Play()
+    end)
+    Btn.MouseLeave:Connect(function()
+        TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundColor3 = color}):Play()
+    end)
+
+    Btn.MouseButton1Click:Connect(function()
+        callback(Btn, Label)
+    end)
+    return Btn, Label
+end
+
+local function AddTextInput(placeholder, defaultText)
+    local order = NextOrder()
+    local Box = Instance.new("TextBox")
+    Box.Size = UDim2.new(1, 0, 0, 32)
+    Box.BackgroundColor3 = Colors.elevated
+    Box.PlaceholderText = "  " .. placeholder
+    Box.PlaceholderColor3 = Colors.textDim
+    Box.Text = defaultText or ""
+    Box.TextColor3 = Colors.text
+    Box.TextSize = 13
+    Box.Font = Enum.Font.Gotham
+    Box.ClearTextOnFocus = false
+    Box.LayoutOrder = order
+    Box.Parent = ScrollHolder
+
+    Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 6)
+
+    local BoxStroke = Instance.new("UIStroke")
+    BoxStroke.Color = Colors.accent
+    BoxStroke.Thickness = 0
+    BoxStroke.Transparency = 0.5
+    BoxStroke.Parent = Box
+
+    Box.Focused:Connect(function()
+        TweenService:Create(BoxStroke, TweenInfo.new(0.15), {Thickness = 1.5}):Play()
+    end)
+    Box.FocusLost:Connect(function()
+        TweenService:Create(BoxStroke, TweenInfo.new(0.15), {Thickness = 0}):Play()
+    end)
+
+    return Box
+end
+
+---------------------------------------------------------
+-- ============ НАПОЛНЕНИЕ МЕНЮ ============
+---------------------------------------------------------
+
+---------------------------------------------------------
+-- СЕКЦИЯ: MAIN CHEATS
+---------------------------------------------------------
+AddSeparator("MAIN CHEATS")
+
+-- SPEED HACK
+local getSpeedState, setSpeedState = AddToggleButton("Speed Hack", false, function(active)
+    ClearConnection("speed")
+    if active then
+        connections["speed"] = RunService.Heartbeat:Connect(function()
+            local hum = GetHumanoid()
+            if hum then
+                hum.WalkSpeed = 45
+            end
+        end)
+    else
+        local hum = GetHumanoid()
+        if hum then hum.WalkSpeed = 16 end
+    end
+end)
+
+-- INFINITE JUMP (исправлен: Enum вместо строки)
+local getJumpState
+getJumpState = AddToggleButton("Infinite Jump", false, function(active)
+    ClearConnection("infjump")
+    if active then
+        connections["infjump"] = UserInputService.JumpRequest:Connect(function()
+            local hum = GetHumanoid()
+            if hum then
+                hum:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end)
+    end
+end)
+
+-- ANTI-FLING
+local getAntiFlingState
+getAntiFlingState, _ = AddToggleButton("Anti-Fling", true, function(active)
+    ClearConnection("antifling")
+    if active then
+        connections["antifling"] = RunService.Heartbeat:Connect(function()
+            local root = GetRoot()
+            if not root then return end
+            if root.AssemblyLinearVelocity.Magnitude > 250 then
+                root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+            end
+            if root.Position.Y < -50 then
+                root.CFrame = CFrame.new(0, 20, 0)
+                root.AssemblyLinearVelocity = Vector3.zero
+            end
+        end)
+    end
+end)
+
+-- Запуск Anti-Fling сразу (по умолчанию ON)
+do
+    connections["antifling"] = RunService.Heartbeat:Connect(function()
+        if not getAntiFlingState() then return end
+        local root = GetRoot()
+        if not root then return end
+        if root.AssemblyLinearVelocity.Magnitude > 250 then
+            root.AssemblyLinearVelocity = Vector3.zero
+        end
+        if root.Position.Y < -50 then
+            root.CFrame = CFrame.new(0, 20, 0)
+            root.AssemblyLinearVelocity = Vector3.zero
+        end
+    end)
+end
+
+---------------------------------------------------------
+-- СЕКЦИЯ: COMBAT
+---------------------------------------------------------
+AddSeparator("COMBAT")
+
+-- AIMBOT (камера — локальная, работает корректно)
+AddToggleButton("Aim at Murderer", false, function(active)
+    ClearConnection("aimbot")
+    if active then
+        connections["aimbot"] = RunService.RenderStepped:Connect(function()
+            local head = GetMurdererHead()
+            if head then
+                camera.CFrame = CFrame.new(camera.CFrame.Position, head.Position)
+            end
+        end)
+    end
+end)
+
+-- ФУНКЦИЯ ПОИСКА И СТРЕЛЬБЫ (улучшенная)
+local function FindGunTool()
+    local char = GetCharacter()
+    if not char then return nil end
+    for _, v in ipairs(char:GetChildren()) do
+        if v:IsA("Tool") then
+            local n = v.Name:lower()
+            if n:find("gun") or n:find("pistol") or n:find("revolver") or n == "gun" then
+                return v
             end
         end
     end
     return nil
 end
 
--- ПОЛИЧКА 2: FLING MURDERER
-AddSeparator("FLING SYSTEM", 5)
+local function AttemptShoot(targetHead)
+    if not targetHead then return false end
+    local tool = FindGunTool()
+    if not tool then return false end
 
-local flingMurdererActive = false
-AddCheatButton("Fling Murderer (BETA): OFF", 6, function(button)
-    flingMurdererActive = not flingMurdererActive
-    if flingMurdererActive then
-        button.Text = "Fling Murderer (BETA): ON"
-        button.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
-    else
-        button.Text = "Fling Murderer (BETA): OFF"
-        button.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
-    end
-end)
-
-game:GetService("RunService").RenderStepped:Connect(function()
-    if not flingMurdererActive then return end
-    local root = GetMurdererRoot()
-    if root then
-        root.CFrame = root.CFrame * CFrame.new(0, 5, 0) * CFrame.Angles(math.rad(15), math.rad(15), math.rad(15))
-        root.Velocity = Vector3.new(math.random(-500, 500), math.random(500, 1000), math.random(-500, 500))
-    end
-end)
-
--- ПОЛИЧКА 3: АІМБОТ
-AddSeparator("COMBAT SYSTEM", 7)
-
-local aimbotActive = false
-AddCheatButton("Aim Murderer: OFF", 8, function(button)
-    aimbotActive = not aimbotActive
-    if aimbotActive then
-        button.Text = "Aim Murderer: ON"
-        button.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
-    else
-        button.Text = "Aim Murderer: OFF"
-        button.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
-    end
-end)
-
-game:GetService("RunService").RenderStepped:Connect(function()
-    if aimbotActive then
-        local targetHead = GetMurdererHead()
-        if targetHead then
-            camera.CFrame = CFrame.new(camera.CFrame.Position, targetHead.Position)
-        end
-    end
-end)
-
----------------------------------------------------------
--- ФУНКЦІЯ ПОСТРІЛУ
----------------------------------------------------------
-local function FindAndShoot(targetHead)
-    local char = player.Character
-    if not char then return end
-    local tool = nil
-    for _, v in pairs(char:GetChildren()) do
-        if v:IsA("Tool") then
-            local n = v.Name:lower()
-            if n:find("gun") or n:find("pistol") or n:find("revolver") or n:find("shoot") then
-                tool = v
-                break
-            end
-        end
-    end
-    if not tool then return end
-    for _, v in pairs(tool:GetDescendants()) do
+    local remotes = {}
+    for _, v in ipairs(tool:GetDescendants()) do
         if v:IsA("RemoteEvent") then
-            pcall(function() v:FireServer(targetHead.Position, targetHead) end)
-            pcall(function() v:FireServer(targetHead) end)
-            pcall(function() v:FireServer(targetHead.Position) end)
-            return
+            table.insert(remotes, v)
         end
     end
+
+    if #remotes == 0 then return false end
+
+    local success = false
+    for _, remote in ipairs(remotes) do
+        local ok = pcall(function()
+            remote:FireServer(targetHead.Position, targetHead)
+        end)
+        if ok then success = true end
+
+        pcall(function()
+            remote:FireServer(targetHead)
+        end)
+
+        pcall(function()
+            remote:FireServer(targetHead.Position)
+        end)
+    end
+    return success
 end
 
 ---------------------------------------------------------
--- SHOT BUTTON
+-- SHOT BUTTON (экранная кнопка)
 ---------------------------------------------------------
 local ShotScreenBtn = Instance.new("TextButton")
-ShotScreenBtn.Size = UDim2.new(0, 120, 0, 50)
-ShotScreenBtn.Position = UDim2.new(0.85, -60, 0.5, -25)
-ShotScreenBtn.BackgroundColor3 = Color3.fromRGB(200, 30, 30)
-ShotScreenBtn.Text = "SHOT"
-ShotScreenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ShotScreenBtn.TextSize = 22
-ShotScreenBtn.Font = Enum.Font.SourceSansBold
+ShotScreenBtn.Size = UDim2.new(0, 110, 0, 44)
+ShotScreenBtn.Position = UDim2.new(1, -120, 0.5, -22)
+ShotScreenBtn.AnchorPoint = Vector2.new(0, 0)
+ShotScreenBtn.BackgroundColor3 = Colors.red
+ShotScreenBtn.Text = "⚡ SHOT"
+ShotScreenBtn.TextColor3 = Colors.text
+ShotScreenBtn.TextSize = 18
+ShotScreenBtn.Font = Enum.Font.GothamBold
 ShotScreenBtn.Visible = false
 ShotScreenBtn.ZIndex = 10
+ShotScreenBtn.AutoButtonColor = false
 ShotScreenBtn.Parent = ScreenGui
-Instance.new("UICorner", ShotScreenBtn).CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", ShotScreenBtn).CornerRadius = UDim.new(0, 10)
+Instance.new("UIStroke", ShotScreenBtn).Color = Color3.fromRGB(255, 100, 100)
 
 ShotScreenBtn.MouseButton1Click:Connect(function()
     local head = GetMurdererHead()
-    if head then FindAndShoot(head) end
-end)
-
-local shotActive = false
-AddCheatButton("Shot Button (BETA): OFF", 9, function(button)
-    shotActive = not shotActive
-    if shotActive then
-        button.Text = "Shot Button (BETA): ON"
-        button.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
-        ShotScreenBtn.Visible = true
-    else
-        button.Text = "Shot Button (BETA): OFF"
-        button.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
-        ShotScreenBtn.Visible = false
+    if head then
+        local result = AttemptShoot(head)
+        if result then
+            TweenService:Create(ShotScreenBtn, TweenInfo.new(0.1), {BackgroundColor3 = Colors.green}):Play()
+            task.delay(0.3, function()
+                TweenService:Create(ShotScreenBtn, TweenInfo.new(0.2), {BackgroundColor3 = Colors.red}):Play()
+            end)
+        end
     end
 end)
 
+AddToggleButton("Shot Button (Screen)", false, function(active)
+    ShotScreenBtn.Visible = active
+end)
+
 ---------------------------------------------------------
--- MAGIC SHOT (ВИПРАВЛЕНО)
+-- MAGIC SHOT (экранная кнопка)
 ---------------------------------------------------------
 local MagicScreenBtn = Instance.new("TextButton")
-MagicScreenBtn.Size = UDim2.new(0, 130, 0, 50)
-MagicScreenBtn.Position = UDim2.new(0.85, -65, 0.4, -25)
-MagicScreenBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 200)
-MagicScreenBtn.Text = "MAG SHOT"
-MagicScreenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-MagicScreenBtn.TextSize = 20
-MagicScreenBtn.Font = Enum.Font.SourceSansBold
+MagicScreenBtn.Size = UDim2.new(0, 120, 0, 44)
+MagicScreenBtn.Position = UDim2.new(1, -120, 0.5, -72)
+MagicScreenBtn.AnchorPoint = Vector2.new(0, 0)
+MagicScreenBtn.BackgroundColor3 = Colors.accent
+MagicScreenBtn.Text = "✦ MAGIC"
+MagicScreenBtn.TextColor3 = Colors.text
+MagicScreenBtn.TextSize = 18
+MagicScreenBtn.Font = Enum.Font.GothamBold
 MagicScreenBtn.Visible = false
 MagicScreenBtn.ZIndex = 10
+MagicScreenBtn.AutoButtonColor = false
 MagicScreenBtn.Parent = ScreenGui
-Instance.new("UICorner", MagicScreenBtn).CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", MagicScreenBtn).CornerRadius = UDim.new(0, 10)
+Instance.new("UIStroke", MagicScreenBtn).Color = Colors.accentLight
 
 MagicScreenBtn.MouseButton1Click:Connect(function()
     local head = GetMurdererHead()
     if not head then return end
-    local char = player.Character
-    if not char then return end
-    local root = char:FindFirstChild("HumanoidRootPart")
+    local root = GetRoot()
     if not root then return end
-    
-    local chance = math.random(1, 100)
-    if chance <= 70 then
-        local wasAntiFling = antiFlingActive
-        antiFlingActive = false
-        
-        local savedPos = root.CFrame
-        root.CFrame = CFrame.new(head.Position + Vector3.new(0, -2, 0))
-        
-        task.wait(0.2)
-        FindAndShoot(head)
-        task.wait(0.1)
-        
-        root.CFrame = savedPos
-        root.Velocity = Vector3.new(0, 0, 0)
-        antiFlingActive = wasAntiFling
-    else
-        FindAndShoot(head)
+
+    -- Временно отключить anti-fling
+    local wasAntiFling = getAntiFlingState()
+    ClearConnection("antifling")
+
+    local savedCFrame = root.CFrame
+
+    -- Телепорт к мардеру
+    root.CFrame = CFrame.new(head.Position + Vector3.new(0, -2, 3), head.Position)
+    task.wait(0.15)
+
+    -- Стрельба
+    AttemptShoot(head)
+    task.wait(0.1)
+
+    -- Возврат
+    root.CFrame = savedCFrame
+    root.AssemblyLinearVelocity = Vector3.zero
+
+    -- Восстановить anti-fling если было включено
+    if wasAntiFling then
+        connections["antifling"] = RunService.Heartbeat:Connect(function()
+            if not getAntiFlingState() then return end
+            local r = GetRoot()
+            if not r then return end
+            if r.AssemblyLinearVelocity.Magnitude > 250 then
+                r.AssemblyLinearVelocity = Vector3.zero
+            end
+        end)
     end
+
+    -- Визуальная обратная связь
+    TweenService:Create(MagicScreenBtn, TweenInfo.new(0.1), {BackgroundColor3 = Colors.green}):Play()
+    task.delay(0.4, function()
+        TweenService:Create(MagicScreenBtn, TweenInfo.new(0.2), {BackgroundColor3 = Colors.accent}):Play()
+    end)
 end)
 
-local magicActive = false
-AddCheatButton("Magic Shot (BETA): OFF", 10, function(button)
-    magicActive = not magicActive
-    if magicActive then
-        button.Text = "Magic Shot (BETA): ON"
-        button.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
-        MagicScreenBtn.Visible = true
-    else
-        button.Text = "Magic Shot (BETA): OFF"
-        button.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
-        MagicScreenBtn.Visible = false
-    end
+AddToggleButton("Magic Shot (Screen)", false, function(active)
+    MagicScreenBtn.Visible = active
 end)
 
 ---------------------------------------------------------
--- BOOMBOX В МЕНЮ
+-- СЕКЦИЯ: ESP
 ---------------------------------------------------------
-AddSeparator("🎵 BOOMBOX", 11)
+AddSeparator("ESP VISUALS")
 
-local AudioInput = Instance.new("TextBox")
-AudioInput.Size = UDim2.new(1, -24, 0, 32)
-AudioInput.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
-AudioInput.PlaceholderText = "  Audio ID..."
-AudioInput.Text = ""
-AudioInput.TextColor3 = Color3.fromRGB(235, 235, 235)
-AudioInput.TextSize = 13
-AudioInput.Font = Enum.Font.SourceSans
-AudioInput.LayoutOrder = 12
-AudioInput.Parent = ScrollHolder
-Instance.new("UICorner", AudioInput).CornerRadius = UDim.new(0, 5)
+-- Хранилище ESP-соединений
+local espConnections = {}
 
-local VolumeInput = Instance.new("TextBox")
-VolumeInput.Size = UDim2.new(1, -24, 0, 28)
-VolumeInput.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
-VolumeInput.PlaceholderText = "  Volume (1-5)"
-VolumeInput.Text = "2"
-VolumeInput.TextColor3 = Color3.fromRGB(235, 235, 235)
-VolumeInput.TextSize = 12
-VolumeInput.Font = Enum.Font.SourceSans
-VolumeInput.LayoutOrder = 13
-VolumeInput.Parent = ScrollHolder
-Instance.new("UICorner", VolumeInput).CornerRadius = UDim.new(0, 5)
-
-local BtnContainer = Instance.new("Frame")
-BtnContainer.Size = UDim2.new(1, -24, 0, 32)
-BtnContainer.BackgroundTransparency = 1
-BtnContainer.LayoutOrder = 14
-BtnContainer.Parent = ScrollHolder
-
-local BtnLayout = Instance.new("UIListLayout")
-BtnLayout.Parent = BtnContainer
-BtnLayout.FillDirection = Enum.FillDirection.Horizontal
-BtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
-BtnLayout.Padding = UDim.new(0, 8)
-
-local PlayBtn = Instance.new("TextButton")
-PlayBtn.Size = UDim2.new(0.48, 0, 1, 0)
-PlayBtn.Text = "PLAY"
-PlayBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
-PlayBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-PlayBtn.TextSize = 14
-PlayBtn.Font = Enum.Font.SourceSansBold
-PlayBtn.Parent = BtnContainer
-Instance.new("UICorner", PlayBtn).CornerRadius = UDim.new(0, 5)
-
-local StopBtn = Instance.new("TextButton")
-StopBtn.Size = UDim2.new(0.48, 0, 1, 0)
-StopBtn.Text = "STOP"
-StopBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-StopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-StopBtn.TextSize = 14
-StopBtn.Font = Enum.Font.SourceSansBold
-StopBtn.Parent = BtnContainer
-Instance.new("UICorner", StopBtn).CornerRadius = UDim.new(0, 5)
-
-local currentSound = nil
-
-local function setupSound()
-    local lp = player
-    if not lp or not lp.Character or not lp.Character:FindFirstChild("HumanoidRootPart") then return nil end
-    if currentSound then currentSound:Destroy() end
-    currentSound = Instance.new("Sound")
-    currentSound.Parent = lp.Character.HumanoidRootPart
-    currentSound.Looped = true
-    return currentSound
-end
-
-PlayBtn.MouseButton1Click:Connect(function()
-    local audioId = tonumber(AudioInput.Text)
-    local vol = tonumber(VolumeInput.Text) or 2
-    if audioId then
-        local sound = setupSound()
-        if sound then
-            sound.SoundId = "rbxassetid://" .. audioId
-            sound.Volume = vol
-            sound:Play()
-        end
-    end
-end)
-
-StopBtn.MouseButton1Click:Connect(function()
-    if currentSound then
-        currentSound:Stop()
-        currentSound:Destroy()
-        currentSound = nil
-    end
-end)
-
-player.CharacterAdded:Connect(function()
-    task.wait(1)
-    if currentSound and AudioInput.Text ~= "" then
-        local audioId = tonumber(AudioInput.Text)
-        local vol = tonumber(VolumeInput.Text) or 2
-        local sound = setupSound()
-        if sound and audioId then
-            sound.SoundId = "rbxassetid://" .. audioId
-            sound.Volume = vol
-            sound:Play()
-        end
-    end
-end)
-
--- Кнопка швидкого вибору ГОРІЛКА РЕМІКС
-AddCheatButton("🍺 ГОРІЛКА РЕМІКС", 14.5, function(button)
-    if currentSound then
-        currentSound:Stop()
-        currentSound:Destroy()
-        currentSound = nil
-    end
-    AudioInput.Text = "88468023940029"
-    VolumeInput.Text = "2"
-    local sound = setupSound()
-    if sound then
-        sound.SoundId = "rbxassetid://88468023940029"
-        sound.Volume = 2
-        sound:Play()
-        button.Text = "🍺 ГРАЄ ГОРІЛКА..."
-        button.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-        task.wait(2)
-        button.Text = "🍺 ГОРІЛКА РЕМІКС"
-        button.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
-    end
-end)
-
--- ПОЛИЧКА 4: ESP
-AddSeparator("ESP VISUALS", 15)
-
-local function ApplyESP(targetPlayer, color)
-    if targetPlayer == player then return end
-    local function addHighlights(char)
-        if not char then return end
-        if char:FindFirstChild("MenuESP") then char.MenuESP:Destroy() end
-        local Highlight = Instance.new("Highlight")
-        Highlight.Name = "MenuESP"
-        Highlight.FillColor = color
-        Highlight.FillTransparency = 0.4
-        Highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-        Highlight.Adornee = char
-        Highlight.Parent = char
-    end
-    if targetPlayer.Character then addHighlights(targetPlayer.Character) end
-    targetPlayer.CharacterAdded:Connect(addHighlights)
-end
-
-local function ClearESP()
-    for _, p in pairs(game.Players:GetPlayers()) do
+local function ClearAllESP()
+    for _, p in ipairs(Players:GetPlayers()) do
         if p.Character and p.Character:FindFirstChild("MenuESP") then
             p.Character.MenuESP:Destroy()
         end
     end
+    for key, conn in pairs(espConnections) do
+        if typeof(conn) == "RBXScriptConnection" then
+            conn:Disconnect()
+        end
+        espConnections[key] = nil
+    end
 end
 
-local espAllActive = false
-AddCheatButton("ESP All Players: OFF", 16, function(button)
-    espAllActive = not espAllActive
-    if espAllActive then
-        button.Text = "ESP All Players: ON"
-        button.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
-        for _, p in pairs(game.Players:GetPlayers()) do
-            ApplyESP(p, Color3.fromRGB(255, 255, 255))
+local function ApplyHighlight(char, color)
+    if not char then return end
+    if char:FindFirstChild("MenuESP") then char.MenuESP:Destroy() end
+
+    local hl = Instance.new("Highlight")
+    hl.Name = "MenuESP"
+    hl.FillColor = color
+    hl.FillTransparency = 0.35
+    hl.OutlineColor = Color3.new(1, 1, 1)
+    hl.OutlineTransparency = 0.3
+    hl.Adornee = char
+    hl.Parent = char
+end
+
+local function ApplyESPToPlayer(p, color)
+    if p == player then return end
+    if p.Character then
+        ApplyHighlight(p.Character, color)
+    end
+    local connKey = "esp_char_" .. p.UserId
+    if espConnections[connKey] then espConnections[connKey]:Disconnect() end
+    espConnections[connKey] = p.CharacterAdded:Connect(function(char)
+        task.wait(0.5)
+        ApplyHighlight(char, color)
+    end)
+end
+
+-- ESP ALL
+local getESPAllState
+getESPAllState = AddToggleButton("ESP All Players", false, function(active)
+    ClearAllESP()
+    ClearConnection("esp_new_player")
+    if active then
+        for _, p in ipairs(Players:GetPlayers()) do
+            ApplyESPToPlayer(p, Color3.fromRGB(220, 220, 255))
         end
-    else
-        button.Text = "ESP All Players: OFF"
-        button.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
-        ClearESP()
+        connections["esp_new_player"] = Players.PlayerAdded:Connect(function(p)
+            if getESPAllState() then
+                ApplyESPToPlayer(p, Color3.fromRGB(220, 220, 255))
+            end
+        end)
     end
 end)
 
-local espRolesActive = false
-AddCheatButton("ESP Roles (MM2): OFF", 17, function(button)
-    espRolesActive = not espRolesActive
-    if espRolesActive then
-        button.Text = "ESP Roles (MM2): ON"
-        button.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
-        for _, p in pairs(game.Players:GetPlayers()) do
-            if p.Backpack:FindFirstChild("Knife") or (p.Character and p.Character:FindFirstChild("Knife")) then
-                ApplyESP(p, Color3.fromRGB(255, 0, 0))
-            elseif p.Backpack:FindFirstChild("Gun") or (p.Character and p.Character:FindFirstChild("Gun")) then
-                ApplyESP(p, Color3.fromRGB(0, 100, 255))
-            else
-                ApplyESP(p, Color3.fromRGB(0, 255, 100))
+-- ESP ROLES (постоянно обновляется)
+local getESPRolesState
+getESPRolesState = AddToggleButton("ESP Roles (Live)", false, function(active)
+    ClearAllESP()
+    ClearConnection("esp_roles_loop")
+    ClearConnection("esp_roles_new")
+    if active then
+        local function UpdateRoles()
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p == player then continue end
+                if not p.Character then continue end
+                if IsMurderer(p) then
+                    ApplyHighlight(p.Character, Color3.fromRGB(255, 40, 40))
+                elseif IsSheriff(p) then
+                    ApplyHighlight(p.Character, Color3.fromRGB(40, 100, 255))
+                else
+                    ApplyHighlight(p.Character, Color3.fromRGB(40, 230, 100))
+                end
             end
         end
-    else
-        button.Text = "ESP Roles (MM2): OFF"
-        button.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
-        ClearESP()
+
+        UpdateRoles()
+
+        -- Обновление каждые 2 секунды
+        connections["esp_roles_loop"] = RunService.Heartbeat:Connect(function()
+            -- Throttle: обновляем каждые 120 кадров (~2 секунды)
+            if not connections["_esp_counter"] then connections["_esp_counter"] = 0 end
+            connections["_esp_counter"] = connections["_esp_counter"] + 1
+            if connections["_esp_counter"] >= 120 then
+                connections["_esp_counter"] = 0
+                UpdateRoles()
+            end
+        end)
+
+        connections["esp_roles_new"] = Players.PlayerAdded:Connect(function(p)
+            p.CharacterAdded:Connect(function()
+                task.wait(1)
+                if getESPRolesState() then UpdateRoles() end
+            end)
+        end)
     end
 end)
+
+---------------------------------------------------------
+-- СЕКЦИЯ: BOOMBOX
+---------------------------------------------------------
+AddSeparator("🎵 BOOMBOX")
+
+local AudioInput = AddTextInput("Audio ID...", "")
+local VolumeInput = AddTextInput("Volume (0.5 - 5)", "2")
+
+-- Boombox управление
+local currentSound = nil
+
+local function CreateAndPlaySound(audioId, volume)
+    -- Уничтожить старый звук
+    if currentSound then
+        pcall(function() currentSound:Stop() end)
+        pcall(function() currentSound:Destroy() end)
+        currentSound = nil
+    end
+
+    local root = GetRoot()
+    if not root then return false end
+
+    local id = tonumber(audioId)
+    if not id then return false end
+
+    local vol = tonumber(volume) or 2
+    vol = math.clamp(vol, 0, 5)
+
+    local sound = Instance.new("Sound")
+    sound.SoundId = "rbxassetid://" .. id
+    sound.Volume = vol
+    sound.Looped = true
+    sound.Parent = root
+    sound:Play()
+
+    currentSound = sound
+    return true
+end
+
+local function StopCurrentSound()
+    if currentSound then
+        pcall(function() currentSound:Stop() end)
+        pcall(function() currentSound:Destroy() end)
+        currentSound = nil
+    end
+end
+
+-- Кнопки Play/Stop
+do
+    local order = NextOrder()
+    local BtnContainer = Instance.new("Frame")
+    BtnContainer.Size = UDim2.new(1, 0, 0, 34)
+    BtnContainer.BackgroundTransparency = 1
+    BtnContainer.LayoutOrder = order
+    BtnContainer.Parent = ScrollHolder
+
+    local BtnLayout = Instance.new("UIListLayout")
+    BtnLayout.Parent = BtnContainer
+    BtnLayout.FillDirection = Enum.FillDirection.Horizontal
+    BtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    BtnLayout.Padding = UDim.new(0, 8)
+
+    local PlayBtn = Instance.new("TextButton")
+    PlayBtn.Size = UDim2.new(0.48, 0, 1, 0)
+    PlayBtn.BackgroundColor3 = Colors.green
+    PlayBtn.Text = "▶ PLAY"
+    PlayBtn.TextColor3 = Colors.text
+    PlayBtn.TextSize = 14
+    PlayBtn.Font = Enum.Font.GothamBold
+    PlayBtn.AutoButtonColor = false
+    PlayBtn.Parent = BtnContainer
+    Instance.new("UICorner", PlayBtn).CornerRadius = UDim.new(0, 6)
+
+    local StopBtn = Instance.new("TextButton")
+    StopBtn.Size = UDim2.new(0.48, 0, 1, 0)
+    StopBtn.BackgroundColor3 = Colors.red
+    StopBtn.Text = "■ STOP"
+    StopBtn.TextColor3 = Colors.text
+    StopBtn.TextSize = 14
+    StopBtn.Font = Enum.Font.GothamBold
+    StopBtn.AutoButtonColor = false
+    StopBtn.Parent = BtnContainer
+    Instance.new("UICorner", StopBtn).CornerRadius = UDim.new(0, 6)
+
+    PlayBtn.MouseButton1Click:Connect(function()
+        local ok = CreateAndPlaySound(AudioInput.Text, VolumeInput.Text)
+        if ok then
+            TweenService:Create(PlayBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(80, 255, 120)}):Play()
+            task.delay(0.3, function()
+                TweenService:Create(PlayBtn, TweenInfo.new(0.2), {BackgroundColor3 = Colors.green}):Play()
+            end)
+        end
+    end)
+
+    StopBtn.MouseButton1Click:Connect(function()
+        StopCurrentSound()
+    end)
+end
+
+-- При респавне — перезапуск звука
+player.CharacterAdded:Connect(function()
+    task.wait(1.5)
+    if AudioInput.Text ~= "" and currentSound == nil then
+        -- Звук был уничтожен вместе с персонажем — пересоздаём
+        return
+    end
+    -- Если звук играл, пересоздаём
+    local wasPlaying = currentSound ~= nil
+    currentSound = nil -- старый уничтожен с персонажем
+    if wasPlaying and AudioInput.Text ~= "" then
+        CreateAndPlaySound(AudioInput.Text, VolumeInput.Text)
+    end
+end)
+
+-- БЫСТРЫЙ ТРЕК
+AddActionButton("🍺 ГОРІЛКА РЕМІКС", Colors.elevated, function(btn, label)
+    AudioInput.Text = "88468023940029"
+    VolumeInput.Text = "2"
+    local ok = CreateAndPlaySound("88468023940029", "2")
+    if ok then
+        label.Text = "🍺 Грає..."
+        label.TextColor3 = Colors.green
+        task.delay(2, function()
+            label.Text = "🍺 ГОРІЛКА РЕМІКС"
+            label.TextColor3 = Colors.text
+        end)
+    end
+end)
+
+---------------------------------------------------------
+-- СЕКЦИЯ: INFO
+---------------------------------------------------------
+AddSeparator("INFO")
+
+do
+    local order = NextOrder()
+    local InfoFrame = Instance.new("Frame")
+    InfoFrame.Size = UDim2.new(1, 0, 0, 60)
+    InfoFrame.BackgroundColor3 = Colors.surface
+    InfoFrame.LayoutOrder = order
+    InfoFrame.Parent = ScrollHolder
+    Instance.new("UICorner", InfoFrame).CornerRadius = UDim.new(0, 6)
+
+    local InfoText = Instance.new("TextLabel")
+    InfoText.Size = UDim2.new(1, -16, 1, -8)
+    InfoText.Position = UDim2.new(0, 8, 0, 4)
+    InfoText.BackgroundTransparency = 1
+    InfoText.Text = "v5.0 | Fixed: Draggable, ChangeState, ESP live update,\nconnection management, CharacterAdded sound,\nfling removed (client cant move others)"
+    InfoText.TextColor3 = Colors.textDim
+    InfoText.TextSize = 10
+    InfoText.Font = Enum.Font.Gotham
+    InfoText.TextXAlignment = Enum.TextXAlignment.Left
+    InfoText.TextYAlignment = Enum.TextYAlignment.Top
+    InfoText.TextWrapped = true
+    InfoText.Parent = InfoFrame
+end
+
+---------------------------------------------------------
+-- DESTROY BUTTON
+---------------------------------------------------------
+AddActionButton("🗑 Destroy Menu", Colors.red, function()
+    -- Отключить все соединения
+    for key, conn in pairs(connections) do
+        if typeof(conn) == "RBXScriptConnection" then
+            conn:Disconnect()
+        end
+    end
+    ClearAllESP()
+    StopCurrentSound()
+
+    -- Сбросить скорость
+    local hum = GetHumanoid()
+    if hum then hum.WalkSpeed = 16 end
+
+    -- Убрать экранные кнопки и меню
+    ShotScreenBtn:Destroy()
+    MagicScreenBtn:Destroy()
+    ScreenGui:Destroy()
+end)
+
+---------------------------------------------------------
+-- УВЕДОМЛЕНИЕ О ЗАГРУЗКЕ
+---------------------------------------------------------
+do
+    local Notif = Instance.new("TextLabel")
+    Notif.Size = UDim2.new(0, 260, 0, 36)
+    Notif.Position = UDim2.new(0.5, -130, 1, -50)
+    Notif.BackgroundColor3 = Colors.accent
+    Notif.TextColor3 = Colors.text
+    Notif.Text = "  idk MM2 Premium v5.0 loaded ✓"
+    Notif.TextSize = 13
+    Notif.Font = Enum.Font.GothamBold
+    Notif.TextXAlignment = Enum.TextXAlignment.Center
+    Notif.Parent = ScreenGui
+    Instance.new("UICorner", Notif).CornerRadius = UDim.new(0, 8)
+
+    task.delay(3, function()
+        TweenService:Create(Notif, TweenInfo.new(0.5), {
+            Position = UDim2.new(0.5, -130, 1, 50),
+            BackgroundTransparency = 1,
+            TextTransparency = 1
+        }):Play()
+        task.delay(0.6, function() Notif:Destroy() end)
+    end)
+end
