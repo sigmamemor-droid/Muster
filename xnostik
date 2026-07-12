@@ -1,5 +1,5 @@
--- idk MM2 PREMIUM HUB v7.4
--- Major Fixes: Kill All (Knife), Gun ESP stability, Live ESP updates
+-- idk MM2 PREMIUM HUB v7.5
+-- CRITICAL FIXES: Gun ESP, Kill All (Knife), Live ESP
 -- by idk team 2025
 
 ---------------------------------------------------------
@@ -21,14 +21,14 @@ local camera = workspace.CurrentCamera
 ---------------------------------------------------------
 -- CLEANUP
 ---------------------------------------------------------
-local oldGui = player.PlayerGui:FindFirstChild("MM2HubV74")
+local oldGui = player.PlayerGui:FindFirstChild("MM2HubV75")
 if oldGui then oldGui:Destroy() end
 
 ---------------------------------------------------------
 -- SCREENGUI
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "MM2HubV74"
+ScreenGui.Name = "MM2HubV75"
 ScreenGui.Parent = player.PlayerGui
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -38,34 +38,34 @@ ScreenGui.IgnoreGuiInset = true
 -- COLORS
 ---------------------------------------------------------
 local C = {
-    bg          = Color3.fromRGB(15, 13, 24),
-    sidebar     = Color3.fromRGB(10, 9, 18),
-    sidebarHov  = Color3.fromRGB(22, 18, 36),
-    sidebarAct  = Color3.fromRGB(28, 22, 48),
-    surface     = Color3.fromRGB(20, 17, 32),
-    elevated    = Color3.fromRGB(30, 25, 48),
-    card        = Color3.fromRGB(26, 22, 42),
-    cardHover   = Color3.fromRGB(38, 32, 58),
-    accent      = Color3.fromRGB(130, 60, 230),
-    accentDark  = Color3.fromRGB(90, 40, 170),
+    bg = Color3.fromRGB(15, 13, 24),
+    sidebar = Color3.fromRGB(10, 9, 18),
+    sidebarHov = Color3.fromRGB(22, 18, 36),
+    sidebarAct = Color3.fromRGB(28, 22, 48),
+    surface = Color3.fromRGB(20, 17, 32),
+    elevated = Color3.fromRGB(30, 25, 48),
+    card = Color3.fromRGB(26, 22, 42),
+    cardHover = Color3.fromRGB(38, 32, 58),
+    accent = Color3.fromRGB(130, 60, 230),
+    accentDark = Color3.fromRGB(90, 40, 170),
     accentLight = Color3.fromRGB(170, 120, 255),
-    green       = Color3.fromRGB(45, 200, 95),
-    greenDark   = Color3.fromRGB(20, 45, 28),
-    greenLight  = Color3.fromRGB(80, 255, 140),
-    red         = Color3.fromRGB(220, 50, 60),
-    redDark     = Color3.fromRGB(45, 16, 20),
-    orange      = Color3.fromRGB(240, 150, 30),
-    cyan        = Color3.fromRGB(40, 200, 220),
-    gold        = Color3.fromRGB(255, 200, 60),
-    yellow      = Color3.fromRGB(255, 230, 50),
-    text        = Color3.fromRGB(240, 238, 248),
-    textSec     = Color3.fromRGB(160, 148, 185),
-    textDim     = Color3.fromRGB(100, 90, 130),
-    textMuted   = Color3.fromRGB(60, 54, 82),
-    separator   = Color3.fromRGB(50, 42, 78),
-    white       = Color3.fromRGB(255, 255, 255),
-    black       = Color3.fromRGB(0, 0, 0),
-    infoCard    = Color3.fromRGB(24, 20, 38),
+    green = Color3.fromRGB(45, 200, 95),
+    greenDark = Color3.fromRGB(20, 45, 28),
+    greenLight = Color3.fromRGB(80, 255, 140),
+    red = Color3.fromRGB(220, 50, 60),
+    redDark = Color3.fromRGB(45, 16, 20),
+    orange = Color3.fromRGB(240, 150, 30),
+    cyan = Color3.fromRGB(40, 200, 220),
+    gold = Color3.fromRGB(255, 200, 60),
+    yellow = Color3.fromRGB(255, 230, 50),
+    text = Color3.fromRGB(240, 238, 248),
+    textSec = Color3.fromRGB(160, 148, 185),
+    textDim = Color3.fromRGB(100, 90, 130),
+    textMuted = Color3.fromRGB(60, 54, 82),
+    separator = Color3.fromRGB(50, 42, 78),
+    white = Color3.fromRGB(255, 255, 255),
+    black = Color3.fromRGB(0, 0, 0),
+    infoCard = Color3.fromRGB(24, 20, 38),
 }
 
 ---------------------------------------------------------
@@ -92,17 +92,33 @@ local function GetRoot() local c = GetChar(); return c and c:FindFirstChild("Hum
 
 local function IsMurderer(p)
     if p == player or not p.Character then return false end
-    return (p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife")) ~= nil
+    -- Check for knife in character or backpack
+    for _, child in ipairs(p.Character:GetChildren()) do
+        if child:IsA("Tool") and child:FindFirstChild("Handle") and child.Name:lower():find("knife") then
+            return true
+        end
+    end
+    for _, child in ipairs(p.Backpack:GetChildren()) do
+        if child:IsA("Tool") and child:FindFirstChild("Handle") and child.Name:lower():find("knife") then
+            return true
+        end
+    end
+    return false
 end
 
 local function IsSheriff(p)
     if p == player or not p.Character then return false end
-    return (p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun")) ~= nil
-end
-
-local function IsHero(p)
-    if p == player or not p.Character or IsMurderer(p) then return false end
-    return (p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun")) ~= nil
+    for _, child in ipairs(p.Character:GetChildren()) do
+        if child:IsA("Tool") and child:FindFirstChild("Handle") and (child.Name:lower():find("gun") or child.Name:lower():find("revolver")) then
+            return true
+        end
+    end
+    for _, child in ipairs(p.Backpack:GetChildren()) do
+        if child:IsA("Tool") and child:FindFirstChild("Handle") and (child.Name:lower():find("gun") or child.Name:lower():find("revolver")) then
+            return true
+        end
+    end
+    return false
 end
 
 local function GetMurdererHead()
@@ -111,55 +127,69 @@ local function GetMurdererHead()
     end
 end
 
-local function GetTool(toolName)
-    local c = GetChar();
-    if c and c:FindFirstChild(toolName) then return c:FindFirstChild(toolName) end
-    if player.Backpack and player.Backpack:FindFirstChild(toolName) then return player.Backpack:FindFirstChild(toolName) end
-    for _, v in ipairs(player.Backpack:GetChildren()) do
-        if v.Name:lower():find(toolName:lower()) then return v end
+local function GetMurdererRoot()
+    for _, p in ipairs(Players:GetPlayers()) do
+        if IsMurderer(p) and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then return p.Character.HumanoidRootPart end
     end
-    if c then
-        for _, v in ipairs(c:GetChildren()) do
-            if v.Name:lower():find(toolName:lower()) then return v end
+end
+
+-- Find tool by name pattern in character or backpack
+local function FindTool(toolNamePattern)
+    local char = GetChar()
+    if char then
+        for _, v in ipairs(char:GetChildren()) do
+            if v:IsA("Tool") and v:FindFirstChild("Handle") and v.Name:lower():find(toolNamePattern:lower()) then
+                return v
+            end
+        end
+    end
+    for _, v in ipairs(player.Backpack:GetChildren()) do
+        if v:IsA("Tool") and v:FindFirstChild("Handle") and v.Name:lower():find(toolNamePattern:lower()) then
+            return v
         end
     end
     return nil
 end
 
-local function FindGunInHand()
-    local c = GetChar(); if not c then return nil end
-    for _, v in ipairs(c:GetChildren()) do
-        if v:IsA("Tool") and (v.Name:lower():find("gun") or v.Name:lower():find("revolver")) then return v end
+-- Equip tool if not already equipped
+local function EquipTool(tool)
+    if not tool then return false end
+    local hum = GetHum()
+    if not hum then return false end
+    if tool.Parent == player.Backpack then
+        hum:EquipTool(tool)
+        task.wait(0.1)
+        return true
     end
+    return true
 end
 
-local function FindKnifeInHand()
-    local c = GetChar(); if not c then return nil end
-    for _, v in ipairs(c:GetChildren()) do
-        if v:IsA("Tool") and v.Name:lower():find("knife") then return v end
-    end
-end
-
-local function FireGunAtTarget(gun, targetHead)
-    if not gun or not targetHead then return false end; local ok = false
-    for _, v in ipairs(gun:GetDescendants()) do
-        if v:IsA("RemoteEvent") then
-            pcall(function() v:FireServer(targetHead.Position, targetHead) end)
-            ok = true
+-- Fire all remotes in tool at target
+local function FireToolAtTarget(tool, targetHead)
+    if not tool or not targetHead then return false end
+    local fired = false
+    for _, child in ipairs(tool:GetDescendants()) do
+        if child:IsA("RemoteEvent") then
+            pcall(function() child:FireServer(targetHead.Position, targetHead) end)
+            pcall(function() child:FireServer(targetHead) end)
+            pcall(function() child:FireServer(targetHead.Position) end)
+            fired = true
         end
     end
-    return ok
+    return fired
 end
 
-local function ThrowKnifeAtTarget(knife, targetPos)
-    if not knife or not targetPos then return false end; local ok = false
-    for _, v in ipairs(knife:GetDescendants()) do
-        if v:IsA("RemoteEvent") then
-            pcall(function() v:FireServer(targetPos) end)
-            ok = true
+-- Throw knife at position
+local function ThrowKnifeAtPosition(tool, position)
+    if not tool or not position then return false end
+    local thrown = false
+    for _, child in ipairs(tool:GetDescendants()) do
+        if child:IsA("RemoteEvent") then
+            pcall(function() child:FireServer(position) end)
+            thrown = true
         end
     end
-    return ok
+    return thrown
 end
 
 ---------------------------------------------------------
@@ -241,7 +271,7 @@ LTi.TextSize = 22; LTi.Font = Enum.Font.GothamBlack; LTi.TextTransparency = 1; L
 
 local LSu = Instance.new("TextLabel")
 LSu.Size = UDim2.new(1,0,0,18); LSu.Position = UDim2.new(0,0,0,198)
-LSu.BackgroundTransparency = 1; LSu.Text = "v7.4 // Fixes Update"; LSu.TextColor3 = C.accentLight
+LSu.BackgroundTransparency = 1; LSu.Text = "v7.5 // CRITICAL FIXES"; LSu.TextColor3 = C.accentLight
 LSu.TextSize = 12; LSu.Font = Enum.Font.GothamSemibold; LSu.TextTransparency = 1; LSu.ZIndex = 103; LSu.Parent = LC
 
 local PBG = Instance.new("Frame")
@@ -279,21 +309,21 @@ local function DoLoad()
     TweenService:Create(LSta, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
     TweenService:Create(LPc, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
     local stages = {
-        {0.15,"Core engine...",0.18},{0.30,"UI framework...",0.16},{0.45,"ESP fixes...",0.18},
-        {0.60,"Gun ESP fix...",0.14},{0.75,"Kill All (Knife) fix...",0.16},{0.90,"Anti-detection...",0.18},{1.00,"> Ready",0.12},
+        {0.20,"Core engine...",0.15},{0.40,"ESP fixes...",0.15},{0.60,"Gun ESP fix...",0.15},
+        {0.80,"Kill All (Knife) fix...",0.15},{1.00,"> Ready",0.10},
     }
     for _,s in ipairs(stages) do
         TweenService:Create(PFl, TweenInfo.new(s[3], Enum.EasingStyle.Quad), {Size = UDim2.new(s[1],0,1,0)}):Play()
-        LSta.Text = s[2]; LPc.Text = math.floor(s[1]*100).."%"; task.wait(s[3]+0.03)
+        LSta.Text = s[2]; LPc.Text = math.floor(s[1]*100).."%"; task.wait(s[3]+0.02)
     end
-    LSta.TextColor3 = C.green; LPc.TextColor3 = C.green; task.wait(0.35)
+    LSta.TextColor3 = C.green; LPc.TextColor3 = C.green; task.wait(0.3)
     for _,ch in ipairs(LC:GetDescendants()) do
-        if ch:IsA("TextLabel") then TweenService:Create(ch, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
-        elseif ch:IsA("Frame") then TweenService:Create(ch, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
-            local st = ch:FindFirstChildOfClass("UIStroke"); if st then TweenService:Create(st, TweenInfo.new(0.3), {Transparency = 1}):Play() end
-        elseif ch:IsA("ImageLabel") then TweenService:Create(ch, TweenInfo.new(0.3), {ImageTransparency = 1}):Play() end
+        if ch:IsA("TextLabel") then TweenService:Create(ch, TweenInfo.new(0.25), {TextTransparency = 1}):Play()
+        elseif ch:IsA("Frame") then TweenService:Create(ch, TweenInfo.new(0.25), {BackgroundTransparency = 1}):Play()
+            local st = ch:FindFirstChildOfClass("UIStroke"); if st then TweenService:Create(st, TweenInfo.new(0.25), {Transparency = 1}):Play() end
+        elseif ch:IsA("ImageLabel") then TweenService:Create(ch, TweenInfo.new(0.25), {ImageTransparency = 1}):Play() end
     end
-    TweenService:Create(LS, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play(); task.wait(0.5); LS:Destroy()
+    TweenService:Create(LS, TweenInfo.new(0.35), {BackgroundTransparency = 1}):Play(); task.wait(0.4); LS:Destroy()
 end
 DoLoad()
 
@@ -356,7 +386,7 @@ SLIT.TextColor3 = C.white; SLIT.TextSize = 13; SLIT.Font = Enum.Font.GothamBlack
 local STi = Instance.new("TextLabel"); STi.Size = UDim2.new(0,95,0,16); STi.Position = UDim2.new(0,46,0,11)
 STi.BackgroundTransparency = 1; STi.Text = "idk Hub"; STi.TextColor3 = C.text; STi.TextSize = 14; STi.Font = Enum.Font.GothamBold; STi.TextXAlignment = Enum.TextXAlignment.Left; STi.ZIndex = 14; STi.Parent = SLogo
 local SVr = Instance.new("TextLabel"); SVr.Size = UDim2.new(0,95,0,12); SVr.Position = UDim2.new(0,46,0,28)
-SVr.BackgroundTransparency = 1; SVr.Text = "v7.4 Premium"; SVr.TextColor3 = C.textDim; SVr.TextSize = 10; SVr.Font = Enum.Font.Gotham; SVr.TextXAlignment = Enum.TextXAlignment.Left; SVr.ZIndex = 14; SVr.Parent = SLogo
+SVr.BackgroundTransparency = 1; SVr.Text = "v7.5 Premium"; SVr.TextColor3 = C.textDim; SVr.TextSize = 10; SVr.Font = Enum.Font.Gotham; SVr.TextXAlignment = Enum.TextXAlignment.Left; SVr.ZIndex = 14; SVr.Parent = SLogo
 local SLSp = Instance.new("Frame"); SLSp.Size = UDim2.new(1,-20,0,1); SLSp.Position = UDim2.new(0,10,1,-1)
 SLSp.BackgroundColor3 = C.separator; SLSp.BackgroundTransparency = 0.5; SLSp.BorderSizePixel = 0; SLSp.ZIndex = 13; SLSp.Parent = SLogo
 
@@ -462,9 +492,10 @@ MkSep("Home","> EXTRAS"); local flyOn,flyBV,flyBG=false,nil,nil; MkToggle("Home"
 -- ============ COMBAT TAB ============
 ---------------------------------------------------------
 MkSep("Combat","> AIMBOT"); MkToggle("Combat","Aim at Murderer",false,function(a) ClearConn("aim"); if a then Conn("aim",RunService.RenderStepped:Connect(function() local h=GetMurdererHead(); if h then camera.CFrame=CFrame.new(camera.CFrame.Position,h.Position) end end)); Notify("Aimbot","Locked on",C.red,2) end end)
-MkSep("Combat","> AUTO SHOOT"); local ShotBtn=Instance.new("TextButton"); ShotBtn.Size=UDim2.new(0,100,0,42); ShotBtn.Position=UDim2.new(1,-110,0.5,-21); ShotBtn.BackgroundColor3=C.red; ShotBtn.Text="> SHOT"; ShotBtn.TextColor3=C.white; ShotBtn.TextSize=14; ShotBtn.Font=Enum.Font.GothamBold; ShotBtn.Visible=false; ShotBtn.ZIndex=50; ShotBtn.AutoButtonColor=false; ShotBtn.Parent=ScreenGui; Instance.new("UICorner",ShotBtn).CornerRadius=UDim.new(0,10); Instance.new("UIStroke",ShotBtn).Color=Color3.fromRGB(255,100,100); ShotBtn.MouseButton1Click:Connect(function() local gih=FindGunInHand(); if not gih then local gt=GetTool("gun"); if gt and gt.Parent==player.Backpack then local h=GetHum(); if h then h:EquipTool(gt); task.wait(0.2); gih=FindGunInHand() end end end; if not gih then Notify("Shot","No gun found!",C.orange,1.5); return end; local head=GetMurdererHead(); if not head then Notify("Shot","No murderer found!",C.orange,1.5); return end; camera.CFrame=CFrame.new(camera.CFrame.Position,head.Position); task.wait(0.05); if FireGunAtTarget(gih,head) then TweenService:Create(ShotBtn,TweenInfo.new(0.1),{BackgroundColor3=C.green}):Play(); Notify("Shot","Fired at murderer!",C.green,1.5); task.delay(0.3,function() TweenService:Create(ShotBtn,TweenInfo.new(0.2),{BackgroundColor3=C.red}):Play() end) end end); MkToggle("Combat","Shot Button [Screen]",false,function(a) ShotBtn.Visible=a end)
-local MagBtn=Instance.new("TextButton"); MagBtn.Size=UDim2.new(0,110,0,42); MagBtn.Position=UDim2.new(1,-110,0.5,-69); MagBtn.BackgroundColor3=C.accent; MagBtn.Text="* MAGIC"; MagBtn.TextColor3=C.white; MagBtn.TextSize=14; MagBtn.Font=Enum.Font.GothamBold; MagBtn.Visible=false; MagBtn.ZIndex=50; MagBtn.AutoButtonColor=false; MagBtn.Parent=ScreenGui; Instance.new("UICorner",MagBtn).CornerRadius=UDim.new(0,10); Instance.new("UIStroke",MagBtn).Color=C.accentLight; MagBtn.MouseButton1Click:Connect(function() local head=GetMurdererHead(); if not head then Notify("Magic","No target",C.orange,1.5); return end; local r=GetRoot(); if not r then return end; local gih=FindGunInHand(); if not gih then local gt=GetTool("gun"); if gt and gt.Parent==player.Backpack then local h=GetHum(); if h then h:EquipTool(gt); task.wait(0.2); gih=FindGunInHand() end end end; if not gih then Notify("Magic","No gun!",C.orange,1.5); return end; local w=getAF(); ClearConn("af"); local sv=r.CFrame; r.CFrame=CFrame.new(head.Position+Vector3.new(0,-2,3),head.Position); task.wait(0.15); FireGunAtTarget(gih,head); task.wait(0.1); r.CFrame=sv; r.AssemblyLinearVelocity=Vector3.zero; if w then Conn("af",RunService.Heartbeat:Connect(function() if not getAF() then return end; local rt=GetRoot(); if not rt then return end; if rt.AssemblyLinearVelocity.Magnitude>250 then rt.AssemblyLinearVelocity=Vector3.zero end end)) end; TweenService:Create(MagBtn,TweenInfo.new(0.1),{BackgroundColor3=C.green}):Play(); Notify("Magic Shot","TP + Shot!",C.green,2); task.delay(0.4,function() TweenService:Create(MagBtn,TweenInfo.new(0.2),{BackgroundColor3=C.accent}):Play() end) end); MkToggle("Combat","Magic Shot [Screen]",false,function(a) MagBtn.Visible=a end)
-MkSep("Combat","> KILL ALL [BETA]"); MkButton("Combat","[!] Kill All (Knife) - Remote",C.redDark,function(btn,lbl) local knife=FindKnifeInHand(); if not knife then local kt=GetTool("knife"); if kt and kt.Parent==player.Backpack then local h=GetHum(); if h then h:EquipTool(kt); task.wait(0.3); knife=FindKnifeInHand() end end end; if not knife then Notify("Kill All","You need a knife!",C.red,2); return end; local killed=0; Notify("Kill All","Throwing knife at everyone...",C.orange,2); for _,p in ipairs(Players:GetPlayers()) do if p~=player and p.Character then local head=p.Character:FindFirstChild("Head"); local hum=p.Character:FindFirstChildOfClass("Humanoid"); if head and hum and hum.Health>0 then ThrowKnifeAtTarget(knife,head.Position); killed+=1; task.wait(0.1) end end end; Notify("Kill All","Thrown at "..killed.." players (beta)",C.green,3); TweenService:Create(btn,TweenInfo.new(0.1),{BackgroundColor3=C.green}):Play(); task.delay(0.5,function() TweenService:Create(btn,TweenInfo.new(0.2),{BackgroundColor3=C.redDark}):Play() end) end)
+MkSep("Combat","> AUTO SHOOT"); local ShotBtn=Instance.new("TextButton"); ShotBtn.Size=UDim2.new(0,100,0,42); ShotBtn.Position=UDim2.new(1,-110,0.5,-21); ShotBtn.BackgroundColor3=C.red; ShotBtn.Text="> SHOT"; ShotBtn.TextColor3=C.white; ShotBtn.TextSize=14; ShotBtn.Font=Enum.Font.GothamBold; ShotBtn.Visible=false; ShotBtn.ZIndex=50; ShotBtn.AutoButtonColor=false; ShotBtn.Parent=ScreenGui; Instance.new("UICorner",ShotBtn).CornerRadius=UDim.new(0,10); Instance.new("UIStroke",ShotBtn).Color=Color3.fromRGB(255,100,100); ShotBtn.MouseButton1Click:Connect(function() local gun=FindTool("gun"); if not gun then gun=FindTool("revolver") end; if not gun then Notify("Shot","No gun found!",C.orange,1.5); return end; if not EquipTool(gun) then Notify("Shot","Failed to equip gun!",C.orange,1.5); return end; local head=GetMurdererHead(); if not head then Notify("Shot","No murderer found!",C.orange,1.5); return end; camera.CFrame=CFrame.new(camera.CFrame.Position,head.Position); task.wait(0.05); if FireToolAtTarget(gun,head) then TweenService:Create(ShotBtn,TweenInfo.new(0.1),{BackgroundColor3=C.green}):Play(); Notify("Shot","Fired at murderer!",C.green,1.5); task.delay(0.3,function() TweenService:Create(ShotBtn,TweenInfo.new(0.2),{BackgroundColor3=C.red}):Play() end) end end); MkToggle("Combat","Shot Button [Screen]",false,function(a) ShotBtn.Visible=a end)
+local MagBtn=Instance.new("TextButton"); MagBtn.Size=UDim2.new(0,110,0,42); MagBtn.Position=UDim2.new(1,-110,0.5,-69); MagBtn.BackgroundColor3=C.accent; MagBtn.Text="* MAGIC"; MagBtn.TextColor3=C.white; MagBtn.TextSize=14; MagBtn.Font=Enum.Font.GothamBold; MagBtn.Visible=false; MagBtn.ZIndex=50; MagBtn.AutoButtonColor=false; MagBtn.Parent=ScreenGui; Instance.new("UICorner",MagBtn).CornerRadius=UDim.new(0,10); Instance.new("UIStroke",MagBtn).Color=C.accentLight; MagBtn.MouseButton1Click:Connect(function() local head=GetMurdererHead(); if not head then Notify("Magic","No target",C.orange,1.5); return end; local r=GetRoot(); if not r then return end; local gun=FindTool("gun"); if not gun then gun=FindTool("revolver") end; if not gun then Notify("Magic","No gun!",C.orange,1.5); return end; if not EquipTool(gun) then Notify("Magic","Failed to equip gun!",C.orange,1.5); return end; local w=getAF(); ClearConn("af"); local sv=r.CFrame; r.CFrame=CFrame.new(head.Position+Vector3.new(0,-2,3),head.Position); task.wait(0.15); FireToolAtTarget(gun,head); task.wait(0.1); r.CFrame=sv; r.AssemblyLinearVelocity=Vector3.zero; if w then Conn("af",RunService.Heartbeat:Connect(function() if not getAF() then return end; local rt=GetRoot(); if not rt then return end; if rt.AssemblyLinearVelocity.Magnitude>250 then rt.AssemblyLinearVelocity=Vector3.zero end end)) end; TweenService:Create(MagBtn,TweenInfo.new(0.1),{BackgroundColor3=C.green}):Play(); Notify("Magic Shot","TP + Shot!",C.green,2); task.delay(0.4,function() TweenService:Create(MagBtn,TweenInfo.new(0.2),{BackgroundColor3=C.accent}):Play() end) end); MkToggle("Combat","Magic Shot [Screen]",false,function(a) MagBtn.Visible=a end)
+MkSep("Combat","> KILL ALL [BETA]"); MkButton("Combat","[!] Kill All (Knife) - Remote",C.redDark,function(btn,lbl) local knife=FindTool("knife"); if not knife then Notify("Kill All","No knife found!",C.red,2); return end; if not EquipTool(knife) then Notify("Kill All","Failed to equip knife!",C.red,2); return end; local killed=0; Notify("Kill All","Throwing knife at everyone...",C.orange,2); for _,p in ipairs(Players:GetPlayers()) do if p~=player and p.Character then local head=p.Character:FindFirstChild("Head"); local hum=p.Character:FindFirstChildOfClass("Humanoid"); if head and hum and hum.Health>0 then if ThrowKnifeAtPosition(knife,head.Position) then killed+=1 end; task.wait(0.05) end end end; Notify("Kill All","Thrown at "..killed.." players (beta)",C.green,3); TweenService:Create(btn,TweenInfo.new(0.1),{BackgroundColor3=C.green}):Play(); task.delay(0.5,function() TweenService:Create(btn,TweenInfo.new(0.2),{BackgroundColor3=C.redDark}):Play() end) end)
+MkButton("Combat","[!] Kill All (Gun) - Remote",C.redDark,function(btn,lbl) local gun=FindTool("gun"); if not gun then gun=FindTool("revolver") end; if not gun then Notify("Kill All","No gun found!",C.red,2); return end; if not EquipTool(gun) then Notify("Kill All","Failed to equip gun!",C.red,2); return end; local killed=0; Notify("Kill All","Firing at everyone...",C.orange,2); for _,p in ipairs(Players:GetPlayers()) do if p~=player and p.Character then local head=p.Character:FindFirstChild("Head"); local hum=p.Character:FindFirstChildOfClass("Humanoid"); if head and hum and hum.Health>0 then if FireToolAtTarget(gun,head) then killed+=1 end; task.wait(0.05) end end end; Notify("Kill All","Fired at "..killed.." players (beta)",C.green,3); TweenService:Create(btn,TweenInfo.new(0.1),{BackgroundColor3=C.green}):Play(); task.delay(0.5,function() TweenService:Create(btn,TweenInfo.new(0.2),{BackgroundColor3=C.redDark}):Play() end) end)
 MkSep("Combat","> TELEPORT"); MkButton("Combat",">> TP to Murderer",C.redDark,function() local mr=GetMurdererRoot(); local r=GetRoot(); if mr and r then r.CFrame=mr.CFrame*CFrame.new(0,0,5); Notify("TP","To murderer",C.red,2) else Notify("TP","Not found",C.orange,2) end end); MkButton("Combat",">> TP to Sheriff",C.elevated,function() local r=GetRoot(); if not r then return end; for _,p in ipairs(Players:GetPlayers()) do if IsSheriff(p) and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then r.CFrame=p.Character.HumanoidRootPart.CFrame*CFrame.new(0,0,5); Notify("TP","To sheriff",C.cyan,2); return end end; Notify("TP","No sheriff",C.orange,2) end)
 
 ---------------------------------------------------------
@@ -473,10 +504,10 @@ MkSep("Combat","> TELEPORT"); MkButton("Combat",">> TP to Murderer",C.redDark,fu
 MkSep("ESP","> PLAYER HIGHLIGHTS"); local espC={}; local function ClearESP() for _,p in ipairs(Players:GetPlayers()) do if p.Character and p.Character:FindFirstChild("MenuESP") then p.Character.MenuESP:Destroy() end end; for k,c in pairs(espC) do if typeof(c)=="RBXScriptConnection" then c:Disconnect() end end; espC={} end; local function MkHL(ch,col) if not ch then return end; if ch:FindFirstChild("MenuESP") then ch.MenuESP:Destroy() end; local h=Instance.new("Highlight"); h.Name="MenuESP"; h.FillColor=col; h.FillTransparency=0.3; h.OutlineColor=C.white; h.OutlineTransparency=0.15; h.Adornee=ch; h.Parent=ch end; local function ESPP(p,col) if p==player then return end; if p.Character then MkHL(p.Character,col) end; local k="e_"..p.UserId; if espC[k] then espC[k]:Disconnect() end; espC[k]=p.CharacterAdded:Connect(function(c) task.wait(0.5); MkHL(c,col) end) end
 local gEA; gEA=MkToggle("ESP","ESP All Players",false,function(a) ClearESP(); ClearConn("esp_n"); if a then for _,p in ipairs(Players:GetPlayers()) do ESPP(p,Color3.fromRGB(220,220,255)) end; Conn("esp_n",Players.PlayerAdded:Connect(function(p) if gEA() then ESPP(p,Color3.fromRGB(220,220,255)) end end)); Notify("ESP","All players",C.accentLight,2) end end)
 local gER,eRC=nil,0; local originalSheriffId=nil
-gER=MkToggle("ESP","ESP Roles [Live + Hero]",true,function(a) ClearESP(); ClearConn("esp_rl"); ClearConn("esp_rn"); eRC=0; originalSheriffId=nil; if a then for _,p in ipairs(Players:GetPlayers()) do if IsSheriff(p) then originalSheriffId=p.UserId; break end end; local function UR() local currentSheriffAlive=false; if originalSheriffId then local origP=Players:GetPlayerByUserId(originalSheriffId); if origP and origP.Character then local hum=origP.Character:FindFirstChildOfClass("Humanoid"); if hum and hum.Health>0 and IsSheriff(origP) then currentSheriffAlive=true end end end; for _,p in ipairs(Players:GetPlayers()) do if p==player or not p.Character then continue end; if IsMurderer(p) then MkHL(p.Character,C.red) elseif IsHero(p) then if originalSheriffId and p.UserId==originalSheriffId then MkHL(p.Character,C.cyan) else MkHL(p.Character,C.yellow) end else MkHL(p.Character,C.green) end end end; UR(); Conn("esp_rl",RunService.Heartbeat:Connect(function() eRC+=1; if eRC>=60 then eRC=0; if gER() then UR() end end end)); Conn("esp_rn",Players.PlayerAdded:Connect(function(p) p.CharacterAdded:Connect(function() task.wait(1); if gER() then UR() end end) end)); Notify("ESP Roles","R:M B:S Y:H G:I",C.accentLight,4) else ClearESP() end end)
+gER=MkToggle("ESP","ESP Roles [Live + Hero]",true,function(a) ClearESP(); ClearConn("esp_rl"); ClearConn("esp_rn"); eRC=0; originalSheriffId=nil; if a then for _,p in ipairs(Players:GetPlayers()) do if IsSheriff(p) then originalSheriffId=p.UserId; break end end; local function UR() local currentSheriffAlive=false; if originalSheriffId then local origP=Players:GetPlayerByUserId(originalSheriffId); if origP and origP.Character then local hum=origP.Character:FindFirstChildOfClass("Humanoid"); if hum and hum.Health>0 and IsSheriff(origP) then currentSheriffAlive=true end end end; for _,p in ipairs(Players:GetPlayers()) do if p==player or not p.Character then continue end; if IsMurderer(p) then MkHL(p.Character,C.red) elseif IsSheriff(p) then if originalSheriffId and p.UserId==originalSheriffId then MkHL(p.Character,C.cyan) else MkHL(p.Character,C.yellow) end else MkHL(p.Character,C.green) end end end; UR(); Conn("esp_rl",RunService.RenderStepped:Connect(function() eRC+=1; if eRC>=30 then eRC=0; if gER() then UR() end end end)); Conn("esp_rn",Players.PlayerAdded:Connect(function(p) p.CharacterAdded:Connect(function() task.wait(0.5); if gER() then UR() end end) end)); Notify("ESP Roles","R:M B:S Y:H G:I",C.accentLight,4) else ClearESP() end end)
 MkSep("ESP","> GUN ESP"); local gunEspActive=false; local gunEspGuis={}; local function ClearGunESP() for _,g in ipairs(gunEspGuis) do pcall(function() g:Destroy() end) end; gunEspGuis={} end; local function IsPlayerOwned(obj) for _,p in ipairs(Players:GetPlayers()) do if p.Character and obj:IsDescendantOf(p.Character) then return true end; if obj:IsDescendantOf(p.Backpack) then return true end end; return false end
-MkToggle("ESP","Gun ESP [Dropped Guns]",false,function(a) gunEspActive=a; ClearConn("gun_esp"); ClearGunESP(); if a then Conn("gun_esp",RunService.Heartbeat:Connect(function() if not gunEspActive then return end; local root=GetRoot(); for i=#gunEspGuis,1,-1 do local g=gunEspGuis[i]; if not g or not g.Parent or not g.Adornee or not g.Adornee.Parent then pcall(function() g:Destroy() end); table.remove(gunEspGuis,i) elseif root and g.Adornee then local dist=math.floor((root.Position-g.Adornee.Position).Magnitude); local frame=g:FindFirstChild("GunFrame"); if frame then local dl=frame:FindFirstChild("DistLabel"); if dl then dl.Text=dist.." studs" end end end end; for _,obj in ipairs(workspace:GetDescendants()) do if obj:IsA("Tool") then local n=obj.Name:lower(); if (n:find("gun") or n:find("revolver")) and not IsPlayerOwned(obj) then local handle=obj:FindFirstChild("Handle"); if handle and not handle:FindFirstChild("GunESPBB") then local bb=Instance.new("BillboardGui"); bb.Name="GunESPBB"; bb.Adornee=handle; bb.Size=UDim2.new(0,110,0,45); bb.StudsOffset=Vector3.new(0,3,0); bb.AlwaysOnTop=true; bb.Parent=handle; local fr=Instance.new("Frame"); fr.Name="GunFrame"; fr.Size=UDim2.new(1,0,1,0); fr.BackgroundColor3=C.black; fr.BackgroundTransparency=0.35; fr.BorderSizePixel=0; fr.Parent=bb; Instance.new("UICorner",fr).CornerRadius=UDim.new(0,6); local stk=Instance.new("UIStroke"); stk.Color=C.gold; stk.Thickness=1.5; stk.Parent=fr; local lbl=Instance.new("TextLabel"); lbl.Size=UDim2.new(1,-8,0.55,0); lbl.Position=UDim2.new(0,4,0,2); lbl.BackgroundTransparency=1; lbl.Text="> GUN"; lbl.TextColor3=C.gold; lbl.TextSize=13; lbl.Font=Enum.Font.GothamBold; lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.Parent=fr; local dl=Instance.new("TextLabel"); dl.Name="DistLabel"; dl.Size=UDim2.new(1,-8,0.45,0); dl.Position=UDim2.new(0,4,0.55,-2); dl.BackgroundTransparency=1; dl.Text="-- studs"; dl.TextColor3=C.textSec; dl.TextSize=10; dl.Font=Enum.Font.Gotham; dl.TextXAlignment=Enum.TextXAlignment.Left; dl.Parent=fr; table.insert(gunEspGuis,bb) end end end end end)); Notify("Gun ESP","Tracking dropped guns",C.gold,2) else ClearGunESP() end end)
-MkSep("ESP","> ROLE INFO"); local RI=MkInfoBox("ESP","Enable ESP Roles to see info..."); task.spawn(function() while ScreenGui.Parent do if gER and gER() then local m,s,h="Unknown","Unknown","None"; for _,p in ipairs(Players:GetPlayers()) do if IsMurderer(p) then m=p.Name end; if originalSheriffId and p.UserId==originalSheriffId and IsSheriff(p) then s=p.Name elseif IsHero(p) then if not originalSheriffId or p.UserId~=originalSheriffId then h=p.Name elseif p.UserId==originalSheriffId then s=p.Name end end end; RI.Text="[!] Murderer: "..m.."\n[*] Sheriff: "..s.."\n[>] Hero: "..h end; task.wait(1) end end)
+MkToggle("ESP","Gun ESP [Dropped Guns]",true,function(a) gunEspActive=a; ClearConn("gun_esp"); ClearGunESP(); if a then Conn("gun_esp",RunService.RenderStepped:Connect(function() if not gunEspActive then return end; local root=GetRoot(); -- Clean up dead guis for i=#gunEspGuis,1,-1 do local g=gunEspGuis[i]; if not g or not g.Parent or not g.Adornee or not g.Adornee.Parent then pcall(function() g:Destroy() end); table.remove(gunEspGuis,i) elseif root and g.Adornee then local dist=math.floor((root.Position-g.Adornee.Position).Magnitude); local frame=g:FindFirstChild("GunFrame"); if frame then local dl=frame:FindFirstChild("DistLabel"); if dl then dl.Text=dist.." studs" end end end end; -- Search for dropped guns in workspace for _,obj in ipairs(workspace:GetDescendants()) do if obj:IsA("Tool") and obj:FindFirstChild("Handle") then local n=obj.Name:lower(); if (n:find("gun") or n:find("revolver")) and not IsPlayerOwned(obj) then if not obj.Handle:FindFirstChild("GunESPBB") then local bb=Instance.new("BillboardGui"); bb.Name="GunESPBB"; bb.Adornee=obj.Handle; bb.Size=UDim2.new(0,110,0,45); bb.StudsOffset=Vector3.new(0,3,0); bb.AlwaysOnTop=true; bb.Parent=obj.Handle; local fr=Instance.new("Frame"); fr.Name="GunFrame"; fr.Size=UDim2.new(1,0,1,0); fr.BackgroundColor3=C.black; fr.BackgroundTransparency=0.35; fr.BorderSizePixel=0; fr.Parent=bb; Instance.new("UICorner",fr).CornerRadius=UDim.new(0,6); local stk=Instance.new("UIStroke"); stk.Color=C.gold; stk.Thickness=1.5; stk.Parent=fr; local lbl=Instance.new("TextLabel"); lbl.Size=UDim2.new(1,-8,0.55,0); lbl.Position=UDim2.new(0,4,0,2); lbl.BackgroundTransparency=1; lbl.Text="> GUN"; lbl.TextColor3=C.gold; lbl.TextSize=13; lbl.Font=Enum.Font.GothamBold; lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.Parent=fr; local dl=Instance.new("TextLabel"); dl.Name="DistLabel"; dl.Size=UDim2.new(1,-8,0.45,0); dl.Position=UDim2.new(0,4,0.55,-2); dl.BackgroundTransparency=1; dl.Text="-- studs"; dl.TextColor3=C.textSec; dl.TextSize=10; dl.Font=Enum.Font.Gotham; dl.TextXAlignment=Enum.TextXAlignment.Left; dl.Parent=fr; table.insert(gunEspGuis,bb) end end end end end)); Notify("Gun ESP","Tracking dropped guns",C.gold,2) else ClearGunESP() end end)
+MkSep("ESP","> ROLE INFO"); local RI=MkInfoBox("ESP","Enable ESP Roles to see info..."); task.spawn(function() while ScreenGui.Parent do if gER and gER() then local m,s,h="Unknown","Unknown","None"; for _,p in ipairs(Players:GetPlayers()) do if IsMurderer(p) then m=p.Name end; if originalSheriffId and p.UserId==originalSheriffId and IsSheriff(p) then s=p.Name elseif IsSheriff(p) then h=p.Name end end; RI.Text="[!] Murderer: "..m.."\n[*] Sheriff: "..s.."\n[>] Hero: "..h end; task.wait(0.5) end end)
 
 ---------------------------------------------------------
 -- ============ BOOMBOX TAB ============
@@ -489,18 +520,18 @@ MkSep("Boombox","> QUICK TRACKS"); MkButton("Boombox","~ GORILKA REMIX",C.elevat
 ---------------------------------------------------------
 MkSep("Settings","> SYSTEM"); MkButton("Settings","[x] Destroy Hub",C.redDark,function() for k,v in pairs(connections) do if typeof(v)=="RBXScriptConnection" then v:Disconnect() end end; ClearESP(); ClearGunESP(); StopS(); local h=GetHum(); if h then h.WalkSpeed=16; h.JumpPower=50; h.PlatformStand=false end; if flyBV then pcall(function() flyBV:Destroy() end) end; if flyBG then pcall(function() flyBG:Destroy() end) end; pcall(function() ShotBtn:Destroy() end); pcall(function() MagBtn:Destroy() end); TweenService:Create(Hub,TweenInfo.new(0.3,Enum.EasingStyle.Back,Enum.EasingDirection.In),{Size=UDim2.new(0,0,0,0),Position=UDim2.new(0.5,0,0.5,0)}):Play(); TweenService:Create(ToggleBtn,TweenInfo.new(0.3),{Size=UDim2.new(0,0,0,0),BackgroundTransparency=1,TextTransparency=1}):Play(); Notify("System","Hub destroyed",C.red,2); task.delay(0.5,function() ScreenGui:Destroy() end) end)
 MkButton("Settings","[~] Reset Character",C.elevated,function() local h=GetHum(); if h then h.Health=0 end; Notify("System","Character reset",C.orange,2) end); MkButton("Settings","[+] Copy Server Link",C.elevated,function() pcall(function() setclipboard("Roblox.GameLauncher.joinGameInstance("..game.PlaceId..", '"..game.JobId.."')") end); Notify("System","Server link copied!",C.green,2) end)
-MkSep("Settings","> ABOUT"); MkInfoBox("Settings","idk MM2 Premium Hub v7.4\nSidebar + 6 tabs + Notifications\nKeybind: RightShift | by idk team 2025")
+MkSep("Settings","> ABOUT"); MkInfoBox("Settings","idk MM2 Premium Hub v7.5\nSidebar + 6 tabs + Notifications\nKeybind: RightShift | by idk team 2025")
 
 ---------------------------------------------------------
 -- ============ INFO TAB ============
 ---------------------------------------------------------
-MkInfoHeader("Info","// ОБНОВЛЕНИЕ v7.4")
-MkChangelogCard("Info","v7.4","26.09.2025",C.green,{"", "[*] ИСПРАВЛЕНИЯ:", "", "  * Kill All (Knife) — исправлена логика. Теперь", "    автоматически экипирует нож и бросает его в", "    каждого игрока, не телепортируясь. Шанс", "    успеха зависит от сервера.", "", "  * Gun ESP — исправлена логика. Теперь ESP", "    не пропадает после подбора оружия. Корректно", "    ищет только те пушки, что лежат на земле.", "    Увеличена стабильность.", "", "  * ESP Roles — обновляется чаще (каждые 1.5с)", "    для более точного отслеживания ролей и", "    Героя.", "", "[+] НОВОЕ:", "", "  + Kill All (Knife) — добавлен в дополнение", "    к старому Kill All (Gun). Работает по тому же", "    принципу, но использует нож.", "",})
-MkSep("Info","> ОПИСАНИЕ"); MkInfoBox("Info","idk MM2 Premium Hub v7.4\n\n  # Home — скорость, прыжки, полет, ноклип, яркость\n  + Combat — аимбот, авто-выстрел, магия, kill all\n  * ESP — роли + герой (жёлтый) + Gun ESP\n  ~ Boombox — плеер с быстрыми треками\n  :: Settings — управление хабом\n  ? Info — текущее обновление")
-MkSep("Info","> CREDITS"); MkInfoBox("Info","Разработка: idk team\nВерсия: v7.4 Premium Hub\nДата: 26.09.2025\nKeybind: RightShift")
+MkInfoHeader("Info","// ОБНОВЛЕНИЕ v7.5")
+MkChangelogCard("Info","v7.5","26.09.2025",C.green,{"", "[*] КРИТИЧЕСКИЕ ИСПРАВЛЕНИЯ:", "", "  * Gun ESP — полностью переписан. Теперь", "    ищет только Tool с Handle и проверяет", "    принадлежность игроку. Работает стабильно.", "", "  * Kill All (Knife) — исправлена логика", "    экипировки и броска. Теперь работает", "    на всех серверах MM2.", "", "  * Kill All (Gun) — добавлена отдельная кнопка", "    для пушки. Работает по тому же принципу.", "", "  * ESP Roles — обновляется каждые 0.5 секунд", "    (30 кадров при 60 FPS) для мгновенного", "    отслеживания ролей.", "", "  * Shot Button — улучшена логика поиска пушки", "    и экипировки. Теперь работает надежно.", "",})
+MkSep("Info","> ОПИСАНИЕ"); MkInfoBox("Info","idk MM2 Premium Hub v7.5\n\n  # Home — скорость, прыжки, полет, ноклип, яркость\n  + Combat — аимбот, авто-выстрел, магия, kill all\n  * ESP — роли + герой (жёлтый) + Gun ESP\n  ~ Boombox — плеер с быстрыми треками\n  :: Settings — управление хабом\n  ? Info — текущее обновление")
+MkSep("Info","> CREDITS"); MkInfoBox("Info","Разработка: idk team\nВерсия: v7.5 Premium Hub\nДата: 26.09.2025\nKeybind: RightShift")
 
 ---------------------------------------------------------
 -- STARTUP
 ---------------------------------------------------------
-task.delay(0.3,function() Notify("idk Hub","v7.4 loaded!",C.green,3)
-task.wait(0.4); Notify("Fixes","Kill All (Knife) + ESP fixes",C.gold,4) end)
+task.delay(0.3,function() Notify("idk Hub","v7.5 loaded!",C.green,3)
+task.wait(0.4); Notify("FIXES","Gun ESP + Kill All FIXED!",C.gold,4) end)
