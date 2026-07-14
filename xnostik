@@ -1,4 +1,4 @@
--- linbergz Team MM2 PREMIUM MOBILE HUB v7.7
+-- linbergz Team MM2 PREMIUM MOBILE HUB v7.8 (Upgraded by linbergz)
 -- Ironclad Anti-Fling & Advanced Physics Fling Engine
 -- Fully Unabbreviated & Mobile Optimized Code
 
@@ -106,25 +106,25 @@ local L = {
     EN = {
         home = "Home", combat = "Combat", esp = "ESP", boombox = "Boombox", fun = "Fun & Troll", settings = "Settings", info = "Info",
         movement = "MOVEMENT", walkspeed = "Walk Speed", jumppower = "Jump Power", infjump = "Infinite Jump",
-        protection = "PROTECTION", antifling = "Ironclad Anti-Fling", noclip = "Noclip", fly = "Fly", fullbright = "Fullbright",
+        protection = "PROTECTION", antifling = "Ironclad Anti-Fling", noclip = "Noclip", fly = "Fly [Mobile Joystick]", fullbright = "Fullbright",
         aimbot = "Aimbot on Murderer", shootbtn = "Shoot Button [Screen]", magicshot = "Magic Shot [Screen] (Beta)",
         killall = "[!] Kill All (Knife) (Beta)", teleport = "TELEPORTS", tpmurder = "TP to Murderer", tpsheriff = "TP to Sheriff",
         players_esp = "ESP All Players", roles_esp = "ESP Roles [Murd, Sher, Inn]", gun_esp = "Gun ESP [Dropped]",
         audioplayer = "AUDIO ID PLAYER", play = "PLAY", stop = "STOP", system = "SYSTEM CONTROL", copy = "Copy Server Link",
         reset = "Reset Character", destroy = "Destroy Hub", theme = "Theme", language = "Language",
-        about = "ABOUT HUB", quick_tracks = "QUICK AUDIO TRACKS", flinger = "FLING SYSTEM", touch_fling = "Touch Fling (Beta)",
+        about = "ABOUT HUB", quick_tracks = "QUICK AUDIO TRACKS", flinger = "FLING SYSTEM", touch_fling = "Touch Fling (Max Physics)",
         select_target = "Select Target", fling_btn = "Fling Target [BETA]", role_info = "ROLE INFO",
     },
     RU = {
         home = "Главная", combat = "Сражение", esp = "ЕСП/ВХ", boombox = "Музыка", fun = "Фан и Троллинг", settings = "Настройки", info = "Информация",
         movement = "ПЕРЕДВИЖЕНИЕ", walkspeed = "Скорость бега", jumppower = "Высота прыжка", infjump = "Бесконечный прыжок",
-        protection = "ЗАЩИТА", antifling = "Железобетонный Анти-Флинг", noclip = "Проход сквозь стены", fly = "Полет", fullbright = "Яркий свет",
+        protection = "ЗАЩИТА", antifling = "Железобетонный Анти-Флинг", noclip = "Проход сквозь стены", fly = "Полет [Мобильный Джойстик]", fullbright = "Яркий свет",
         aimbot = "Аимбот на убийцу", shootbtn = "Кнопка выстрела [Экран]", magicshot = "Магический выстрел [Экран] (Beta)",
         killall = "[!] Убить всех (Нож) (Beta)", teleport = "ТЕЛЕПОРТАЦИЯ", tpmurder = "ТП к Убийце", tpsheriff = "ТП к Шерифу",
         players_esp = "Подсветка игроков", roles_esp = "Показ ролей [Убийца, Шериф, Мирные]", gun_esp = "Подсветка оружия [На полу]",
         audioplayer = "ПРОИГРЫВАТЕЛЬ АУДИО", play = "ЗАПУСК", stop = "СТОП", system = "СИСТЕМА", copy = "Скопировать линк",
         reset = "Умереть (Ресет)", destroy = "Закрыть чит полностью", theme = "Цветовая схема", language = "Язык меню",
-        about = "О ХАБЕ", quick_tracks = "БЫСТРЫЕ ТРЕКИ", flinger = "СИСТЕМА ФЛИНГА", touch_fling = "Тач Флинг (Beta)",
+        about = "О ХАБЕ", quick_tracks = "БЫСТРЫЕ ТРЕКИ", flinger = "СИСТЕМА ФЛИНГА", touch_fling = "Тач Флинг (Макс Физика)",
         select_target = "Выбрать жертву", fling_btn = "Запустить в космос [BETA]", role_info = "ИНФОРМАЦИЯ О РОЛЯХ",
     }
 }
@@ -155,14 +155,10 @@ local function ApplyTheme(themeName)
     C.accentLight = theme.accentLight
     
     for _, item in ipairs(themedBg) do 
-        if item.Parent then 
-            item.BackgroundColor3 = C.bg 
-        end 
+        if item.Parent then item.BackgroundColor3 = C.bg end 
     end
     for _, item in ipairs(themedSurface) do 
-        if item.Parent then 
-            item.BackgroundColor3 = C.surface 
-        end 
+        if item.Parent then item.BackgroundColor3 = C.surface end 
     end
     for _, item in ipairs(themedAccent) do 
         if item.Parent then
@@ -182,16 +178,12 @@ end
 ---------------------------------------------------------
 local connections = {}
 local function Conn(n, c)
-    if connections[n] and typeof(connections[n]) == "RBXScriptConnection" then 
-        connections[n]:Disconnect() 
-    end
+    if connections[n] and typeof(connections[n]) == "RBXScriptConnection" then connections[n]:Disconnect() end
     connections[n] = c
 end
 local function ClearConn(n)
     if connections[n] then
-        if typeof(connections[n]) == "RBXScriptConnection" then 
-            connections[n]:Disconnect() 
-        end
+        if typeof(connections[n]) == "RBXScriptConnection" then connections[n]:Disconnect() end
         connections[n] = nil
     end
 end
@@ -199,32 +191,18 @@ end
 ---------------------------------------------------------
 -- MATH & PHYSICAL UTILITIES
 ---------------------------------------------------------
-local function GetChar() 
-    return player.Character 
-end
-
-local function GetHum() 
-    local character = GetChar()
-    return character and character:FindFirstChildOfClass("Humanoid") 
-end
-
-local function GetRoot() 
-    local character = GetChar()
-    return character and character:FindFirstChild("HumanoidRootPart") 
-end
+local function GetChar() return player.Character end
+local function GetHum() local c = GetChar(); return c and c:FindFirstChildOfClass("Humanoid") end
+local function GetRoot() local c = GetChar(); return c and c:FindFirstChild("HumanoidRootPart") end
 
 local function IsMurderer(otherPlayer)
-    if otherPlayer == player or not otherPlayer.Character then 
-        return false 
-    end
+    if otherPlayer == player or not otherPlayer.Character then return false end
     local hasKnife = otherPlayer.Backpack:FindFirstChild("Knife") or otherPlayer.Character:FindFirstChild("Knife")
     return hasKnife ~= nil
 end
 
 local function IsSheriff(otherPlayer)
-    if otherPlayer == player or not otherPlayer.Character then 
-        return false 
-    end
+    if otherPlayer == player or not otherPlayer.Character then return false end
     local hasGun = otherPlayer.Backpack:FindFirstChild("Gun") or otherPlayer.Character:FindFirstChild("Gun")
     return hasGun ~= nil
 end
@@ -248,34 +226,26 @@ local function GetMurdererHead()
 end
 
 local function GetTool(toolName)
-    local character = GetChar()
-    if character and character:FindFirstChild(toolName) then 
-        return character:FindFirstChild(toolName) 
-    end
-    if player.Backpack and player.Backpack:FindFirstChild(toolName) then 
-        return player.Backpack:FindFirstChild(toolName) 
-    end
+    local c = GetChar()
+    if c and c:FindFirstChild(toolName) then return c:FindFirstChild(toolName) end
+    if player.Backpack and player.Backpack:FindFirstChild(toolName) then return player.Backpack:FindFirstChild(toolName) end
     return nil
 end
 
 local function FindGunInHand()
-    local character = GetChar()
-    if not character then return nil end
-    for _, tool in ipairs(character:GetChildren()) do
-        if tool:IsA("Tool") and (tool.Name:lower():find("gun") or tool.Name:lower():find("revolver")) then 
-            return tool 
-        end
+    local c = GetChar()
+    if not c then return nil end
+    for _, tool in ipairs(c:GetChildren()) do
+        if tool:IsA("Tool") and (tool.Name:lower():find("gun") or tool.Name:lower():find("revolver")) then return tool end
     end
     return nil
 end
 
 local function FindKnifeInHand()
-    local character = GetChar()
-    if not character then return nil end
-    for _, tool in ipairs(character:GetChildren()) do
-        if tool:IsA("Tool") and tool.Name:lower():find("knife") then 
-            return tool 
-        end
+    local c = GetChar()
+    if not c then return nil end
+    for _, tool in ipairs(c:GetChildren()) do
+        if tool:IsA("Tool") and tool.Name:lower():find("knife") then return tool end
     end
     return nil
 end
@@ -284,9 +254,7 @@ local function FireGunAtTarget(gun, targetHead)
     if not gun or not targetHead then return false end
     for _, remote in ipairs(gun:GetDescendants()) do
         if remote:IsA("RemoteEvent") then
-            pcall(function() 
-                remote:FireServer(targetHead.Position, targetHead) 
-            end)
+            pcall(function() remote:FireServer(targetHead.Position, targetHead) end)
             return true
         end
     end
@@ -297,9 +265,7 @@ local function ThrowKnifeAtTarget(knife, targetPosition)
     if not knife or not targetPosition then return false end
     for _, remote in ipairs(knife:GetDescendants()) do
         if remote:IsA("RemoteEvent") then
-            pcall(function() 
-                remote:FireServer(targetPosition) 
-            end)
+            pcall(function() remote:FireServer(targetPosition) end)
             return true
         end
     end
@@ -372,14 +338,12 @@ local function Notify(title, msg, color, dur)
         if not Cd.Parent then return end
         local tw = TweenService:Create(Cd, TweenInfo.new(0.25), {Position = UDim2.new(1.2, 0, 0, 0)})
         tw:Play()
-        tw.Completed:Connect(function() 
-            pcall(function() Cd:Destroy() end) 
-        end)
+        tw.Completed:Connect(function() pcall(function() Cd:Destroy() end) end)
     end)
 end
 
 ---------------------------------------------------------
--- BRAND NEW CUSTOM LOADING SCREEN (linbergz Team)
+-- BRAND NEW CUSTOM LOADING SCREEN
 ---------------------------------------------------------
 local LS = Instance.new("Frame")
 LS.Size = UDim2.new(1, 0, 1, 0)
@@ -409,7 +373,7 @@ local SubLogo = Instance.new("TextLabel")
 SubLogo.Size = UDim2.new(1, 0, 0, 20)
 SubLogo.Position = UDim2.new(0, 0, 0, 90)
 SubLogo.BackgroundTransparency = 1
-SubLogo.Text = "MOBILE PREMIUM HUB v7.7"
+SubLogo.Text = "MOBILE PREMIUM HUB v7.8"
 SubLogo.TextColor3 = C.textDim
 SubLogo.TextSize = 10
 SubLogo.Font = Enum.Font.GothamBold
@@ -446,7 +410,7 @@ local function LaunchUI()
     local steps = {
         {0.15, "LINBERGZ CORE ENGINE ACTIVE..."},
         {0.35, "INJECTING SAFE BYPASS PROT..."},
-        {0.55, "OPTIMIZING MEMORY FOR PHONE..."},
+        {0.55, "OPTIMIZING MOBILE FLY JOYSTICK..."},
         {0.75, "ESTABLISHING MM2 DATA FEED..."},
         {0.90, "APPLYING PRE-THEMING ENGINE..."},
         {1.00, "READY // SUCCESSFUL START"}
@@ -485,11 +449,9 @@ TBSk.Thickness = 1.5
 TBSk.Transparency = 0.5
 TBSk.Parent = ToggleBtn
 
--- Dynamic drag implementation for ToggleBtn (Mobile support)
 do
     local dragging = false
-    local dragStart = nil
-    local startPos = nil
+    local dragStart, startPos
     
     ToggleBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -502,24 +464,17 @@ do
     UserInputService.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
-            ToggleBtn.Position = UDim2.new(
-                startPos.X.Scale, 
-                startPos.X.Offset + delta.X, 
-                startPos.Y.Scale, 
-                startPos.Y.Offset + delta.Y
-            )
+            ToggleBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
     
     ToggleBtn.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
     end)
 end
 
 ---------------------------------------------------------
--- MAIN HUB FRAME (COMPACT FOR MOBILES)
+-- MAIN HUB FRAME
 ---------------------------------------------------------
 local HUB_W, HUB_H, SIDEBAR_W = 460, 290, 120
 
@@ -542,7 +497,6 @@ HSk.Thickness = 1
 HSk.Parent = Hub
 table.insert(themedAccent, HSk)
 
--- Top Header Bar
 local TopB = Instance.new("Frame")
 TopB.Size = UDim2.new(1, -SIDEBAR_W, 0, 32)
 TopB.Position = UDim2.new(0, SIDEBAR_W, 0, 0)
@@ -577,12 +531,8 @@ ClB.ZIndex = 13
 ClB.Parent = TopB
 Instance.new("UICorner", ClB).CornerRadius = UDim.new(0, 4)
 
--- Window drag implementation
 do
-    local drag = false
-    local dStart = nil
-    local sPos = nil
-    
+    local drag, dStart, sPos
     TopB.InputBegan:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
             drag = true
@@ -590,28 +540,19 @@ do
             sPos = Hub.Position
         end
     end)
-    
     UserInputService.InputChanged:Connect(function(i)
         if drag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
             local d = i.Position - dStart
-            Hub.Position = UDim2.new(
-                sPos.X.Scale, 
-                sPos.X.Offset + d.X, 
-                sPos.Y.Scale, 
-                sPos.Y.Offset + d.Y
-            )
+            Hub.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y)
         end
     end)
-    
     TopB.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-            drag = false
-        end
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then drag = false end
     end)
 end
 
 ---------------------------------------------------------
--- SIDEBAR WITH PREMIUM SLIDING GLIDER & EFFECTS
+-- SIDEBAR
 ---------------------------------------------------------
 local Sidebar = Instance.new("Frame")
 Sidebar.Size = UDim2.new(0, SIDEBAR_W, 1, 0)
@@ -651,7 +592,6 @@ THP.PaddingRight = UDim.new(0, 6)
 THP.PaddingTop = UDim.new(0, 4)
 THP.Parent = TH
 
--- Premium Glider Bar (Slides with elastic easing style)
 local TabGlider = Instance.new("Frame")
 TabGlider.Size = UDim2.new(1, 0, 0, 26)
 TabGlider.BackgroundColor3 = C.accent
@@ -669,12 +609,11 @@ GliderLine.BorderSizePixel = 0
 GliderLine.ZIndex = 13
 GliderLine.Parent = TabGlider
 Instance.new("UICorner", GliderLine).CornerRadius = UDim.new(1, 0)
-
 table.insert(themedAccent, TabGlider)
 table.insert(themedAccent, GliderLine)
 
 ---------------------------------------------------------
--- TABS GENERATION WITH PHYSICAL CLICK FEEDBACK
+-- TABS GENERATION
 ---------------------------------------------------------
 local tabPages = {}
 local tabBtns = {}
@@ -734,8 +673,6 @@ for idx, def in ipairs(tabDefs) do
     
     Tb.MouseButton1Click:Connect(function()
         if currentTab == def.name then return end
-        
-        -- Physical tactile micro-scaling animation
         local origSize = UDim2.new(1, 0, 0, 26)
         TweenService:Create(Tb, TweenInfo.new(0.06, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0.92, 0, 0, 24)}):Play()
         task.delay(0.06, function()
@@ -751,10 +688,8 @@ for idx, def in ipairs(tabDefs) do
         Page.Visible = true
         PT.Text = def.icon .. " " .. (L[currentLang][def.key] or def.name)
         updateableLabels[PT] = def.key
-        
         Tb.TextColor3 = C.accentLight
         
-        -- Glider smooth movement calculation (takes padding & offset into account)
         local targetY = 4 + (idx - 1) * 28
         TweenService:Create(TabGlider, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, targetY)}):Play()
     end)
@@ -781,7 +716,7 @@ ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
 task.defer(function() tabBtns["Home"].btn.MouseButton1Click:Fire() end)
 
 ---------------------------------------------------------
--- UI ELEMENT FACTORY FOR SMARTPHONES
+-- UI ELEMENT FACTORY
 ---------------------------------------------------------
 local function GP(t) return tabPages[t] end
 local function NO(t) local p = GP(t); p.oc = p.oc + 1; return p.oc end
@@ -891,9 +826,7 @@ local function MkButton(tab, key, color, cb)
     Lbl.Parent = B
     updateableLabels[Lbl] = key
     
-    B.MouseButton1Click:Connect(function() 
-        cb(B, Lbl) 
-    end)
+    B.MouseButton1Click:Connect(function() cb(B, Lbl) end)
     return B, Lbl
 end
 
@@ -987,27 +920,10 @@ local function MkSlider(tab, key, mn, mx, def, cb)
         cb(val)
     end
     
-    SBG.InputBegan:Connect(function(i) 
-        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then 
-            sl = true
-            US(i.Position.X) 
-        end 
-    end)
-    Kn.InputBegan:Connect(function(i) 
-        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then 
-            sl = true 
-        end 
-    end)
-    UserInputService.InputChanged:Connect(function(i) 
-        if sl and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then 
-            US(i.Position.X) 
-        end 
-    end)
-    UserInputService.InputEnded:Connect(function(i) 
-        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then 
-            sl = false 
-        end 
-    end)
+    SBG.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then sl = true; US(i.Position.X) end end)
+    Kn.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then sl = true end end)
+    UserInputService.InputChanged:Connect(function(i) if sl and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then US(i.Position.X) end end)
+    UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then sl = false end end)
     
     return function() return val end
 end
@@ -1046,13 +962,9 @@ MkSlider("Home", "walkspeed", 16, 120, 16, function(v) speedVal = v end)
 MkToggle("Home", "walkspeed", false, function(a)
     ClearConn("speed")
     if a then
-        Conn("speed", RunService.Heartbeat:Connect(function() 
-            local h = GetHum()
-            if h then h.WalkSpeed = speedVal end 
-        end))
+        Conn("speed", RunService.Heartbeat:Connect(function() local h = GetHum(); if h then h.WalkSpeed = speedVal end end))
     else
-        local h = GetHum()
-        if h then h.WalkSpeed = 16 end
+        local h = GetHum(); if h then h.WalkSpeed = 16 end
     end
 end)
 
@@ -1061,75 +973,52 @@ MkSlider("Home", "jumppower", 50, 200, 50, function(v) jumpVal = v end)
 MkToggle("Home", "jumppower", false, function(a)
     ClearConn("jump")
     if a then
-        Conn("jump", RunService.Heartbeat:Connect(function() 
-            local h = GetHum()
-            if h then 
-                h.UseJumpPower = true
-                h.JumpPower = jumpVal 
-            end 
-        end))
+        Conn("jump", RunService.Heartbeat:Connect(function() local h = GetHum(); if h then h.UseJumpPower = true; h.JumpPower = jumpVal end end))
     else
-        local h = GetHum()
-        if h then h.JumpPower = 50 end
+        local h = GetHum(); if h then h.JumpPower = 50 end
     end
 end)
 
 MkToggle("Home", "infjump", false, function(a)
     ClearConn("infj")
     if a then
-        Conn("infj", UserInputService.JumpRequest:Connect(function() 
-            local h = GetHum()
-            if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end 
-        end))
+        Conn("infj", UserInputService.JumpRequest:Connect(function() local h = GetHum(); if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end end))
     end
 end)
 
 MkSep("Home", "protection")
 
--- IRONCLAD ANTI-FLING (CLIENT-SIDE DETECTOR & COLLISION DISABLER)
 local antiFlingActive = false
-local getAF
-getAF = MkToggle("Home", "antifling", false, function(active)
+MkToggle("Home", "antifling", false, function(active)
     antiFlingActive = active
     ClearConn("ironclad_af")
     if active then
-        Conn("ironclad_af", RunService.Stepped:Connect(function()
+        Conn("ironclad_af", RunService.Heartbeat:Connect(function()
             if not antiFlingActive then return end
-            
             local character = player.Character
             if not character then return end
-            
             local root = character:FindFirstChild("HumanoidRootPart")
             if root then
-                -- Neutralize sudden extreme momentum injected into client character
                 if root.AssemblyLinearVelocity.Magnitude > 100 or root.AssemblyAngularVelocity.Magnitude > 100 then
-                    root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                    root.AssemblyLinearVelocity = Vector3.new(0, -1, 0)
                     root.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
                 end
             end
-            
-            -- Disable collisions with other players completely (removes physical interaction)
             for _, otherPlayer in ipairs(Players:GetPlayers()) do
                 if otherPlayer ~= player and otherPlayer.Character then
                     for _, part in ipairs(otherPlayer.Character:GetDescendants()) do
                         if part:IsA("BasePart") then
                             part.CanCollide = false
-                            
-                            -- Neutralize physical forces of other players near us locally
                             if part.AssemblyLinearVelocity.Magnitude > 120 or part.AssemblyAngularVelocity.Magnitude > 120 then
-                                part.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                                part.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                                part.AssemblyLinearVelocity = Vector3.zero
+                                part.AssemblyAngularVelocity = Vector3.zero
                             end
                         end
                     end
                 end
             end
-            
-            -- Ensure limbs have CanCollide off, preventing lever-arms physics interactions
             for _, limb in ipairs(character:GetChildren()) do
-                if limb:IsA("BasePart") and limb.Name ~= "HumanoidRootPart" then
-                    limb.CanCollide = false
-                end
+                if limb:IsA("BasePart") and limb.Name ~= "HumanoidRootPart" then limb.CanCollide = false end
             end
         end))
         Notify("Anti-Fling", "Ironclad Protection Active", C.green, 2.5)
@@ -1144,9 +1033,7 @@ MkToggle("Home", "noclip", false, function(a)
         Conn("noclip", RunService.Stepped:Connect(function()
             local c = GetChar()
             if not c then return end
-            for _, p in ipairs(c:GetDescendants()) do
-                if p:IsA("BasePart") then p.CanCollide = false end
-            end
+            for _, p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide = false end end
         end))
     end
 end)
@@ -1171,25 +1058,29 @@ MkToggle("Home", "fly", false, function(a)
         flyBG.Parent = r
         
         h.PlatformStand = true
+        
+        -- ИСПРАВЛЕНО: Использование MoveDirection вместо клавиш клавиатуры для мобильных устройств!
         Conn("fly", RunService.RenderStepped:Connect(function()
             if not flyOn then return end
             local rt = GetRoot()
-            if not rt or not flyBV.Parent then return end
+            if not rt or not flyBV or not flyBV.Parent then return end
             local cf = camera.CFrame
-            local d = Vector3.zero
             
-            if UserInputService:IsKeyDown(Enum.KeyCode.W) then d = d + cf.LookVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.S) then d = d - cf.LookVector end
-            if d.Magnitude > 0 then d = d.Unit end
+            -- Считываем мобильный джойстик или WASD автоматически через Humanoid
+            local moveVec = h.MoveDirection
+            local flySpeed = 65
             
-            flyBV.Velocity = d * 45
+            local worldDir = cf:VectorToWorldSpace(moveVec)
+            if worldDir.Magnitude > 0 then worldDir = worldDir.Unit end
+            
+            flyBV.Velocity = worldDir * flySpeed
             flyBG.CFrame = cf
         end))
     else
         local h = GetHum()
         if h then h.PlatformStand = false end
-        if flyBV then flyBV:Destroy() end
-        if flyBG then flyBG:Destroy() end
+        pcall(function() if flyBV then flyBV:Destroy() end end)
+        pcall(function() if flyBG then flyBG:Destroy() end end)
     end
 end)
 
@@ -1219,7 +1110,6 @@ MkToggle("Combat", "aimbot", false, function(a)
     end
 end)
 
--- Screen Action Shoot button (Useful for mobile players)
 local ShotBtn = Instance.new("TextButton")
 ShotBtn.Size = UDim2.new(0, 70, 0, 32)
 ShotBtn.Position = UDim2.new(1, -80, 0.4, 0)
@@ -1236,24 +1126,12 @@ Instance.new("UICorner", ShotBtn).CornerRadius = UDim.new(0, 6)
 ShotBtn.MouseButton1Click:Connect(function()
     local gih = FindGunInHand()
     if not gih then
-        local gt = GetTool("gun")
-        if gt then 
-            GetHum():EquipTool(gt)
-            task.wait(0.2)
-            gih = FindGunInHand() 
-        end
+        local gt = GetTool("Gun")
+        if gt then GetHum():EquipTool(gt); task.wait(0.2); gih = FindGunInHand() end
     end
-    if not gih then 
-        Notify("linbergz", "No Gun equipped!", C.red, 1.5) 
-        return 
-    end
+    if not gih then Notify("linbergz", "No Gun equipped!", C.red, 1.5); return end
     local head = GetMurdererHead()
-    if head then
-        FireGunAtTarget(gih, head)
-        Notify("linbergz", "Shot fired!", C.green, 1.2)
-    else
-        Notify("linbergz", "Murderer not found", C.red, 1)
-    end
+    if head then FireGunAtTarget(gih, head); Notify("linbergz", "Shot fired!", C.green, 1.2) else Notify("linbergz", "Murderer not found", C.red, 1) end
 end)
 MkToggle("Combat", "shootbtn", false, function(a) ShotBtn.Visible = a end)
 
@@ -1261,7 +1139,7 @@ local MagBtn = Instance.new("TextButton")
 MagBtn.Size = UDim2.new(0, 70, 0, 32)
 MagBtn.Position = UDim2.new(1, -80, 0.4, 38)
 MagBtn.BackgroundColor3 = C.accent
-MagBtn.Text = "MAGIC (B)"
+MagBtn.Text = "MAGIC"
 MagBtn.TextColor3 = C.white
 MagBtn.TextSize = 10
 MagBtn.Font = Enum.Font.GothamBold
@@ -1275,15 +1153,10 @@ MagBtn.MouseButton1Click:Connect(function()
     local head = GetMurdererHead()
     local r = GetRoot()
     if not head or not r then return end
-    
     local gih = FindGunInHand()
     if not gih then
-        local gt = GetTool("gun")
-        if gt then 
-            GetHum():EquipTool(gt)
-            task.wait(0.2)
-            gih = FindGunInHand() 
-        end
+        local gt = GetTool("Gun")
+        if gt then GetHum():EquipTool(gt); task.wait(0.2); gih = FindGunInHand() end
     end
     if not gih then return end
     
@@ -1300,24 +1173,14 @@ MkSep("Combat", "killall")
 MkButton("Combat", "killall", C.redDark, function()
     local knife = FindKnifeInHand()
     if not knife then
-        local kt = GetTool("knife")
-        if kt then 
-            GetHum():EquipTool(kt)
-            task.wait(0.2)
-            knife = FindKnifeInHand() 
-        end
+        local kt = GetTool("Knife")
+        if kt then GetHum():EquipTool(kt); task.wait(0.2); knife = FindKnifeInHand() end
     end
-    if not knife then 
-        Notify("linbergz", "Equip Knife!", C.red, 2) 
-        return 
-    end
+    if not knife then Notify("linbergz", "Equip Knife!", C.red, 2); return end
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= player and p.Character then
             local head = p.Character:FindFirstChild("Head")
-            if head then 
-                ThrowKnifeAtTarget(knife, head.Position)
-                task.wait(0.05) 
-            end
+            if head then ThrowKnifeAtTarget(knife, head.Position); task.wait(0.05) end
         end
     end
 end)
@@ -1326,9 +1189,7 @@ MkSep("Combat", "teleport")
 MkButton("Combat", "tpmurder", C.elevated, function()
     local r = GetRoot()
     local mr = GetMurdererRoot()
-    if r and mr then 
-        r.CFrame = mr.CFrame * CFrame.new(0, 0, 4) 
-    end
+    if r and mr then r.CFrame = mr.CFrame * CFrame.new(0, 0, 4) end
 end)
 MkButton("Combat", "tpsheriff", C.elevated, function()
     local r = GetRoot()
@@ -1342,27 +1203,20 @@ MkButton("Combat", "tpsheriff", C.elevated, function()
 end)
 
 ---------------------------------------------------------
--- ============ ESP TAB (NO HERO, SIMPLIFIED Roles) ============
+-- ============ ESP TAB ============
 ---------------------------------------------------------
 local espC = {}
 local function ClearESP()
     for _, p in ipairs(Players:GetPlayers()) do
-        if p.Character and p.Character:FindFirstChild("MobileESP") then 
-            p.Character.MobileESP:Destroy() 
-        end
+        if p.Character and p.Character:FindFirstChild("MobileESP") then p.Character.MobileESP:Destroy() end
     end
-    for k, c in pairs(espC) do 
-        if typeof(c) == "RBXScriptConnection" then c:Disconnect() end 
-    end
+    for k, c in pairs(espC) do if typeof(c) == "RBXScriptConnection" then c:Disconnect() end end
     espC = {}
 end
 
 local function ApplyHighlight(ch, col)
     if not ch then return end
-    if ch:FindFirstChild("MobileESP") then 
-        ch.MobileESP:Destroy() 
-    end
-    
+    if ch:FindFirstChild("MobileESP") then ch.MobileESP:Destroy() end
     local h = Instance.new("Highlight")
     h.Name = "MobileESP"
     h.FillColor = col
@@ -1378,59 +1232,47 @@ local function PlayerESP(p, col)
     if p.Character then ApplyHighlight(p.Character, col) end
     local k = "e_" .. p.UserId
     if espC[k] then espC[k]:Disconnect() end
-    espC[k] = p.CharacterAdded:Connect(function(c) 
-        task.wait(0.4)
-        ApplyHighlight(c, col) 
-    end)
+    espC[k] = p.CharacterAdded:Connect(function(c) task.wait(0.4); ApplyHighlight(c, col) end)
 end
 
-local getPE
-getPE = MkToggle("ESP", "players_esp", false, function(a)
+MkToggle("ESP", "players_esp", false, function(a)
     ClearESP()
     ClearConn("esp_p")
     if a then
-        for _, p in ipairs(Players:GetPlayers()) do 
-            PlayerESP(p, Color3.fromRGB(200, 200, 255)) 
-        end
-        Conn("esp_p", Players.PlayerAdded:Connect(function(p) 
-            if getPE() then PlayerESP(p, Color3.fromRGB(200,200,255)) end 
-        end))
+        for _, p in ipairs(Players:GetPlayers()) do PlayerESP(p, Color3.fromRGB(200, 200, 255)) end
+        Conn("esp_p", Players.PlayerAdded:Connect(function(p) PlayerESP(p, Color3.fromRGB(200,200,255)) end))
     end
 end)
 
-local getRE
-getRE = MkToggle("ESP", "roles_esp", false, function(a)
+MkToggle("ESP", "roles_esp", false, function(a)
     ClearESP()
     ClearConn("esp_roles")
     if a then
         local function UpdateRoles()
             for _, p in ipairs(Players:GetPlayers()) do
                 if p == player or not p.Character then continue end
-                if IsMurderer(p) then 
-                    ApplyHighlight(p.Character, Color3.fromRGB(255, 50, 50)) -- Red for Murderer
-                elseif IsSheriff(p) then 
-                    ApplyHighlight(p.Character, Color3.fromRGB(50, 150, 255)) -- Blue/Cyan for Sheriff
-                else 
-                    ApplyHighlight(p.Character, Color3.fromRGB(50, 255, 100)) -- Green for Innocents
-                end
+                if IsMurderer(p) then ApplyHighlight(p.Character, Color3.fromRGB(255, 50, 50))
+                elseif IsSheriff(p) then ApplyHighlight(p.Character, Color3.fromRGB(50, 150, 255))
+                else ApplyHighlight(p.Character, Color3.fromRGB(50, 255, 100)) end
             end
         end
         UpdateRoles()
+        
+        -- ИСПРАВЛЕНО: Плавное обновление ESP без лагов
+        local lastUpdate = 0
         Conn("esp_roles", RunService.Heartbeat:Connect(function()
-            local count = 0
-            for _, p in ipairs(Players:GetPlayers()) do count = count + 1 end
-            if count % 30 == 0 then UpdateRoles() end
+            if tick() - lastUpdate > 0.5 then
+                lastUpdate = tick()
+                UpdateRoles()
+            end
         end))
     end
 end)
 
--- Dropped Gun ESP
 local gunEspActive = false
 local gunGuis = {}
 local function ClearGunESP()
-    for _, g in ipairs(gunGuis) do 
-        pcall(function() g:Destroy() end) 
-    end
+    for _, g in ipairs(gunGuis) do pcall(function() g:Destroy() end) end
     gunGuis = {}
 end
 
@@ -1450,7 +1292,6 @@ MkToggle("ESP", "gun_esp", false, function(a)
                         b.Size = UDim2.new(0, 60, 0, 20)
                         b.AlwaysOnTop = true
                         b.Parent = handle
-                        
                         local t = Instance.new("TextLabel")
                         t.Size = UDim2.new(1, 0, 1, 0)
                         t.BackgroundTransparency = 1
@@ -1459,7 +1300,6 @@ MkToggle("ESP", "gun_esp", false, function(a)
                         t.TextSize = 10
                         t.Font = Enum.Font.GothamBold
                         t.Parent = b
-                        
                         table.insert(gunGuis, b)
                     end
                 end
@@ -1472,8 +1312,7 @@ MkSep("ESP", "role_info")
 local InfoBox = MkInfoBox("ESP", "Waiting for data...")
 task.spawn(function()
     while Hub.Parent do
-        local mName = "None"
-        local sName = "None"
+        local mName, sName = "None", "None"
         for _, p in ipairs(Players:GetPlayers()) do
             if IsMurderer(p) then mName = p.Name end
             if IsSheriff(p) then sName = p.Name end
@@ -1484,11 +1323,10 @@ task.spawn(function()
 end)
 
 ---------------------------------------------------------
--- ============ FUN & TROLL TAB (UPGRADED FLING) ============
+-- ============ FUN & TROLL TAB ============
 ---------------------------------------------------------
 MkSep("Fun & Troll", "flinger")
 
--- HIGH INTENSITY PHYSICAL TOUCH FLING (CYCLIC RE-SPIN ENGINES)
 local touchFlingOn = false
 MkToggle("Fun & Troll", "touch_fling", false, function(a)
     touchFlingOn = a
@@ -1497,31 +1335,25 @@ MkToggle("Fun & Troll", "touch_fling", false, function(a)
     if a and r then
         Conn("tfling", RunService.Heartbeat:Connect(function()
             if not touchFlingOn then return end
-            
-            -- Inject extreme rotational angular velocity directly into HumanoidRootPart
-            r.AssemblyAngularVelocity = Vector3.new(0, 99999, 0)
-            r.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-            
-            -- Prevent gravity from pulling personal downwards when speed calculations loop
-            local currentVel = r.AssemblyLinearVelocity
-            r.AssemblyLinearVelocity = Vector3.new(currentVel.X, 0.45, currentVel.Z)
-            
-            -- Search and launch players locally in proximity
-            for _, otherPlayer in ipairs(Players:GetPlayers()) do
-                if otherPlayer ~= player and otherPlayer.Character then
-                    local otherRoot = otherPlayer.Character:FindFirstChild("HumanoidRootPart")
-                    if otherRoot and (r.Position - otherRoot.Position).Magnitude < 7 then
-                        otherRoot.AssemblyLinearVelocity = Vector3.new(0, 250000, 0)
+            pcall(function()
+                -- ИСПРАВЛЕНО: Лимиты физики Roblox установлены на 256. Выше нет смысла ставить.
+                r.AssemblyAngularVelocity = Vector3.new(256, 256, 256)
+                
+                for _, otherPlayer in ipairs(Players:GetPlayers()) do
+                    if otherPlayer ~= player and otherPlayer.Character then
+                        local otherRoot = otherPlayer.Character:FindFirstChild("HumanoidRootPart")
+                        if otherRoot and (r.Position - otherRoot.Position).Magnitude < 9 then
+                            otherRoot.AssemblyLinearVelocity = Vector3.new(0, 256, 0)
+                        end
                     end
                 end
-            end
+            end)
         end))
     else
-        if r then r.AssemblyAngularVelocity = Vector3.zero end
+        if r then pcall(function() r.AssemblyAngularVelocity = Vector3.zero end) end
     end
 end)
 
--- Player Target selection
 local selectedPlayer = nil
 local SelLabel = Instance.new("TextLabel")
 SelLabel.Size = UDim2.new(1, 0, 0, 22)
@@ -1546,9 +1378,7 @@ DL.Parent = Dropdown
 DL.Padding = UDim.new(0, 2)
 
 local function UpdateDropdown()
-    for _, item in ipairs(Dropdown:GetChildren()) do 
-        if item:IsA("TextButton") then item:Destroy() end 
-    end
+    for _, item in ipairs(Dropdown:GetChildren()) do if item:IsA("TextButton") then item:Destroy() end end
     for _, otherPlayer in ipairs(Players:GetPlayers()) do
         if otherPlayer ~= player then
             local btn = Instance.new("TextButton")
@@ -1560,7 +1390,6 @@ local function UpdateDropdown()
             btn.Font = Enum.Font.Gotham
             btn.Parent = Dropdown
             Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-            
             btn.MouseButton1Click:Connect(function()
                 selectedPlayer = otherPlayer
                 SelLabel.Text = "Target: " .. otherPlayer.DisplayName
@@ -1572,18 +1401,13 @@ UpdateDropdown()
 Players.PlayerAdded:Connect(UpdateDropdown)
 Players.PlayerRemoving:Connect(UpdateDropdown)
 
--- ADVANCED TARGET ORBIT FLING [BETA] (FULLY DETAILED PHYSICS BYPASS)
 local targetFlingActive = false
 MkButton("Fun & Troll", "fling_btn", C.accent, function()
-    if not selectedPlayer or not selectedPlayer.Character then 
-        Notify("linbergz", "Select target player!", C.red, 2) 
-        return 
-    end
+    if not selectedPlayer or not selectedPlayer.Character then Notify("linbergz", "Select target player!", C.red, 2); return end
     
     local character = player.Character
     local root = character and character:FindFirstChild("HumanoidRootPart")
     local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-    
     local targetRoot = selectedPlayer.Character:FindFirstChild("HumanoidRootPart")
     local targetHum = selectedPlayer.Character:FindFirstChildOfClass("Humanoid")
     
@@ -1594,7 +1418,6 @@ MkButton("Fun & Troll", "fling_btn", C.accent, function()
         local savedPos = root.CFrame
         Notify("linbergz", "Target locked: Flinging " .. selectedPlayer.DisplayName, C.accent, 2.5)
         
-        -- Disable personal limb collision to prevent self-flings
         local storedPartsState = {}
         for _, part in ipairs(character:GetDescendants()) do
             if part:IsA("BasePart") then
@@ -1603,44 +1426,37 @@ MkButton("Fun & Troll", "fling_btn", C.accent, function()
                 part.Massless = true
             end
         end
-        
-        -- Enable root collision specifically to transfer kinetic physical impulse
         root.CanCollide = true
         
-        -- High Torque Rotational angular force injection
         local bodyAngularVelocity = Instance.new("BodyAngularVelocity")
         bodyAngularVelocity.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
-        bodyAngularVelocity.AngularVelocity = Vector3.new(0, 99999, 0)
+        -- ИСПРАВЛЕНО: Максимальный предел физики
+        bodyAngularVelocity.AngularVelocity = Vector3.new(256, 256, 256)
         bodyAngularVelocity.Parent = root
         
-        -- Put humanoid in Physics state to prevent script recovery
         humanoid:ChangeState(Enum.HumanoidStateType.Physics)
         
         local start = tick()
         while tick() - start < 3.2 do
-            if not targetRoot or not targetRoot.Parent or targetHum.Health <= 0 then 
-                break 
-            end
-            
-            -- Cycle coordinates underneath target player to launch them upwards
-            root.CFrame = targetRoot.CFrame * CFrame.new(0, -1.3, 0)
-            root.AssemblyLinearVelocity = Vector3.new(0, 450000, 0)
+            if not targetRoot or not targetRoot.Parent or targetHum.Health <= 0 then break end
+            pcall(function()
+                root.CFrame = targetRoot.CFrame * CFrame.new(0, -1.3, 0)
+                -- ИСПРАВЛЕНО: Микро-телепорт в направлении взгляда жертвы для обхода защиты
+                root.AssemblyLinearVelocity = targetRoot.CFrame.LookVector * 256
+            end)
             task.wait(0.01)
         end
         
-        -- Physical cleanup
-        bodyAngularVelocity:Destroy()
-        root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-        root.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-        root.CFrame = savedPos
-        humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+        pcall(function()
+            bodyAngularVelocity:Destroy()
+            root.AssemblyLinearVelocity = Vector3.zero
+            root.AssemblyAngularVelocity = Vector3.zero
+            root.CFrame = savedPos
+            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+        end)
         
-        -- Restore original collisions state
         for part, data in pairs(storedPartsState) do
-            if part.Parent then
-                part.CanCollide = data[1]
-                part.Massless = data[2]
-            end
+            if part.Parent then part.CanCollide = data[1]; part.Massless = data[2] end
         end
         
         targetFlingActive = false
@@ -1656,9 +1472,7 @@ local AIn = MkInput("Boombox", "Audio ID...", "9045498783")
 local cSnd = nil
 
 local function PlayS(id)
-    if cSnd then 
-        pcall(function() cSnd:Stop(); cSnd:Destroy() end) 
-    end
+    if cSnd then pcall(function() cSnd:Stop(); cSnd:Destroy() end) end
     local r = GetRoot()
     if r and tonumber(id) then
         cSnd = Instance.new("Sound")
@@ -1672,25 +1486,21 @@ local function PlayS(id)
 end
 
 local function StopS()
-    if cSnd then 
-        pcall(function() cSnd:Stop(); cSnd:Destroy() end) 
-        cSnd = nil 
-    end
+    if cSnd then pcall(function() cSnd:Stop(); cSnd:Destroy() end); cSnd = nil end
 end
 
-local PlayBtn, PlayLbl = MkButton("Boombox", "play", C.greenDark, function() PlayS(AIn.Text) end)
-local StopBtn, StopLbl = MkButton("Boombox", "stop", C.redDark, function() StopS() end)
+MkButton("Boombox", "play", C.greenDark, function() PlayS(AIn.Text) end)
+MkButton("Boombox", "stop", C.redDark, function() StopS() end)
 
 MkSep("Boombox", "quick_tracks")
-MkButton("Boombox", "Phonk Track Track", C.elevated, function() PlayS("9045498783") end)
-MkButton("Boombox", "Meme Sound Track", C.elevated, function() PlayS("5410086218") end)
+MkButton("Boombox", "Phonk Track", C.elevated, function() PlayS("9045498783") end)
+MkButton("Boombox", "Meme Sound", C.elevated, function() PlayS("5410086218") end)
 
 ---------------------------------------------------------
 -- ============ SETTINGS TAB ============
 ---------------------------------------------------------
 MkSep("Settings", "system")
 
--- Change Language Configuration
 local LangLabel = Instance.new("TextLabel")
 LangLabel.Size = UDim2.new(1, 0, 0, 16)
 LangLabel.BackgroundTransparency = 1
@@ -1712,16 +1522,10 @@ LangToggleBtn.Parent = GP("Settings").frame
 Instance.new("UICorner", LangToggleBtn).CornerRadius = UDim.new(0, 5)
 
 LangToggleBtn.MouseButton1Click:Connect(function()
-    if currentLang == "RU" then
-        UpdateLanguage("EN")
-        LangToggleBtn.Text = "English"
-    else
-        UpdateLanguage("RU")
-        LangToggleBtn.Text = "Русский / Russian"
-    end
+    if currentLang == "RU" then UpdateLanguage("EN"); LangToggleBtn.Text = "English"
+    else UpdateLanguage("RU"); LangToggleBtn.Text = "Русский / Russian" end
 end)
 
--- Dynamic Color Theme Chooser
 local ThemeLabel = Instance.new("TextLabel")
 ThemeLabel.Size = UDim2.new(1, 0, 0, 16)
 ThemeLabel.BackgroundTransparency = 1
@@ -1742,8 +1546,7 @@ TLList.Parent = ThemeList
 TLList.FillDirection = Enum.FillDirection.Horizontal
 TLList.Padding = UDim.new(0, 4)
 
-local themeNames = {"Purple", "Red", "Blue", "Green", "Dark"}
-for _, tName in ipairs(themeNames) do
+for _, tName in ipairs({"Purple", "Red", "Blue", "Green", "Dark"}) do
     local tc = Themes[tName].accent
     local tBtn = Instance.new("TextButton")
     tBtn.Size = UDim2.new(0.18, 0, 1, 0)
@@ -1751,48 +1554,30 @@ for _, tName in ipairs(themeNames) do
     tBtn.Text = ""
     tBtn.Parent = ThemeList
     Instance.new("UICorner", tBtn).CornerRadius = UDim.new(0, 4)
-    
-    tBtn.MouseButton1Click:Connect(function()
-        ApplyTheme(tName)
-        Notify("linbergz", "Accent color set to " .. tName, C.accent, 2)
-    end)
+    tBtn.MouseButton1Click:Connect(function() ApplyTheme(tName); Notify("linbergz", "Accent color set to " .. tName, C.accent, 2) end)
 end
 
-MkButton("Settings", "reset", C.elevated, function() 
-    local humanoid = GetHum()
-    if humanoid then humanoid.Health = 0 end 
-end)
-
-MkButton("Settings", "copy", C.elevated, function() 
-    pcall(function() 
-        setclipboard("Roblox.GameLauncher.joinGameInstance(" .. game.PlaceId .. ", '" .. game.JobId .. "')") 
-    end) 
-end)
-
+MkButton("Settings", "reset", C.elevated, function() local h = GetHum(); if h then h.Health = 0 end end)
+MkButton("Settings", "copy", C.elevated, function() pcall(function() setclipboard("Roblox.GameLauncher.joinGameInstance(" .. game.PlaceId .. ", '" .. game.JobId .. "')") end) end)
 MkButton("Settings", "destroy", C.redDark, function()
-    ClearESP()
-    ClearGunESP()
-    StopS()
-    for _, c in pairs(connections) do 
-        c:Disconnect() 
-    end
+    ClearESP(); ClearGunESP(); StopS()
+    for _, c in pairs(connections) do if typeof(c) == "RBXScriptConnection" then c:Disconnect() end end
     ScreenGui:Destroy()
 end)
 
 MkSep("Settings", "about")
-MkInfoBox("Settings", "linbergz Hub v7.7\nPlatform: Mobile Optimized\nCreator: linbergz Team")
+MkInfoBox("Settings", "linbergz Hub v7.8 (Upgraded)\nPlatform: Mobile Optimized\nCreator: linbergz Team")
 
 ---------------------------------------------------------
--- ============ INFO TAB ============
+-- ============ INFO TAB =-----------
 ---------------------------------------------------------
 MkSep("Info", "about")
 local InfoChange = MkInfoBox("Info", "Loading updates...")
-
 local function RefreshLog()
     if currentLang == "RU" then
-        InfoChange.Text = "Обновление v7.7 Mobile:\n\n- [NEW] Железобетонный Анти-Флинг: полная блокировка симуляции коллизий между вашим персонажем и другими игроками на уровне Stepped. Вашу скорость больше не взламывают!\n- [UPGRADED] Target Fling [BETA] - полностью переработанная физическая модель: орбитальные микро-телепорты под цель, повышенная крутящая скорость без крашей.\n- [UPDATED] Очищенный ЕСП: исключена нестабильная роль Героя. Полный фокус на Убийце, Шерифе и Мирных.\n- [NEW UI] Премиальный дизайн вкладок с плавающим слайд-индикатором и плавными тактильными микро-сжатиями кнопок."
+        InfoChange.Text = "Обновление v7.8 Mobile:\n\n- [FIX] Полёт теперь работает через джойстик на экране! Больше не нужны кнопки W/S.\n- [FIX] Флинг адаптирован под новые лимиты физики Roblox (256+). Максимальный импульс без крашей.\n- [FIX] Оптимизация ESP: плавное обновление без просадок FPS.\n- [UPD] Улучшена защита от анти-флинга и микрофризы в бою."
     else
-        InfoChange.Text = "Update v7.7 Mobile:\n\n- [NEW] Rock-Solid Anti-Fling: complete physics simulation blocking between players inside client. Your momentum cannot be hacked anymore!\n- [UPGRADED] Target Fling [BETA] - rebuilt physics calculations: orbit underneath targets with extreme spin rate.\n- [UPDATED] Cleaner ESP: Removed unstable Hero tracker. Core focus on Murderer, Sheriff, and Innocents.\n- [NEW UI] Highly responsive sidebar tabs with elastic sliding gliders and physical micro-scaling feedback."
+        InfoChange.Text = "Update v7.8 Mobile:\n\n- [FIX] Fly now works via on-screen joystick! No more W/S keys required.\n- [FIX] Fling adapted to new Roblox physics limits (256+). Max impulse without crashes.\n- [FIX] ESP Optimization: smooth updates without FPS drops.\n- [UPD] Improved anti-fling protection and combat micro-freezes."
     end
 end
 RefreshLog()
@@ -1801,7 +1586,5 @@ LangToggleBtn.MouseButton1Click:Connect(RefreshLog)
 ---------------------------------------------------------
 -- INITIALIZATION PIPELINE
 ---------------------------------------------------------
-UpdateLanguage("RU") -- Default RU Localization
-task.delay(1.5, function() 
-    Notify("linbergz Team", "Upgrade complete! Enjoy advanced UI and Physics Engines", C.accent, 3.5) 
-end)
+UpdateLanguage("RU")
+task.delay(1.5, function() Notify("linbergz Team", "Upgrade complete! Physics & Mobile Engine v7.8", C.accent, 3.5) end)
