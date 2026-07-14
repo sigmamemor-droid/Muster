@@ -1,5 +1,5 @@
--- linbergz Team MM2 PREMIUM MOBILE HUB
--- Optimized & Designed for Mobile Devices
+-- linbergz Team MM2 PREMIUM MOBILE HUB v7.6
+-- Refined Tabs & Upgraded Fling System
 -- Creation Date: 26.09.2025
 
 ---------------------------------------------------------
@@ -105,32 +105,32 @@ local L = {
         home = "Home", combat = "Combat", esp = "ESP", boombox = "Boombox", fun = "Fun & Troll", settings = "Settings", info = "Info",
         movement = "MOVEMENT", walkspeed = "Walk Speed", jumppower = "Jump Power", infjump = "Infinite Jump",
         protection = "PROTECTION", antifling = "Anti-Fling", noclip = "Noclip", fly = "Fly", fullbright = "Fullbright",
-        aimbot = "Aimbot on Murderer", shootbtn = "Shoot Button [Screen]", magicshot = "Magic Shot [Screen]",
-        killall = "[!] Kill All (Knife) - Beta", teleport = "TELEPORTS", tpmurder = "TP to Murderer", tpsheriff = "TP to Sheriff",
-        players_esp = "ESP All Players", roles_esp = "ESP Roles [Live + Hero]", gun_esp = "Gun ESP [Dropped]",
+        aimbot = "Aimbot on Murderer", shootbtn = "Shoot Button [Screen]", magicshot = "Magic Shot [Screen] (Beta)",
+        killall = "[!] Kill All (Knife) (Beta)", teleport = "TELEPORTS", tpmurder = "TP to Murderer", tpsheriff = "TP to Sheriff",
+        players_esp = "ESP All Players", roles_esp = "ESP Roles [Murd, Sher, Inn]", gun_esp = "Gun ESP [Dropped]",
         audioplayer = "AUDIO ID PLAYER", play = "PLAY", stop = "STOP", system = "SYSTEM CONTROL", copy = "Copy Server Link",
         reset = "Reset Character", destroy = "Destroy Hub", theme = "Theme", language = "Language",
-        about = "ABOUT HUB", quick_tracks = "QUICK AUDIO TRACKS", flinger = "FLING SYSTEM", touch_fling = "Touch Fling (Physical)",
-        select_target = "Select Target", fling_btn = "Fling Target", role_info = "ROLE INFO",
+        about = "ABOUT HUB", quick_tracks = "QUICK AUDIO TRACKS", flinger = "FLING SYSTEM", touch_fling = "Touch Fling (Beta)",
+        select_target = "Select Target", fling_btn = "Fling Target (Beta)", role_info = "ROLE INFO",
     },
     RU = {
         home = "Главная", combat = "Сражение", esp = "ЕСП/ВХ", boombox = "Музыка", fun = "Фан и Троллинг", settings = "Настройки", info = "Информация",
         movement = "ПЕРЕДВИЖЕНИЕ", walkspeed = "Скорость бега", jumppower = "Высота прыжка", infjump = "Бесконечный прыжок",
-        protection = "ЗАЩИТА", antifling = "Анти-Флинг", noclip = "Проход сквозь стены", fly = "Полет", fullbright = "Яркий свет",
-        aimbot = "Аимбот на убийцу", shootbtn = "Кнопка выстрела [Экран]", magicshot = "Магический выстрел [Экран]",
-        killall = "[!] Убить всех (Нож)", teleport = "ТЕЛЕПОРТАЦИЯ", tpmurder = "ТП к Убийце", tpsheriff = "ТП к Шерифу",
-        players_esp = "Подсветка игроков", roles_esp = "Показ ролей [Живые + Герой]", gun_esp = "Подсветка оружия [На полу]",
+        protection = "ЗАЗАЩИТА", antifling = "Анти-Флинг", noclip = "Проход сквозь стены", fly = "Полет", fullbright = "Яркий свет",
+        aimbot = "Аимбот на убийцу", shootbtn = "Кнопка выстрела [Экран]", magicshot = "Магический выстрел [Экран] (Beta)",
+        killall = "[!] Убить всех (Нож) (Beta)", teleport = "ТЕЛЕПОРТАЦИЯ", tpmurder = "ТП к Убийце", tpsheriff = "ТП к Шерифу",
+        players_esp = "Подсветка игроков", roles_esp = "Показ ролей [Убик, Шериф, Мир]", gun_esp = "Подсветка оружия [На полу]",
         audioplayer = "ПРОИГРЫВАТЕЛЬ АУДИО", play = "ЗАПУСК", stop = "СТОП", system = "СИСТЕМА", copy = "Скопировать линк",
         reset = "Умереть (Ресет)", destroy = "Закрыть чит полностью", theme = "Цветовая схема", language = "Язык меню",
-        about = "О ХАБЕ", quick_tracks = "БЫСТРЫЕ ТРЕКИ", flinger = "СИСТЕМА ФЛИНГА", touch_fling = "Тач Флинг (Таран)",
-        select_target = "Выбрать жертву", fling_btn = "Запустить в космос", role_info = "ИНФОРМАЦИЯ О РОЛЯХ",
+        about = "О ХАБЕ", quick_tracks = "БЫСТРЫЕ ТРЕКИ", flinger = "СИСТЕМА ФЛИНГА", touch_fling = "Тач Флинг (Beta)",
+        select_target = "Выбрать жертву", fling_btn = "Запустить в космос (Beta)", role_info = "ИНФОРМАЦИЯ О РОЛЯХ",
     }
 }
 
 local function UpdateLanguage(lang)
     currentLang = lang
     for item, key in pairs(updateableLabels) do
-        if typeof(item) == "Instance" and item:IsA("TextLabel") or item:IsA("TextButton") then
+        if typeof(item) == "Instance" and (item:IsA("TextLabel") or item:IsA("TextButton")) then
             item.Text = L[currentLang][key] or item.Text
         end
     end
@@ -196,11 +196,6 @@ end
 
 local function IsSheriff(p)
     if p == player or not p.Character then return false end
-    return (p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun")) ~= nil
-end
-
-local function IsHero(p)
-    if p == player or not p.Character or IsMurderer(p) then return false end
     return (p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun")) ~= nil
 end
 
@@ -314,7 +309,7 @@ MainLogo.ZIndex = 102; MainLogo.Parent = LogoBox
 
 local SubLogo = Instance.new("TextLabel")
 SubLogo.Size = UDim2.new(1, 0, 0, 20); SubLogo.Position = UDim2.new(0, 0, 0, 90)
-SubLogo.BackgroundTransparency = 1; SubLogo.Text = "MOBILE PREMIUM HUB v7.5"
+SubLogo.BackgroundTransparency = 1; SubLogo.Text = "MOBILE PREMIUM HUB v7.6"
 SubLogo.TextColor3 = C.textDim; SubLogo.TextSize = 10; SubLogo.Font = Enum.Font.GothamBold
 SubLogo.ZIndex = 102; SubLogo.Parent = LogoBox
 
@@ -363,6 +358,7 @@ Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 table.insert(themedAccent, ToggleBtn)
 
 local TBSk = Instance.new("UIStroke"); TBSk.Color = C.white; TBSk.Thickness = 1.5; TBSk.Transparency = 0.5; TBSk.Parent = ToggleBtn
+
 -- Mobile drag function for ToggleBtn
 do
     local dragging, dragInput, dragStart, startPos
@@ -432,16 +428,38 @@ do
 end
 
 ---------------------------------------------------------
--- SIDEBAR
+-- SIDEBAR WITH GLIDER INDICATOR & ANIMATED TABS
 ---------------------------------------------------------
 local Sidebar = Instance.new("Frame"); Sidebar.Size = UDim2.new(0, SIDEBAR_W, 1, 0); Sidebar.BackgroundColor3 = C.sidebar; Sidebar.BorderSizePixel = 0; Sidebar.ZIndex = 12; Sidebar.Parent = Hub
 
-local SLogo = Instance.new("Frame"); SLogo.Size = UDim2.new(1, 0, 0, 38); SLogo.BackgroundTransparency = 1; SLogo.Parent = Sidebar
-local STi = Instance.new("TextLabel"); STi.Size = UDim2.new(1, 0, 1, 0); STi.BackgroundTransparency = 1; STi.Text = "linbergz"; STi.TextColor3 = C.white; STi.TextSize = 15; STi.Font = Enum.Font.GothamBlack; STi.Parent = SLogo
+local SLogo = Instance.new("Frame"); SLogo.Size = UDim2.new(1, 0, 0, 36); SLogo.BackgroundTransparency = 1; SLogo.Parent = Sidebar
+local STi = Instance.new("TextLabel"); STi.Size = UDim2.new(1, 0, 1, 0); STi.BackgroundTransparency = 1; STi.Text = "linbergz"; STi.TextColor3 = C.white; STi.TextSize = 14; STi.Font = Enum.Font.GothamBlack; STi.Parent = SLogo
 
-local TH = Instance.new("Frame"); TH.Size = UDim2.new(1, 0, 1, -38); TH.Position = UDim2.new(0, 0, 0, 38); TH.BackgroundTransparency = 1; TH.ZIndex = 13; TH.Parent = Sidebar
-local THL = Instance.new("UIListLayout"); THL.Parent = TH; THL.Padding = UDim.new(0, 1)
-local THP = Instance.new("UIPadding"); THP.PaddingLeft = UDim.new(0, 4); THP.PaddingRight = UDim.new(0, 4); THP.Parent = TH
+local TH = Instance.new("Frame"); TH.Size = UDim2.new(1, 0, 1, -36); TH.Position = UDim2.new(0, 0, 0, 36); TH.BackgroundTransparency = 1; TH.ZIndex = 13; TH.Parent = Sidebar
+local THL = Instance.new("UIListLayout"); THL.Parent = TH; THL.Padding = UDim.new(0, 2)
+local THP = Instance.new("UIPadding"); THP.PaddingLeft = UDim.new(0, 6); THP.PaddingRight = UDim.new(0, 6); THP.PaddingTop = UDim.new(0, 4); THP.Parent = TH
+
+-- Premium Glider Bar (Slides to active tab)
+local TabGlider = Instance.new("Frame")
+TabGlider.Size = UDim2.new(1, 0, 0, 24)
+TabGlider.BackgroundColor3 = C.accent
+TabGlider.BackgroundTransparency = 0.85
+TabGlider.ZIndex = 12
+TabGlider.Visible = true
+TabGlider.Parent = TH
+Instance.new("UICorner", TabGlider).CornerRadius = UDim.new(0, 6)
+
+local GliderLine = Instance.new("Frame")
+GliderLine.Size = UDim2.new(0, 3, 1, 0)
+GliderLine.Position = UDim2.new(0, 0, 0, 0)
+GliderLine.BackgroundColor3 = C.accent
+GliderLine.BorderSizePixel = 0
+GliderLine.ZIndex = 13
+GliderLine.Parent = TabGlider
+Instance.new("UICorner", GliderLine).CornerRadius = UDim.new(1, 0)
+
+table.insert(themedAccent, TabGlider)
+table.insert(themedAccent, GliderLine)
 
 ---------------------------------------------------------
 -- PAGES GENERATION
@@ -468,25 +486,35 @@ for idx, def in ipairs(tabDefs) do
     local PP = Instance.new("UIPadding"); PP.PaddingTop = UDim.new(0, 4); PP.PaddingBottom = UDim.new(0, 8); PP.PaddingLeft = UDim.new(0, 6); PP.PaddingRight = UDim.new(0, 6); PP.Parent = Page
     tabPages[def.name] = {frame = Page, oc = 0}
     
-    local Tb = Instance.new("TextButton"); Tb.Size = UDim2.new(1, 0, 0, 24); Tb.BackgroundTransparency = 1; Tb.Text = def.name; Tb.TextColor3 = C.textDim; Tb.TextSize = 10; Tb.Font = Enum.Font.GothamBold; Tb.AutoButtonColor = false; Tb.ZIndex = 14; Tb.Parent = TH; Instance.new("UICorner", Tb).CornerRadius = UDim.new(0, 4)
+    local Tb = Instance.new("TextButton"); Tb.Size = UDim2.new(1, 0, 0, 24); Tb.BackgroundTransparency = 1; Tb.Text = def.name; Tb.TextColor3 = C.textDim; Tb.TextSize = 10; Tb.Font = Enum.Font.GothamBold; Tb.AutoButtonColor = false; Tb.ZIndex = 14; Tb.Parent = TH; Instance.new("UICorner", Tb).CornerRadius = UDim.new(0, 6)
     updateableLabels[Tb] = def.key
     tabBtns[def.name] = {btn = Tb, index = idx}
     
     Tb.MouseButton1Click:Connect(function()
         if currentTab == def.name then return end
+        
+        -- Physical Click Micro-Scale Animation (Premium mobile feedback)
+        local origSize = UDim2.new(1, 0, 0, 24)
+        TweenService:Create(Tb, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0.92, 0, 0, 22)}):Play()
+        task.delay(0.08, function()
+            TweenService:Create(Tb, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = origSize}):Play()
+        end)
+        
         if currentTab and tabPages[currentTab] then
             tabPages[currentTab].frame.Visible = false
-            tabBtns[currentTab].btn.BackgroundTransparency = 1
             tabBtns[currentTab].btn.TextColor3 = C.textDim
         end
+        
         currentTab = def.name
         Page.Visible = true
         PT.Text = L[currentLang][def.key] or def.name
         updateableLabels[PT] = def.key
         
-        Tb.BackgroundTransparency = 0
-        Tb.BackgroundColor3 = C.sidebarAct
         Tb.TextColor3 = C.accentLight
+        
+        -- Smooth Glider Movement Animation
+        local targetY = 4 + (idx - 1) * 26
+        TweenService:Create(TabGlider, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, targetY)}):Play()
     end)
 end
 
@@ -671,7 +699,6 @@ MkToggle("Home", "fly", false, function(a)
             if not rt or not flyBV.Parent then return end
             local cf = camera.CFrame
             local d = Vector3.zero
-            -- Mobile friendly movement handling can be enhanced, WASD works too
             if UserInputService:IsKeyDown(Enum.KeyCode.W) then d += cf.LookVector end
             if UserInputService:IsKeyDown(Enum.KeyCode.S) then d -= cf.LookVector end
             if d.Magnitude > 0 then d = d.Unit end
@@ -732,7 +759,7 @@ MkToggle("Combat", "shootbtn", false, function(a) ShotBtn.Visible = a end)
 
 local MagBtn = Instance.new("TextButton")
 MagBtn.Size = UDim2.new(0, 70, 0, 32); MagBtn.Position = UDim2.new(1, -80, 0.4, 38)
-MagBtn.BackgroundColor3 = C.accent; MagBtn.Text = "MAGIC"; MagBtn.TextColor3 = C.white; MagBtn.TextSize = 10; MagBtn.Font = Enum.Font.GothamBold; MagBtn.Visible = false; MagBtn.ZIndex = 50; MagBtn.Parent = ScreenGui
+MagBtn.BackgroundColor3 = C.accent; MagBtn.Text = "MAGIC (B)"; MagBtn.TextColor3 = C.white; MagBtn.TextSize = 10; MagBtn.Font = Enum.Font.GothamBold; MagBtn.Visible = false; MagBtn.ZIndex = 50; MagBtn.Parent = ScreenGui
 Instance.new("UICorner", MagBtn).CornerRadius = UDim.new(0, 6)
 table.insert(themedAccent, MagBtn)
 
@@ -787,7 +814,7 @@ MkButton("Combat", "tpsheriff", C.elevated, function()
 end)
 
 ---------------------------------------------------------
--- ============ ESP TAB ============
+-- ============ ESP TAB (SIMPLIFIED & CLEAN) ============
 ---------------------------------------------------------
 local espC = {}
 local function ClearESP()
@@ -801,8 +828,15 @@ end
 local function ApplyHighlight(ch, col)
     if not ch then return end
     if ch:FindFirstChild("MobileESP") then ch.MobileESP:Destroy() end
+    
     local h = Instance.new("Highlight")
-    h.Name = "MobileESP"; h.FillColor = col; h.FillTransparency = 0.4; h.OutlineColor = C.white; h.Adornee = ch; h.Parent = ch
+    h.Name = "MobileESP"
+    h.FillColor = col
+    h.FillTransparency = 0.55
+    h.OutlineColor = Color3.fromRGB(255, 255, 255)
+    h.OutlineTransparency = 0.2
+    h.Adornee = ch
+    h.Parent = ch
 end
 
 local function PlayerESP(p, col)
@@ -831,10 +865,13 @@ getRE = MkToggle("ESP", "roles_esp", false, function(a)
         local function UpdateRoles()
             for _, p in ipairs(Players:GetPlayers()) do
                 if p == player or not p.Character then continue end
-                if IsMurderer(p) then ApplyHighlight(p.Character, C.red)
-                elseif IsSheriff(p) then ApplyHighlight(p.Character, C.cyan)
-                elseif IsHero(p) then ApplyHighlight(p.Character, C.gold)
-                else ApplyHighlight(p.Character, C.green) end
+                if IsMurderer(p) then 
+                    ApplyHighlight(p.Character, Color3.fromRGB(255, 50, 50)) -- Red
+                elseif IsSheriff(p) then 
+                    ApplyHighlight(p.Character, Color3.fromRGB(50, 150, 255)) -- Blue/Cyan
+                else 
+                    ApplyHighlight(p.Character, Color3.fromRGB(50, 255, 100)) -- Innocent Green
+                end
             end
         end
         UpdateRoles()
@@ -889,11 +926,11 @@ task.spawn(function()
 end)
 
 ---------------------------------------------------------
--- ============ FUN & TROLL TAB ============
+-- ============ FUN & TROLL TAB (UPGRADED FLING) ============
 ---------------------------------------------------------
 MkSep("Fun & Troll", "flinger")
 
--- Touch Fling implementation
+-- HIGH POWER PHYSICAL TOUCH FLING (BETA)
 local touchFlingOn = false
 MkToggle("Fun & Troll", "touch_fling", false, function(a)
     touchFlingOn = a
@@ -902,12 +939,19 @@ MkToggle("Fun & Troll", "touch_fling", false, function(a)
     if a and r then
         Conn("tfling", RunService.Heartbeat:Connect(function()
             if not touchFlingOn then return end
-            r.AssemblyAngularVelocity = Vector3.new(0, 8000, 0)
+            -- Apply extreme rotational force to fling objects upon physical collision
+            r.AssemblyAngularVelocity = Vector3.new(0, 99999, 0)
+            r.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+            
+            -- Keep player slightly above ground to prevent friction loss and self-fling
+            local vel = r.AssemblyLinearVelocity
+            r.AssemblyLinearVelocity = Vector3.new(vel.X, 0.5, vel.Z)
+            
             for _, p in ipairs(Players:GetPlayers()) do
                 if p ~= player and p.Character then
                     local tr = p.Character:FindFirstChild("HumanoidRootPart")
-                    if tr and (r.Position - tr.Position).Magnitude < 6 then
-                        tr.AssemblyLinearVelocity = Vector3.new(0, 9999, 0)
+                    if tr and (r.Position - tr.Position).Magnitude < 7 then
+                        tr.AssemblyLinearVelocity = Vector3.new(0, 300000, 0)
                     end
                 end
             end
@@ -917,7 +961,7 @@ MkToggle("Fun & Troll", "touch_fling", false, function(a)
     end
 end)
 
--- Player dropdown target selection
+-- Target selector setup
 local selectedPlayer = nil
 local SelLabel = Instance.new("TextLabel")
 SelLabel.Size = UDim2.new(1, 0, 0, 22); SelLabel.BackgroundTransparency = 1; SelLabel.Text = "Select Target: None"; SelLabel.TextColor3 = C.textSec; SelLabel.TextSize = 10; SelLabel.Font = Enum.Font.GothamBold; SelLabel.Parent = GP("Fun & Troll").frame
@@ -944,26 +988,52 @@ UpdateDropdown()
 Players.PlayerAdded:Connect(UpdateDropdown)
 Players.PlayerRemoving:Connect(UpdateDropdown)
 
--- Fling Selected Button
+-- HIGH SPEED ADVANCED TARGET FLING (BETA)
 MkButton("Fun & Troll", "fling_btn", C.accent, function()
-    if not selectedPlayer or not selectedPlayer.Character then Notify("linbergz", "Select a valid target!", C.red, 2) return end
+    if not selectedPlayer or not selectedPlayer.Character then Notify("linbergz", "Select target first!", C.red, 2) return end
     local r = GetRoot()
+    local th = selectedPlayer.Character:FindFirstChild("Humanoid")
     local tr = selectedPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if r and tr then
+    if r and tr and th and th.Health > 0 then
         local savedPos = r.CFrame
-        Notify("linbergz", "Flinging " .. selectedPlayer.DisplayName, C.accent, 2.5)
-        local bv = Instance.new("BodyAngularVelocity")
-        bv.MaxTorque = Vector3.new(1e9, 1e9, 1e9); bv.AngularVelocity = Vector3.new(0, 99999, 0); bv.Parent = r
+        Notify("linbergz", "Launching target: " .. selectedPlayer.DisplayName, C.accent, 2)
         
-        local start = tick()
-        while tick() - start < 2.5 do
-            r.CFrame = tr.CFrame * CFrame.new(0, 0, 0.2)
-            r.AssemblyLinearVelocity = Vector3.new(800, 800, 800)
-            task.wait(0.05)
+        -- Temporarily turn local parts massless and disable collisions to prevent self-death
+        local char = GetChar()
+        local parts = {}
+        for _, p in ipairs(char:GetDescendants()) do
+            if p:IsA("BasePart") then
+                parts[p] = {p.CanCollide, p.Massless}
+                p.CanCollide = false
+                p.Massless = true
+            end
         end
+        
+        local bv = Instance.new("BodyAngularVelocity")
+        bv.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+        bv.AngularVelocity = Vector3.new(0, 999999, 0)
+        bv.Parent = r
+        
+        -- Orbit and strike logic
+        local start = tick()
+        while tick() - start < 3 do
+            if not tr or not tr.Parent then break end
+            r.CFrame = tr.CFrame * CFrame.new(0, -1.5, 0) -- Underneath target to lift them
+            r.AssemblyLinearVelocity = Vector3.new(0, 400000, 0)
+            task.wait(0.01)
+        end
+        
+        -- Clean up state
         bv:Destroy()
         r.AssemblyLinearVelocity = Vector3.zero
         r.CFrame = savedPos
+        
+        for part, data in pairs(parts) do
+            if part.Parent then
+                part.CanCollide = data[1]
+                part.Massless = data[2]
+            end
+        end
     end
 end)
 
@@ -979,7 +1049,7 @@ local function PlayS(id)
     local r = GetRoot()
     if r and tonumber(id) then
         cSnd = Instance.new("Sound")
-        cSnd.SoundId = "rbxassetid://"..id; cSnd.Volume = 2; cSnd.Looped = true; cSnd.Parent = r; cSnd:Play()
+        cSnd.SoundId = "rbxassetid://"..id; cSnd.Volume = 2; cSnd.Parent = r; cSnd:Play()
         Notify("Boombox", "Playing track: "..id, C.green, 2)
     end
 end
@@ -1048,7 +1118,7 @@ MkButton("Settings", "destroy", C.redDark, function()
 end)
 
 MkSep("Settings", "about")
-MkInfoBox("Settings", "linbergz Hub v7.5\nPlatform: Mobile Optimized\nCreator: linbergz Team")
+MkInfoBox("Settings", "linbergz Hub v7.6\nPlatform: Mobile Optimized\nCreator: linbergz Team")
 
 ---------------------------------------------------------
 -- ============ INFO TAB ============
@@ -1057,9 +1127,9 @@ MkSep("Info", "about")
 local InfoChange = MkInfoBox("Info", "Loading...")
 local function RefreshLog()
     if currentLang == "RU" then
-        InfoChange.Text = "Обновление v7.5 Mobile:\n- Добавлена вкладка Фан и Троллинг\n- Встроен Touch Fling и Выбор Цели\n- Изменяемый цвет интерфейса (5 Тем)\n- Смена языка Русский/English\n- Меню уменьшено и оптимизировано под пальцы"
+        InfoChange.Text = "Обновление v7.6 Mobile:\n- Полностью новый премиальный дизайн вкладок\n- Активный неоновый глайдер при переключении меню\n- Физический отклик кнопок (микро-скейлинг при нажатии)\n- Полностью улучшен и форсирован Touch Fling\n- Улучшен и исправлен Target Fling (Beta)\n- Упрощен ЕСП (Без Hero): только Убийца, Шериф, Мирные\n- Возле нестабильных функций добавлены метки (Beta)"
     else
-        InfoChange.Text = "Update v7.5 Mobile:\n- Added Fun & Troll tab\n- Touch Fling & Target Selector active\n- Theme Changer interface (5 Themes)\n- Language Switcher RU/EN\n- UI adapted & downsized for smartphones"
+        InfoChange.Text = "Update v7.6 Mobile:\n- Complete premium visual upgrade of tabs\n- Smooth sliding neon indicator in Sidebar\n- Click micro-scaling animation for physical feedback\n- Highly accelerated Touch Fling power\n- Upgraded Target Fling (Beta) logic\n- Clean ESP layout: Murderer, Sheriff, Innocents only\n- Instability indicators added (Beta)"
     end
 end
 RefreshLog()
@@ -1069,4 +1139,4 @@ LangToggleBtn.MouseButton1Click:Connect(RefreshLog)
 -- INITS
 ---------------------------------------------------------
 UpdateLanguage("RU") -- Default RU
-task.delay(1.5, function() Notify("linbergz Team", "Fully loaded!", C.accent, 3) end)
+task.delay(1.5, function() Notify("linbergz Team", "Upgrade complete! enjoy premium UI", C.accent, 3) end)
