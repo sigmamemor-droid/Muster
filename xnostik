@@ -1,6 +1,6 @@
--- linbergz Team MM2 PREMIUM MOBILE HUB v8.0 (Nexus Update)
+-- linbergz Team MM2 PREMIUM MOBILE HUB v8.0 (Nexus Redesign Update)
 -- Ironclad Anti-Fling & Advanced Physics Fling Engine + MM2 Auto Features
--- Fully Unabbreviated & Mobile Optimized Code
+-- Fully Unabbreviated & Mobile Optimized Code with Premium Glassmorphism UI
 
 ---------------------------------------------------------
 -- SERVICES
@@ -36,33 +36,33 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
 
 ---------------------------------------------------------
--- THEME SYSTEM CONFIGURATION
+-- THEME SYSTEM CONFIGURATION (PREMIUM PALETTES)
 ---------------------------------------------------------
 local Themes = {
-    Purple = { accent = Color3.fromRGB(140, 65, 245), accentLight = Color3.fromRGB(180, 115, 255), bg = Color3.fromRGB(13, 11, 20), surface = Color3.fromRGB(18, 15, 28) },
-    Red = { accent = Color3.fromRGB(220, 45, 55), accentLight = Color3.fromRGB(255, 90, 100), bg = Color3.fromRGB(18, 9, 10), surface = Color3.fromRGB(26, 13, 15) },
-    Blue = { accent = Color3.fromRGB(40, 130, 240), accentLight = Color3.fromRGB(100, 175, 255), bg = Color3.fromRGB(9, 13, 22), surface = Color3.fromRGB(13, 19, 32) },
-    Green = { accent = Color3.fromRGB(45, 195, 90), accentLight = Color3.fromRGB(100, 240, 140), bg = Color3.fromRGB(9, 18, 12), surface = Color3.fromRGB(13, 26, 17) },
-    Dark = { accent = Color3.fromRGB(180, 180, 180), accentLight = Color3.fromRGB(240, 240, 240), bg = Color3.fromRGB(10, 10, 10), surface = Color3.fromRGB(18, 18, 18) }
+    Purple = { accent = Color3.fromRGB(150, 80, 255), accentLight = Color3.fromRGB(190, 130, 255), bg = Color3.fromRGB(10, 8, 18), surface = Color3.fromRGB(16, 12, 28) },
+    Red = { accent = Color3.fromRGB(255, 60, 80), accentLight = Color3.fromRGB(255, 110, 140), bg = Color3.fromRGB(14, 6, 8), surface = Color3.fromRGB(22, 10, 14) },
+    Blue = { accent = Color3.fromRGB(0, 160, 255), accentLight = Color3.fromRGB(100, 210, 255), bg = Color3.fromRGB(6, 10, 18), surface = Color3.fromRGB(10, 16, 28) },
+    Green = { accent = Color3.fromRGB(0, 230, 120), accentLight = Color3.fromRGB(120, 255, 180), bg = Color3.fromRGB(5, 14, 10), surface = Color3.fromRGB(8, 24, 16) },
+    Dark = { accent = Color3.fromRGB(220, 220, 220), accentLight = Color3.fromRGB(255, 255, 255), bg = Color3.fromRGB(8, 8, 8), surface = Color3.fromRGB(14, 14, 14) }
 }
 
 local C = {
-    bg = Themes.Purple.bg, sidebar = Color3.fromRGB(8, 7, 13), surface = Themes.Purple.surface,
-    elevated = Color3.fromRGB(25, 21, 38), cardHover = Color3.fromRGB(35, 30, 55),
+    bg = Themes.Purple.bg, sidebar = Color3.fromRGB(6, 5, 12), surface = Themes.Purple.surface,
+    elevated = Color3.fromRGB(24, 18, 40), cardHover = Color3.fromRGB(36, 28, 60),
     accent = Themes.Purple.accent, accentLight = Themes.Purple.accentLight,
-    green = Color3.fromRGB(45, 200, 95), greenDark = Color3.fromRGB(15, 45, 25),
-    red = Color3.fromRGB(220, 50, 60), redDark = Color3.fromRGB(45, 16, 20),
-    gold = Color3.fromRGB(255, 195, 45), goldDark = Color3.fromRGB(35, 28, 10),
+    green = Color3.fromRGB(0, 230, 120), greenDark = Color3.fromRGB(10, 40, 25),
+    red = Color3.fromRGB(255, 60, 80), redDark = Color3.fromRGB(45, 12, 18),
+    gold = Color3.fromRGB(255, 200, 50), goldDark = Color3.fromRGB(40, 30, 8),
     white = Color3.fromRGB(255, 255, 255), black = Color3.fromRGB(0, 0, 0),
-    text = Color3.fromRGB(240, 238, 248), textSec = Color3.fromRGB(160, 148, 185),
-    textDim = Color3.fromRGB(100, 90, 120), textMuted = Color3.fromRGB(60, 54, 82),
-    separator = Color3.fromRGB(45, 38, 70),
+    text = Color3.fromRGB(245, 245, 250), textSec = Color3.fromRGB(175, 170, 195),
+    textDim = Color3.fromRGB(115, 110, 135), textMuted = Color3.fromRGB(70, 65, 85),
+    separator = Color3.fromRGB(32, 26, 54),
 }
 
--- Глобальные настройки шрифта и прозрачности
+-- Глобальные настройки шрифта и прозрачности (Редизайн использует полупрозрачность по умолчанию)
 local currentFont = Enum.Font.GothamSemibold
 local globalTextObjects = {}
-local menuTransparency = 0 -- 0 = полностью непрозрачный
+local menuTransparency = 0.15 -- Премиальный Glassmorphism эффект
 
 ---------------------------------------------------------
 -- LOCALIZATION ENGINE (RU/EN)
@@ -72,42 +72,40 @@ local updateableLabels = {}
 
 local L = {
     EN = {
-        home = "Home", combat = "Combat", esp = "ESP", fun = "Fun & Troll", boombox = "Boombox", nexus = "Nexus [SOON]", settings = "Settings", info = "Info",
-        movement = "MOVEMENT", walkspeed = "Walk Speed", jumppower = "Jump Power", infjump = "Infinite Jump",
-        protection = "PROTECTION", antifling = "Ironclad Anti-Fling", noclip = "Noclip", fly = "Fly [Mobile]", fullbright = "Fullbright",
-        automation = "MM2 AUTOMATION", autofarm = "Auto Farm Coins", tplobby = "TP to Lobby", tpmap = "TP to Map",
-        aimbot = "Aimbot on Murderer", shootbtn = "Shoot Button [Screen]", magicshot = "Magic Shot [Screen]",
-        autograb = "Auto Grab Gun (On Drop)", killall = "[!] Kill All (Knife)", teleport = "TELEPORTS", tpmurder = "TP to Murderer", tpsheriff = "TP to Sheriff",
-        players_esp = "ESP All Players", roles_esp = "ESP Roles [Murd, Sher, Inn]", gun_esp = "Gun ESP [Dropped]",
-        announce = "Announce Roles in Chat", audioplayer = "AUDIO ID PLAYER", play = "PLAY", stop = "STOP", system = "SYSTEM CONTROL", copy = "Copy Server Link",
-        reset = "Reset Character", destroy = "Destroy Hub", theme = "Theme", language = "Language",
-        about = "ABOUT HUB", quick_tracks = "QUICK AUDIO TRACKS", flinger = "FLING SYSTEM", touch_fling = "Touch Fling (Max Physics)",
-        select_target = "Select Target", fling_btn = "Fling Target [BETA]", invis = "Glitch Invisibility (R15)", role_info = "ROLE INFO",
-        nexus_title = "Nexus Engine", nexus_desc = "Ultimate server-side features are in development. Follow linbergz Team updates!",
-        nexus_1 = "God Mode [Server-Side]", nexus_2 = "Kill Aura [Infinity Range]", nexus_3 = "Server Crash Protocol",
-        soon = "SOON",
-        -- Новое для Настроек
-        menu_size = "Menu Size", menu_transparency = "Menu Transparency", change_font = "Change Font",
-        tab_ui = "UI Settings", tab_theme = "Themes", tab_showcase = "Theme Showcase (soon)"
+        home = "Home", combat = "Combat", esp = "ESP/Visuals", fun = "Trolling", boombox = "Boombox", nexus = "Nexus Pro [soon]", settings = "Settings", info = "Info/Logs",
+        movement = "PHYSICS & MOVEMENT", walkspeed = "Custom Walk Speed", jumppower = "Custom Jump Power", infjump = "Air Jump (Infinite)",
+        protection = "SECURITY SHIELDS", antifling = "Ironclad Anti-Fling", noclip = "Noclip (Wall-Pass)", fly = "Fly [Mobile Engine]", fullbright = "Ambient Fullbright",
+        automation = "MM2 AUTOMATION", autofarm = "Gold Coin Auto Farm", tplobby = "Teleport to Lobby", tpmap = "Teleport to Active Map",
+        aimbot = "Aimbot on Murderer", shootbtn = "Screen Shoot Button", magicshot = "Screen Magic Shot",
+        autograb = "Auto Loot Gun", killall = "[💥] Kill Server (Knife)", teleport = "MAP TELEPORTS", tpmurder = "Chase Murderer", tpsheriff = "Retrieve Sheriff",
+        players_esp = "Global Player ESP", roles_esp = "Tactical Role ESP", gun_esp = "Lootable Gun ESP",
+        announce = "Broadcast Roles to Chat", audioplayer = "DIGITAL AUDIO PLAYER", play = "INITIALIZE ID", stop = "TERMINATE ID", system = "HUB CONTROL PANEL", copy = "Extract Server Link",
+        reset = "Instant Character Reset", destroy = "Self-Destruct Hub", theme = "Theme Palette", language = "Menu Language",
+        about = "linbergz ARCHITECTURE", quick_tracks = "HOT AUDIO PRESETS", flinger = "PHYSICS FLING SYSTEM", touch_fling = "Kinetic Touch Fling",
+        select_target = "Select Target Profile", fling_btn = "Launch Target to Orbit", invis = "R15 Glitch Cloak", role_info = "LIVE ROLE ANALYTICS",
+        nexus_title = "Nexus Server-Side Engine", nexus_desc = "Server-side bypass features are currently compiling. Stay tuned to linbergz Team!",
+        nexus_1 = "God Mode Bypass", nexus_2 = "Scythe Aura [Infinite Range]", nexus_3 = "Server Crash Protocol",
+        soon = "DEVELOPMENT",
+        menu_size = "UI Scaling (Width)", menu_transparency = "Acrylic Transparency", change_font = "Typography Font Style",
+        tab_ui = "Interface", tab_theme = "Color Schemes", tab_showcase = "Presets (soon)"
     },
     RU = {
-        home = "Главная", combat = "Сражение", esp = "ЕСП/ВХ", fun = "Фан и Троллинг", boombox = "Музыка", nexus = "Nexus [SOON]", settings = "Настройки", info = "Информация",
-        movement = "ПЕРЕДВИЖЕНИЕ", walkspeed = "Скорость бега", jumppower = "Высота прыжка", infjump = "Бесконечный прыжок",
-        protection = "ЗАЩИТА", antifling = "Железобетонный Анти-Флинг", noclip = "Проход сквозь стены", fly = "Полет [Мобильный]", fullbright = "Яркий свет",
-        automation = "MM2 АВТОМАТИЗАЦИЯ", autofarm = "Авто-фарм монет", tplobby = "ТП в Лобби", tpmap = "ТП на Карту",
-        aimbot = "Аимбот на убийцу", shootbtn = "Кнопка выстрела [Экран]", magicshot = "Магический выстрел [Экран]",
-        autograb = "Авто-подбор оружия", killall = "[!] Убить всех (Нож)", teleport = "ТЕЛЕПОРТАЦИЯ", tpmurder = "ТП к Убийце", tpsheriff = "ТП к Шерифу",
-        players_esp = "Подсветка игроков", roles_esp = "Показ ролей [Убийца, Шериф, Мирные]", gun_esp = "Подсветка оружия [На полу]",
-        announce = "Огласить роли в чат", audioplayer = "ПРОИГРЫВАТЕЛЬ АУДИО", play = "ЗАПУСК", stop = "СТОП", system = "СИСТЕМА", copy = "Скопировать линк",
-        reset = "Умереть (Ресет)", destroy = "Закрыть чит полностью", theme = "Цветовая схема", language = "Язык меню",
-        about = "О ХАБЕ", quick_tracks = "БЫСТРЫЕ ТРЕКИ", flinger = "СИСТЕМА ФЛИНГА", touch_fling = "Тач Флинг (Макс Физика)",
-        select_target = "Выбрать жертву", fling_btn = "Запустить в космос [BETA]", invis = "Невидимость (Глитч R15)", role_info = "ИНФОРМАЦИЯ О РОЛЯХ",
-        nexus_title = "Nexus Движок", nexus_desc = "Разработка серверных функций в процессе. Следите за обновлениями linbergz Team!",
-        nexus_1 = "Режим Бога [Серверно]", nexus_2 = "Аура Смерти [Беск. Радиус]", nexus_3 = "Протокол Краша Сервера",
-        soon = "Скоро",
-        -- Новое для Настроек
-        menu_size = "Размер Меню", menu_transparency = "Прозрачность Меню", change_font = "Сменить Шрифт",
-        tab_ui = "Настройки UI", tab_theme = "Темы", tab_showcase = "Theme Showcase (soon)"
+        home = "Главная", combat = "Сражение", esp = "Визуалы/ВХ", fun = "Троллинг", boombox = "Музыка", nexus = "Nexus Pro [soon]", settings = "Настройки", info = "О хабе",
+        movement = "ФИЗИКА И ПЕРЕДВИЖЕНИЕ", walkspeed = "Настройка скорости", jumppower = "Высота прыжка", infjump = "Прыжки в воздухе",
+        protection = "МОДУЛИ ЗАЩИТЫ", antifling = "Анти-Флинг система", noclip = "Хождение сквозь стены", fly = "Полет [Mobile]", fullbright = "Режим Яркого Света",
+        automation = "АВТОМАТИЗАЦИЯ", autofarm = "Авто-фарм золота", tplobby = "ТП в Лобби", tpmap = "ТП на игровую арену",
+        aimbot = "Аимбот на убийцу", shootbtn = "Кнопка выстрела на экране", magicshot = "Кнопка Магического выстрела",
+        autograb = "Авто-подбор оружия", killall = "[💥] Убить весь сервер (Нож)", teleport = "ТЕЛЕПОРТАЦИЯ", tpmurder = "Телепорт к Убийце", tpsheriff = "Телепорт к Шерифу",
+        players_esp = "Подсветка игроков (ESP)", roles_esp = "Отображение ролей", gun_esp = "Подсветка оружия",
+        announce = "Объявить роли в чат", audioplayer = "ПРОИГРЫВАТЕЛЬ АУДИО", play = "ВОСПРОИЗВЕСТИ ID", stop = "ОСТАНОВИТЬ", system = "ПАНЕЛЬ УПРАВЛЕНИЯ", copy = "Скопировать ссылку",
+        reset = "Быстрый суицид", destroy = "Полное удаление чита", theme = "Цветовая гамма", language = "Язык интерфейса",
+        about = "О ХАБЕ", quick_tracks = "ГОРЯЧИЕ АУДИОТРЕКИ", flinger = "ФИЗИЧЕСКИЙ ФЛИНГЕР", touch_fling = "Тач-флинг (Убийца физикой)",
+        select_target = "Выбрать жертву", fling_btn = "Запустить цель в орбиту", invis = "Невидимость (R15 Глитч)", role_info = "АНАЛИТИКА РОЛЕЙ",
+        nexus_title = "Nexus Server-Side Движок", nexus_desc = "Функции обхода сервера находятся в разработке. Следите за обновлениями linbergz Team!",
+        nexus_1 = "Обход режима бога", nexus_2 = "Аура Клинка [Беск. Дистанция]", nexus_3 = "Протокол краша сервера",
+        soon = "В РАЗРАБОТКЕ",
+        menu_size = "Размер интерфейса", menu_transparency = "Прозрачность акрила", change_font = "Стиль шрифтов",
+        tab_ui = "Интерфейс", tab_theme = "Цветовые темы", tab_showcase = "Витрина (soon)"
     }
 }
 
@@ -183,65 +181,79 @@ local function FireGunAtTarget(gun, target) if not gun or not target then return
 local function ThrowKnifeAtTarget(knife, target) if not knife or not target then return false end; for _, r in ipairs(knife:GetDescendants()) do if r:IsA("RemoteEvent") then pcall(function() r:FireServer(target) end); return true end end; return false end
 
 ---------------------------------------------------------
--- MOBILE NOTIFICATIONS
+-- PREMIUM NOTIFICATIONS (REDESIGNED)
 ---------------------------------------------------------
 local NotifHolder = Instance.new("Frame")
-NotifHolder.Size = UDim2.new(0, 220, 1, -20)
-NotifHolder.Position = UDim2.new(1, -230, 0, 10)
+NotifHolder.Size = UDim2.new(0, 240, 1, -20)
+NotifHolder.Position = UDim2.new(1, -250, 0, 10)
 NotifHolder.BackgroundTransparency = 1
 NotifHolder.ZIndex = 200
 NotifHolder.Parent = ScreenGui
 
 local NLay = Instance.new("UIListLayout")
-NLay.Parent = NotifHolder; NLay.SortOrder = Enum.SortOrder.LayoutOrder; NLay.Padding = UDim.new(0, 4); NLay.VerticalAlignment = Enum.VerticalAlignment.Bottom
+NLay.Parent = NotifHolder; NLay.SortOrder = Enum.SortOrder.LayoutOrder; NLay.Padding = UDim.new(0, 6); NLay.VerticalAlignment = Enum.VerticalAlignment.Bottom
 
 local nOrd = 0
 local function Notify(title, msg, color, dur)
     nOrd = nOrd + 1; color = color or C.accent; dur = dur or 2.5
     local Cd = Instance.new("Frame")
-    Cd.Size = UDim2.new(1, 0, 0, 46); Cd.BackgroundColor3 = C.surface; Cd.BorderSizePixel = 0; Cd.LayoutOrder = nOrd; Cd.ClipsDescendants = true; Cd.ZIndex = 201; Cd.Parent = NotifHolder
-    Instance.new("UICorner", Cd).CornerRadius = UDim.new(0, 6)
-    local stk = Instance.new("UIStroke"); stk.Color = color; stk.Thickness = 1; stk.Parent = Cd
-    local T = Instance.new("TextLabel"); T.Size = UDim2.new(1, -12, 0, 16); T.Position = UDim2.new(0, 8, 0, 4); T.BackgroundTransparency = 1; T.Text = title; T.TextColor3 = color; T.TextSize = 11; T.Font = currentFont; T.TextXAlignment = Enum.TextXAlignment.Left; T.Parent = Cd; table.insert(globalTextObjects, T)
-    local M = Instance.new("TextLabel"); M.Size = UDim2.new(1, -12, 0, 20); M.Position = UDim2.new(0, 8, 0, 20); M.BackgroundTransparency = 1; M.Text = msg; M.TextColor3 = C.textSec; M.TextSize = 10; M.Font = currentFont; M.TextXAlignment = Enum.TextXAlignment.Left; M.Parent = Cd; table.insert(globalTextObjects, M)
-    Cd.Position = UDim2.new(1.2, 0, 0, 0)
-    TweenService:Create(Cd, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
+    Cd.Size = UDim2.new(1, 0, 0, 52); Cd.BackgroundColor3 = C.surface; Cd.BackgroundTransparency = 0.1; Cd.BorderSizePixel = 0; Cd.LayoutOrder = nOrd; Cd.ClipsDescendants = true; Cd.ZIndex = 201; Cd.Parent = NotifHolder
+    Instance.new("UICorner", Cd).CornerRadius = UDim.new(0, 8)
+    
+    local stk = Instance.new("UIStroke")
+    stk.Color = color; stk.Thickness = 1.2; stk.Transparency = 0.3; stk.Parent = Cd
+    
+    local AccentGlow = Instance.new("Frame")
+    AccentGlow.Size = UDim2.new(0, 4, 1, 0)
+    AccentGlow.BackgroundColor3 = color
+    AccentGlow.BorderSizePixel = 0
+    AccentGlow.Parent = Cd
+    Instance.new("UICorner", AccentGlow).CornerRadius = UDim.new(0, 4)
+
+    local T = Instance.new("TextLabel"); T.Size = UDim2.new(1, -20, 0, 18); T.Position = UDim2.new(0, 12, 0, 6); T.BackgroundTransparency = 1; T.Text = title; T.TextColor3 = C.white; T.TextSize = 11; T.Font = Enum.Font.GothamBold; T.TextXAlignment = Enum.TextXAlignment.Left; T.Parent = Cd; table.insert(globalTextObjects, T)
+    local M = Instance.new("TextLabel"); M.Size = UDim2.new(1, -20, 0, 22); M.Position = UDim2.new(0, 12, 0, 22); M.BackgroundTransparency = 1; M.Text = msg; M.TextColor3 = C.textSec; M.TextSize = 9; M.Font = currentFont; M.TextXAlignment = Enum.TextXAlignment.Left; M.Parent = Cd; table.insert(globalTextObjects, M)
+    
+    Cd.Position = UDim2.new(1.3, 0, 0, 0)
+    TweenService:Create(Cd, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
     task.delay(dur, function()
         if not Cd.Parent then return end
-        local tw = TweenService:Create(Cd, TweenInfo.new(0.25), {Position = UDim2.new(1.2, 0, 0, 0)}); tw:Play()
+        local tw = TweenService:Create(Cd, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {Position = UDim2.new(1.3, 0, 0, 0)})
+        tw:Play()
         tw.Completed:Connect(function() pcall(function() Cd:Destroy() end) end)
     end)
 end
 
 ---------------------------------------------------------
--- LOADING SCREEN
+-- PREMIUM LOADING SCREEN (RE-DESIGNED)
 ---------------------------------------------------------
 local LS = Instance.new("Frame")
-LS.Size = UDim2.new(1, 0, 1, 0); LS.BackgroundColor3 = Color3.fromRGB(8, 7, 13); LS.ZIndex = 100; LS.Parent = ScreenGui
-local LogoBox = Instance.new("Frame"); LogoBox.Size = UDim2.new(0, 200, 0, 200); LogoBox.Position = UDim2.new(0.5, -100, 0.5, -100); LogoBox.BackgroundTransparency = 1; LogoBox.ZIndex = 101; LogoBox.Parent = LS
-local MainLogo = Instance.new("TextLabel"); MainLogo.Size = UDim2.new(1, 0, 0, 60); MainLogo.Position = UDim2.new(0, 0, 0, 30); MainLogo.BackgroundTransparency = 1; MainLogo.Text = "linbergz"; MainLogo.TextColor3 = C.white; MainLogo.TextSize = 38; MainLogo.Font = Enum.Font.GothamBlack; MainLogo.ZIndex = 102; MainLogo.Parent = LogoBox
-local SubLogo = Instance.new("TextLabel"); SubLogo.Size = UDim2.new(1, 0, 0, 20); SubLogo.Position = UDim2.new(0, 0, 0, 90); SubLogo.BackgroundTransparency = 1; SubLogo.Text = "NEXUS UPDATE v8.0"; SubLogo.TextColor3 = C.textDim; SubLogo.TextSize = 10; SubLogo.Font = Enum.Font.GothamBold; SubLogo.ZIndex = 102; SubLogo.Parent = LogoBox
-local LogLabel = Instance.new("TextLabel"); LogLabel.Size = UDim2.new(1, 0, 0, 20); LogLabel.Position = UDim2.new(0, 0, 0, 140); LogLabel.BackgroundTransparency = 1; LogLabel.Text = "Initializing..."; LogLabel.TextColor3 = C.accentLight; LogLabel.TextSize = 9; LogLabel.Font = Enum.Font.Code; LogLabel.ZIndex = 102; LogLabel.Parent = LogoBox
-local ProgressBg = Instance.new("Frame"); ProgressBg.Size = UDim2.new(0.8, 0, 0, 3); ProgressBg.Position = UDim2.new(0.1, 0, 0, 125); ProgressBg.BackgroundColor3 = Color3.fromRGB(24, 20, 38); ProgressBg.BorderSizePixel = 0; ProgressBg.ZIndex = 102; ProgressBg.Parent = LogoBox
+LS.Size = UDim2.new(1, 0, 1, 0); LS.BackgroundColor3 = Color3.fromRGB(5, 4, 10); LS.ZIndex = 100; LS.Parent = ScreenGui
+local LogoBox = Instance.new("Frame"); LogoBox.Size = UDim2.new(0, 240, 0, 240); LogoBox.Position = UDim2.new(0.5, -120, 0.5, -120); LogoBox.BackgroundTransparency = 1; LogoBox.ZIndex = 101; LogoBox.Parent = LS
+local MainLogo = Instance.new("TextLabel"); MainLogo.Size = UDim2.new(1, 0, 0, 60); MainLogo.Position = UDim2.new(0, 0, 0, 30); MainLogo.BackgroundTransparency = 1; MainLogo.Text = "linbergz"; MainLogo.TextColor3 = C.white; MainLogo.TextSize = 42; MainLogo.Font = Enum.Font.GothamBlack; MainLogo.ZIndex = 102; MainLogo.Parent = LogoBox
+local SubLogo = Instance.new("TextLabel"); SubLogo.Size = UDim2.new(1, 0, 0, 20); SubLogo.Position = UDim2.new(0, 0, 0, 90); SubLogo.BackgroundTransparency = 1; SubLogo.Text = "NEXUS COGNITION v8.0"; SubLogo.TextColor3 = C.accent; SubLogo.TextSize = 10; SubLogo.Font = Enum.Font.GothamBold; SubLogo.ZIndex = 102; SubLogo.Parent = LogoBox
+local LogLabel = Instance.new("TextLabel"); LogLabel.Size = UDim2.new(1, 0, 0, 20); LogLabel.Position = UDim2.new(0, 0, 0, 140); LogLabel.BackgroundTransparency = 1; LogLabel.Text = "INITIALIZING CORE..."; LogLabel.TextColor3 = C.textDim; LogLabel.TextSize = 8; LogLabel.Font = Enum.Font.Code; LogLabel.ZIndex = 102; LogLabel.Parent = LogoBox
+local ProgressBg = Instance.new("Frame"); ProgressBg.Size = UDim2.new(0.8, 0, 0, 2); ProgressBg.Position = UDim2.new(0.1, 0, 0, 125); ProgressBg.BackgroundColor3 = Color3.fromRGB(15, 12, 30); ProgressBg.BorderSizePixel = 0; ProgressBg.ZIndex = 102; ProgressBg.Parent = LogoBox
 local ProgressFill = Instance.new("Frame"); ProgressFill.Size = UDim2.new(0, 0, 1, 0); ProgressFill.BackgroundColor3 = C.accent; ProgressFill.BorderSizePixel = 0; ProgressFill.ZIndex = 103; ProgressFill.Parent = ProgressBg
 
 local function LaunchUI()
-    local steps = { {0.15, "LINBERGZ CORE ENGINE ACTIVE..."}, {0.35, "INJECTING NEXUS PROT..."}, {0.55, "OPTIMIZING MOBILE JOYSTICK..."}, {0.75, "ESTABLISHING MM2 DATA FEED..."}, {0.90, "APPLYING PRE-THEMING..."}, {1.00, "READY // SUCCESSFUL START"} }
-    for _, step in ipairs(steps) do TweenService:Create(ProgressFill, TweenInfo.new(0.2), {Size = UDim2.new(step[1], 0, 1, 0)}):Play(); LogLabel.Text = step[2]; task.wait(0.25) end
-    TweenService:Create(LS, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(LogoBox, TweenInfo.new(0.3), {Size = UDim2.new(0,0,0,0), Position=UDim2.new(0.5,0,0.5,0)}):Play()
-    task.wait(0.4); LS:Destroy()
+    local steps = { {0.15, "DECODING MEMORY BLOCKS..."}, {0.35, "BYPASSING ROBLOX ANTIFLING..."}, {0.55, "ASSEMBLING RENDER PIPELINE..."}, {0.75, "INJECTING GRAPHICS PACKS..."}, {0.90, "POLISHING ACRYLIC INTERFACES..."}, {1.00, "SYSTEMS SECURED // WELCOME"} }
+    for _, step in ipairs(steps) do TweenService:Create(ProgressFill, TweenInfo.new(0.25, Enum.EasingStyle.Cubic), {Size = UDim2.new(step[1], 0, 1, 0)}):Play(); LogLabel.Text = step[2]; task.wait(0.3) end
+    TweenService:Create(LS, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(LogoBox, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0,0,0,0), Position=UDim2.new(0.5,0,0.5,0)}):Play()
+    task.wait(0.5); LS:Destroy()
 end
 task.spawn(LaunchUI)
 
 ---------------------------------------------------------
--- MOBILE TOGGLE BUTTON
+-- REDESIGNED TOGGLE BUTTON (NEON GLOW EFFECT)
 ---------------------------------------------------------
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 42, 0, 42); ToggleBtn.Position = UDim2.new(0, 10, 0.3, 0); ToggleBtn.BackgroundColor3 = C.accent; ToggleBtn.Text = "lz"; ToggleBtn.TextColor3 = C.white; ToggleBtn.TextSize = 14; ToggleBtn.Font = Enum.Font.GothamBold; ToggleBtn.ZIndex = 50; ToggleBtn.Parent = ScreenGui
+ToggleBtn.Size = UDim2.new(0, 48, 0, 48); ToggleBtn.Position = UDim2.new(0, 15, 0.25, 0); ToggleBtn.BackgroundColor3 = C.bg; ToggleBtn.Text = "lz"; ToggleBtn.TextColor3 = C.white; ToggleBtn.TextSize = 15; ToggleBtn.Font = Enum.Font.GothamBlack; ToggleBtn.ZIndex = 50; ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
-table.insert(themedAccent, ToggleBtn)
-local TBSk = Instance.new("UIStroke"); TBSk.Color = C.white; TBSk.Thickness = 1.5; TBSk.Transparency = 0.5; TBSk.Parent = ToggleBtn
+table.insert(themedBg, ToggleBtn)
+
+local TBSk = Instance.new("UIStroke"); TBSk.Color = C.accent; TBSk.Thickness = 1.5; TBSk.Transparency = 0.2; TBSk.Parent = ToggleBtn
+table.insert(themedAccent, TBSk)
 
 do
     local dragging, dragStart, startPos
@@ -251,21 +263,34 @@ do
 end
 
 ---------------------------------------------------------
--- MAIN HUB FRAME (WITH RESIZABLE CONFIG)
+-- PREMIER GLASSMORPHISM HUB FRAME
 ---------------------------------------------------------
-local HUB_W, HUB_H, SIDEBAR_W = 460, 290, 120
+local HUB_W, HUB_H, SIDEBAR_W = 480, 310, 130
 local Hub = Instance.new("Frame")
-Hub.Name = "Hub"; Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H); Hub.Position = UDim2.new(0.5, -HUB_W / 2, 0.5, -HUB_H / 2); Hub.BackgroundColor3 = C.bg; Hub.BorderSizePixel = 0; Hub.Visible = false; Hub.ClipsDescendants = true; Hub.ZIndex = 10; Hub.Parent = ScreenGui
-Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 10)
+Hub.Name = "Hub"
+Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
+Hub.Position = UDim2.new(0.5, -HUB_W / 2, 0.5, -HUB_H / 2)
+Hub.BackgroundColor3 = C.bg
+Hub.BackgroundTransparency = menuTransparency
+Hub.BorderSizePixel = 0
+Hub.Visible = false
+Hub.ClipsDescendants = true
+Hub.ZIndex = 10
+Hub.Parent = ScreenGui
+
+Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 12)
 table.insert(themedBg, Hub)
-local HSk = Instance.new("UIStroke"); HSk.Color = C.accent; HSk.Thickness = 1; HSk.Parent = Hub; table.insert(themedAccent, HSk)
+
+local HSk = Instance.new("UIStroke"); HSk.Color = C.accent; HSk.Thickness = 1.2; HSk.Transparency = 0.4; HSk.Parent = Hub; table.insert(themedAccent, HSk)
 
 local Watermark = Instance.new("TextLabel")
-Watermark.Size = UDim2.new(1, -SIDEBAR_W, 1, 0); Watermark.Position = UDim2.new(0, SIDEBAR_W, 0, 0); Watermark.BackgroundTransparency = 1; Watermark.Text = "lz"; Watermark.TextColor3 = C.bg; Watermark.TextSize = 120; Watermark.Font = Enum.Font.GothamBlack; Watermark.ZIndex = 9; Watermark.Parent = Hub
+Watermark.Size = UDim2.new(1, -SIDEBAR_W, 1, 0); Watermark.Position = UDim2.new(0, SIDEBAR_W, 0, 0); Watermark.BackgroundTransparency = 1; Watermark.Text = "lz"; Watermark.TextColor3 = C.accent; Watermark.TextTransparency = 0.95; Watermark.TextSize = 140; Watermark.Font = Enum.Font.GothamBlack; Watermark.ZIndex = 9; Watermark.Parent = Hub; table.insert(themedAccent, Watermark)
 
-local TopB = Instance.new("Frame"); TopB.Name = "TopBar"; TopB.Size = UDim2.new(1, -SIDEBAR_W, 0, 32); TopB.Position = UDim2.new(0, SIDEBAR_W, 0, 0); TopB.BackgroundColor3 = C.surface; TopB.BorderSizePixel = 0; TopB.ZIndex = 12; TopB.Parent = Hub; table.insert(themedSurface, TopB)
-local PT = Instance.new("TextLabel"); PT.Size = UDim2.new(1, -60, 1, 0); PT.Position = UDim2.new(0, 10, 0, 0); PT.BackgroundTransparency = 1; PT.Text = "Home"; PT.TextColor3 = C.text; PT.TextSize = 12; PT.Font = Enum.Font.GothamBold; PT.TextXAlignment = Enum.TextXAlignment.Left; PT.ZIndex = 13; PT.Parent = TopB; updateableLabels[PT] = "home"; table.insert(globalTextObjects, PT)
-local ClB = Instance.new("TextButton"); ClB.Size = UDim2.new(0, 20, 0, 20); ClB.Position = UDim2.new(1, -26, 0.5, -10); ClB.BackgroundColor3 = C.redDark; ClB.Text = "x"; ClB.TextColor3 = C.red; ClB.TextSize = 11; ClB.Font = Enum.Font.GothamBold; ClB.ZIndex = 13; ClB.Parent = TopB; Instance.new("UICorner", ClB).CornerRadius = UDim.new(0, 4)
+local TopB = Instance.new("Frame"); TopB.Name = "TopBar"; TopB.Size = UDim2.new(1, -SIDEBAR_W, 0, 36); TopB.Position = UDim2.new(0, SIDEBAR_W, 0, 0); TopB.BackgroundColor3 = C.surface; TopB.BackgroundTransparency = menuTransparency; TopB.BorderSizePixel = 0; TopB.ZIndex = 12; TopB.Parent = Hub; table.insert(themedSurface, TopB)
+local PT = Instance.new("TextLabel"); PT.Size = UDim2.new(1, -60, 1, 0); PT.Position = UDim2.new(0, 14, 0, 0); PT.BackgroundTransparency = 1; PT.Text = "Home"; PT.TextColor3 = C.white; PT.TextSize = 12; PT.Font = Enum.Font.GothamBold; PT.TextXAlignment = Enum.TextXAlignment.Left; PT.ZIndex = 13; PT.Parent = TopB; updateableLabels[PT] = "home"; table.insert(globalTextObjects, PT)
+
+local ClB = Instance.new("TextButton"); ClB.Size = UDim2.new(0, 22, 0, 22); ClB.Position = UDim2.new(1, -30, 0.5, -11); ClB.BackgroundColor3 = C.redDark; ClB.Text = "×"; ClB.TextColor3 = C.red; ClB.TextSize = 15; ClB.Font = Enum.Font.GothamBold; ClB.ZIndex = 13; ClB.Parent = TopB; Instance.new("UICorner", ClB).CornerRadius = UDim.new(0, 6)
+local ClBS = Instance.new("UIStroke"); ClBS.Color = C.red; ClBS.Thickness = 0.8; ClBS.Transparency = 0.5; ClBS.Parent = ClB
 
 do
     local drag, dStart, sPos
@@ -275,25 +300,27 @@ do
 end
 
 ---------------------------------------------------------
--- SIDEBAR
+-- SIDEBAR (PREMIUM REDESIGN)
 ---------------------------------------------------------
-local Sidebar = Instance.new("Frame"); Sidebar.Name = "Sidebar"; Sidebar.Size = UDim2.new(0, SIDEBAR_W, 1, 0); Sidebar.BackgroundColor3 = C.sidebar; Sidebar.BorderSizePixel = 0; Sidebar.ZIndex = 12; Sidebar.Parent = Hub; table.insert(themedBg, Sidebar)
-local SLogo = Instance.new("Frame"); SLogo.Size = UDim2.new(1, 0, 0, 36); SLogo.BackgroundTransparency = 1; SLogo.Parent = Sidebar
-local STi = Instance.new("TextLabel"); STi.Size = UDim2.new(1, 0, 1, 0); STi.BackgroundTransparency = 1; STi.Text = "linbergz"; STi.TextColor3 = C.white; STi.TextSize = 12; STi.Font = Enum.Font.GothamBlack; STi.Parent = SLogo; table.insert(globalTextObjects, STi)
+local Sidebar = Instance.new("Frame"); Sidebar.Name = "Sidebar"; Sidebar.Size = UDim2.new(0, SIDEBAR_W, 1, 0); Sidebar.BackgroundColor3 = C.sidebar; Sidebar.BackgroundTransparency = menuTransparency; Sidebar.BorderSizePixel = 0; Sidebar.ZIndex = 12; Sidebar.Parent = Hub; table.insert(themedBg, Sidebar)
+local SideLine = Instance.new("Frame"); SideLine.Size = UDim2.new(0, 1, 1, 0); SideLine.Position = UDim2.new(1, -1, 0, 0); SideLine.BackgroundColor3 = C.accent; SideLine.BorderSizePixel = 0; SideLine.BackgroundTransparency = 0.8; SideLine.ZIndex = 13; SideLine.Parent = Sidebar; table.insert(themedAccent, SideLine)
 
-local TH = Instance.new("Frame"); TH.Size = UDim2.new(1, 0, 1, -36); TH.Position = UDim2.new(0, 0, 0, 36); TH.BackgroundTransparency = 1; TH.ZIndex = 13; TH.Parent = Sidebar
-local THL = Instance.new("UIListLayout"); THL.Parent = TH; THL.Padding = UDim.new(0, 2)
-local THP = Instance.new("UIPadding"); THP.PaddingLeft = UDim.new(0, 6); THP.PaddingRight = UDim.new(0, 6); THP.PaddingTop = UDim.new(0, 4); THP.Parent = TH
+local SLogo = Instance.new("Frame"); SLogo.Size = UDim2.new(1, 0, 0, 42); SLogo.BackgroundTransparency = 1; SLogo.Parent = Sidebar
+local STi = Instance.new("TextLabel"); STi.Size = UDim2.new(1, 0, 1, 0); STi.BackgroundTransparency = 1; STi.Text = "linbergz Core"; STi.TextColor3 = C.white; STi.TextSize = 13; STi.Font = Enum.Font.GothamBlack; STi.Parent = SLogo; table.insert(globalTextObjects, STi)
 
-local TabGlider = Instance.new("Frame"); TabGlider.Size = UDim2.new(1, 0, 0, 26); TabGlider.BackgroundColor3 = C.accent; TabGlider.BackgroundTransparency = 0.88; TabGlider.ZIndex = 12; TabGlider.Visible = true; TabGlider.Parent = TH; Instance.new("UICorner", TabGlider).CornerRadius = UDim.new(0, 5)
-local GliderLine = Instance.new("Frame"); GliderLine.Size = UDim2.new(0, 3, 1, 0); GliderLine.Position = UDim2.new(0, 0, 0, 0); GliderLine.BackgroundColor3 = C.accent; GliderLine.BorderSizePixel = 0; GliderLine.ZIndex = 13; GliderLine.Parent = TabGlider; Instance.new("UICorner", GliderLine).CornerRadius = UDim.new(1, 0)
+local TH = Instance.new("Frame"); TH.Size = UDim2.new(1, 0, 1, -42); TH.Position = UDim2.new(0, 0, 0, 42); TH.BackgroundTransparency = 1; TH.ZIndex = 13; TH.Parent = Sidebar
+local THL = Instance.new("UIListLayout"); THL.Parent = TH; THL.Padding = UDim.new(0, 3)
+local THP = Instance.new("UIPadding"); THP.PaddingLeft = UDim.new(0, 8); THP.PaddingRight = UDim.new(0, 8); THP.PaddingTop = UDim.new(0, 2); THP.Parent = TH
+
+local TabGlider = Instance.new("Frame"); TabGlider.Size = UDim2.new(1, 0, 0, 28); TabGlider.BackgroundColor3 = C.accent; TabGlider.BackgroundTransparency = 0.85; TabGlider.ZIndex = 12; TabGlider.Visible = true; TabGlider.Parent = TH; Instance.new("UICorner", TabGlider).CornerRadius = UDim.new(0, 6)
+local GliderLine = Instance.new("Frame"); GliderLine.Size = UDim2.new(0, 3.5, 1, 0); GliderLine.Position = UDim2.new(0, 0, 0, 0); GliderLine.BackgroundColor3 = C.accent; GliderLine.BorderSizePixel = 0; GliderLine.ZIndex = 13; GliderLine.Parent = TabGlider; Instance.new("UICorner", GliderLine).CornerRadius = UDim.new(1, 0)
 table.insert(themedAccent, TabGlider); table.insert(themedAccent, GliderLine)
 
 ---------------------------------------------------------
 -- TABS GENERATION
 ---------------------------------------------------------
 local tabPages, tabBtns, currentTab = {}, {}, nil
-local CX, CY, CW, CH = SIDEBAR_W + 1, 32, HUB_W - SIDEBAR_W - 1, HUB_H - 32
+local CX, CY, CW, CH = SIDEBAR_W + 1, 36, HUB_W - SIDEBAR_W - 1, HUB_H - 36
 
 local tabDefs = {
     {name = "Home", key = "home", icon = "🏠", order = 1},
@@ -306,15 +333,14 @@ local tabDefs = {
     {name = "Info", key = "info", icon = "📝", order = 8},
 }
 
--- Хендлер изменения размера меню
 local function ResizeMenu(newW, newH)
     HUB_W, HUB_H = newW, newH
     Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
-    TopB.Size = UDim2.new(1, -SIDEBAR_W, 0, 32)
+    TopB.Size = UDim2.new(1, -SIDEBAR_W, 0, 36)
     Watermark.Size = UDim2.new(1, -SIDEBAR_W, 1, 0)
     
     local pageW = HUB_W - SIDEBAR_W - 1
-    local pageH = HUB_H - 32
+    local pageH = HUB_H - 36
     for _, pageData in pairs(tabPages) do
         pageData.frame.Size = UDim2.new(0, pageW, 0, pageH)
     end
@@ -323,12 +349,12 @@ end
 for idx, def in ipairs(tabDefs) do
     local Page = Instance.new("ScrollingFrame")
     Page.Name = "Page_" .. def.name; Page.Size = UDim2.new(0, CW, 0, CH); Page.Position = UDim2.new(0, CX, 0, CY); Page.BackgroundTransparency = 1; Page.BorderSizePixel = 0; Page.ScrollBarThickness = 2; Page.ScrollBarImageColor3 = C.accent; Page.Visible = false; Page.Parent = Hub; table.insert(themedAccent, Page)
-    local PL = Instance.new("UIListLayout"); PL.Parent = Page; PL.SortOrder = Enum.SortOrder.LayoutOrder; PL.Padding = UDim.new(0, 4)
-    local PP = Instance.new("UIPadding"); PP.PaddingTop = UDim.new(0, 4); PP.PaddingBottom = UDim.new(0, 8); PP.PaddingLeft = UDim.new(0, 6); PP.PaddingRight = UDim.new(0, 6); PP.Parent = Page
+    local PL = Instance.new("UIListLayout"); PL.Parent = Page; PL.SortOrder = Enum.SortOrder.LayoutOrder; PL.Padding = UDim.new(0, 5)
+    local PP = Instance.new("UIPadding"); PP.PaddingTop = UDim.new(0, 6); PP.PaddingBottom = UDim.new(0, 8); PP.PaddingLeft = UDim.new(0, 8); PP.PaddingRight = UDim.new(0, 8); PP.Parent = Page
     tabPages[def.name] = {frame = Page, oc = 0}
     
     local Tb = Instance.new("TextButton")
-    Tb.Size = UDim2.new(1, 0, 0, 26); Tb.BackgroundTransparency = 1; Tb.Text = def.icon .. " " .. def.name; Tb.TextColor3 = C.textDim; Tb.TextSize = 10; Tb.Font = Enum.Font.GothamBold; Tb.AutoButtonColor = false; Tb.ZIndex = 14; Tb.Parent = TH; Instance.new("UICorner", Tb).CornerRadius = UDim.new(0, 5)
+    Tb.Size = UDim2.new(1, 0, 0, 28); Tb.BackgroundTransparency = 1; Tb.Text = "  " .. def.icon .. "  " .. def.name; Tb.TextColor3 = C.textDim; Tb.TextSize = 10; Tb.Font = Enum.Font.GothamBold; Tb.TextXAlignment = Enum.TextXAlignment.Left; Tb.AutoButtonColor = false; Tb.ZIndex = 14; Tb.Parent = TH; Instance.new("UICorner", Tb).CornerRadius = UDim.new(0, 6)
     table.insert(globalTextObjects, Tb)
     
     if def.name == "Nexus" then Tb.TextColor3 = C.gold end
@@ -336,87 +362,92 @@ for idx, def in ipairs(tabDefs) do
     
     Tb.MouseButton1Click:Connect(function()
         if currentTab == def.name then return end
-        local origSize = UDim2.new(1, 0, 0, 26)
-        TweenService:Create(Tb, TweenInfo.new(0.06, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0.92, 0, 0, 24)}):Play()
-        task.delay(0.06, function() TweenService:Create(Tb, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = origSize}):Play() end)
+        local origSize = UDim2.new(1, 0, 0, 28)
+        TweenService:Create(Tb, TweenInfo.new(0.08, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = UDim2.new(0.94, 0, 0, 26)}):Play()
+        task.delay(0.08, function() TweenService:Create(Tb, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = origSize}):Play() end)
         
         if currentTab and tabPages[currentTab] then tabPages[currentTab].frame.Visible = false; tabBtns[currentTab].btn.TextColor3 = (currentTab == "Nexus") and C.gold or C.textDim end
-        currentTab = def.name; Page.Visible = true; PT.Text = def.icon .. " " .. (L[currentLang][def.key] or def.name); updateableLabels[PT] = def.key
+        currentTab = def.name; Page.Visible = true; PT.Text = def.icon .. "  " .. (L[currentLang][def.key] or def.name); updateableLabels[PT] = def.key
         Tb.TextColor3 = C.accentLight
         
-        local targetY = 4 + (idx - 1) * 28
-        TweenService:Create(TabGlider, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, targetY)}):Play()
+        local targetY = 2 + (idx - 1) * 31
+        TweenService:Create(TabGlider, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, targetY)}):Play()
     end)
 end
 
 local hubOpen = false
 local function ToggleHub()
     hubOpen = not hubOpen
-    if hubOpen then Hub.Visible = true; Hub.Size = UDim2.new(0, HUB_W, 0, 0); TweenService:Create(Hub, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, HUB_W, 0, HUB_H)}):Play()
-    else local tw = TweenService:Create(Hub, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(0, HUB_W, 0, 0)}); tw:Play(); tw.Completed:Connect(function() Hub.Visible = false; Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H) end) end
+    if hubOpen then Hub.Visible = true; Hub.Size = UDim2.new(0, HUB_W, 0, 0); TweenService:Create(Hub, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, HUB_W, 0, HUB_H)}):Play()
+    else local tw = TweenService:Create(Hub, TweenInfo.new(0.2, Enum.EasingStyle.Cubic), {Size = UDim2.new(0, HUB_W, 0, 0)}); tw:Play(); tw.Completed:Connect(function() Hub.Visible = false; Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H) end) end
 end
 ToggleBtn.MouseButton1Click:Connect(ToggleHub)
 ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
 task.defer(function() tabBtns["Home"].btn.MouseButton1Click:Fire() end)
 
 ---------------------------------------------------------
--- UI ELEMENT FACTORY
+-- UI ELEMENT FACTORY (MODERN ACRYLIC REDESIGN)
 ---------------------------------------------------------
 local function GP(t) return tabPages[t] end
 local function NO(t) local p = GP(t); p.oc = p.oc + 1; return p.oc end
 
 local function MkSep(tab, key, customParent)
-    local o = NO(tab); local F = Instance.new("Frame"); F.Size = UDim2.new(1, 0, 0, 16); F.BackgroundTransparency = 1; F.LayoutOrder = o; F.Parent = customParent or GP(tab).frame
+    local o = NO(tab); local F = Instance.new("Frame"); F.Size = UDim2.new(1, 0, 0, 20); F.BackgroundTransparency = 1; F.LayoutOrder = o; F.Parent = customParent or GP(tab).frame
     local Lb = Instance.new("TextLabel"); Lb.Size = UDim2.new(1, 0, 1, 0); Lb.BackgroundTransparency = 1; Lb.Text = ""; Lb.TextColor3 = C.accentLight; Lb.TextSize = 9; Lb.Font = Enum.Font.GothamBold; Lb.TextXAlignment = Enum.TextXAlignment.Left; Lb.Parent = F; updateableLabels[Lb] = key; table.insert(themedAccent, Lb); table.insert(globalTextObjects, Lb)
 end
 
 local function MkToggle(tab, key, def, cb, customParent)
     local o = NO(tab); local active = def or false
-    local B = Instance.new("TextButton"); B.Size = UDim2.new(1, 0, 0, 26); B.BackgroundColor3 = active and C.greenDark or C.elevated; B.Text = ""; B.AutoButtonColor = false; B.LayoutOrder = o; B.Parent = customParent or GP(tab).frame; Instance.new("UICorner", B).CornerRadius = UDim.new(0, 5)
-    local BS = Instance.new("UIStroke"); BS.Color = active and C.green or C.elevated; BS.Thickness = 0.5; BS.Parent = B
-    local Lbl = Instance.new("TextLabel"); Lbl.Size = UDim2.new(1, -40, 1, 0); Lbl.Position = UDim2.new(0, 8, 0, 0); Lbl.BackgroundTransparency = 1; Lbl.Text = ""; Lbl.TextColor3 = C.text; Lbl.TextSize = 10; Lbl.Font = currentFont; Lbl.TextXAlignment = Enum.TextXAlignment.Left; Lbl.Parent = B; updateableLabels[Lbl] = key; table.insert(globalTextObjects, Lbl)
-    local TBg = Instance.new("Frame"); TBg.Size = UDim2.new(0, 24, 0, 12); TBg.Position = UDim2.new(1, -30, 0.5, -6); TBg.BackgroundColor3 = active and C.green or C.textMuted; TBg.BorderSizePixel = 0; TBg.Parent = B; Instance.new("UICorner", TBg).CornerRadius = UDim.new(1, 0)
-    local TC = Instance.new("Frame"); TC.Size = UDim2.new(0, 10, 0, 10); TC.Position = active and UDim2.new(1, -11, 0.5, -5) or UDim2.new(0, 1, 0.5, -5); TC.BackgroundColor3 = C.white; TC.BorderSizePixel = 0; TC.Parent = TBg; Instance.new("UICorner", TC).CornerRadius = UDim.new(1, 0)
+    local B = Instance.new("TextButton"); B.Size = UDim2.new(1, 0, 0, 32); B.BackgroundColor3 = active and C.greenDark or C.elevated; B.Text = ""; B.AutoButtonColor = false; B.LayoutOrder = o; B.Parent = customParent or GP(tab).frame; Instance.new("UICorner", B).CornerRadius = UDim.new(0, 8)
+    local BS = Instance.new("UIStroke"); BS.Color = active and C.green or C.elevated; BS.Thickness = 1; BS.Parent = B
+    
+    local Lbl = Instance.new("TextLabel"); Lbl.Size = UDim2.new(1, -40, 1, 0); Lbl.Position = UDim2.new(0, 10, 0, 0); Lbl.BackgroundTransparency = 1; Lbl.Text = ""; Lbl.TextColor3 = C.text; Lbl.TextSize = 10; Lbl.Font = currentFont; Lbl.TextXAlignment = Enum.TextXAlignment.Left; Lbl.Parent = B; updateableLabels[Lbl] = key; table.insert(globalTextObjects, Lbl)
+    local TBg = Instance.new("Frame"); TBg.Size = UDim2.new(0, 28, 0, 14); TBg.Position = UDim2.new(1, -38, 0.5, -7); TBg.BackgroundColor3 = active and C.green or C.textMuted; TBg.BorderSizePixel = 0; TBg.Parent = B; Instance.new("UICorner", TBg).CornerRadius = UDim.new(1, 0)
+    local TC = Instance.new("Frame"); TC.Size = UDim2.new(0, 12, 0, 12); TC.Position = active and UDim2.new(1, -13, 0.5, -6) or UDim2.new(0, 1, 0.5, -6); TC.BackgroundColor3 = C.white; TC.BorderSizePixel = 0; TC.Parent = TBg; Instance.new("UICorner", TC).CornerRadius = UDim.new(1, 0)
     
     local function U()
-        TweenService:Create(B, TweenInfo.new(0.15), {BackgroundColor3 = active and C.greenDark or C.elevated}):Play()
-        BS.Color = active and C.green or C.elevated
-        TweenService:Create(TBg, TweenInfo.new(0.15), {BackgroundColor3 = active and C.green or C.textMuted}):Play()
-        TweenService:Create(TC, TweenInfo.new(0.15, Enum.EasingStyle.Back), {Position = active and UDim2.new(1, -11, 0.5, -5) or UDim2.new(0, 1, 0.5, -5)}):Play()
+        TweenService:Create(B, TweenInfo.new(0.2, Enum.EasingStyle.Cubic), {BackgroundColor3 = active and C.greenDark or C.elevated}):Play()
+        TweenService:Create(BS, TweenInfo.new(0.2, Enum.EasingStyle.Cubic), {Color = active and C.green or C.elevated}):Play()
+        TweenService:Create(TBg, TweenInfo.new(0.2), {BackgroundColor3 = active and C.green or C.textMuted}):Play()
+        TweenService:Create(TC, TweenInfo.new(0.2, Enum.EasingStyle.Back), {Position = active and UDim2.new(1, -13, 0.5, -6) or UDim2.new(0, 1, 0.5, -6)}):Play()
     end
     
     B.MouseButton1Click:Connect(function() active = not active; U(); cb(active) end)
-    B.MouseEnter:Connect(function() if not active then TweenService:Create(B, TweenInfo.new(0.1), {BackgroundColor3 = C.cardHover}):Play() end end)
-    B.MouseLeave:Connect(function() if not active then TweenService:Create(B, TweenInfo.new(0.1), {BackgroundColor3 = C.elevated}):Play() end end)
+    B.MouseEnter:Connect(function() if not active then TweenService:Create(B, TweenInfo.new(0.15), {BackgroundColor3 = C.cardHover}):Play() end end)
+    B.MouseLeave:Connect(function() if not active then TweenService:Create(B, TweenInfo.new(0.15), {BackgroundColor3 = C.elevated}):Play() end end)
     return function() return active end
 end
 
 local function MkButton(tab, key, color, cb, customParent)
     local o = NO(tab); local bc = color or C.elevated
-    local B = Instance.new("TextButton"); B.Size = UDim2.new(1, 0, 0, 24); B.BackgroundColor3 = bc; B.Text = ""; B.AutoButtonColor = false; B.LayoutOrder = o; B.Parent = customParent or GP(tab).frame; Instance.new("UICorner", B).CornerRadius = UDim.new(0, 5)
+    local B = Instance.new("TextButton"); B.Size = UDim2.new(1, 0, 0, 30); B.BackgroundColor3 = bc; B.Text = ""; B.AutoButtonColor = false; B.LayoutOrder = o; B.Parent = customParent or GP(tab).frame; Instance.new("UICorner", B).CornerRadius = UDim.new(0, 8)
+    local BS = Instance.new("UIStroke"); BS.Color = C.accent; BS.Thickness = 0.8; BS.Transparency = 0.7; BS.Parent = B; table.insert(themedAccent, BS)
+    
     local Lbl = Instance.new("TextLabel"); Lbl.Size = UDim2.new(1, -10, 1, 0); Lbl.Position = UDim2.new(0, 5, 0, 0); Lbl.BackgroundTransparency = 1; Lbl.Text = ""; Lbl.TextColor3 = C.text; Lbl.TextSize = 10; Lbl.Font = currentFont; Lbl.TextXAlignment = Enum.TextXAlignment.Center; Lbl.Parent = B; updateableLabels[Lbl] = key; table.insert(globalTextObjects, Lbl)
     
     B.MouseButton1Click:Connect(function() cb(B, Lbl) end)
-    B.MouseEnter:Connect(function() TweenService:Create(B, TweenInfo.new(0.1), {BackgroundColor3 = C.accent}):Play(); TweenService:Create(Lbl, TweenInfo.new(0.1), {TextColor3 = C.white}):Play() end)
-    B.MouseLeave:Connect(function() TweenService:Create(B, TweenInfo.new(0.1), {BackgroundColor3 = bc}):Play(); TweenService:Create(Lbl, TweenInfo.new(0.1), {TextColor3 = C.text}):Play() end)
+    B.MouseEnter:Connect(function() TweenService:Create(B, TweenInfo.new(0.15), {BackgroundColor3 = C.accent}):Play(); TweenService:Create(Lbl, TweenInfo.new(0.15), {TextColor3 = C.white}):Play() end)
+    B.MouseLeave:Connect(function() TweenService:Create(B, TweenInfo.new(0.15), {BackgroundColor3 = bc}):Play(); TweenService:Create(Lbl, TweenInfo.new(0.15), {TextColor3 = C.text}):Play() end)
     return B, Lbl
 end
 
 local function MkInput(tab, ph, def, customParent)
-    local o = NO(tab); local Bx = Instance.new("TextBox"); Bx.Size = UDim2.new(1, 0, 0, 24); Bx.BackgroundColor3 = C.elevated; Bx.PlaceholderText = ph; Bx.PlaceholderColor3 = C.textMuted; Bx.Text = def or ""; Bx.TextColor3 = C.text; Bx.TextSize = 10; Bx.Font = currentFont; Bx.ClearTextOnFocus = false; Bx.LayoutOrder = o; Bx.Parent = customParent or GP(tab).frame; Instance.new("UICorner", Bx).CornerRadius = UDim.new(0, 5); table.insert(globalTextObjects, Bx); return Bx
+    local o = NO(tab); local Bx = Instance.new("TextBox"); Bx.Size = UDim2.new(1, 0, 0, 28); Bx.BackgroundColor3 = C.elevated; Bx.PlaceholderText = ph; Bx.PlaceholderColor3 = C.textMuted; Bx.Text = def or ""; Bx.TextColor3 = C.text; Bx.TextSize = 10; Bx.Font = currentFont; Bx.ClearTextOnFocus = false; Bx.LayoutOrder = o; Bx.Parent = customParent or GP(tab).frame; Instance.new("UICorner", Bx).CornerRadius = UDim.new(0, 8)
+    local BS = Instance.new("UIStroke"); BS.Color = C.accent; BS.Thickness = 0.8; BS.Transparency = 0.6; BS.Parent = Bx; table.insert(themedAccent, BS)
+    table.insert(globalTextObjects, Bx); return Bx
 end
 
 local function MkSlider(tab, key, mn, mx, def, cb, customParent)
     local o = NO(tab); local val = def or mn
-    local Ct = Instance.new("Frame"); Ct.Size = UDim2.new(1, 0, 0, 34); Ct.BackgroundColor3 = C.elevated; Ct.BorderSizePixel = 0; Ct.LayoutOrder = o; Ct.Parent = customParent or GP(tab).frame; Instance.new("UICorner", Ct).CornerRadius = UDim.new(0, 5)
-    local Lb = Instance.new("TextLabel"); Lb.Size = UDim2.new(0.6, 0, 0, 14); Lb.Position = UDim2.new(0, 8, 0, 2); Lb.BackgroundTransparency = 1; Lb.Text = ""; Lb.TextColor3 = C.text; Lb.TextSize = 9; Lb.Font = currentFont; Lb.TextXAlignment = Enum.TextXAlignment.Left; Lb.Parent = Ct; updateableLabels[Lb] = key; table.insert(globalTextObjects, Lb)
-    local VL = Instance.new("TextLabel"); VL.Size = UDim2.new(0.35, 0, 0, 14); VL.Position = UDim2.new(0.65, -8, 0, 2); VL.BackgroundTransparency = 1; VL.Text = tostring(val); VL.TextColor3 = C.accentLight; VL.TextSize = 9; VL.Font = Enum.Font.GothamBold; VL.TextXAlignment = Enum.TextXAlignment.Right; VL.Parent = Ct; table.insert(themedAccent, VL); table.insert(globalTextObjects, VL)
-    local SBG = Instance.new("Frame"); SBG.Size = UDim2.new(1, -16, 0, 4); SBG.Position = UDim2.new(0, 8, 0, 22); SBG.BackgroundColor3 = C.bg; SBG.BorderSizePixel = 0; SBG.Parent = Ct; Instance.new("UICorner", SBG).CornerRadius = UDim.new(1, 0)
+    local Ct = Instance.new("Frame"); Ct.Size = UDim2.new(1, 0, 0, 38); Ct.BackgroundColor3 = C.elevated; Ct.BorderSizePixel = 0; Ct.LayoutOrder = o; Ct.Parent = customParent or GP(tab).frame; Instance.new("UICorner", Ct).CornerRadius = UDim.new(0, 8)
+    local Lb = Instance.new("TextLabel"); Lb.Size = UDim2.new(0.6, 0, 0, 16); Lb.Position = UDim2.new(0, 10, 0, 3); Lb.BackgroundTransparency = 1; Lb.Text = ""; Lb.TextColor3 = C.text; Lb.TextSize = 9; Lb.Font = currentFont; Lb.TextXAlignment = Enum.TextXAlignment.Left; Lb.Parent = Ct; updateableLabels[Lb] = key; table.insert(globalTextObjects, Lb)
+    local VL = Instance.new("TextLabel"); VL.Size = UDim2.new(0.35, 0, 0, 16); VL.Position = UDim2.new(0.65, -10, 0, 3); VL.BackgroundTransparency = 1; VL.Text = tostring(val); VL.TextColor3 = C.accentLight; VL.TextSize = 9; VL.Font = Enum.Font.GothamBold; VL.TextXAlignment = Enum.TextXAlignment.Right; VL.Parent = Ct; table.insert(themedAccent, VL); table.insert(globalTextObjects, VL)
+    local SBG = Instance.new("Frame"); SBG.Size = UDim2.new(1, -20, 0, 4); SBG.Position = UDim2.new(0, 10, 0, 25); SBG.BackgroundColor3 = C.bg; SBG.BorderSizePixel = 0; SBG.Parent = Ct; Instance.new("UICorner", SBG).CornerRadius = UDim.new(1, 0)
     local fp = (val - mn) / (mx - mn)
     local SF = Instance.new("Frame"); SF.Size = UDim2.new(fp, 0, 1, 0); SF.BackgroundColor3 = C.accent; SF.BorderSizePixel = 0; SF.Parent = SBG; Instance.new("UICorner", SF).CornerRadius = UDim.new(1, 0); table.insert(themedAccent, SF)
-    local Kn = Instance.new("Frame"); Kn.Size = UDim2.new(0, 10, 0, 10); Kn.Position = UDim2.new(fp, -5, 0.5, -5); Kn.BackgroundColor3 = C.white; Kn.BorderSizePixel = 0; Kn.Parent = SBG; Instance.new("UICorner", Kn).CornerRadius = UDim.new(1, 0)
+    local Kn = Instance.new("Frame"); Kn.Size = UDim2.new(0, 12, 0, 12); Kn.Position = UDim2.new(fp, -6, 0.5, -6); Kn.BackgroundColor3 = C.white; Kn.BorderSizePixel = 0; Kn.Parent = SBG; Instance.new("UICorner", Kn).CornerRadius = UDim.new(1, 0)
     local sl = false
-    local function US(ix) local ap = SBG.AbsolutePosition.X; local as = SBG.AbsoluteSize.X; local r = math.clamp((ix - ap) / as, 0, 1); val = math.floor(mn + (mx - mn) * r); VL.Text = tostring(val); SF.Size = UDim2.new(r, 0, 1, 0); Kn.Position = UDim2.new(r, -5, 0.5, -5); cb(val) end
+    local function US(ix) local ap = SBG.AbsolutePosition.X; local as = SBG.AbsoluteSize.X; local r = math.clamp((ix - ap) / as, 0, 1); val = math.floor(mn + (mx - mn) * r); VL.Text = tostring(val); SF.Size = UDim2.new(r, 0, 1, 0); Kn.Position = UDim2.new(r, -6, 0.5, -6); cb(val) end
     SBG.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then sl = true; US(i.Position.X) end end)
     Kn.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then sl = true end end)
     UserInputService.InputChanged:Connect(function(i) if sl and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then US(i.Position.X) end end)
@@ -425,8 +456,8 @@ local function MkSlider(tab, key, mn, mx, def, cb, customParent)
 end
 
 local function MkInfoBox(tab, text, customParent)
-    local o = NO(tab); local F = Instance.new("Frame"); F.Size = UDim2.new(1, 0, 0, 0); F.AutomaticSize = Enum.AutomaticSize.Y; F.BackgroundColor3 = C.surface; F.LayoutOrder = o; F.Parent = customParent or GP(tab).frame; Instance.new("UICorner", F).CornerRadius = UDim.new(0, 5)
-    local T = Instance.new("TextLabel"); T.Size = UDim2.new(1, -12, 0, 0); T.Position = UDim2.new(0, 6, 0, 4); T.AutomaticSize = Enum.AutomaticSize.Y; T.BackgroundTransparency = 1; T.Text = text; T.TextColor3 = C.textSec; T.TextSize = 9; T.Font = currentFont; T.TextXAlignment = Enum.TextXAlignment.Left; T.TextWrapped = true; T.Parent = F; table.insert(globalTextObjects, T); return T
+    local o = NO(tab); local F = Instance.new("Frame"); F.Size = UDim2.new(1, 0, 0, 0); F.AutomaticSize = Enum.AutomaticSize.Y; F.BackgroundColor3 = C.surface; F.BackgroundTransparency = 0.5; F.LayoutOrder = o; F.Parent = customParent or GP(tab).frame; Instance.new("UICorner", F).CornerRadius = UDim.new(0, 8)
+    local T = Instance.new("TextLabel"); T.Size = UDim2.new(1, -16, 0, 0); T.Position = UDim2.new(0, 8, 0, 6); T.AutomaticSize = Enum.AutomaticSize.Y; T.BackgroundTransparency = 1; T.Text = text; T.TextColor3 = C.textSec; T.TextSize = 9; T.Font = currentFont; T.TextXAlignment = Enum.TextXAlignment.Left; T.TextWrapped = true; T.Parent = F; table.insert(globalTextObjects, T); return T
 end
 
 ---------------------------------------------------------
@@ -513,11 +544,11 @@ MkToggle("Home", "fullbright", false, function(a) if a then Lighting.Brightness 
 MkSep("Combat", "aimbot")
 MkToggle("Combat", "aimbot", false, function(a) ClearConn("aim"); if a then Conn("aim", RunService.RenderStepped:Connect(function() local h = GetMurdererHead(); if h then camera.CFrame = CFrame.new(camera.CFrame.Position, h.Position) end end)) end end)
 
-local ShotBtn = Instance.new("TextButton"); ShotBtn.Size = UDim2.new(0, 70, 0, 32); ShotBtn.Position = UDim2.new(1, -80, 0.4, 0); ShotBtn.BackgroundColor3 = C.red; ShotBtn.Text = "SHOOT"; ShotBtn.TextColor3 = C.white; ShotBtn.TextSize = 10; ShotBtn.Font = Enum.Font.GothamBold; ShotBtn.Visible = false; ShotBtn.ZIndex = 50; ShotBtn.Parent = ScreenGui; Instance.new("UICorner", ShotBtn).CornerRadius = UDim.new(0, 6)
+local ShotBtn = Instance.new("TextButton"); ShotBtn.Size = UDim2.new(0, 80, 0, 36); ShotBtn.Position = UDim2.new(1, -95, 0.4, 0); ShotBtn.BackgroundColor3 = C.red; ShotBtn.Text = "SHOOT"; ShotBtn.TextColor3 = C.white; ShotBtn.TextSize = 11; ShotBtn.Font = Enum.Font.GothamBold; ShotBtn.Visible = false; ShotBtn.ZIndex = 50; ShotBtn.Parent = ScreenGui; Instance.new("UICorner", ShotBtn).CornerRadius = UDim.new(0, 8)
 ShotBtn.MouseButton1Click:Connect(function() local g = FindGunInHand(); if not g then local t = GetTool("Gun"); if t then GetHum():EquipTool(t); task.wait(0.2); g = FindGunInHand() end end; if not g then Notify("linbergz", "No Gun!", C.red, 1.5); return end; local h = GetMurdererHead(); if h then FireGunAtTarget(g, h) else Notify("linbergz", "Murderer not found", C.red, 1) end end)
 MkToggle("Combat", "shootbtn", false, function(a) ShotBtn.Visible = a end)
 
-local MagBtn = Instance.new("TextButton"); MagBtn.Size = UDim2.new(0, 70, 0, 32); MagBtn.Position = UDim2.new(1, -80, 0.4, 38); MagBtn.BackgroundColor3 = C.accent; MagBtn.Text = "MAGIC"; MagBtn.TextColor3 = C.white; MagBtn.TextSize = 10; MagBtn.Font = Enum.Font.GothamBold; MagBtn.Visible = false; MagBtn.ZIndex = 50; MagBtn.Parent = ScreenGui; Instance.new("UICorner", MagBtn).CornerRadius = UDim.new(0, 6)
+local MagBtn = Instance.new("TextButton"); MagBtn.Size = UDim2.new(0, 80, 0, 36); MagBtn.Position = UDim2.new(1, -95, 0.4, 42); MagBtn.BackgroundColor3 = C.accent; MagBtn.Text = "MAGIC"; MagBtn.TextColor3 = C.white; MagBtn.TextSize = 11; MagBtn.Font = Enum.Font.GothamBold; MagBtn.Visible = false; MagBtn.ZIndex = 50; MagBtn.Parent = ScreenGui; Instance.new("UICorner", MagBtn).CornerRadius = UDim.new(0, 8)
 MagBtn.MouseButton1Click:Connect(function() local h = GetMurdererHead(); local r = GetRoot(); if not h or not r then return end; local g = FindGunInHand(); if not g then local t = GetTool("Gun"); if t then GetHum():EquipTool(t); task.wait(0.2); g = FindGunInHand() end end; if not g then return end; local p = r.CFrame; r.CFrame = CFrame.new(h.Position + Vector3.new(0,-3,2), h.Position); task.wait(0.15); FireGunAtTarget(g, h); task.wait(0.1); r.CFrame = p end)
 MkToggle("Combat", "magicshot", false, function(a) MagBtn.Visible = a end)
 
@@ -593,9 +624,9 @@ MkToggle("Fun & Troll", "touch_fling", false, function(a) touchFlingOn = a; Clea
 local selectedPlayer = nil
 local SelLabel = Instance.new("TextLabel"); SelLabel.Size = UDim2.new(1, 0, 0, 22); SelLabel.BackgroundTransparency = 1; SelLabel.Text = "Select Target: None"; SelLabel.TextColor3 = C.textSec; SelLabel.TextSize = 10; SelLabel.Font = Enum.Font.GothamBold; SelLabel.Parent = GP("Fun & Troll").frame; updateableLabels[SelLabel] = "select_target"; table.insert(globalTextObjects, SelLabel)
 
-local Dropdown = Instance.new("ScrollingFrame"); Dropdown.Size = UDim2.new(1, 0, 0, 60); Dropdown.BackgroundColor3 = C.surface; Dropdown.CanvasSize = UDim2.new(0,0,0,0); Dropdown.AutomaticCanvasSize = Enum.AutomaticSize.Y; Dropdown.Parent = GP("Fun & Troll").frame; Instance.new("UICorner", Dropdown).CornerRadius = UDim.new(0, 5)
+local Dropdown = Instance.new("ScrollingFrame"); Dropdown.Size = UDim2.new(1, 0, 0, 60); Dropdown.BackgroundColor3 = C.surface; Dropdown.BackgroundTransparency = 0.5; Dropdown.CanvasSize = UDim2.new(0,0,0,0); Dropdown.AutomaticCanvasSize = Enum.AutomaticSize.Y; Dropdown.Parent = GP("Fun & Troll").frame; Instance.new("UICorner", Dropdown).CornerRadius = UDim.new(0, 8)
 local DL = Instance.new("UIListLayout"); DL.Parent = Dropdown; DL.Padding = UDim.new(0, 2)
-local function UpdateDropdown() for _, i in ipairs(Dropdown:GetChildren()) do if i:IsA("TextButton") then i:Destroy() end end; for _, p in ipairs(Players:GetPlayers()) do if p ~= player then local b = Instance.new("TextButton"); b.Size = UDim2.new(1,-4,0,18); b.BackgroundColor3 = C.elevated; b.Text = p.DisplayName.." (@"..p.Name..")"; b.TextColor3 = C.text; b.TextSize = 9; b.Font = Enum.Font.Gotham; b.Parent = Dropdown; Instance.new("UICorner", b).CornerRadius = UDim.new(0,4); b.MouseButton1Click:Connect(function() selectedPlayer = p; SelLabel.Text = "Target: "..p.DisplayName end); table.insert(globalTextObjects, b) end end end
+local function UpdateDropdown() for _, i in ipairs(Dropdown:GetChildren()) do if i:IsA("TextButton") then i:Destroy() end end; for _, p in ipairs(Players:GetPlayers()) do if p ~= player then local b = Instance.new("TextButton"); b.Size = UDim2.new(1,-4,0,20); b.BackgroundColor3 = C.elevated; b.Text = p.DisplayName.." (@"..p.Name..")"; b.TextColor3 = C.text; b.TextSize = 9; b.Font = Enum.Font.Gotham; b.Parent = Dropdown; Instance.new("UICorner", b).CornerRadius = UDim.new(0,6); b.MouseButton1Click:Connect(function() selectedPlayer = p; SelLabel.Text = "Target: "..p.DisplayName end); table.insert(globalTextObjects, b) end end end
 UpdateDropdown(); Players.PlayerAdded:Connect(UpdateDropdown); Players.PlayerRemoving:Connect(UpdateDropdown)
 
 local targetFlingActive = false
@@ -650,13 +681,13 @@ MkInfoBox("Nexus", L[currentLang].nexus_desc)
 
 local function MkSoonButton(tab, key)
     local o = NO(tab)
-    local B = Instance.new("TextButton"); B.Size = UDim2.new(1, 0, 0, 26); B.BackgroundColor3 = C.goldDark; B.Text = ""; B.AutoButtonColor = false; B.LayoutOrder = o; B.Parent = GP(tab).frame; Instance.new("UICorner", B).CornerRadius = UDim.new(0, 5)
-    local BS = Instance.new("UIStroke"); BS.Color = C.gold; BS.Thickness = 0.8; BS.Parent = B
-    local Lbl = Instance.new("TextLabel"); Lbl.Size = UDim2.new(0.7, 0, 1, 0); Lbl.Position = UDim2.new(0, 8, 0, 0); Lbl.BackgroundTransparency = 1; Lbl.Text = ""; Lbl.TextColor3 = C.gold; Lbl.TextSize = 10; Lbl.Font = Enum.Font.GothamSemibold; Lbl.TextXAlignment = Enum.TextXAlignment.Left; Lbl.Parent = B; updateableLabels[Lbl] = key; table.insert(globalTextObjects, Lbl)
+    local B = Instance.new("TextButton"); B.Size = UDim2.new(1, 0, 0, 32); B.BackgroundColor3 = C.goldDark; B.Text = ""; B.AutoButtonColor = false; B.LayoutOrder = o; B.Parent = GP(tab).frame; Instance.new("UICorner", B).CornerRadius = UDim.new(0, 8)
+    local BS = Instance.new("UIStroke"); BS.Color = C.gold; BS.Thickness = 1; BS.Parent = B
+    local Lbl = Instance.new("TextLabel"); Lbl.Size = UDim2.new(0.7, 0, 1, 0); Lbl.Position = UDim2.new(0, 10, 0, 0); Lbl.BackgroundTransparency = 1; Lbl.Text = ""; Lbl.TextColor3 = C.gold; Lbl.TextSize = 10; Lbl.Font = Enum.Font.GothamSemibold; Lbl.TextXAlignment = Enum.TextXAlignment.Left; Lbl.Parent = B; updateableLabels[Lbl] = key; table.insert(globalTextObjects, Lbl)
     local Soon = Instance.new("TextLabel"); Soon.Size = UDim2.new(0.25, 0, 1, 0); Soon.Position = UDim2.new(0.75, 0, 0, 0); Soon.BackgroundTransparency = 1; Soon.Text = "SOON"; Soon.TextColor3 = C.textDim; Soon.TextSize = 9; Soon.Font = Enum.Font.GothamBold; Soon.TextXAlignment = Enum.TextXAlignment.Right; Soon.Parent = B; updateableLabels[Soon] = "soon"; table.insert(globalTextObjects, Soon)
     B.MouseButton1Click:Connect(function() Notify("Nexus Engine", "This feature is currently in development!", C.gold, 3) end)
-    B.MouseEnter:Connect(function() TweenService:Create(B, TweenInfo.new(0.1), {BackgroundColor3 = C.elevated}):Play() end)
-    B.MouseLeave:Connect(function() TweenService:Create(B, TweenInfo.new(0.1), {BackgroundColor3 = C.goldDark}):Play() end)
+    B.MouseEnter:Connect(function() TweenService:Create(B, TweenInfo.new(0.15), {BackgroundColor3 = C.elevated}):Play() end)
+    B.MouseLeave:Connect(function() TweenService:Create(B, TweenInfo.new(0.15), {BackgroundColor3 = C.goldDark}):Play() end)
 end
 
 MkSoonButton("Nexus", "nexus_1")
@@ -664,14 +695,13 @@ MkSoonButton("Nexus", "nexus_2")
 MkSoonButton("Nexus", "nexus_3")
 
 ---------------------------------------------------------
--- ============ NEW SETTINGS TAB (REWRITTEN) ============
+-- ============ SETTINGS TAB (REWRITTEN) ============
 ---------------------------------------------------------
--- Создаем верхнюю навигацию по вкладкам настроек
 local SettingsContainer = GP("Settings").frame
 SettingsContainer.ScrollBarThickness = 0
 
 local SettingsNav = Instance.new("Frame")
-SettingsNav.Size = UDim2.new(1, 0, 0, 24)
+SettingsNav.Size = UDim2.new(1, 0, 0, 26)
 SettingsNav.BackgroundTransparency = 1
 SettingsNav.LayoutOrder = 1
 SettingsNav.Parent = SettingsContainer
@@ -680,9 +710,8 @@ local SNavList = Instance.new("UIListLayout")
 SNavList.Parent = SettingsNav
 SNavList.FillDirection = Enum.FillDirection.Horizontal
 SNavList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-SNavList.Padding = UDim.new(0, 4)
+SNavList.Padding = UDim.new(0, 6)
 
--- Фреймы-контейнеры для трех разделов настроек
 local Section_UI = Instance.new("Frame")
 Section_UI.Size = UDim2.new(1, 0, 0, 200)
 Section_UI.AutomaticSize = Enum.AutomaticSize.Y
@@ -716,7 +745,7 @@ Section_Showcase.Parent = SettingsContainer
 local Showcase_List = Instance.new("UIListLayout")
 Showcase_List.Parent = Section_Showcase; Showcase_List.Padding = UDim.new(0, 4); Showcase_List.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Кнопки навигации по настройкам
+-- Кнопки навигации по настройкам (Новый дизайн)
 local navBtns = {}
 local function CreateNavBtn(key, sectionFrame)
     local btn = Instance.new("TextButton")
@@ -727,7 +756,10 @@ local function CreateNavBtn(key, sectionFrame)
     btn.TextSize = 8
     btn.Font = Enum.Font.GothamBold
     btn.Parent = SettingsNav
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    
+    local btnStk = Instance.new("UIStroke"); btnStk.Color = C.accent; btnStk.Thickness = 0.8; btnStk.Transparency = 0.8; btnStk.Parent = btn
+    
     updateableLabels[btn] = key
     table.insert(globalTextObjects, btn)
 
@@ -739,11 +771,13 @@ local function CreateNavBtn(key, sectionFrame)
         for _, b in ipairs(navBtns) do
             b.BackgroundColor3 = C.elevated
             b.TextColor3 = C.textDim
+            b:FindFirstChildOfClass("UIStroke").Transparency = 0.8
         end
         
         sectionFrame.Visible = true
         btn.BackgroundColor3 = C.accent
         btn.TextColor3 = C.white
+        btnStk.Transparency = 0.4
     end)
     table.insert(navBtns, btn)
 end
@@ -752,42 +786,40 @@ CreateNavBtn("tab_ui", Section_UI)
 CreateNavBtn("tab_theme", Section_Theme)
 CreateNavBtn("tab_showcase", Section_Showcase)
 
--- Активация первой вкладки "UI" по дефолту
 navBtns[1].BackgroundColor3 = C.accent
 navBtns[1].TextColor3 = C.white
+navBtns[1]:FindFirstChildOfClass("UIStroke").Transparency = 0.4
 
 ---------------------------------
 -- НАПОЛНЕНИЕ ВКЛАДКИ 1: UI
 ---------------------------------
 MkSep("Settings", "menu_size", Section_UI)
-MkSlider("Settings", "menu_size", 300, 700, 460, function(v)
+MkSlider("Settings", "menu_size", 300, 700, 480, function(v)
     ResizeMenu(v, HUB_H)
 end, Section_UI)
 
--- Прозрачность
 MkSep("Settings", "menu_transparency", Section_UI)
-MkSlider("Settings", "menu_transparency", 0, 90, 0, function(v)
+MkSlider("Settings", "menu_transparency", 0, 90, 15, function(v)
     menuTransparency = v / 100
     Hub.BackgroundTransparency = menuTransparency
     Sidebar.BackgroundTransparency = menuTransparency
     TopB.BackgroundTransparency = menuTransparency
 end, Section_UI)
 
--- Смена шрифтов
 MkSep("Settings", "change_font", Section_UI)
 local fontIndex = 1
 local availableFonts = {Enum.Font.GothamSemibold, Enum.Font.Code, Enum.Font.Arial, Enum.Font.SourceSans}
-local fontNames = {"Gotham", "Monospace Code", "Classic Arial", "Source Sans"}
+local fontNames = {"Gotham Premium", "Digital Code", "Classic Arial", "Source Sans"}
 
 local FontToggleBtn = Instance.new("TextButton")
-FontToggleBtn.Size = UDim2.new(1, 0, 0, 24)
+FontToggleBtn.Size = UDim2.new(1, 0, 0, 28)
 FontToggleBtn.BackgroundColor3 = C.elevated
-FontToggleBtn.Text = "Font: Gotham"
+FontToggleBtn.Text = "Font: Gotham Premium"
 FontToggleBtn.TextColor3 = C.white
 FontToggleBtn.TextSize = 10
 FontToggleBtn.Font = Enum.Font.GothamBold
 FontToggleBtn.Parent = Section_UI
-Instance.new("UICorner", FontToggleBtn).CornerRadius = UDim.new(0, 5)
+Instance.new("UICorner", FontToggleBtn).CornerRadius = UDim.new(0, 8)
 
 FontToggleBtn.MouseButton1Click:Connect(function()
     fontIndex = fontIndex + 1
@@ -795,7 +827,6 @@ FontToggleBtn.MouseButton1Click:Connect(function()
     currentFont = availableFonts[fontIndex]
     FontToggleBtn.Text = "Font: " .. fontNames[fontIndex]
     
-    -- Обновляем шрифты на всех зарегистрированных объектах
     for _, textObj in ipairs(globalTextObjects) do
         if textObj.Parent then
             textObj.Font = currentFont
@@ -804,10 +835,9 @@ FontToggleBtn.MouseButton1Click:Connect(function()
     Notify("UI Engine", "Font changed to " .. fontNames[fontIndex], C.accent, 2)
 end)
 
--- Системные контроли
 MkSep("Settings", "system", Section_UI)
 
-local LangToggleBtn = Instance.new("TextButton"); LangToggleBtn.Size = UDim2.new(1,0,0,24); LangToggleBtn.BackgroundColor3 = C.elevated; LangToggleBtn.Text = "Русский / Russian"; LangToggleBtn.TextColor3 = C.white; LangToggleBtn.TextSize = 10; LangToggleBtn.Font = Enum.Font.GothamBold; LangToggleBtn.Parent = Section_UI; Instance.new("UICorner", LangToggleBtn).CornerRadius = UDim.new(0,5)
+local LangToggleBtn = Instance.new("TextButton"); LangToggleBtn.Size = UDim2.new(1,0,0,28); LangToggleBtn.BackgroundColor3 = C.elevated; LangToggleBtn.Text = "Русский / Russian"; LangToggleBtn.TextColor3 = C.white; LangToggleBtn.TextSize = 10; LangToggleBtn.Font = Enum.Font.GothamBold; LangToggleBtn.Parent = Section_UI; Instance.new("UICorner", LangToggleBtn).CornerRadius = UDim.new(0,8)
 LangToggleBtn.MouseButton1Click:Connect(function() if currentLang == "RU" then UpdateLanguage("EN"); LangToggleBtn.Text = "English" else UpdateLanguage("RU"); LangToggleBtn.Text = "Русский / Russian" end end)
 
 MkButton("Settings", "reset", C.elevated, function() local h = GetHum(); if h then h.Health = 0 end end, Section_UI)
@@ -818,8 +848,8 @@ MkButton("Settings", "destroy", C.redDark, function() ClearESP(); ClearGunESP();
 -- НАПОЛНЕНИЕ ВКЛАДКИ 2: THEME
 ---------------------------------
 MkSep("Settings", "theme", Section_Theme)
-local ThemeList = Instance.new("Frame"); ThemeList.Size = UDim2.new(1,0,0,32); ThemeList.BackgroundTransparency = 1; ThemeList.Parent = Section_Theme
-local TLList = Instance.new("UIListLayout"); TLList.Parent = ThemeList; TLList.FillDirection = Enum.FillDirection.Horizontal; TLList.Padding = UDim.new(0,4); TLList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+local ThemeList = Instance.new("Frame"); ThemeList.Size = UDim2.new(1,0,0,36); ThemeList.BackgroundTransparency = 1; ThemeList.Parent = Section_Theme
+local TLList = Instance.new("UIListLayout"); TLList.Parent = ThemeList; TLList.FillDirection = Enum.FillDirection.Horizontal; TLList.Padding = UDim.new(0,5); TLList.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 for _, tName in ipairs({"Purple", "Red", "Blue", "Green", "Dark"}) do 
     local tc = Themes[tName].accent
@@ -831,7 +861,7 @@ for _, tName in ipairs({"Purple", "Red", "Blue", "Green", "Dark"}) do
     tBtn.Font = Enum.Font.GothamBold
     tBtn.TextSize = 11
     tBtn.Parent = ThemeList
-    Instance.new("UICorner", tBtn).CornerRadius = UDim.new(0,4)
+    Instance.new("UICorner", tBtn).CornerRadius = UDim.new(0,6)
     
     tBtn.MouseButton1Click:Connect(function() 
         ApplyTheme(tName)
@@ -843,11 +873,11 @@ end
 -- НАПОЛНЕНИЕ ВКЛАДКИ 3: SHOWCASE (SOON)
 ---------------------------------
 MkSep("Settings", "soon", Section_Showcase)
-MkInfoBox("Settings", "Here you will be able to preview and save customized templates!\nFollow linbergz updates.", Section_Showcase)
+MkInfoBox("Settings", "Custom presets will list here upon our future compiler release. Follow linbergz updates!", Section_Showcase)
 
--- О хабе (Остается внизу вкладки Settings вне секций)
+-- О хабе
 MkSep("Settings", "about")
-MkInfoBox("Settings", "linbergz Hub v8.0 (Nexus)\nPlatform: Mobile Optimized\nCreator: linbergz Team")
+MkInfoBox("Settings", "linbergz Hub v8.0 (Nexus Redesign)\nPlatform: Mobile Optimized (Premium Framework)\nCreator: linbergz Team")
 
 ---------------------------------------------------------
 -- ============ INFO TAB ============
@@ -855,8 +885,8 @@ MkInfoBox("Settings", "linbergz Hub v8.0 (Nexus)\nPlatform: Mobile Optimized\nCr
 MkSep("Info", "about")
 local InfoChange = MkInfoBox("Info", "Loading updates...")
 local function RefreshLog()
-    if currentLang == "RU" then InfoChange.Text = "Обновление v8.0 Nexus Mobile:\n\n- [NEW] Auto-Grab: Моментальный подбор оружия после смерти шерифа.\n- [NEW] Auto-Farm: Автоматический сбор монет на карте.\n- [NEW] Chat Announcer: Палит убийцу и шерифа в чат всем.\n- [NEW] Glitch Invisibility: Делает вас невидимым через баг R15.\n- [NEW] Настройки UI: Размер меню, Настройка прозрачности и Шрифты!\n- [NEW] Добавлены телепорты (Лобби, Карта).\n- [FIX] Флинг адаптирован под лимиты физики."
-    else InfoChange.Text = "Update v8.0 Nexus Mobile:\n\n- [NEW] Auto-Grab: Instantly grab sheriff's gun when dropped.\n- [NEW] Auto-Farm: Automatically collect coins around the map.\n- [NEW] Chat Announcer: Leaks murderer and sheriff in chat.\n- [NEW] Glitch Invisibility: Become invisible using R15 exploit.\n- [NEW] UI Settings: Added menu scaling, transparency control & fonts!\n- [NEW] Added teleports (Lobby, Map).\n- [FIX] Fling adapted to physics limits." end
+    if currentLang == "RU" then InfoChange.Text = "Премиум Редизайн v8.0 Nexus Mobile:\n\n- [NEW] Glassmorphism UI: Полностью обновленный дизайн меню с эффектом стекла и мягкими неоновыми контурами.\n- [NEW] Физический отклик: Перерисованы все ползунки, кнопки и анимации переключения вкладок.\n- [NEW] Сглаживание: Округлые углы (8px-12px) адаптированы под новые мобильные экраны.\n- [NEW] Кастомизация: Изменение размеров меню, прозрачности и шрифтов.\n- [FIX] Полная оптимизация: Меньше нагрузки на процессор телефона за счет упрощенной геометрии."
+    else InfoChange.Text = "Premium Redesign v8.0 Nexus Mobile:\n\n- [NEW] Glassmorphism UI: Overhauled design using frosted glass effects and neon acrylic highlights.\n- [NEW] Physical Interactions: Rewritten sliders, switches, and smooth UI transitions.\n- [NEW] Smoothness: Modern rounded interfaces (8px-12px) optimized for high-end feel.\n- [NEW] Total Control: Resizable menu canvas, transparent gradient sliders, and custom typography.\n- [FIX] Optimized: Low-level rendering pipeline reduces phone heat." end
 end
 RefreshLog(); LangToggleBtn.MouseButton1Click:Connect(RefreshLog)
 
@@ -864,4 +894,4 @@ RefreshLog(); LangToggleBtn.MouseButton1Click:Connect(RefreshLog)
 -- INITIALIZATION PIPELINE
 ---------------------------------------------------------
 UpdateLanguage("RU")
-task.delay(1.5, function() Notify("linbergz Team", "Nexus Engine v8.0 Active!", C.gold, 3.5) end)
+task.delay(1.5, function() Notify("linbergz Team", "Nexus Engine v8.0 Redesign Active!", C.gold, 3.5) end)
