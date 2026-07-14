@@ -1,4 +1,4 @@
--- linbergz Team MM2 PREMIUM MOBILE HUB v8.0 (Nexus Redesign Update)
+-- linbergz Team MM2 PREMIUM MOBILE HUB v8.0 (Nexus Redesign Update - HOTFIXED)
 -- Ironclad Anti-Fling & Advanced Physics Fling Engine + MM2 Auto Features
 -- Fully Unabbreviated & Mobile Optimized Code with Premium Glassmorphism UI
 
@@ -85,7 +85,6 @@ local L = {
         soon = "DEVELOPMENT",
         menu_size = "UI Scaling (Width)", menu_transparency = "Acrylic Transparency", change_font = "Typography Font Style",
         tab_ui = "Interface", tab_theme = "Color Schemes", tab_showcase = "Presets (soon)",
-        -- Новые субвкладки для Home
         subtab_labels = "ESP Tags", subtab_movement = "Movement", subtab_automation = "Auto-Play",
         enable_roles = "Enable Role ESP", enable_gun = "Enable Gun ESP", enable_tracers = "Enable Tracers ESP", enable_box = "Enable 2D Box ESP",
         speed_slider = "Walkspeed (0-100)", enable_bhop = "Activate BunnyHop", bhop_power = "Bhop Jump Power", bhop_sound = "Bhop Sound Effects"
@@ -105,7 +104,6 @@ local L = {
         soon = "В РАЗРАБОТКЕ",
         menu_size = "Размер интерфейса", menu_transparency = "Прозрачность акрила", change_font = "Стиль шрифтов",
         tab_ui = "Интерфейс", tab_theme = "Цветовые темы", tab_showcase = "Витрина (soon)",
-        -- Новые субвкладки для Home
         subtab_labels = "Метки", subtab_movement = "Передвижение", subtab_automation = "Автоматизация",
         enable_roles = "Включить ESP ролей", enable_gun = "ESP пистолета", enable_tracers = "Tracers (Линии)", enable_box = "Box ESP (Коробки)",
         speed_slider = "Скорость (0-100)", enable_bhop = "Бхоп (Bunnyhop)", bhop_power = "Сила бхопа", bhop_sound = "Звук бхопа"
@@ -375,6 +373,50 @@ for idx, def in ipairs(tabDefs) do
     end)
 end
 
+-- Анимация переключения меню исправлена (Без изменения геометрии scale, только прозрачность и видимость)
+local hubOpen = false
+local function ToggleHub()
+    hubOpen = not hubOpen
+    if hubOpen then
+        Hub.Visible = true
+        Hub.GroupTransparency = 1
+        TweenService:Create(Hub, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {GroupTransparency = 0}):Play()
+    else
+        local tw = TweenService:Create(Hub, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {GroupTransparency = 1})
+        tw:Play()
+        tw.Completed:Connect(function()
+            if not hubOpen then Hub.Visible = false end
+        end)
+    end
+end
+
+-- Добавление CanvasGroup для плавной анимации прозрачности всего меню
+if not Hub:IsA("CanvasGroup") then
+    local oldParent = Hub.Parent
+    local CG = Instance.new("CanvasGroup")
+    CG.Name = Hub.Name
+    CG.Size = Hub.Size
+    CG.Position = Hub.Position
+    CG.BackgroundColor3 = Hub.BackgroundColor3
+    CG.BackgroundTransparency = Hub.BackgroundTransparency
+    CG.BorderSizePixel = Hub.BorderSizePixel
+    CG.Visible = Hub.Visible
+    CG.ClipsDescendants = Hub.ClipsDescendants
+    CG.ZIndex = Hub.ZIndex
+    
+    for _, child in ipairs(Hub:GetChildren()) do
+        child.Parent = CG
+    end
+    Hub:Destroy()
+    Hub = CG
+    Hub.Parent = oldParent
+    table.insert(themedBg, Hub)
+end
+
+ToggleBtn.MouseButton1Click:Connect(ToggleHub)
+ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
+task.defer(function() tabBtns["Home"].btn.MouseButton1Click:Fire() end)
+
 ---------------------------------------------------------
 -- UI ELEMENT FACTORY
 ---------------------------------------------------------
@@ -466,7 +508,6 @@ local function ClearVisuals()
     espConnections = {}
 end
 
--- Вспомогательная функция для рисования 2D линий (Используем Gui для кроссплатформенности)
 local function DrawLine(p1, p2, col)
     local line = Instance.new("Frame")
     line.BorderSizePixel = 0
@@ -482,7 +523,6 @@ local function DrawLine(p1, p2, col)
     return line
 end
 
--- Вспомогательная функция для рисования 2D боксов
 local function DrawBox(pos, size, col)
     local box = Instance.new("Frame")
     box.BackgroundColor3 = col
@@ -516,17 +556,16 @@ HomeNav.Parent = HomeContainer
 local HNavList = Instance.new("UIListLayout")
 HNavList.Parent = HomeNav; HNavList.FillDirection = Enum.FillDirection.Horizontal; HNavList.HorizontalAlignment = Enum.HorizontalAlignment.Center; HNavList.Padding = UDim.new(0, 6)
 
--- 3 Суб-вкладки
 local Sub_Labels = Instance.new("Frame")
-Sub_Labels.Size = UDim2.new(1, 0, 0, 200); Sub_Labels.AutomaticSize = Enum.AutomaticSize.Y; Sub_Labels.BackgroundTransparency = 1; Sub_Labels.LayoutOrder = 2; Sub_Labels.Visible = true; Sub_Labels.Parent = HomeContainer
+Sub_Labels.Size = UDim2.new(1, 0, 1, -30); Sub_Labels.BackgroundTransparency = 1; Sub_Labels.LayoutOrder = 2; Sub_Labels.Visible = true; Sub_Labels.Parent = HomeContainer
 local LabelsList = Instance.new("UIListLayout"); LabelsList.Parent = Sub_Labels; LabelsList.Padding = UDim.new(0, 4); LabelsList.SortOrder = Enum.SortOrder.LayoutOrder
 
 local Sub_Movement = Instance.new("Frame")
-Sub_Movement.Size = UDim2.new(1, 0, 0, 200); Sub_Movement.AutomaticSize = Enum.AutomaticSize.Y; Sub_Movement.BackgroundTransparency = 1; Sub_Movement.LayoutOrder = 3; Sub_Movement.Visible = false; Sub_Movement.Parent = HomeContainer
+Sub_Movement.Size = UDim2.new(1, 0, 1, -30); Sub_Movement.BackgroundTransparency = 1; Sub_Movement.LayoutOrder = 3; Sub_Movement.Visible = false; Sub_Movement.Parent = HomeContainer
 local MovList = Instance.new("UIListLayout"); MovList.Parent = Sub_Movement; MovList.Padding = UDim.new(0, 4); MovList.SortOrder = Enum.SortOrder.LayoutOrder
 
 local Sub_Automation = Instance.new("Frame")
-Sub_Automation.Size = UDim2.new(1, 0, 0, 200); Sub_Automation.AutomaticSize = Enum.AutomaticSize.Y; Sub_Automation.BackgroundTransparency = 1; Sub_Automation.LayoutOrder = 4; Sub_Automation.Visible = false; Sub_Automation.Parent = HomeContainer
+Sub_Automation.Size = UDim2.new(1, 0, 1, -30); Sub_Automation.BackgroundTransparency = 1; Sub_Automation.LayoutOrder = 4; Sub_Automation.Visible = false; Sub_Automation.Parent = HomeContainer
 local AutList = Instance.new("UIListLayout"); AutList.Parent = Sub_Automation; AutList.Padding = UDim.new(0, 4); AutList.SortOrder = Enum.SortOrder.LayoutOrder
 
 local homeNavBtns = {}
@@ -577,7 +616,6 @@ local espRolesEnabled, espGunEnabled, espTracersEnabled, espBoxesEnabled = false
 
 MkSep("Home", "subtab_labels", Sub_Labels)
 
--- 1. ESP Ролей
 local function ClearRoles() for _, p in ipairs(Players:GetPlayers()) do if p.Character and p.Character:FindFirstChild("MobileESP") then p.Character.MobileESP:Destroy() end end end
 local function ApplyHighlight(ch, col) if not ch then return end; if ch:FindFirstChild("MobileESP") then ch.MobileESP:Destroy() end; local h = Instance.new("Highlight"); h.Name = "MobileESP"; h.FillColor = col; h.FillTransparency = 0.55; h.OutlineColor = Color3.fromRGB(255,255,255); h.OutlineTransparency = 0.2; h.Adornee = ch; h.Parent = ch end
 
@@ -606,7 +644,6 @@ MkToggle("Home", "enable_roles", false, function(a)
     end
 end, Sub_Labels)
 
--- 2. ESP Пистолета (Оружия на полу)
 local gunGuis = {}
 local function ClearGunESP() for _, g in ipairs(gunGuis) do pcall(function() g:Destroy() end) end; gunGuis = {} end
 
@@ -630,23 +667,19 @@ MkToggle("Home", "enable_gun", false, function(a)
     end
 end, Sub_Labels)
 
--- 3. Tracers
 MkToggle("Home", "enable_tracers", false, function(a)
     espTracersEnabled = a
     if not a then ClearVisuals() end
 end, Sub_Labels)
 
--- 4. Box ESP
 MkToggle("Home", "enable_box", false, function(a)
     espBoxesEnabled = a
     if not a then ClearVisuals() end
 end, Sub_Labels)
 
--- Цикл отрисовки Tracers и Box ESP
 RunService.RenderStepped:Connect(function()
     if not espTracersEnabled and not espBoxesEnabled then return end
     
-    -- Чистим предыдущие рисунки
     for _, draw in ipairs(activeTracers) do pcall(function() draw:Destroy() end) end
     for _, draw in ipairs(activeBoxes) do pcall(function() draw:Destroy() end) end
     activeTracers = {}
@@ -662,13 +695,11 @@ RunService.RenderStepped:Connect(function()
                 if IsMurderer(p) then col = Color3.fromRGB(255,50,50)
                 elseif IsSheriff(p) then col = Color3.fromRGB(50,150,255) end
                 
-                -- Линии (Tracers)
                 if espTracersEnabled then
                     local screenCenter = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y)
                     DrawLine(screenCenter, Vector2.new(pos.X, pos.Y), col)
                 end
                 
-                -- 2D Коробочки (Boxes)
                 if espBoxesEnabled then
                     local height = (camera:WorldToViewportPoint(root.Position + Vector3.new(0, 3, 0)).Y - camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0)).Y)
                     local width = height * 0.6
@@ -679,13 +710,11 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-
 ---------------------------------
 -- СУБ-ВКЛАДКА 2: ПЕРЕДВИЖЕНИЕ
 ---------------------------------
 MkSep("Home", "subtab_movement", Sub_Movement)
 
--- Скорость
 local customSpeed = 16
 local speedActive = false
 MkSlider("Home", "speed_slider", 16, 100, 16, function(v) 
@@ -706,14 +735,13 @@ MkToggle("Home", "walkspeed", false, function(a)
     end
 end, Sub_Movement)
 
--- Бхоп
 local bhopEnabled, bhopPower, bhopSoundActive = false, 50, false
 
 local function PlayBhopSound()
     local r = GetRoot()
     if r then
         local sound = Instance.new("Sound")
-        sound.SoundId = "rbxassetid://9114223126" -- Свуш/прыжок
+        sound.SoundId = "rbxassetid://9114223126"
         sound.Volume = 0.6
         sound.Parent = r
         sound:Play()
@@ -745,7 +773,6 @@ end, Sub_Movement)
 MkToggle("Home", "bhop_sound", false, function(a)
     bhopSoundActive = a
 end, Sub_Movement)
-
 
 ---------------------------------
 -- СУБ-ВКЛАДКА 3: АВТОМАТИЗАЦИЯ
@@ -869,7 +896,7 @@ MkButton("Fun & Troll", "invis", C.elevated, function()
 end)
 
 ---------------------------------------------------------
--- ============ BOOMBOX TAB (WITH WORKING HIGH-ID AUDIO) ============
+-- ============ BOOMBOX TAB ============
 ---------------------------------------------------------
 MkSep("Boombox", "audioplayer"); local AIn = MkInput("Boombox", "Audio ID...", "93602974995833"); local cSnd = nil
 
@@ -878,7 +905,6 @@ local function PlayS(id)
     local r = GetRoot()
     if r and tonumber(id) then 
         cSnd = Instance.new("Sound")
-        -- Использование 64-битного ID формата для новых аудио Roblox
         cSnd.SoundId = "http://www.roblox.com/asset/?id="..id
         cSnd.Volume = 3
         cSnd.Looped = true
@@ -911,15 +937,15 @@ local SNavList = Instance.new("UIListLayout")
 SNavList.Parent = SettingsNav; SNavList.FillDirection = Enum.FillDirection.Horizontal; SNavList.HorizontalAlignment = Enum.HorizontalAlignment.Center; SNavList.Padding = UDim.new(0, 6)
 
 local Section_UI = Instance.new("Frame")
-Section_UI.Size = UDim2.new(1, 0, 0, 200); Section_UI.AutomaticSize = Enum.AutomaticSize.Y; Section_UI.BackgroundTransparency = 1; Section_UI.LayoutOrder = 2; Section_UI.Visible = true; Section_UI.Parent = SettingsContainer
+Section_UI.Size = UDim2.new(1, 0, 1, -30); Section_UI.BackgroundTransparency = 1; Section_UI.LayoutOrder = 2; Section_UI.Visible = true; Section_UI.Parent = SettingsContainer
 local UI_List = Instance.new("UIListLayout"); UI_List.Parent = Section_UI; UI_List.Padding = UDim.new(0, 4); UI_List.SortOrder = Enum.SortOrder.LayoutOrder
 
 local Section_Theme = Instance.new("Frame")
-Section_Theme.Size = UDim2.new(1, 0, 0, 200); Section_Theme.AutomaticSize = Enum.AutomaticSize.Y; Section_Theme.BackgroundTransparency = 1; Section_Theme.LayoutOrder = 3; Section_Theme.Visible = false; Section_Theme.Parent = SettingsContainer
+Section_Theme.Size = UDim2.new(1, 0, 1, -30); Section_Theme.BackgroundTransparency = 1; Section_Theme.LayoutOrder = 3; Section_Theme.Visible = false; Section_Theme.Parent = SettingsContainer
 local Theme_List = Instance.new("UIListLayout"); Theme_List.Parent = Section_Theme; Theme_List.Padding = UDim.new(0, 4); Theme_List.SortOrder = Enum.SortOrder.LayoutOrder
 
 local Section_Showcase = Instance.new("Frame")
-Section_Showcase.Size = UDim2.new(1, 0, 0, 200); Section_Showcase.AutomaticSize = Enum.AutomaticSize.Y; Section_Showcase.BackgroundTransparency = 1; Section_Showcase.LayoutOrder = 4; Section_Showcase.Visible = false; Section_Showcase.Parent = SettingsContainer
+Section_Showcase.Size = UDim2.new(1, 0, 1, -30); Section_Showcase.BackgroundTransparency = 1; Section_Showcase.LayoutOrder = 4; Section_Showcase.Visible = false; Section_Showcase.Parent = SettingsContainer
 local Showcase_List = Instance.new("UIListLayout"); Showcase_List.Parent = Section_Showcase; Showcase_List.Padding = UDim.new(0, 4); Showcase_List.SortOrder = Enum.SortOrder.LayoutOrder
 
 local navBtns = {}
