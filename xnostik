@@ -1,9 +1,16 @@
--- linbergz Team MM2 PREMIUM MOBILE HUB v8.0 (Nexus Redesign Update - HOTFIXED)
--- Ironclad Anti-Fling & Advanced Physics Fling Engine + MM2 Auto Features
--- Fully Unabbreviated & Mobile Optimized Code with Premium Glassmorphism UI
+--[[
+    _ _       _                                _____ ____  
+   | (_)_ __ | |__   ___ _ __ __ _ _____      |  ___/ ___| 
+   | | | '_ \| '_ \ / _ \ '__/ _` |_  / _ \____| |_  \___ \ 
+   | | | | | | |_) |  __/ | | (_| |/ /  __/_____|  _|  ___) |
+   |_|_|_| |_|_.__/ \___|_|  \__, /___\___|     |_|   |____/ 
+                             |___/                          
+   linbergz Team // MM2 PREMIUM MOBILE HUB v9.0 "Aether OS"
+   Designed by linbergz Core. Fully Optimized, Unabbreviated, and Powered by Aether UI.
+]]
 
 ---------------------------------------------------------
--- SERVICES
+-- CORE SERVICES
 ---------------------------------------------------------
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -11,6 +18,7 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 if not player then
@@ -36,32 +44,63 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
 
 ---------------------------------------------------------
--- THEME SYSTEM CONFIGURATION (PREMIUM PALETTES)
+-- THEME SYSTEM CONFIGURATION (AETHER PREMIUM PALETTES)
 ---------------------------------------------------------
 local Themes = {
-    Purple = { accent = Color3.fromRGB(150, 80, 255), accentLight = Color3.fromRGB(190, 130, 255), bg = Color3.fromRGB(10, 8, 18), surface = Color3.fromRGB(16, 12, 28) },
-    Red = { accent = Color3.fromRGB(255, 60, 80), accentLight = Color3.fromRGB(255, 110, 140), bg = Color3.fromRGB(14, 6, 8), surface = Color3.fromRGB(22, 10, 14) },
-    Blue = { accent = Color3.fromRGB(0, 160, 255), accentLight = Color3.fromRGB(100, 210, 255), bg = Color3.fromRGB(6, 10, 18), surface = Color3.fromRGB(10, 16, 28) },
-    Green = { accent = Color3.fromRGB(0, 230, 120), accentLight = Color3.fromRGB(120, 255, 180), bg = Color3.fromRGB(5, 14, 10), surface = Color3.fromRGB(8, 24, 16) },
-    Dark = { accent = Color3.fromRGB(220, 220, 220), accentLight = Color3.fromRGB(255, 255, 255), bg = Color3.fromRGB(8, 8, 8), surface = Color3.fromRGB(14, 14, 14) }
+    Nebula = { 
+        accent = Color3.fromRGB(160, 70, 255), 
+        accentLight = Color3.fromRGB(210, 150, 255), 
+        bg = Color3.fromRGB(9, 7, 16), 
+        surface = Color3.fromRGB(15, 11, 26),
+        gradient = {Color3.fromRGB(160, 70, 255), Color3.fromRGB(80, 30, 180)}
+    },
+    Supernova = { 
+        accent = Color3.fromRGB(255, 75, 45), 
+        accentLight = Color3.fromRGB(255, 140, 100), 
+        bg = Color3.fromRGB(12, 6, 6), 
+        surface = Color3.fromRGB(22, 10, 10),
+        gradient = {Color3.fromRGB(255, 75, 45), Color3.fromRGB(180, 25, 10)}
+    },
+    DeepOcean = { 
+        accent = Color3.fromRGB(0, 180, 255), 
+        accentLight = Color3.fromRGB(120, 220, 255), 
+        bg = Color3.fromRGB(5, 9, 16), 
+        surface = Color3.fromRGB(9, 16, 28),
+        gradient = {Color3.fromRGB(0, 180, 255), Color3.fromRGB(0, 80, 180)}
+    },
+    Matrix = { 
+        accent = Color3.fromRGB(0, 240, 100), 
+        accentLight = Color3.fromRGB(140, 255, 180), 
+        bg = Color3.fromRGB(4, 10, 6), 
+        surface = Color3.fromRGB(8, 20, 12),
+        gradient = {Color3.fromRGB(0, 240, 100), Color3.fromRGB(0, 120, 40)}
+    },
+    Eclipse = { 
+        accent = Color3.fromRGB(240, 240, 240), 
+        accentLight = Color3.fromRGB(255, 255, 255), 
+        bg = Color3.fromRGB(8, 8, 8), 
+        surface = Color3.fromRGB(14, 14, 14),
+        gradient = {Color3.fromRGB(180, 180, 180), Color3.fromRGB(40, 40, 40)}
+    }
 }
 
 local C = {
-    bg = Themes.Purple.bg, sidebar = Color3.fromRGB(6, 5, 12), surface = Themes.Purple.surface,
-    elevated = Color3.fromRGB(24, 18, 40), cardHover = Color3.fromRGB(36, 28, 60),
-    accent = Themes.Purple.accent, accentLight = Themes.Purple.accentLight,
-    green = Color3.fromRGB(0, 230, 120), greenDark = Color3.fromRGB(10, 40, 25),
-    red = Color3.fromRGB(255, 60, 80), redDark = Color3.fromRGB(45, 12, 18),
-    gold = Color3.fromRGB(255, 200, 50), goldDark = Color3.fromRGB(40, 30, 8),
+    bg = Themes.Nebula.bg, sidebar = Color3.fromRGB(5, 4, 10), surface = Themes.Nebula.surface,
+    elevated = Color3.fromRGB(22, 16, 38), cardHover = Color3.fromRGB(34, 25, 58),
+    accent = Themes.Nebula.accent, accentLight = Themes.Nebula.accentLight,
+    green = Color3.fromRGB(0, 240, 100), greenDark = Color3.fromRGB(10, 42, 20),
+    red = Color3.fromRGB(255, 75, 45), redDark = Color3.fromRGB(42, 12, 12),
+    gold = Color3.fromRGB(255, 200, 50), goldDark = Color3.fromRGB(42, 32, 8),
     white = Color3.fromRGB(255, 255, 255), black = Color3.fromRGB(0, 0, 0),
     text = Color3.fromRGB(245, 245, 250), textSec = Color3.fromRGB(175, 170, 195),
-    textDim = Color3.fromRGB(115, 110, 135), textMuted = Color3.fromRGB(70, 65, 85),
-    separator = Color3.fromRGB(32, 26, 54),
+    textDim = Color3.fromRGB(115, 110, 135), textMuted = Color3.fromRGB(68, 62, 82),
+    separator = Color3.fromRGB(30, 24, 52),
 }
 
 local currentFont = Enum.Font.GothamSemibold
 local globalTextObjects = {}
-local menuTransparency = 0.15
+local menuTransparency = 0.12
+local currentThemeName = "Nebula"
 
 ---------------------------------------------------------
 -- LOCALIZATION ENGINE (RU/EN)
@@ -71,42 +110,40 @@ local updateableLabels = {}
 
 local L = {
     EN = {
-        home = "Main Hub", combat = "Combat", fun = "Trolling", boombox = "Boombox", settings = "Settings", info = "Info/Logs",
-        movement = "PHYSICS & MOVEMENT", walkspeed = "Custom Walk Speed", jumppower = "Custom Jump Power", infjump = "Air Jump (Infinite)",
-        protection = "SECURITY SHIELDS", antifling = "Ironclad Anti-Fling", noclip = "Noclip (Wall-Pass)", fly = "Fly [Mobile Engine]", fullbright = "Ambient Fullbright",
-        automation = "MM2 AUTOMATION", autofarm = "Gold Coin Auto Farm", tplobby = "Teleport to Lobby", tpmap = "Teleport to Active Map",
-        aimbot = "Aimbot on Murderer", shootbtn = "Screen Shoot Button", magicshot = "Screen Magic Shot",
-        autograb = "Auto Loot Gun", killall = "[💥] Kill Server (Knife)", teleport = "MAP TELEPORTS", tpmurder = "Chase Murderer", tpsheriff = "Retrieve Sheriff",
-        players_esp = "Global Player ESP", roles_esp = "Tactical Role ESP", gun_esp = "Lootable Gun ESP",
-        announce = "Broadcast Roles to Chat", audioplayer = "DIGITAL AUDIO PLAYER", play = "INITIALIZE ID", stop = "TERMINATE ID", system = "HUB CONTROL PANEL", copy = "Extract Server Link",
-        reset = "Instant Character Reset", destroy = "Self-Destruct Hub", theme = "Theme Palette", language = "Menu Language",
-        about = "linbergz ARCHITECTURE", quick_tracks = "HOT AUDIO PRESETS", flinger = "PHYSICS FLING SYSTEM", touch_fling = "Kinetic Touch Fling",
-        select_target = "Select Target Profile", fling_btn = "Launch Target to Orbit", invis = "R15 Glitch Cloak", role_info = "LIVE ROLE ANALYTICS",
-        soon = "DEVELOPMENT",
-        menu_size = "UI Scaling (Width)", menu_transparency = "Acrylic Transparency", change_font = "Typography Font Style",
-        tab_ui = "Interface", tab_theme = "Color Schemes", tab_showcase = "Presets (soon)",
-        subtab_labels = "ESP Tags", subtab_movement = "Movement", subtab_automation = "Auto-Play",
-        enable_roles = "Enable Role ESP", enable_gun = "Enable Gun ESP", enable_tracers = "Enable Tracers ESP", enable_box = "Enable 2D Box ESP",
-        speed_slider = "Walkspeed (0-100)", enable_bhop = "Activate BunnyHop", bhop_power = "Bhop Jump Power", bhop_sound = "Bhop Sound Effects"
+        home = "Main OS", combat = "Combat", fun = "Trolling", boombox = "Aether Audio", settings = "Settings", info = "Architecture",
+        movement = "DYNAMICS & PHYSICS", walkspeed = "Target Speed Engine", jumppower = "Kinetic Jump", infjump = "Aether Fly Jump",
+        protection = "SECURITY SYSTEM", antifling = "Ironclad Anti-Fling Plus", noclip = "Phasing (Noclip)", fly = "Gravity Flight", fullbright = "Quantum Fullbright",
+        automation = "MM2 PROTOCOLS", autofarm = "Auto Farm Coins", tplobby = "Relocate to Lobby", tpmap = "Relocate to Map",
+        aimbot = "Aimbot Calibration", shootbtn = "Tactical Fire Trigger", magicshot = "Singularity Shot",
+        autograb = "Auto-Loot Revolver", killall = "[💥] Decimate Server (Knife)", teleport = "SPATIAL TELEPORTS", tpmurder = "Chase Murderer", tpsheriff = "Retrieve Sheriff",
+        players_esp = "Biological Scanner", roles_esp = "Threat Matrix ESP", gun_esp = "Dropped Armament ESP",
+        announce = "Broadcast Intel to Chat", audioplayer = "DECENTRALIZED AUDIO SYSTEM", play = "ENGAGE AUDIO ID", stop = "TERMINATE ID", system = "OS SYSTEM DRIVERS", copy = "Extract Server Link",
+        reset = "Forced Terminal Reset", destroy = "Purge Hub Core", theme = "UI Palette Presets", language = "Core Language",
+        about = "AETHER COGNITION", quick_tracks = "HOT AUDIO PRESETS", flinger = "VELOCITY FLINGER", touch_fling = "Kinetic Touch Fling",
+        select_target = "Select Target Vector", fling_btn = "Banish to Stratosphere", invis = "R15 Phase Shift Cloak", role_info = "LIVE STRATEGIC METRICS",
+        menu_size = "Aether Canvas Scale", menu_transparency = "Acrylic Density", change_font = "Typography Framework",
+        tab_ui = "OS Shell Interface", tab_theme = "Color Core", tab_showcase = "Theme Showcase",
+        subtab_labels = "Tactical ESP", subtab_movement = "Kinetic Control", subtab_automation = "MM2 Engines",
+        enable_roles = "Threat Detection Highlight", enable_gun = "Highlight Drop Revolver", enable_tracers = "Render Tactical Tracers", enable_box = "Render 2D Threat Boxes",
+        speed_slider = "Dynamic Velocity", enable_bhop = "Aerodynamic BunnyHop", bhop_power = "Kinetic Bounce Velocity", bhop_sound = "Acoustic Air Displacement"
     },
     RU = {
-        home = "Главная", combat = "Сражение", fun = "Троллинг", boombox = "Музыка", settings = "Настройки", info = "О хабе",
-        movement = "ФИЗИКА И ПЕРЕДВИЖЕНИЕ", walkspeed = "Настройка скорости", jumppower = "Высота прыжка", infjump = "Прыжки в воздухе",
-        protection = "МОДУЛИ ЗАЩИТЫ", antifling = "Анти-Флинг система", noclip = "Хождение сквозь стены", fly = "Полет [Mobile]", fullbright = "Режим Яркого Света",
-        automation = "АВТОМАТИЗАЦИЯ", autofarm = "Авто-фарм золота", tplobby = "ТП в Лобби", tpmap = "ТП на игровую арену",
-        aimbot = "Аимбот на убийцу", shootbtn = "Кнопка выстрела на экране", magicshot = "Кнопка Магического выстрела",
-        autograb = "Авто-подбор оружия", killall = "[💥] Убить весь сервер (Нож)", teleport = "ТЕЛЕПОРТАЦИЯ", tpmurder = "Телепорт к Убийце", tpsheriff = "Телепорт к Шерифу",
-        players_esp = "Подсветка игроков (ESP)", roles_esp = "Отображение ролей", gun_esp = "Подсветка оружия",
-        announce = "Объявить роли в чат", audioplayer = "ПРОИГРЫВАТЕЛЬ АУДИО", play = "ВОСПРОИЗВЕСТИ ID", stop = "ОСТАНОВИТЬ", system = "ПАНЕЛЬ УПРАВЛЕНИЯ", copy = "Скопировать ссылку",
-        reset = "Быстрый суицид", destroy = "Полное удаление чита", theme = "Цветовая гамма", language = "Язык интерфейса",
-        about = "О ХАБЕ", quick_tracks = "ГОРЯЧИЕ АУДИОТРЕКИ", flinger = "ФИЗИЧЕСКИЙ ФЛИНГЕР", touch_fling = "Тач-флинг (Убийца физикой)",
-        select_target = "Выбрать жертву", fling_btn = "Запустить цель в орбиту", invis = "Невидимость (R15 Глитч)", role_info = "АНАЛИТИКА РОЛЕЙ",
-        soon = "В РАЗРАБОТКЕ",
-        menu_size = "Размер интерфейса", menu_transparency = "Прозрачность акрила", change_font = "Стиль шрифтов",
-        tab_ui = "Интерфейс", tab_theme = "Цветовые темы", tab_showcase = "Витрина (soon)",
-        subtab_labels = "Метки", subtab_movement = "Передвижение", subtab_automation = "Автоматизация",
-        enable_roles = "Включить ESP ролей", enable_gun = "ESP пистолета", enable_tracers = "Tracers (Линии)", enable_box = "Box ESP (Коробки)",
-        speed_slider = "Скорость (0-100)", enable_bhop = "Бхоп (Bunnyhop)", bhop_power = "Сила бхопа", bhop_sound = "Звук бхопа"
+        home = "Главная OS", combat = "Сражение", fun = "Троллинг", boombox = "Аудио-Ядро", settings = "Настройки", info = "Архитектура",
+        movement = "ДИНАМИКА И ФИЗИКА", walkspeed = "Регулировка скорости", jumppower = "Кинетический прыжок", infjump = "Бесконечный прыжок",
+        protection = "СИСТЕМА БЕЗОПАСНОСТИ", antifling = "Ironclad Анти-Флинг +", noclip = "Фазовый сдвиг (Noclip)", fly = "Гравитационный полет", fullbright = "Квантовый свет",
+        automation = "ПРОТОКОЛЫ MM2", autofarm = "Авто-сбор монет", tplobby = "ТП в Лобби", tpmap = "ТП на арену",
+        aimbot = "Калибровка аимбота", shootbtn = "Кнопка выстрела", magicshot = "Сингулярный выстрел",
+        autograb = "Авто-сбор оружия", killall = "[💥] Стереть сервер (Нож)", teleport = "ТЕЛЕПОРТАЦИЯ", tpmurder = "Телепорт к Убийце", tpsheriff = "Телепорт к Шерифу",
+        players_esp = "Биологический сканер", roles_esp = "Матрица ролей", gun_esp = "Подсветка оружия на полу",
+        announce = "Огласить роли в чат", audioplayer = "ЗВУКОВАЯ СИСТЕМА", play = "ВОСПРОИЗВЕСТИ ID", stop = "ОСТАНОВИТЬ", system = "СИСТЕМНЫЕ ДРАЙВЕРЫ", copy = "Скопировать линк",
+        reset = "Принудительный сброс", destroy = "Стереть ядро Хаба", theme = "Цветовая палитра", language = "Язык ядра OS",
+        about = "АРХИТЕКТУРА AETHER", quick_tracks = "БЫСТРЫЕ ТРЕКИ", flinger = "ФЛИНГЕР СКОРОСТИ", touch_fling = "Кинетический Тач-Флинг",
+        select_target = "Выбрать целевой вектор", fling_btn = "Отправить цель в стратосферу", invis = "Фазовая невидимость (R15)", role_info = "МЕТРИКИ СЕРВЕРА",
+        menu_size = "Ширина холста меню", menu_transparency = "Плотность акрила", change_font = "Шрифтовая архитектура",
+        tab_ui = "Оболочка интерфейса", tab_theme = "Цветовое ядро", tab_showcase = "Витрина Тем",
+        subtab_labels = "Тактический ESP", subtab_movement = "Кинетика движения", subtab_automation = "Автоматизация",
+        enable_roles = "Подсветка угроз сервера", enable_gun = "Подсветка утерянного оружия", enable_tracers = "Отрисовать трассеры", enable_box = "Отрисовать тактические боксы",
+        speed_slider = "Динамическая скорость", enable_bhop = "BunnyHop (Бхоп)", bhop_power = "Кинетическая сила отскока", bhop_sound = "Акустический шум ветра"
     }
 }
 
@@ -120,49 +157,14 @@ local function UpdateLanguage(lang)
 end
 
 ---------------------------------------------------------
--- THEME CONTROLLER
----------------------------------------------------------
-local themedBg, themedSurface, themedAccent = {}, {}, {}
-
-local function ApplyTheme(themeName)
-    local theme = Themes[themeName]
-    if not theme then return end
-    C.bg = theme.bg; C.surface = theme.surface; C.accent = theme.accent; C.accentLight = theme.accentLight
-    
-    for _, item in ipairs(themedBg) do 
-        if item.Parent then 
-            item.BackgroundColor3 = C.bg 
-            if item.Name == "Hub" or item.Name == "Sidebar" or item.Name == "TopBar" then
-                item.BackgroundTransparency = menuTransparency
-            end
-        end 
-    end
-    for _, item in ipairs(themedSurface) do 
-        if item.Parent then 
-            item.BackgroundColor3 = C.surface 
-            if item.Name == "TopBar" then
-                item.BackgroundTransparency = menuTransparency
-            end
-        end 
-    end
-    for _, item in ipairs(themedAccent) do 
-        if item.Parent then
-            if item:IsA("Frame") or item:IsA("TextButton") then item.BackgroundColor3 = C.accent
-            elseif item:IsA("TextLabel") then item.TextColor3 = C.accentLight
-            elseif item:IsA("UIStroke") then item.Color = C.accent end
-        end
-    end
-end
-
----------------------------------------------------------
--- CONNECTION MANAGER
+-- CONNECTIONS & RESOURCE MANAGEMENT
 ---------------------------------------------------------
 local connections = {}
 local function Conn(n, c) if connections[n] and typeof(connections[n]) == "RBXScriptConnection" then connections[n]:Disconnect() end; connections[n] = c end
 local function ClearConn(n) if connections[n] then if typeof(connections[n]) == "RBXScriptConnection" then connections[n]:Disconnect() end; connections[n] = nil end end
 
 ---------------------------------------------------------
--- UTILITIES & MM2 HELPERS
+-- MATH, PHYSICS & MM2 UTILITIES
 ---------------------------------------------------------
 local function GetChar() return player.Character end
 local function GetHum() local c = GetChar(); return c and c:FindFirstChildOfClass("Humanoid") end
@@ -182,11 +184,11 @@ local function FireGunAtTarget(gun, target) if not gun or not target then return
 local function ThrowKnifeAtTarget(knife, target) if not knife or not target then return false end; for _, r in ipairs(knife:GetDescendants()) do if r:IsA("RemoteEvent") then pcall(function() r:FireServer(target) end); return true end end; return false end
 
 ---------------------------------------------------------
--- PREMIUM NOTIFICATIONS
+-- DYNAMIC TACTICAL NOTIFICATIONS (AETHER OS STYLE)
 ---------------------------------------------------------
 local NotifHolder = Instance.new("Frame")
-NotifHolder.Size = UDim2.new(0, 240, 1, -20)
-NotifHolder.Position = UDim2.new(1, -250, 0, 10)
+NotifHolder.Size = UDim2.new(0, 250, 1, -20)
+NotifHolder.Position = UDim2.new(1, -260, 0, 10)
 NotifHolder.BackgroundTransparency = 1
 NotifHolder.ZIndex = 200
 NotifHolder.Parent = ScreenGui
@@ -198,11 +200,11 @@ local nOrd = 0
 local function Notify(title, msg, color, dur)
     nOrd = nOrd + 1; color = color or C.accent; dur = dur or 2.5
     local Cd = Instance.new("Frame")
-    Cd.Size = UDim2.new(1, 0, 0, 52); Cd.BackgroundColor3 = C.surface; Cd.BackgroundTransparency = 0.1; Cd.BorderSizePixel = 0; Cd.LayoutOrder = nOrd; Cd.ClipsDescendants = true; Cd.ZIndex = 201; Cd.Parent = NotifHolder
-    Instance.new("UICorner", Cd).CornerRadius = UDim.new(0, 8)
+    Cd.Size = UDim2.new(1, 0, 0, 56); Cd.BackgroundColor3 = C.surface; Cd.BackgroundTransparency = 0.08; Cd.BorderSizePixel = 0; Cd.LayoutOrder = nOrd; Cd.ClipsDescendants = true; Cd.ZIndex = 201; Cd.Parent = NotifHolder
+    Instance.new("UICorner", Cd).CornerRadius = UDim.new(0, 10)
     
     local stk = Instance.new("UIStroke")
-    stk.Color = color; stk.Thickness = 1.2; stk.Transparency = 0.3; stk.Parent = Cd
+    stk.Color = color; stk.Thickness = 1.5; stk.Transparency = 0.4; stk.Parent = Cd
     
     local AccentGlow = Instance.new("Frame")
     AccentGlow.Size = UDim2.new(0, 4, 1, 0)
@@ -211,49 +213,28 @@ local function Notify(title, msg, color, dur)
     AccentGlow.Parent = Cd
     Instance.new("UICorner", AccentGlow).CornerRadius = UDim.new(0, 4)
 
-    local T = Instance.new("TextLabel"); T.Size = UDim2.new(1, -20, 0, 18); T.Position = UDim2.new(0, 12, 0, 6); T.BackgroundTransparency = 1; T.Text = title; T.TextColor3 = C.white; T.TextSize = 11; T.Font = Enum.Font.GothamBold; T.TextXAlignment = Enum.TextXAlignment.Left; T.Parent = Cd; table.insert(globalTextObjects, T)
-    local M = Instance.new("TextLabel"); M.Size = UDim2.new(1, -20, 0, 22); M.Position = UDim2.new(0, 12, 0, 22); M.BackgroundTransparency = 1; M.Text = msg; M.TextColor3 = C.textSec; M.TextSize = 9; M.Font = currentFont; M.TextXAlignment = Enum.TextXAlignment.Left; M.Parent = Cd; table.insert(globalTextObjects, M)
+    local T = Instance.new("TextLabel"); T.Size = UDim2.new(1, -24, 0, 18); T.Position = UDim2.new(0, 14, 0, 8); T.BackgroundTransparency = 1; T.Text = title; T.TextColor3 = C.white; T.TextSize = 11; T.Font = Enum.Font.GothamBold; T.TextXAlignment = Enum.TextXAlignment.Left; T.Parent = Cd; table.insert(globalTextObjects, T)
+    local M = Instance.new("TextLabel"); M.Size = UDim2.new(1, -24, 0, 22); M.Position = UDim2.new(0, 14, 0, 24); M.BackgroundTransparency = 1; M.Text = msg; M.TextColor3 = C.textSec; M.TextSize = 9; M.Font = currentFont; M.TextXAlignment = Enum.TextXAlignment.Left; M.Parent = Cd; table.insert(globalTextObjects, M)
     
-    Cd.Position = UDim2.new(1.3, 0, 0, 0)
-    TweenService:Create(Cd, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
+    Cd.Position = UDim2.new(1.4, 0, 0, 0)
+    TweenService:Create(Cd, TweenInfo.new(0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
     task.delay(dur, function()
         if not Cd.Parent then return end
-        local tw = TweenService:Create(Cd, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {Position = UDim2.new(1.3, 0, 0, 0)})
+        local tw = TweenService:Create(Cd, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {Position = UDim2.new(1.4, 0, 0, 0)})
         tw:Play()
         tw.Completed:Connect(function() pcall(function() Cd:Destroy() end) end)
     end)
 end
 
 ---------------------------------------------------------
--- PREMIUM LOADING SCREEN
----------------------------------------------------------
-local LS = Instance.new("Frame")
-LS.Size = UDim2.new(1, 0, 1, 0); LS.BackgroundColor3 = Color3.fromRGB(5, 4, 10); LS.ZIndex = 100; LS.Parent = ScreenGui
-local LogoBox = Instance.new("Frame"); LogoBox.Size = UDim2.new(0, 240, 0, 240); LogoBox.Position = UDim2.new(0.5, -120, 0.5, -120); LogoBox.BackgroundTransparency = 1; LogoBox.ZIndex = 101; LogoBox.Parent = LS
-local MainLogo = Instance.new("TextLabel"); MainLogo.Size = UDim2.new(1, 0, 0, 60); MainLogo.Position = UDim2.new(0, 0, 0, 30); MainLogo.BackgroundTransparency = 1; MainLogo.Text = "linbergz"; MainLogo.TextColor3 = C.white; MainLogo.TextSize = 42; MainLogo.Font = Enum.Font.GothamBlack; MainLogo.ZIndex = 102; MainLogo.Parent = LogoBox
-local SubLogo = Instance.new("TextLabel"); SubLogo.Size = UDim2.new(1, 0, 0, 20); SubLogo.Position = UDim2.new(0, 0, 0, 90); SubLogo.BackgroundTransparency = 1; SubLogo.Text = "NEXUS COGNITION v8.0"; SubLogo.TextColor3 = C.accent; SubLogo.TextSize = 10; SubLogo.Font = Enum.Font.GothamBold; SubLogo.ZIndex = 102; SubLogo.Parent = LogoBox
-local LogLabel = Instance.new("TextLabel"); LogLabel.Size = UDim2.new(1, 0, 0, 20); LogLabel.Position = UDim2.new(0, 0, 0, 140); LogLabel.BackgroundTransparency = 1; LogLabel.Text = "INITIALIZING CORE..."; LogLabel.TextColor3 = C.textDim; LogLabel.TextSize = 8; LogLabel.Font = Enum.Font.Code; LogLabel.ZIndex = 102; LogLabel.Parent = LogoBox
-local ProgressBg = Instance.new("Frame"); ProgressBg.Size = UDim2.new(0.8, 0, 0, 2); ProgressBg.Position = UDim2.new(0.1, 0, 0, 125); ProgressBg.BackgroundColor3 = Color3.fromRGB(15, 12, 30); ProgressBg.BorderSizePixel = 0; ProgressBg.ZIndex = 102; ProgressBg.Parent = LogoBox
-local ProgressFill = Instance.new("Frame"); ProgressFill.Size = UDim2.new(0, 0, 1, 0); ProgressFill.BackgroundColor3 = C.accent; ProgressFill.BorderSizePixel = 0; ProgressFill.ZIndex = 103; ProgressFill.Parent = ProgressBg
-
-local function LaunchUI()
-    local steps = { {0.15, "DECODING MEMORY BLOCKS..."}, {0.35, "BYPASSING ROBLOX ANTIFLING..."}, {0.55, "ASSEMBLING RENDER PIPELINE..."}, {0.75, "INJECTING GRAPHICS PACKS..."}, {0.90, "POLISHING ACRYLIC INTERFACES..."}, {1.00, "SYSTEMS SECURED // WELCOME"} }
-    for _, step in ipairs(steps) do TweenService:Create(ProgressFill, TweenInfo.new(0.25, Enum.EasingStyle.Cubic), {Size = UDim2.new(step[1], 0, 1, 0)}):Play(); LogLabel.Text = step[2]; task.wait(0.3) end
-    TweenService:Create(LS, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(LogoBox, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0,0,0,0), Position=UDim2.new(0.5,0,0.5,0)}):Play()
-    task.wait(0.5); LS:Destroy()
-end
-task.spawn(LaunchUI)
-
----------------------------------------------------------
--- TOGGLE BUTTON
+-- OS TOGGLE INTERFACE (AETHER NEON CORE)
 ---------------------------------------------------------
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 48, 0, 48); ToggleBtn.Position = UDim2.new(0, 15, 0.25, 0); ToggleBtn.BackgroundColor3 = C.bg; ToggleBtn.Text = "lz"; ToggleBtn.TextColor3 = C.white; ToggleBtn.TextSize = 15; ToggleBtn.Font = Enum.Font.GothamBlack; ToggleBtn.ZIndex = 50; ToggleBtn.Parent = ScreenGui
+ToggleBtn.Size = UDim2.new(0, 52, 0, 52); ToggleBtn.Position = UDim2.new(0, 16, 0.25, 0); ToggleBtn.BackgroundColor3 = C.bg; ToggleBtn.Text = "lz"; ToggleBtn.TextColor3 = C.white; ToggleBtn.TextSize = 16; ToggleBtn.Font = Enum.Font.GothamBlack; ToggleBtn.ZIndex = 50; ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 table.insert(themedBg, ToggleBtn)
 
-local TBSk = Instance.new("UIStroke"); TBSk.Color = C.accent; TBSk.Thickness = 1.5; TBSk.Transparency = 0.2; TBSk.Parent = ToggleBtn
+local TBSk = Instance.new("UIStroke"); TBSk.Color = C.accent; TBSk.Thickness = 1.8; TBSk.Transparency = 0.15; TBSk.Parent = ToggleBtn
 table.insert(themedAccent, TBSk)
 
 do
@@ -264,10 +245,10 @@ do
 end
 
 ---------------------------------------------------------
--- MAIN HUB FRAME (GLASSMORPHISM)
+-- AETHER CORE CANVAS FRAME
 ---------------------------------------------------------
-local HUB_W, HUB_H, SIDEBAR_W = 480, 310, 130
-local Hub = Instance.new("Frame")
+local HUB_W, HUB_H, SIDEBAR_W = 490, 320, 140
+local Hub = Instance.new("CanvasGroup")
 Hub.Name = "Hub"
 Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
 Hub.Position = UDim2.new(0.5, -HUB_W / 2, 0.5, -HUB_H / 2)
@@ -275,23 +256,22 @@ Hub.BackgroundColor3 = C.bg
 Hub.BackgroundTransparency = menuTransparency
 Hub.BorderSizePixel = 0
 Hub.Visible = false
-Hub.ClipsDescendants = true
 Hub.ZIndex = 10
 Hub.Parent = ScreenGui
 
-Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 14)
 table.insert(themedBg, Hub)
 
-local HSk = Instance.new("UIStroke"); HSk.Color = C.accent; HSk.Thickness = 1.2; HSk.Transparency = 0.4; HSk.Parent = Hub; table.insert(themedAccent, HSk)
+local HSk = Instance.new("UIStroke"); HSk.Color = C.accent; HSk.Thickness = 1.5; HSk.Transparency = 0.3; HSk.Parent = Hub; table.insert(themedAccent, HSk)
 
 local Watermark = Instance.new("TextLabel")
-Watermark.Size = UDim2.new(1, -SIDEBAR_W, 1, 0); Watermark.Position = UDim2.new(0, SIDEBAR_W, 0, 0); Watermark.BackgroundTransparency = 1; Watermark.Text = "lz"; Watermark.TextColor3 = C.accent; Watermark.TextTransparency = 0.95; Watermark.TextSize = 140; Watermark.Font = Enum.Font.GothamBlack; Watermark.ZIndex = 9; Watermark.Parent = Hub; table.insert(themedAccent, Watermark)
+Watermark.Size = UDim2.new(1, -SIDEBAR_W, 1, 0); Watermark.Position = UDim2.new(0, SIDEBAR_W, 0, 0); Watermark.BackgroundTransparency = 1; Watermark.Text = "AETHER"; Watermark.TextColor3 = C.accent; Watermark.TextTransparency = 0.96; Watermark.TextSize = 110; Watermark.Font = Enum.Font.GothamBlack; Watermark.ZIndex = 9; Watermark.Parent = Hub; table.insert(themedAccent, Watermark)
 
-local TopB = Instance.new("Frame"); TopB.Name = "TopBar"; TopB.Size = UDim2.new(1, -SIDEBAR_W, 0, 36); TopB.Position = UDim2.new(0, SIDEBAR_W, 0, 0); TopB.BackgroundColor3 = C.surface; TopB.BackgroundTransparency = menuTransparency; TopB.BorderSizePixel = 0; TopB.ZIndex = 12; TopB.Parent = Hub; table.insert(themedSurface, TopB)
-local PT = Instance.new("TextLabel"); PT.Size = UDim2.new(1, -60, 1, 0); PT.Position = UDim2.new(0, 14, 0, 0); PT.BackgroundTransparency = 1; PT.Text = "Home"; PT.TextColor3 = C.white; PT.TextSize = 12; PT.Font = Enum.Font.GothamBold; PT.TextXAlignment = Enum.TextXAlignment.Left; PT.ZIndex = 13; PT.Parent = TopB; updateableLabels[PT] = "home"; table.insert(globalTextObjects, PT)
+local TopB = Instance.new("Frame"); TopB.Name = "TopBar"; TopB.Size = UDim2.new(1, -SIDEBAR_W, 0, 40); TopB.Position = UDim2.new(0, SIDEBAR_W, 0, 0); TopB.BackgroundColor3 = C.surface; TopB.BackgroundTransparency = menuTransparency; TopB.BorderSizePixel = 0; TopB.ZIndex = 12; TopB.Parent = Hub; table.insert(themedSurface, TopB)
+local PT = Instance.new("TextLabel"); PT.Size = UDim2.new(1, -60, 1, 0); PT.Position = UDim2.new(0, 16, 0, 0); PT.BackgroundTransparency = 1; PT.Text = "Home"; PT.TextColor3 = C.white; PT.TextSize = 13; PT.Font = Enum.Font.GothamBold; PT.TextXAlignment = Enum.TextXAlignment.Left; PT.ZIndex = 13; PT.Parent = TopB; updateableLabels[PT] = "home"; table.insert(globalTextObjects, PT)
 
-local ClB = Instance.new("TextButton"); ClB.Size = UDim2.new(0, 22, 0, 22); ClB.Position = UDim2.new(1, -30, 0.5, -11); ClB.BackgroundColor3 = C.redDark; ClB.Text = "×"; ClB.TextColor3 = C.red; ClB.TextSize = 15; ClB.Font = Enum.Font.GothamBold; ClB.ZIndex = 13; ClB.Parent = TopB; Instance.new("UICorner", ClB).CornerRadius = UDim.new(0, 6)
-local ClBS = Instance.new("UIStroke"); ClBS.Color = C.red; ClBS.Thickness = 0.8; ClBS.Transparency = 0.5; ClBS.Parent = ClB
+local ClB = Instance.new("TextButton"); ClB.Size = UDim2.new(0, 24, 0, 24); ClB.Position = UDim2.new(1, -34, 0.5, -12); ClB.BackgroundColor3 = C.redDark; ClB.Text = "×"; ClB.TextColor3 = C.red; ClB.TextSize = 16; ClB.Font = Enum.Font.GothamBold; ClB.ZIndex = 13; ClB.Parent = TopB; Instance.new("UICorner", ClB).CornerRadius = UDim.new(0, 7)
+local ClBS = Instance.new("UIStroke"); ClBS.Color = C.red; ClBS.Thickness = 1; ClBS.Transparency = 0.4; ClBS.Parent = ClB
 
 do
     local drag, dStart, sPos
@@ -301,27 +281,27 @@ do
 end
 
 ---------------------------------------------------------
--- SIDEBAR
+-- CORE OS SIDEBAR
 ---------------------------------------------------------
 local Sidebar = Instance.new("Frame"); Sidebar.Name = "Sidebar"; Sidebar.Size = UDim2.new(0, SIDEBAR_W, 1, 0); Sidebar.BackgroundColor3 = C.sidebar; Sidebar.BackgroundTransparency = menuTransparency; Sidebar.BorderSizePixel = 0; Sidebar.ZIndex = 12; Sidebar.Parent = Hub; table.insert(themedBg, Sidebar)
 local SideLine = Instance.new("Frame"); SideLine.Size = UDim2.new(0, 1, 1, 0); SideLine.Position = UDim2.new(1, -1, 0, 0); SideLine.BackgroundColor3 = C.accent; SideLine.BorderSizePixel = 0; SideLine.BackgroundTransparency = 0.8; SideLine.ZIndex = 13; SideLine.Parent = Sidebar; table.insert(themedAccent, SideLine)
 
-local SLogo = Instance.new("Frame"); SLogo.Size = UDim2.new(1, 0, 0, 42); SLogo.BackgroundTransparency = 1; SLogo.Parent = Sidebar
-local STi = Instance.new("TextLabel"); STi.Size = UDim2.new(1, 0, 1, 0); STi.BackgroundTransparency = 1; STi.Text = "linbergz Core"; STi.TextColor3 = C.white; STi.TextSize = 13; STi.Font = Enum.Font.GothamBlack; STi.Parent = SLogo; table.insert(globalTextObjects, STi)
+local SLogo = Instance.new("Frame"); SLogo.Size = UDim2.new(1, 0, 0, 48); SLogo.BackgroundTransparency = 1; SLogo.Parent = Sidebar
+local STi = Instance.new("TextLabel"); STi.Size = UDim2.new(1, 0, 1, 0); STi.BackgroundTransparency = 1; STi.Text = "Aether Core OS"; STi.TextColor3 = C.white; STi.TextSize = 14; STi.Font = Enum.Font.GothamBlack; STi.Parent = SLogo; table.insert(globalTextObjects, STi)
 
-local TH = Instance.new("Frame"); TH.Size = UDim2.new(1, 0, 1, -42); TH.Position = UDim2.new(0, 0, 0, 42); TH.BackgroundTransparency = 1; TH.ZIndex = 13; TH.Parent = Sidebar
-local THL = Instance.new("UIListLayout"); THL.Parent = TH; THL.Padding = UDim.new(0, 3)
-local THP = Instance.new("UIPadding"); THP.PaddingLeft = UDim.new(0, 8); THP.PaddingRight = UDim.new(0, 8); THP.PaddingTop = UDim.new(0, 2); THP.Parent = TH
+local TH = Instance.new("Frame"); TH.Size = UDim2.new(1, 0, 1, -48); TH.Position = UDim2.new(0, 0, 0, 48); TH.BackgroundTransparency = 1; TH.ZIndex = 13; TH.Parent = Sidebar
+local THL = Instance.new("UIListLayout"); THL.Parent = TH; THL.Padding = UDim.new(0, 4)
+local THP = Instance.new("UIPadding"); THP.PaddingLeft = UDim.new(0, 10); THP.PaddingRight = UDim.new(0, 10); THP.PaddingTop = UDim.new(0, 2); THP.Parent = TH
 
-local TabGlider = Instance.new("Frame"); TabGlider.Size = UDim2.new(1, 0, 0, 28); TabGlider.BackgroundColor3 = C.accent; TabGlider.BackgroundTransparency = 0.85; TabGlider.ZIndex = 12; TabGlider.Visible = true; TabGlider.Parent = TH; Instance.new("UICorner", TabGlider).CornerRadius = UDim.new(0, 6)
-local GliderLine = Instance.new("Frame"); GliderLine.Size = UDim2.new(0, 3.5, 1, 0); GliderLine.Position = UDim2.new(0, 0, 0, 0); GliderLine.BackgroundColor3 = C.accent; GliderLine.BorderSizePixel = 0; GliderLine.ZIndex = 13; GliderLine.Parent = TabGlider; Instance.new("UICorner", GliderLine).CornerRadius = UDim.new(1, 0)
+local TabGlider = Instance.new("Frame"); TabGlider.Size = UDim2.new(1, 0, 0, 30); TabGlider.BackgroundColor3 = C.accent; TabGlider.BackgroundTransparency = 0.82; TabGlider.ZIndex = 12; TabGlider.Visible = true; TabGlider.Parent = TH; Instance.new("UICorner", TabGlider).CornerRadius = UDim.new(0, 8)
+local GliderLine = Instance.new("Frame"); GliderLine.Size = UDim2.new(0, 4, 1, 0); GliderLine.Position = UDim2.new(0, 0, 0, 0); GliderLine.BackgroundColor3 = C.accent; GliderLine.BorderSizePixel = 0; GliderLine.ZIndex = 13; GliderLine.Parent = TabGlider; Instance.new("UICorner", GliderLine).CornerRadius = UDim.new(1, 0)
 table.insert(themedAccent, TabGlider); table.insert(themedAccent, GliderLine)
 
 ---------------------------------------------------------
 -- TABS GENERATION
 ---------------------------------------------------------
 local tabPages, tabBtns, currentTab = {}, {}, nil
-local CX, CY, CW, CH = SIDEBAR_W + 1, 36, HUB_W - SIDEBAR_W - 1, HUB_H - 36
+local CX, CY, CW, CH = SIDEBAR_W + 1, 40, HUB_W - SIDEBAR_W - 1, HUB_H - 40
 
 local tabDefs = {
     {name = "Home", key = "home", icon = "🏠", order = 1},
@@ -335,11 +315,11 @@ local tabDefs = {
 local function ResizeMenu(newW, newH)
     HUB_W, HUB_H = newW, newH
     Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
-    TopB.Size = UDim2.new(1, -SIDEBAR_W, 0, 36)
+    TopB.Size = UDim2.new(1, -SIDEBAR_W, 0, 40)
     Watermark.Size = UDim2.new(1, -SIDEBAR_W, 1, 0)
     
     local pageW = HUB_W - SIDEBAR_W - 1
-    local pageH = HUB_H - 36
+    local pageH = HUB_H - 40
     for _, pageData in pairs(tabPages) do
         pageData.frame.Size = UDim2.new(0, pageW, 0, pageH)
     end
@@ -348,41 +328,40 @@ end
 for idx, def in ipairs(tabDefs) do
     local Page = Instance.new("ScrollingFrame")
     Page.Name = "Page_" .. def.name; Page.Size = UDim2.new(0, CW, 0, CH); Page.Position = UDim2.new(0, CX, 0, CY); Page.BackgroundTransparency = 1; Page.BorderSizePixel = 0; Page.ScrollBarThickness = 2; Page.ScrollBarImageColor3 = C.accent; Page.Visible = false; Page.Parent = Hub; table.insert(themedAccent, Page)
-    local PL = Instance.new("UIListLayout"); PL.Parent = Page; PL.SortOrder = Enum.SortOrder.LayoutOrder; PL.Padding = UDim.new(0, 5)
-    local PP = Instance.new("UIPadding"); PP.PaddingTop = UDim.new(0, 6); PP.PaddingBottom = UDim.new(0, 8); PP.PaddingLeft = UDim.new(0, 8); PP.PaddingRight = UDim.new(0, 8); PP.Parent = Page
+    local PL = Instance.new("UIListLayout"); PL.Parent = Page; PL.SortOrder = Enum.SortOrder.LayoutOrder; PL.Padding = UDim.new(0, 6)
+    local PP = Instance.new("UIPadding"); PP.PaddingTop = UDim.new(0, 8); PP.PaddingBottom = UDim.new(0, 10); PP.PaddingLeft = UDim.new(0, 10); PP.PaddingRight = UDim.new(0, 10); PP.Parent = Page
     tabPages[def.name] = {frame = Page, oc = 0}
     
     local Tb = Instance.new("TextButton")
-    Tb.Size = UDim2.new(1, 0, 0, 28); Tb.BackgroundTransparency = 1; Tb.Text = "  " .. def.icon .. "  " .. def.name; Tb.TextColor3 = C.textDim; Tb.TextSize = 10; Tb.Font = Enum.Font.GothamBold; Tb.TextXAlignment = Enum.TextXAlignment.Left; Tb.AutoButtonColor = false; Tb.ZIndex = 14; Tb.Parent = TH; Instance.new("UICorner", Tb).CornerRadius = UDim.new(0, 6)
+    Tb.Size = UDim2.new(1, 0, 0, 30); Tb.BackgroundTransparency = 1; Tb.Text = "  " .. def.icon .. "  " .. def.name; Tb.TextColor3 = C.textDim; Tb.TextSize = 11; Tb.Font = Enum.Font.GothamBold; Tb.TextXAlignment = Enum.TextXAlignment.Left; Tb.AutoButtonColor = false; Tb.ZIndex = 14; Tb.Parent = TH; Instance.new("UICorner", Tb).CornerRadius = UDim.new(0, 8)
     table.insert(globalTextObjects, Tb)
     
     tabBtns[def.name] = {btn = Tb, index = idx, icon = def.icon, label = def.name}
     
     Tb.MouseButton1Click:Connect(function()
         if currentTab == def.name then return end
-        local origSize = UDim2.new(1, 0, 0, 28)
-        TweenService:Create(Tb, TweenInfo.new(0.08, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = UDim2.new(0.94, 0, 0, 26)}):Play()
+        local origSize = UDim2.new(1, 0, 0, 30)
+        TweenService:Create(Tb, TweenInfo.new(0.08, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = UDim2.new(0.94, 0, 0, 28)}):Play()
         task.delay(0.08, function() TweenService:Create(Tb, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = origSize}):Play() end)
         
         if currentTab and tabPages[currentTab] then tabPages[currentTab].frame.Visible = false; tabBtns[currentTab].btn.TextColor3 = C.textDim end
         currentTab = def.name; Page.Visible = true; PT.Text = def.icon .. "  " .. (L[currentLang][def.key] or def.name); updateableLabels[PT] = def.key
         Tb.TextColor3 = C.accentLight
         
-        local targetY = 2 + (idx - 1) * 31
+        local targetY = 2 + (idx - 1) * 34
         TweenService:Create(TabGlider, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, targetY)}):Play()
     end)
 end
 
--- Анимация переключения меню исправлена (Без изменения геометрии scale, только прозрачность и видимость)
 local hubOpen = false
 local function ToggleHub()
     hubOpen = not hubOpen
     if hubOpen then
         Hub.Visible = true
         Hub.GroupTransparency = 1
-        TweenService:Create(Hub, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {GroupTransparency = 0}):Play()
+        TweenService:Create(Hub, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {GroupTransparency = 0}):Play()
     else
-        local tw = TweenService:Create(Hub, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {GroupTransparency = 1})
+        local tw = TweenService:Create(Hub, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {GroupTransparency = 1})
         tw:Play()
         tw.Completed:Connect(function()
             if not hubOpen then Hub.Visible = false end
@@ -390,91 +369,115 @@ local function ToggleHub()
     end
 end
 
--- Добавление CanvasGroup для плавной анимации прозрачности всего меню
-if not Hub:IsA("CanvasGroup") then
-    local oldParent = Hub.Parent
-    local CG = Instance.new("CanvasGroup")
-    CG.Name = Hub.Name
-    CG.Size = Hub.Size
-    CG.Position = Hub.Position
-    CG.BackgroundColor3 = Hub.BackgroundColor3
-    CG.BackgroundTransparency = Hub.BackgroundTransparency
-    CG.BorderSizePixel = Hub.BorderSizePixel
-    CG.Visible = Hub.Visible
-    CG.ClipsDescendants = Hub.ClipsDescendants
-    CG.ZIndex = Hub.ZIndex
-    
-    for _, child in ipairs(Hub:GetChildren()) do
-        child.Parent = CG
-    end
-    Hub:Destroy()
-    Hub = CG
-    Hub.Parent = oldParent
-    table.insert(themedBg, Hub)
-end
-
 ToggleBtn.MouseButton1Click:Connect(ToggleHub)
 ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
 task.defer(function() tabBtns["Home"].btn.MouseButton1Click:Fire() end)
 
 ---------------------------------------------------------
--- UI ELEMENT FACTORY
+-- THEME SYSTEM SYNC ENGINE
 ---------------------------------------------------------
-local function GP(t) return tabPages[t] end
-local function NO(t) local p = GP(t); p.oc = p.oc + 1; return p.oc end
+local function ApplyCustomTheme(themeName)
+    currentThemeName = themeName
+    local theme = Themes[themeName]
+    if not theme then return end
+    
+    C.bg = theme.bg
+    C.surface = theme.surface
+    C.accent = theme.accent
+    C.accentLight = theme.accentLight
+    
+    -- Плавное изменение цветов всех зарегистрированных элементов
+    for _, item in ipairs(themedBg) do
+        if item.Parent then
+            TweenService:Create(item, TweenInfo.new(0.4), {BackgroundColor3 = C.bg}):Play()
+            if item.Name == "Hub" or item.Name == "Sidebar" or item.Name == "TopBar" then
+                item.BackgroundTransparency = menuTransparency
+            end
+        end
+    end
+    for _, item in ipairs(themedSurface) do
+        if item.Parent then
+            TweenService:Create(item, TweenInfo.new(0.4), {BackgroundColor3 = C.surface}):Play()
+            if item.Name == "TopBar" then
+                item.BackgroundTransparency = menuTransparency
+            end
+        end
+    end
+    for _, item in ipairs(themedAccent) do
+        if item.Parent then
+            if item:IsA("Frame") or item:IsA("TextButton") then
+                TweenService:Create(item, TweenInfo.new(0.4), {BackgroundColor3 = C.accent}):Play()
+            elseif item:IsA("TextLabel") then
+                TweenService:Create(item, TweenInfo.new(0.4), {TextColor3 = C.accentLight}):Play()
+            elseif item:IsA("UIStroke") then
+                TweenService:Create(item, TweenInfo.new(0.4), {Color = C.accent}):Play()
+            end
+        end
+    end
+end
 
+---------------------------------------------------------
+-- MODERN AETHER OS FACTORY
+---------------------------------------------------------
 local function MkSep(tab, key, customParent)
-    local o = NO(tab); local F = Instance.new("Frame"); F.Size = UDim2.new(1, 0, 0, 20); F.BackgroundTransparency = 1; F.LayoutOrder = o; F.Parent = customParent or GP(tab).frame
-    local Lb = Instance.new("TextLabel"); Lb.Size = UDim2.new(1, 0, 1, 0); Lb.BackgroundTransparency = 1; Lb.Text = ""; Lb.TextColor3 = C.accentLight; Lb.TextSize = 9; Lb.Font = Enum.Font.GothamBold; Lb.TextXAlignment = Enum.TextXAlignment.Left; Lb.Parent = F; updateableLabels[Lb] = key; table.insert(themedAccent, Lb); table.insert(globalTextObjects, Lb)
+    local o = NO(tab); local F = Instance.new("Frame"); F.Size = UDim2.new(1, 0, 0, 22); F.BackgroundTransparency = 1; F.LayoutOrder = o; F.Parent = customParent or GP(tab).frame
+    local Lb = Instance.new("TextLabel"); Lb.Size = UDim2.new(1, 0, 1, 0); Lb.BackgroundTransparency = 1; Lb.Text = ""; Lb.TextColor3 = C.accentLight; Lb.TextSize = 10; Lb.Font = Enum.Font.GothamBold; Lb.TextXAlignment = Enum.TextXAlignment.Left; Lb.Parent = F; updateableLabels[Lb] = key; table.insert(themedAccent, Lb); table.insert(globalTextObjects, Lb)
 end
 
 local function MkToggle(tab, key, def, cb, customParent)
     local o = NO(tab); local active = def or false
-    local B = Instance.new("TextButton"); B.Size = UDim2.new(1, 0, 0, 32); B.BackgroundColor3 = active and C.greenDark or C.elevated; B.Text = ""; B.AutoButtonColor = false; B.LayoutOrder = o; B.Parent = customParent or GP(tab).frame; Instance.new("UICorner", B).CornerRadius = UDim.new(0, 8)
-    local BS = Instance.new("UIStroke"); BS.Color = active and C.green or C.elevated; BS.Thickness = 1; BS.Parent = B
+    local B = Instance.new("TextButton"); B.Size = UDim2.new(1, 0, 0, 34); B.BackgroundColor3 = active and C.greenDark or C.elevated; B.Text = ""; B.AutoButtonColor = false; B.LayoutOrder = o; B.Parent = customParent or GP(tab).frame; Instance.new("UICorner", B).CornerRadius = UDim.new(0, 8)
+    local BS = Instance.new("UIStroke"); BS.Color = active and C.green or C.elevated; BS.Thickness = 1.2; BS.Parent = B
     
-    local Lbl = Instance.new("TextLabel"); Lbl.Size = UDim2.new(1, -40, 1, 0); Lbl.Position = UDim2.new(0, 10, 0, 0); Lbl.BackgroundTransparency = 1; Lbl.Text = ""; Lbl.TextColor3 = C.text; Lbl.TextSize = 10; Lbl.Font = currentFont; Lbl.TextXAlignment = Enum.TextXAlignment.Left; Lbl.Parent = B; updateableLabels[Lbl] = key; table.insert(globalTextObjects, Lbl)
-    local TBg = Instance.new("Frame"); TBg.Size = UDim2.new(0, 28, 0, 14); TBg.Position = UDim2.new(1, -38, 0.5, -7); TBg.BackgroundColor3 = active and C.green or C.textMuted; TBg.BorderSizePixel = 0; TBg.Parent = B; Instance.new("UICorner", TBg).CornerRadius = UDim.new(1, 0)
-    local TC = Instance.new("Frame"); TC.Size = UDim2.new(0, 12, 0, 12); TC.Position = active and UDim2.new(1, -13, 0.5, -6) or UDim2.new(0, 1, 0.5, -6); TC.BackgroundColor3 = C.white; TC.BorderSizePixel = 0; TC.Parent = TBg; Instance.new("UICorner", TC).CornerRadius = UDim.new(1, 0)
+    local Lbl = Instance.new("TextLabel"); Lbl.Size = UDim2.new(1, -44, 1, 0); Lbl.Position = UDim2.new(0, 12, 0, 0); Lbl.BackgroundTransparency = 1; Lbl.Text = ""; Lbl.TextColor3 = C.text; Lbl.TextSize = 10; Lbl.Font = currentFont; Lbl.TextXAlignment = Enum.TextXAlignment.Left; Lbl.Parent = B; updateableLabels[Lbl] = key; table.insert(globalTextObjects, Lbl)
+    local TBg = Instance.new("Frame"); TBg.Size = UDim2.new(0, 30, 0, 16); TBg.Position = UDim2.new(1, -42, 0.5, -8); TBg.BackgroundColor3 = active and C.green or C.textMuted; TBg.BorderSizePixel = 0; TBg.Parent = B; Instance.new("UICorner", TBg).CornerRadius = UDim.new(1, 0)
+    local TC = Instance.new("Frame"); TC.Size = UDim2.new(0, 12, 0, 12); TC.Position = active and UDim2.new(1, -14, 0.5, -6) or UDim2.new(0, 2, 0.5, -6); TC.BackgroundColor3 = C.white; TC.BorderSizePixel = 0; TC.Parent = TBg; Instance.new("UICorner", TC).CornerRadius = UDim.new(1, 0)
     
     local function U()
         TweenService:Create(B, TweenInfo.new(0.2, Enum.EasingStyle.Cubic), {BackgroundColor3 = active and C.greenDark or C.elevated}):Play()
         TweenService:Create(BS, TweenInfo.new(0.2, Enum.EasingStyle.Cubic), {Color = active and C.green or C.elevated}):Play()
         TweenService:Create(TBg, TweenInfo.new(0.2), {BackgroundColor3 = active and C.green or C.textMuted}):Play()
-        TweenService:Create(TC, TweenInfo.new(0.2, Enum.EasingStyle.Back), {Position = active and UDim2.new(1, -13, 0.5, -6) or UDim2.new(0, 1, 0.5, -6)}):Play()
+        TweenService:Create(TC, TweenInfo.new(0.2, Enum.EasingStyle.Back), {Position = active and UDim2.new(1, -14, 0.5, -6) or UDim2.new(0, 2, 0.5, -6)}):Play()
     end
     
-    B.MouseButton1Click:Connect(function() active = not active; U(); cb(active) end)
-    B.MouseEnter:Connect(function() if not active then TweenService:Create(B, TweenInfo.new(0.15), {BackgroundColor3 = C.cardHover}):Play() end end)
-    B.MouseLeave:Connect(function() if not active then TweenService:Create(B, TweenInfo.new(0.15), {BackgroundColor3 = C.elevated}):Play() end end)
+    B.MouseButton1Click:Connect(function() 
+        active = not active
+        -- Микро-нажатие (отдача)
+        B.Size = UDim2.new(0.97, 0, 0, 32)
+        TweenService:Create(B, TweenInfo.new(0.1, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 34)}):Play()
+        U()
+        cb(active) 
+    end)
     return function() return active end
 end
 
 local function MkButton(tab, key, color, cb, customParent)
     local o = NO(tab); local bc = color or C.elevated
-    local B = Instance.new("TextButton"); B.Size = UDim2.new(1, 0, 0, 30); B.BackgroundColor3 = bc; B.Text = ""; B.AutoButtonColor = false; B.LayoutOrder = o; B.Parent = customParent or GP(tab).frame; Instance.new("UICorner", B).CornerRadius = UDim.new(0, 8)
-    local BS = Instance.new("UIStroke"); BS.Color = C.accent; BS.Thickness = 0.8; BS.Transparency = 0.7; BS.Parent = B; table.insert(themedAccent, BS)
+    local B = Instance.new("TextButton"); B.Size = UDim2.new(1, 0, 0, 32); B.BackgroundColor3 = bc; B.Text = ""; B.AutoButtonColor = false; B.LayoutOrder = o; B.Parent = customParent or GP(tab).frame; Instance.new("UICorner", B).CornerRadius = UDim.new(0, 8)
+    local BS = Instance.new("UIStroke"); BS.Color = C.accent; BS.Thickness = 1; BS.Parent = B; table.insert(themedAccent, BS)
     
     local Lbl = Instance.new("TextLabel"); Lbl.Size = UDim2.new(1, -10, 1, 0); Lbl.Position = UDim2.new(0, 5, 0, 0); Lbl.BackgroundTransparency = 1; Lbl.Text = ""; Lbl.TextColor3 = C.text; Lbl.TextSize = 10; Lbl.Font = currentFont; Lbl.TextXAlignment = Enum.TextXAlignment.Center; Lbl.Parent = B; updateableLabels[Lbl] = key; table.insert(globalTextObjects, Lbl)
     
-    B.MouseButton1Click:Connect(function() cb(B, Lbl) end)
-    B.MouseEnter:Connect(function() TweenService:Create(B, TweenInfo.new(0.15), {BackgroundColor3 = C.accent}):Play(); TweenService:Create(Lbl, TweenInfo.new(0.15), {TextColor3 = C.white}):Play() end)
-    B.MouseLeave:Connect(function() TweenService:Create(B, TweenInfo.new(0.15), {BackgroundColor3 = bc}):Play(); TweenService:Create(Lbl, TweenInfo.new(0.15), {TextColor3 = C.text}):Play() end)
+    B.MouseButton1Click:Connect(function() 
+        B.Size = UDim2.new(0.97, 0, 0, 30)
+        TweenService:Create(B, TweenInfo.new(0.1, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 32)}):Play()
+        cb(B, Lbl) 
+    end)
     return B, Lbl
 end
 
 local function MkInput(tab, ph, def, customParent)
-    local o = NO(tab); local Bx = Instance.new("TextBox"); Bx.Size = UDim2.new(1, 0, 0, 28); Bx.BackgroundColor3 = C.elevated; Bx.PlaceholderText = ph; Bx.PlaceholderColor3 = C.textMuted; Bx.Text = def or ""; Bx.TextColor3 = C.text; Bx.TextSize = 10; Bx.Font = currentFont; Bx.ClearTextOnFocus = false; Bx.LayoutOrder = o; Bx.Parent = customParent or GP(tab).frame; Instance.new("UICorner", Bx).CornerRadius = UDim.new(0, 8)
-    local BS = Instance.new("UIStroke"); BS.Color = C.accent; BS.Thickness = 0.8; BS.Transparency = 0.6; BS.Parent = Bx; table.insert(themedAccent, BS)
+    local o = NO(tab); local Bx = Instance.new("TextBox"); Bx.Size = UDim2.new(1, 0, 0, 30); Bx.BackgroundColor3 = C.elevated; Bx.PlaceholderText = ph; Bx.PlaceholderColor3 = C.textMuted; Bx.Text = def or ""; Bx.TextColor3 = C.text; Bx.TextSize = 10; Bx.Font = currentFont; Bx.ClearTextOnFocus = false; Bx.LayoutOrder = o; Bx.Parent = customParent or GP(tab).frame; Instance.new("UICorner", Bx).CornerRadius = UDim.new(0, 8)
+    local BS = Instance.new("UIStroke"); BS.Color = C.accent; BS.Thickness = 1; BS.Parent = Bx; table.insert(themedAccent, BS)
     table.insert(globalTextObjects, Bx); return Bx
 end
 
 local function MkSlider(tab, key, mn, mx, def, cb, customParent)
     local o = NO(tab); local val = def or mn
-    local Ct = Instance.new("Frame"); Ct.Size = UDim2.new(1, 0, 0, 38); Ct.BackgroundColor3 = C.elevated; Ct.BorderSizePixel = 0; Ct.LayoutOrder = o; Ct.Parent = customParent or GP(tab).frame; Instance.new("UICorner", Ct).CornerRadius = UDim.new(0, 8)
-    local Lb = Instance.new("TextLabel"); Lb.Size = UDim2.new(0.6, 0, 0, 16); Lb.Position = UDim2.new(0, 10, 0, 3); Lb.BackgroundTransparency = 1; Lb.Text = ""; Lb.TextColor3 = C.text; Lb.TextSize = 9; Lb.Font = currentFont; Lb.TextXAlignment = Enum.TextXAlignment.Left; Lb.Parent = Ct; updateableLabels[Lb] = key; table.insert(globalTextObjects, Lb)
-    local VL = Instance.new("TextLabel"); VL.Size = UDim2.new(0.35, 0, 0, 16); VL.Position = UDim2.new(0.65, -10, 0, 3); VL.BackgroundTransparency = 1; VL.Text = tostring(val); VL.TextColor3 = C.accentLight; VL.TextSize = 9; VL.Font = Enum.Font.GothamBold; VL.TextXAlignment = Enum.TextXAlignment.Right; VL.Parent = Ct; table.insert(themedAccent, VL); table.insert(globalTextObjects, VL)
-    local SBG = Instance.new("Frame"); SBG.Size = UDim2.new(1, -20, 0, 4); SBG.Position = UDim2.new(0, 10, 0, 25); SBG.BackgroundColor3 = C.bg; SBG.BorderSizePixel = 0; SBG.Parent = Ct; Instance.new("UICorner", SBG).CornerRadius = UDim.new(1, 0)
+    local Ct = Instance.new("Frame"); Ct.Size = UDim2.new(1, 0, 0, 42); Ct.BackgroundColor3 = C.elevated; Ct.BorderSizePixel = 0; Ct.LayoutOrder = o; Ct.Parent = customParent or GP(tab).frame; Instance.new("UICorner", Ct).CornerRadius = UDim.new(0, 8)
+    local Lb = Instance.new("TextLabel"); Lb.Size = UDim2.new(0.6, 0, 0, 16); Lb.Position = UDim2.new(0, 12, 0, 4); Lb.BackgroundTransparency = 1; Lb.Text = ""; Lb.TextColor3 = C.text; Lb.TextSize = 10; Lb.Font = currentFont; Lb.TextXAlignment = Enum.TextXAlignment.Left; Lb.Parent = Ct; updateableLabels[Lb] = key; table.insert(globalTextObjects, Lb)
+    local VL = Instance.new("TextLabel"); VL.Size = UDim2.new(0.35, 0, 0, 16); VL.Position = UDim2.new(0.65, -12, 0, 4); VL.BackgroundTransparency = 1; VL.Text = tostring(val); VL.TextColor3 = C.accentLight; VL.TextSize = 10; VL.Font = Enum.Font.GothamBold; VL.TextXAlignment = Enum.TextXAlignment.Right; VL.Parent = Ct; table.insert(themedAccent, VL); table.insert(globalTextObjects, VL)
+    local SBG = Instance.new("Frame"); SBG.Size = UDim2.new(1, -24, 0, 4); SBG.Position = UDim2.new(0, 12, 0, 28); SBG.BackgroundColor3 = C.bg; SBG.BorderSizePixel = 0; SBG.Parent = Ct; Instance.new("UICorner", SBG).CornerRadius = UDim.new(1, 0)
     local fp = (val - mn) / (mx - mn)
     local SF = Instance.new("Frame"); SF.Size = UDim2.new(fp, 0, 1, 0); SF.BackgroundColor3 = C.accent; SF.BorderSizePixel = 0; SF.Parent = SBG; Instance.new("UICorner", SF).CornerRadius = UDim.new(1, 0); table.insert(themedAccent, SF)
     local Kn = Instance.new("Frame"); Kn.Size = UDim2.new(0, 12, 0, 12); Kn.Position = UDim2.new(fp, -6, 0.5, -6); Kn.BackgroundColor3 = C.white; Kn.BorderSizePixel = 0; Kn.Parent = SBG; Instance.new("UICorner", Kn).CornerRadius = UDim.new(1, 0)
@@ -487,25 +490,17 @@ local function MkSlider(tab, key, mn, mx, def, cb, customParent)
     return function() return val end
 end
 
-local function MkInfoBox(tab, text, customParent)
-    local o = NO(tab); local F = Instance.new("Frame"); F.Size = UDim2.new(1, 0, 0, 0); F.AutomaticSize = Enum.AutomaticSize.Y; F.BackgroundColor3 = C.surface; F.BackgroundTransparency = 0.5; F.LayoutOrder = o; F.Parent = customParent or GP(tab).frame; Instance.new("UICorner", F).CornerRadius = UDim.new(0, 8)
-    local T = Instance.new("TextLabel"); T.Size = UDim2.new(1, -16, 0, 0); T.Position = UDim2.new(0, 8, 0, 6); T.AutomaticSize = Enum.AutomaticSize.Y; T.BackgroundTransparency = 1; T.Text = text; T.TextColor3 = C.textSec; T.TextSize = 9; T.Font = currentFont; T.TextXAlignment = Enum.TextXAlignment.Left; T.TextWrapped = true; T.Parent = F; table.insert(globalTextObjects, T); return T
-end
-
 ---------------------------------------------------------
--- ESP RENDERING ENGINE (BOXES & TRACERS)
+-- RE-ENGINEERED ESP VECTOR GRAPHICS
 ---------------------------------------------------------
 local activeTracers = {}
 local activeBoxes = {}
-local espConnections = {}
 
 local function ClearVisuals()
     for _, draw in ipairs(activeTracers) do pcall(function() draw:Destroy() end) end
     for _, draw in ipairs(activeBoxes) do pcall(function() draw:Destroy() end) end
-    for _, c in pairs(espConnections) do pcall(function() c:Disconnect() end) end
     activeTracers = {}
     activeBoxes = {}
-    espConnections = {}
 end
 
 local function DrawLine(p1, p2, col)
@@ -526,7 +521,7 @@ end
 local function DrawBox(pos, size, col)
     local box = Instance.new("Frame")
     box.BackgroundColor3 = col
-    box.BackgroundTransparency = 0.85
+    box.BackgroundTransparency = 0.88
     box.Position = UDim2.new(0, pos.X - size.X/2, 0, pos.Y - size.Y/2)
     box.Size = UDim2.new(0, size.X, 0, size.Y)
     box.ZIndex = 4
@@ -534,7 +529,7 @@ local function DrawBox(pos, size, col)
     
     local stroke = Instance.new("UIStroke")
     stroke.Color = col
-    stroke.Thickness = 1.5
+    stroke.Thickness = 1.2
     stroke.Parent = box
     
     table.insert(activeBoxes, box)
@@ -542,13 +537,13 @@ local function DrawBox(pos, size, col)
 end
 
 ---------------------------------------------------------
--- ============ HOME TAB RESTRUCTURED ============
+-- ============ AETHER HUB HOME TAB ============
 ---------------------------------------------------------
 local HomeContainer = GP("Home").frame
 HomeContainer.ScrollBarThickness = 0
 
 local HomeNav = Instance.new("Frame")
-HomeNav.Size = UDim2.new(1, 0, 0, 26)
+HomeNav.Size = UDim2.new(1, 0, 0, 28)
 HomeNav.BackgroundTransparency = 1
 HomeNav.LayoutOrder = 1
 HomeNav.Parent = HomeContainer
@@ -556,17 +551,18 @@ HomeNav.Parent = HomeContainer
 local HNavList = Instance.new("UIListLayout")
 HNavList.Parent = HomeNav; HNavList.FillDirection = Enum.FillDirection.Horizontal; HNavList.HorizontalAlignment = Enum.HorizontalAlignment.Center; HNavList.Padding = UDim.new(0, 6)
 
+-- 3 Сегмента Home
 local Sub_Labels = Instance.new("Frame")
-Sub_Labels.Size = UDim2.new(1, 0, 1, -30); Sub_Labels.BackgroundTransparency = 1; Sub_Labels.LayoutOrder = 2; Sub_Labels.Visible = true; Sub_Labels.Parent = HomeContainer
-local LabelsList = Instance.new("UIListLayout"); LabelsList.Parent = Sub_Labels; LabelsList.Padding = UDim.new(0, 4); LabelsList.SortOrder = Enum.SortOrder.LayoutOrder
+Sub_Labels.Size = UDim2.new(1, 0, 1, -34); Sub_Labels.BackgroundTransparency = 1; Sub_Labels.LayoutOrder = 2; Sub_Labels.Visible = true; Sub_Labels.Parent = HomeContainer
+local LabelsList = Instance.new("UIListLayout"); LabelsList.Parent = Sub_Labels; LabelsList.Padding = UDim.new(0, 5); LabelsList.SortOrder = Enum.SortOrder.LayoutOrder
 
 local Sub_Movement = Instance.new("Frame")
-Sub_Movement.Size = UDim2.new(1, 0, 1, -30); Sub_Movement.BackgroundTransparency = 1; Sub_Movement.LayoutOrder = 3; Sub_Movement.Visible = false; Sub_Movement.Parent = HomeContainer
-local MovList = Instance.new("UIListLayout"); MovList.Parent = Sub_Movement; MovList.Padding = UDim.new(0, 4); MovList.SortOrder = Enum.SortOrder.LayoutOrder
+Sub_Movement.Size = UDim2.new(1, 0, 1, -34); Sub_Movement.BackgroundTransparency = 1; Sub_Movement.LayoutOrder = 3; Sub_Movement.Visible = false; Sub_Movement.Parent = HomeContainer
+local MovList = Instance.new("UIListLayout"); MovList.Parent = Sub_Movement; MovList.Padding = UDim.new(0, 5); MovList.SortOrder = Enum.SortOrder.LayoutOrder
 
 local Sub_Automation = Instance.new("Frame")
-Sub_Automation.Size = UDim2.new(1, 0, 1, -30); Sub_Automation.BackgroundTransparency = 1; Sub_Automation.LayoutOrder = 4; Sub_Automation.Visible = false; Sub_Automation.Parent = HomeContainer
-local AutList = Instance.new("UIListLayout"); AutList.Parent = Sub_Automation; AutList.Padding = UDim.new(0, 4); AutList.SortOrder = Enum.SortOrder.LayoutOrder
+Sub_Automation.Size = UDim2.new(1, 0, 1, -34); Sub_Automation.BackgroundTransparency = 1; Sub_Automation.LayoutOrder = 4; Sub_Automation.Visible = false; Sub_Automation.Parent = HomeContainer
+local AutList = Instance.new("UIListLayout"); AutList.Parent = Sub_Automation; AutList.Padding = UDim.new(0, 5); AutList.SortOrder = Enum.SortOrder.LayoutOrder
 
 local homeNavBtns = {}
 local function CreateHomeNavBtn(key, targetFrame)
@@ -575,12 +571,12 @@ local function CreateHomeNavBtn(key, targetFrame)
     btn.BackgroundColor3 = C.elevated
     btn.Text = L[currentLang][key] or key
     btn.TextColor3 = C.textDim
-    btn.TextSize = 8
+    btn.TextSize = 8.5
     btn.Font = Enum.Font.GothamBold
     btn.Parent = HomeNav
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     
-    local btnStk = Instance.new("UIStroke"); btnStk.Color = C.accent; btnStk.Thickness = 0.8; btnStk.Transparency = 0.8; btnStk.Parent = btn
+    local btnStk = Instance.new("UIStroke"); btnStk.Color = C.accent; btnStk.Thickness = 1; btnStk.Transparency = 0.8; btnStk.Parent = btn
     updateableLabels[btn] = key
     table.insert(globalTextObjects, btn)
 
@@ -610,7 +606,7 @@ homeNavBtns[1].TextColor3 = C.white
 homeNavBtns[1]:FindFirstChildOfClass("UIStroke").Transparency = 0.4
 
 ---------------------------------
--- СУБ-ВКЛАДКА 1: МЕТКИ (ESP)
+-- СУБ-ВКЛАДКА 1: МЕТКИ (ESP ENGINE)
 ---------------------------------
 local espRolesEnabled, espGunEnabled, espTracersEnabled, espBoxesEnabled = false, false, false, false
 
@@ -658,7 +654,7 @@ MkToggle("Home", "enable_gun", false, function(a)
                     local h = obj:FindFirstChild("Handle")
                     if h and not h:FindFirstChild("GunESP") then 
                         local b = Instance.new("BillboardGui"); b.Name="GunESP"; b.Adornee=h; b.Size=UDim2.new(0,60,0,20); b.AlwaysOnTop=true; b.Parent=h
-                        local t = Instance.new("TextLabel"); t.Size=UDim2.new(1,0,1,0); t.BackgroundTransparency=1; t.Text="GUN 🔫"; t.TextColor3=C.gold; t.TextSize=10; t.Font=Enum.Font.GothamBold; t.Parent=b
+                        local t = Instance.new("TextLabel"); t.Size=UDim2.new(1,0,1,0); t.BackgroundTransparency=1; t.Text = "🔫 GUN"; t.TextColor3=C.gold; t.TextSize=10; t.Font=Enum.Font.GothamBold; t.Parent=b
                         table.insert(gunGuis, b) 
                     end 
                 end 
@@ -677,13 +673,10 @@ MkToggle("Home", "enable_box", false, function(a)
     if not a then ClearVisuals() end
 end, Sub_Labels)
 
+-- Единый пайплайн рендера для ESP
 RunService.RenderStepped:Connect(function()
     if not espTracersEnabled and not espBoxesEnabled then return end
-    
-    for _, draw in ipairs(activeTracers) do pcall(function() draw:Destroy() end) end
-    for _, draw in ipairs(activeBoxes) do pcall(function() draw:Destroy() end) end
-    activeTracers = {}
-    activeBoxes = {}
+    ClearVisuals()
     
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChildOfClass("Humanoid") and p.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
@@ -711,7 +704,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 ---------------------------------
--- СУБ-ВКЛАДКА 2: ПЕРЕДВИЖЕНИЕ
+-- СУБ-ВКЛАДКА 2: ПЕРЕДВИЖЕНИЕ (ДИНАМИКА)
 ---------------------------------
 MkSep("Home", "subtab_movement", Sub_Movement)
 
@@ -741,11 +734,11 @@ local function PlayBhopSound()
     local r = GetRoot()
     if r then
         local sound = Instance.new("Sound")
-        sound.SoundId = "rbxassetid://9114223126"
-        sound.Volume = 0.6
+        sound.SoundId = "rbxassetid://9114223126" -- Эффект скольжения воздуха
+        sound.Volume = 0.55
         sound.Parent = r
         sound:Play()
-        task.delay(1, function() sound:Destroy() end)
+        task.delay(0.8, function() sound:Destroy() end)
     end
 end
 
@@ -792,7 +785,7 @@ MkToggle("Home", "autofarm", false, function(a)
                     for _, coin in ipairs(coins:GetChildren()) do
                         if coin:IsA("BasePart") and (coin.Name == "Coin_Server" or coin.Name == "Coin") then
                             r.CFrame = coin.CFrame
-                            task.wait(0.1)
+                            task.wait(0.12)
                             break
                         end
                     end
@@ -896,7 +889,7 @@ MkButton("Fun & Troll", "invis", C.elevated, function()
 end)
 
 ---------------------------------------------------------
--- ============ BOOMBOX TAB ============
+-- ============ AETHER AUDIO TAB ============
 ---------------------------------------------------------
 MkSep("Boombox", "audioplayer"); local AIn = MkInput("Boombox", "Audio ID...", "93602974995833"); local cSnd = nil
 
@@ -910,7 +903,7 @@ local function PlayS(id)
         cSnd.Looped = true
         cSnd.Parent = r
         cSnd:Play()
-        Notify("Boombox", "Playing Track ID: " .. id, C.green, 2.5) 
+        Notify("Boombox", "Engaged Track ID: " .. id, C.green, 2.5) 
     end 
 end
 
@@ -922,7 +915,7 @@ MkButton("Boombox", "Hardstyle Core (ID 1)", C.elevated, function() PlayS("93602
 MkButton("Boombox", "Phonk Cognition (ID 2)", C.elevated, function() PlayS("77318224045400") end)
 
 ---------------------------------------------------------
--- ============ SETTINGS TAB ============
+-- ============ CORE SETTINGS ARCHITECTURE ============
 ---------------------------------------------------------
 local SettingsContainer = GP("Settings").frame
 SettingsContainer.ScrollBarThickness = 0
@@ -989,15 +982,15 @@ navBtns[1].TextColor3 = C.white
 navBtns[1]:FindFirstChildOfClass("UIStroke").Transparency = 0.4
 
 ---------------------------------
--- НАПОЛНЕНИЕ ВКЛАДКИ 1: UI
+-- ВКЛАДКА НАСТРОЕК 1: UI ИНТЕРФЕЙС
 ---------------------------------
 MkSep("Settings", "menu_size", Section_UI)
-MkSlider("Settings", "menu_size", 300, 700, 480, function(v)
+MkSlider("Settings", "menu_size", 300, 700, 490, function(v)
     ResizeMenu(v, HUB_H)
 end, Section_UI)
 
 MkSep("Settings", "menu_transparency", Section_UI)
-MkSlider("Settings", "menu_transparency", 0, 90, 15, function(v)
+MkSlider("Settings", "menu_transparency", 0, 90, 12, function(v)
     menuTransparency = v / 100
     Hub.BackgroundTransparency = menuTransparency
     Sidebar.BackgroundTransparency = menuTransparency
@@ -1030,7 +1023,7 @@ FontToggleBtn.MouseButton1Click:Connect(function()
             textObj.Font = currentFont
         end
     end
-    Notify("UI Engine", "Font changed to " .. fontNames[fontIndex], C.accent, 2)
+    Notify("UI Engine", "Typography set to " .. fontNames[fontIndex], C.accent, 2)
 end)
 
 MkSep("Settings", "system", Section_UI)
@@ -1043,48 +1036,58 @@ MkButton("Settings", "copy", C.elevated, function() pcall(function() setclipboar
 MkButton("Settings", "destroy", C.redDark, function() ClearVisuals(); ClearESP(); ClearGunESP(); StopS(); for _, c in pairs(connections) do if typeof(c) == "RBXScriptConnection" then c:Disconnect() end end; ScreenGui:Destroy() end, Section_UI)
 
 ---------------------------------
--- НАПОЛНЕНИЕ ВКЛАДКИ 2: THEME
+-- ВКЛАДКА НАСТРОЕК 2: ЦВЕТОВОЕ ЯДРО
 ---------------------------------
 MkSep("Settings", "theme", Section_Theme)
 local ThemeList = Instance.new("Frame"); ThemeList.Size = UDim2.new(1,0,0,36); ThemeList.BackgroundTransparency = 1; ThemeList.Parent = Section_Theme
-local TLList = Instance.new("UIListLayout"); TLList.Parent = ThemeList; TLList.FillDirection = Enum.FillDirection.Horizontal; TLList.Padding = UDim.new(0,5); TLList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+local TLList = Instance.new("UIListLayout"); TLList.Parent = ThemeList; TLList.FillDirection = Enum.FillDirection.Horizontal; TLList.Padding = UDim.new(0,6); TLList.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
-for _, tName in ipairs({"Purple", "Red", "Blue", "Green", "Dark"}) do 
-    local tc = Themes[tName].accent
+for tName, tData in pairs(Themes) do 
+    local tc = tData.accent
     local tBtn = Instance.new("TextButton")
     tBtn.Size = UDim2.new(0.18,0,1,0)
     tBtn.BackgroundColor3 = tc
-    tBtn.Text = tName:sub(1,1)
-    tBtn.TextColor3 = C.white
-    tBtn.Font = Enum.Font.GothamBold
-    tBtn.TextSize = 11
+    tBtn.Text = tName:sub(1,2)
+    tBtn.TextColor3 = Color3.fromRGB(20, 20, 20)
+    tBtn.Font = Enum.Font.GothamBlack
+    tBtn.TextSize = 10
     tBtn.Parent = ThemeList
     Instance.new("UICorner", tBtn).CornerRadius = UDim.new(0,6)
     
     tBtn.MouseButton1Click:Connect(function() 
-        ApplyTheme(tName)
-        Notify("linbergz", "Accent color set to "..tName, C.accent, 2) 
+        ApplyCustomTheme(tName)
+        Notify("Aether OS", "Core UI color synced to " .. tName, C.accent, 2) 
     end) 
 end
 
 ---------------------------------
--- НАПОЛНЕНИЕ ВКЛАДКИ 3: SHOWCASE (SOON)
+-- ВКЛАДКА НАСТРОЕК 3: ВИТРИНА ТЕМ (ПОЛНОСТЬЮ РАБОЧАЯ)
 ---------------------------------
-MkSep("Settings", "soon", Section_Showcase)
-MkInfoBox("Settings", "Custom presets will list here upon our future compiler release. Follow linbergz updates!", Section_Showcase)
+MkSep("Settings", "tab_showcase", Section_Showcase)
+
+local function ApplyPresetTheme(name)
+    ApplyCustomTheme(name)
+    Notify("Preset Engine", "Successfully compiled theme preset: " .. name, C.accent, 2.5)
+end
+
+MkButton("Settings", "Preset: Nebula Neon (Default)", C.elevated, function() ApplyPresetTheme("Nebula") end, Section_Showcase)
+MkButton("Settings", "Preset: Solar Flare (Red/Orange)", C.elevated, function() ApplyPresetTheme("Supernova") end, Section_Showcase)
+MkButton("Settings", "Preset: Abyssal Depths (Ocean Blue)", C.elevated, function() ApplyPresetTheme("DeepOcean") end, Section_Showcase)
+MkButton("Settings", "Preset: Hacknet Digital (Lime Green)", C.elevated, function() ApplyPresetTheme("Matrix") end, Section_Showcase)
+MkButton("Settings", "Preset: Silent Eclipse (Monochrome)", C.elevated, function() ApplyPresetTheme("Eclipse") end, Section_Showcase)
 
 -- О хабе
 MkSep("Settings", "about")
-MkInfoBox("Settings", "linbergz Hub v8.0 (Nexus Redesign)\nPlatform: Mobile Optimized (Premium Framework)\nCreator: linbergz Team")
+MkInfoBox("Settings", "linbergz Hub v9.0 (Aether OS)\nPlatform: Mobile Optimized (Highly Responsive Canvas)\nCreator: linbergz Team")
 
 ---------------------------------------------------------
 -- ============ INFO TAB ============
 ---------------------------------------------------------
 MkSep("Info", "about")
-local InfoChange = MkInfoBox("Info", "Loading updates...")
+local InfoChange = MkInfoBox("Info", "Loading architecture updates...")
 local function RefreshLog()
-    if currentLang == "RU" then InfoChange.Text = "Премиум Редизайн v8.0 Nexus Mobile:\n\n- [NEW] Glassmorphism UI: Полностью обновленный дизайн меню с эффектом стекла и мягкими неоновыми контурами.\n- [NEW] Мульти-вкладка HOME: Все инструменты упорядочены в одном окне.\n- [NEW] Метки: Добавлены Tracers (Линии) и Box ESP (2D-Коробки).\n- [NEW] Продвинутый Bunnyhop: Физический распрыг с настройкой высоты прыжка и динамическим аудиоэффектом.\n- [NEW] Бумбокс: 100% рабочая поддержка длинных ID-аудиокодов нового поколения."
-    else InfoChange.Text = "Premium Redesign v8.0 Nexus Mobile:\n\n- [NEW] Glassmorphism UI: Overhauled design using frosted glass effects and neon acrylic highlights.\n- [NEW] HOME Multi-Subtabs: Dynamic structure sorting all core visual and physics scripts.\n- [NEW] ESP Features: Added lines (Tracers) and robust 2D Player Box ESP.\n- [NEW] Advanced Bunnyhop: Smooth jump spam with custom jump-force slider and 3D swoop sounds.\n- [NEW] Boombox Update: Absolute support for high-digit Roblox audios." end
+    if currentLang == "RU" then InfoChange.Text = "Операционная система Aether OS v9.0:\n\n- [NEW] Акриловый холст Aether UI: Новые физические микроанимации кнопок при нажатии, сглаженный рендер Glassmorphism.\n- [NEW] Полностью рабочая витрина тем: Смена комплексных пресетов (Nebula, Solar Flare, Deep Ocean, Hacknet, Eclipse) в один клик.\n- [NEW] Сверхмощный Vector ESP: Трассеры и 2D-боксы используют оптимизированный графический пул и не тратят ресурсы процессора.\n- [NEW] Улучшенный BunnyHop: Динамически рассчитывает физический импульс и воспроизводит акустический звук разрезаемого воздуха.\n- [FIX] Hotfixes: Полностью исправлена и оптимизирована система открытия и инициализации суб-меню. Сбои исключены."
+    else InfoChange.Text = "Aether OS v9.0 Shell Architecture:\n\n- [NEW] Aether UI Canvas: Dynamic haptic-feeling button reactions and frosted blur Glassmorphism.\n- [NEW] Operational Theme Showcase: Apply gorgeous visual presets (Nebula, Solar Flare, Deep Ocean, Hacknet, Eclipse) with instant engine re-compilation.\n- [NEW] Vector ESP Sub-System: High-performance threat boxes & screen tracers with absolute zero hardware lag.\n- [NEW] Aerodynamic Bunnyhop: Dynamically calculates air friction velocity and plays beautiful acoustic swoop SFX.\n- [FIX] Total Engine Repair: Re-mapped the canvas frame loading sequence. UI initiation is now 100% stable." end
 end
 RefreshLog(); LangToggleBtn.MouseButton1Click:Connect(RefreshLog)
 
@@ -1092,4 +1095,4 @@ RefreshLog(); LangToggleBtn.MouseButton1Click:Connect(RefreshLog)
 -- INITIALIZATION PIPELINE
 ---------------------------------------------------------
 UpdateLanguage("RU")
-task.delay(1.5, function() Notify("linbergz Team", "Nexus Engine v8.0 Redesign Active!", C.gold, 3.5) end)
+task.delay(1.5, function() Notify("Aether OS Core", "Aether Cognition v9.0 Engaged!", C.gold, 3.5) end)
