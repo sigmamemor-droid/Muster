@@ -1,5 +1,5 @@
 -- linbergz Team MM2 PREMIUM MOBILE HUB v8.0 (Nexus Update)
--- Ironclad Anti-Fling & Advanced Physics Fling Engine
+-- Ironclad Anti-Fling & Advanced Physics Fling Engine + MM2 Auto Features
 -- Fully Unabbreviated & Mobile Optimized Code
 
 ---------------------------------------------------------
@@ -10,6 +10,7 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local player = Players.LocalPlayer
 if not player then
@@ -69,13 +70,14 @@ local L = {
         home = "Home", combat = "Combat", esp = "ESP", fun = "Fun & Troll", boombox = "Boombox", nexus = "Nexus [SOON]", settings = "Settings", info = "Info",
         movement = "MOVEMENT", walkspeed = "Walk Speed", jumppower = "Jump Power", infjump = "Infinite Jump",
         protection = "PROTECTION", antifling = "Ironclad Anti-Fling", noclip = "Noclip", fly = "Fly [Mobile Joystick]", fullbright = "Fullbright",
+        automation = "MM2 AUTOMATION", autofarm = "Auto Farm Coins", tplobby = "TP to Lobby", tpmap = "TP to Map",
         aimbot = "Aimbot on Murderer", shootbtn = "Shoot Button [Screen]", magicshot = "Magic Shot [Screen]",
-        killall = "[!] Kill All (Knife)", teleport = "TELEPORTS", tpmurder = "TP to Murderer", tpsheriff = "TP to Sheriff",
+        autograb = "Auto Grab Gun (On Drop)", killall = "[!] Kill All (Knife)", teleport = "TELEPORTS", tpmurder = "TP to Murderer", tpsheriff = "TP to Sheriff",
         players_esp = "ESP All Players", roles_esp = "ESP Roles [Murd, Sher, Inn]", gun_esp = "Gun ESP [Dropped]",
-        audioplayer = "AUDIO ID PLAYER", play = "PLAY", stop = "STOP", system = "SYSTEM CONTROL", copy = "Copy Server Link",
+        announce = "Announce Roles in Chat", audioplayer = "AUDIO ID PLAYER", play = "PLAY", stop = "STOP", system = "SYSTEM CONTROL", copy = "Copy Server Link",
         reset = "Reset Character", destroy = "Destroy Hub", theme = "Theme", language = "Language",
         about = "ABOUT HUB", quick_tracks = "QUICK AUDIO TRACKS", flinger = "FLING SYSTEM", touch_fling = "Touch Fling (Max Physics)",
-        select_target = "Select Target", fling_btn = "Fling Target [BETA]", role_info = "ROLE INFO",
+        select_target = "Select Target", fling_btn = "Fling Target [BETA]", invis = "Glitch Invisibility (R15)", role_info = "ROLE INFO",
         nexus_title = "Nexus Engine", nexus_desc = "Ultimate server-side features are in development. Follow linbergz Team updates!",
         nexus_1 = "God Mode [Server-Side]", nexus_2 = "Kill Aura [Infinity Range]", nexus_3 = "Server Crash Protocol",
         soon = "SOON",
@@ -84,13 +86,14 @@ local L = {
         home = "Главная", combat = "Сражение", esp = "ЕСП/ВХ", fun = "Фан и Троллинг", boombox = "Музыка", nexus = "Nexus [SOON]", settings = "Настройки", info = "Информация",
         movement = "ПЕРЕДВИЖЕНИЕ", walkspeed = "Скорость бега", jumppower = "Высота прыжка", infjump = "Бесконечный прыжок",
         protection = "ЗАЩИТА", antifling = "Железобетонный Анти-Флинг", noclip = "Проход сквозь стены", fly = "Полет [Мобильный Джойстик]", fullbright = "Яркий свет",
+        automation = "MM2 АВТОМАТИЗАЦИЯ", autofarm = "Авто-фарм монет", tplobby = "ТП в Лобби", tpmap = "ТП на Карту",
         aimbot = "Аимбот на убийцу", shootbtn = "Кнопка выстрела [Экран]", magicshot = "Магический выстрел [Экран]",
-        killall = "[!] Убить всех (Нож)", teleport = "ТЕЛЕПОРТАЦИЯ", tpmurder = "ТП к Убийце", tpsheriff = "ТП к Шерифу",
+        autograb = "Авто-подбор оружия", killall = "[!] Убить всех (Нож)", teleport = "ТЕЛЕПОРТАЦИЯ", tpmurder = "ТП к Убийце", tpsheriff = "ТП к Шерифу",
         players_esp = "Подсветка игроков", roles_esp = "Показ ролей [Убийца, Шериф, Мирные]", gun_esp = "Подсветка оружия [На полу]",
-        audioplayer = "ПРОИГРЫВАТЕЛЬ АУДИО", play = "ЗАПУСК", stop = "СТОП", system = "СИСТЕМА", copy = "Скопировать линк",
+        announce = "Огласить роли в чат", audioplayer = "ПРОИГРЫВАТЕЛЬ АУДИО", play = "ЗАПУСК", stop = "СТОП", system = "СИСТЕМА", copy = "Скопировать линк",
         reset = "Умереть (Ресет)", destroy = "Закрыть чит полностью", theme = "Цветовая схема", language = "Язык меню",
         about = "О ХАБЕ", quick_tracks = "БЫСТРЫЕ ТРЕКИ", flinger = "СИСТЕМА ФЛИНГА", touch_fling = "Тач Флинг (Макс Физика)",
-        select_target = "Выбрать жертву", fling_btn = "Запустить в космос [BETA]", role_info = "ИНФОРМАЦИЯ О РОЛЯХ",
+        select_target = "Выбрать жертву", fling_btn = "Запустить в космос [BETA]", invis = "Невидимость (Глитч R15)", role_info = "ИНФОРМАЦИЯ О РОЛЯХ",
         nexus_title = "Nexus Движок", nexus_desc = "Разработка серверных функций в процессе. Следите за обновлениями linbergz Team!",
         nexus_1 = "Режим Бога [Серверно]", nexus_2 = "Аура Смерти [Беск. Радиус]", nexus_3 = "Протокол Краша Сервера",
         soon = "Скоро",
@@ -134,7 +137,7 @@ local function Conn(n, c) if connections[n] and typeof(connections[n]) == "RBXSc
 local function ClearConn(n) if connections[n] then if typeof(connections[n]) == "RBXScriptConnection" then connections[n]:Disconnect() end; connections[n] = nil end end
 
 ---------------------------------------------------------
--- MATH & PHYSICAL UTILITIES
+-- MATH & PHYSICAL UTILITIES (MM2 SPECIFIC)
 ---------------------------------------------------------
 local function GetChar() return player.Character end
 local function GetHum() local c = GetChar(); return c and c:FindFirstChildOfClass("Humanoid") end
@@ -231,7 +234,6 @@ Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 10)
 table.insert(themedBg, Hub)
 local HSk = Instance.new("UIStroke"); HSk.Color = C.accent; HSk.Thickness = 1; HSk.Parent = Hub; table.insert(themedAccent, HSk)
 
--- Watermark
 local Watermark = Instance.new("TextLabel")
 Watermark.Size = UDim2.new(1, -SIDEBAR_W, 1, 0); Watermark.Position = UDim2.new(0, SIDEBAR_W, 0, 0); Watermark.BackgroundTransparency = 1; Watermark.Text = "lz"; Watermark.TextColor3 = C.bg; Watermark.TextSize = 120; Watermark.Font = Enum.Font.GothamBlack; Watermark.ZIndex = 9; Watermark.Parent = Hub
 
@@ -273,7 +275,7 @@ local tabDefs = {
     {name = "ESP", key = "esp", icon = "👁️", order = 3},
     {name = "Fun & Troll", key = "fun", icon = "🎭", order = 4},
     {name = "Boombox", key = "boombox", icon = "🎵", order = 5},
-    {name = "Nexus", key = "nexus", icon = "💎", order = 6}, -- NEW TAB
+    {name = "Nexus", key = "nexus", icon = "💎", order = 6},
     {name = "Settings", key = "settings", icon = "⚙️", order = 7},
     {name = "Info", key = "info", icon = "📝", order = 8},
 }
@@ -288,11 +290,7 @@ for idx, def in ipairs(tabDefs) do
     local Tb = Instance.new("TextButton")
     Tb.Size = UDim2.new(1, 0, 0, 26); Tb.BackgroundTransparency = 1; Tb.Text = def.icon .. " " .. def.name; Tb.TextColor3 = C.textDim; Tb.TextSize = 10; Tb.Font = Enum.Font.GothamBold; Tb.AutoButtonColor = false; Tb.ZIndex = 14; Tb.Parent = TH; Instance.new("UICorner", Tb).CornerRadius = UDim.new(0, 5)
     
-    -- Special style for Nexus
-    if def.name == "Nexus" then
-        Tb.TextColor3 = C.gold
-    end
-    
+    if def.name == "Nexus" then Tb.TextColor3 = C.gold end
     tabBtns[def.name] = {btn = Tb, index = idx, icon = def.icon, label = def.name}
     
     Tb.MouseButton1Click:Connect(function()
@@ -393,6 +391,33 @@ end
 ---------------------------------------------------------
 -- ============ HOME TAB ============
 ---------------------------------------------------------
+MkSep("Home", "automation")
+MkToggle("Home", "autofarm", false, function(a)
+    ClearConn("af_conn")
+    if a then
+        Conn("af_conn", RunService.Stepped:Connect(function()
+            local r = GetRoot()
+            if not r then return end
+            local normal = workspace:FindFirstChild("Normal")
+            if normal then
+                local coins = normal:FindFirstChild("CoinContainer")
+                if coins then
+                    for _, coin in ipairs(coins:GetChildren()) do
+                        if coin:IsA("BasePart") and (coin.Name == "Coin_Server" or coin.Name == "Coin") then
+                            r.CFrame = coin.CFrame
+                            task.wait(0.1) -- Yielding per coin to prevent instant kick
+                            break
+                        end
+                    end
+                end
+            end
+        end))
+        Notify("Auto Farm", "Collecting Map Coins", C.green, 2)
+    else
+        Notify("Auto Farm", "Deactivated", C.red, 1.5)
+    end
+end)
+
 MkSep("Home", "movement")
 local speedVal = 16
 MkSlider("Home", "walkspeed", 16, 120, 16, function(v) speedVal = v end)
@@ -455,12 +480,31 @@ local MagBtn = Instance.new("TextButton"); MagBtn.Size = UDim2.new(0, 70, 0, 32)
 MagBtn.MouseButton1Click:Connect(function() local h = GetMurdererHead(); local r = GetRoot(); if not h or not r then return end; local g = FindGunInHand(); if not g then local t = GetTool("Gun"); if t then GetHum():EquipTool(t); task.wait(0.2); g = FindGunInHand() end end; if not g then return end; local p = r.CFrame; r.CFrame = CFrame.new(h.Position + Vector3.new(0,-3,2), h.Position); task.wait(0.15); FireGunAtTarget(g, h); task.wait(0.1); r.CFrame = p end)
 MkToggle("Combat", "magicshot", false, function(a) MagBtn.Visible = a end)
 
+MkToggle("Combat", "autograb", false, function(a)
+    ClearConn("ag_conn")
+    if a then
+        Conn("ag_conn", RunService.Heartbeat:Connect(function()
+            local r = GetRoot()
+            if not r then return end
+            for _, obj in ipairs(workspace:GetDescendants()) do
+                if obj:IsA("Tool") and (obj.Name == "GunDrop" or obj.Name == "Gun") then
+                    local h = obj:FindFirstChild("Handle")
+                    if h then r.CFrame = h.CFrame end
+                end
+            end
+        end))
+        Notify("Combat", "Auto Gun-Grab Active", C.green, 2)
+    end
+end)
+
 MkSep("Combat", "killall")
 MkButton("Combat", "killall", C.redDark, function() local k = FindKnifeInHand(); if not k then local t = GetTool("Knife"); if t then GetHum():EquipTool(t); task.wait(0.2); k = FindKnifeInHand() end end; if not k then Notify("linbergz", "Equip Knife!", C.red, 2); return end; for _, p in ipairs(Players:GetPlayers()) do if p ~= player and p.Character then local h = p.Character:FindFirstChild("Head"); if h then ThrowKnifeAtTarget(k, h.Position); task.wait(0.05) end end end end)
 
 MkSep("Combat", "teleport")
 MkButton("Combat", "tpmurder", C.elevated, function() local r = GetRoot(); local m = GetMurdererRoot(); if r and m then r.CFrame = m.CFrame * CFrame.new(0,0,4) end end)
 MkButton("Combat", "tpsheriff", C.elevated, function() local r = GetRoot(); if not r then return end; for _, p in ipairs(Players:GetPlayers()) do if IsSheriff(p) and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then r.CFrame = p.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,4); return end end end)
+MkButton("Combat", "tplobby", C.elevated, function() local r = GetRoot(); if r then r.CFrame = CFrame.new(-109, 138, 11) end end)
+MkButton("Combat", "tpmap", C.elevated, function() local r = GetRoot(); local map = workspace:FindFirstChild("Normal") if r and map then local spawns = map:FindFirstChild("Spawns"); if spawns then r.CFrame = spawns:GetChildren()[1].CFrame end end end)
 
 ---------------------------------------------------------
 -- ============ ESP TAB ============
@@ -487,6 +531,16 @@ MkToggle("ESP", "gun_esp", false, function(a) gunEspActive = a; ClearConn("gun_e
 MkSep("ESP", "role_info")
 local InfoBox = MkInfoBox("ESP", "Waiting for data...")
 task.spawn(function() while Hub.Parent do local mN, sN = "None", "None"; for _, p in ipairs(Players:GetPlayers()) do if IsMurderer(p) then mN = p.Name end; if IsSheriff(p) then sN = p.Name end end; InfoBox.Text = "Murderer: "..mN.."\nSheriff: "..sN; task.wait(1.5) end end)
+
+MkButton("ESP", "announce", C.accent, function()
+    local mN, sN = "None", "None"
+    for _, p in ipairs(Players:GetPlayers()) do
+        if IsMurderer(p) then mN = p.Name end
+        if IsSheriff(p) then sN = p.Name end
+    end
+    local msg = "[linbergz Analytics] Murderer: " .. mN .. " | Sheriff: " .. sN
+    pcall(function() ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All") end)
+end)
 
 ---------------------------------------------------------
 -- ============ FUN & TROLL TAB ============
@@ -517,6 +571,24 @@ MkButton("Fun & Troll", "fling_btn", C.accent, function()
         pcall(function() bav:Destroy(); r.AssemblyLinearVelocity = Vector3.zero; r.AssemblyAngularVelocity = Vector3.zero; r.CFrame = savedPos; h:ChangeState(Enum.HumanoidStateType.GettingUp) end)
         for p, d in pairs(stored) do if p.Parent then p.CanCollide = d[1]; p.Massless = d[2] end end
         targetFlingActive = false; Notify("linbergz", "Fling sequence completed", C.green, 2)
+    end
+end)
+
+MkSep("Fun & Troll", "invis")
+MkButton("Fun & Troll", "invis", C.elevated, function()
+    local c = GetChar()
+    if c and c:FindFirstChild("LowerTorso") then
+        local r = c:FindFirstChild("HumanoidRootPart")
+        if r then
+            local pos = r.CFrame
+            r.CFrame = r.CFrame * CFrame.new(0, 100, 0)
+            task.wait(0.1)
+            pcall(function() c.LowerTorso:Destroy() end)
+            r.CFrame = pos
+            Notify("Invisibility", "Glitch Applied. You are invisible.", C.green, 2.5)
+        end
+    else
+        Notify("Error", "R15 required or already invisible", C.red, 2)
     end
 end)
 
@@ -575,8 +647,8 @@ MkSep("Settings", "about"); MkInfoBox("Settings", "linbergz Hub v8.0 (Nexus)\nPl
 MkSep("Info", "about")
 local InfoChange = MkInfoBox("Info", "Loading updates...")
 local function RefreshLog()
-    if currentLang == "RU" then InfoChange.Text = "Обновление v8.0 Nexus Mobile:\n\n- [NEW] Вкладка NEXUS - будущее серверных читов. Следи за обновлениями!\n- [FIX] Полёт теперь работает через джойстик.\n- [FIX] Флинг адаптирован под лимиты физики.\n- [UI] Полный редизайн, ховер эффекты, водяные знаки."
-    else InfoChange.Text = "Update v8.0 Nexus Mobile:\n\n- [NEW] NEXUS Tab - the future of server-side cheats. Stay tuned!\n- [FIX] Fly now works via mobile joystick.\n- [FIX] Fling adapted to physics limits.\n- [UI] Full redesign, hover effects, watermarks." end
+    if currentLang == "RU" then InfoChange.Text = "Обновление v8.0 Nexus Mobile:\n\n- [NEW] Auto-Grab: Моментальный подбор оружия после смерти шерифа.\n- [NEW] Auto-Farm: Автоматический сбор монет на карте.\n- [NEW] Chat Announcer: Палит убийцу и шерифа в чат всем.\n- [NEW] Glitch Invisibility: Делает вас невидимым через баг R15.\n- [NEW] Добавлены телепорты (Лобби, Карта).\n- [FIX] Флинг адаптирован под лимиты физики."
+    else InfoChange.Text = "Update v8.0 Nexus Mobile:\n\n- [NEW] Auto-Grab: Instantly grab sheriff's gun when dropped.\n- [NEW] Auto-Farm: Automatically collect coins around the map.\n- [NEW] Chat Announcer: Leaks murderer and sheriff in chat.\n- [NEW] Glitch Invisibility: Become invisible using R15 exploit.\n- [NEW] Added teleports (Lobby, Map).\n- [FIX] Fling adapted to physics limits." end
 end
 RefreshLog(); LangToggleBtn.MouseButton1Click:Connect(RefreshLog)
 
