@@ -18,6 +18,7 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService") -- [FIX] Added missing HttpService
 
 local player = Players.LocalPlayer
 if not player then
@@ -46,36 +47,11 @@ ScreenGui.IgnoreGuiInset = true
 -- THEME SYSTEM CONFIGURATION
 ---------------------------------------------------------
 local Themes = {
-    Nebula = { 
-        accent = Color3.fromRGB(160, 70, 255), 
-        accentLight = Color3.fromRGB(210, 150, 255), 
-        bg = Color3.fromRGB(9, 7, 16), 
-        surface = Color3.fromRGB(15, 11, 26)
-    },
-    Supernova = { 
-        accent = Color3.fromRGB(255, 75, 45), 
-        accentLight = Color3.fromRGB(255, 140, 100), 
-        bg = Color3.fromRGB(12, 6, 6), 
-        surface = Color3.fromRGB(22, 10, 10)
-    },
-    DeepOcean = { 
-        accent = Color3.fromRGB(0, 180, 255), 
-        accentLight = Color3.fromRGB(120, 220, 255), 
-        bg = Color3.fromRGB(5, 9, 16), 
-        surface = Color3.fromRGB(9, 16, 28)
-    },
-    Matrix = { 
-        accent = Color3.fromRGB(0, 240, 100), 
-        accentLight = Color3.fromRGB(140, 255, 180), 
-        bg = Color3.fromRGB(4, 10, 6), 
-        surface = Color3.fromRGB(8, 20, 12)
-    },
-    Eclipse = { 
-        accent = Color3.fromRGB(240, 240, 240), 
-        accentLight = Color3.fromRGB(255, 255, 255), 
-        bg = Color3.fromRGB(8, 8, 8), 
-        surface = Color3.fromRGB(14, 14, 14)
-    }
+    Nebula = { accent = Color3.fromRGB(160, 70, 255), accentLight = Color3.fromRGB(210, 150, 255), bg = Color3.fromRGB(9, 7, 16), surface = Color3.fromRGB(15, 11, 26) },
+    Supernova = { accent = Color3.fromRGB(255, 75, 45), accentLight = Color3.fromRGB(255, 140, 100), bg = Color3.fromRGB(12, 6, 6), surface = Color3.fromRGB(22, 10, 10) },
+    DeepOcean = { accent = Color3.fromRGB(0, 180, 255), accentLight = Color3.fromRGB(120, 220, 255), bg = Color3.fromRGB(5, 9, 16), surface = Color3.fromRGB(9, 16, 28) },
+    Matrix = { accent = Color3.fromRGB(0, 240, 100), accentLight = Color3.fromRGB(140, 255, 180), bg = Color3.fromRGB(4, 10, 6), surface = Color3.fromRGB(8, 20, 12) },
+    Eclipse = { accent = Color3.fromRGB(240, 240, 240), accentLight = Color3.fromRGB(255, 255, 255), bg = Color3.fromRGB(8, 8, 8), surface = Color3.fromRGB(14, 14, 14) }
 }
 
 local C = {
@@ -121,10 +97,10 @@ local L = {
         enable_murd = "ESP Murderer (Red Glow)", enable_sher = "ESP Sheriff (Blue Glow)", enable_inn = "ESP Innocents (Green Glow)",
         enable_gun = "ESP Gun on Ground", enable_tracers = "Tracers (Tactical Lines)", enable_box = "Box ESP (3D Outline)",
         speed_slider = "Walkspeed (0-100)", enable_bhop = "Aerodynamic BunnyHop", bhop_power = "Kinetic Bounce Force", bhop_sound = "Bhop Sound Effects",
-        -- Новые функции боя
         enable_silent = "Silent Aim", silent_desc = "Redirects gun/knife projectiles to targets silently",
         enable_killaura = "Kill Aura", killaura_desc = "Instantly kills all targets in range with a knife",
-        enable_autoshoot = "Auto-Shoot", autoshoot_desc = "Automatically fires at the Murderer when visible"
+        enable_autoshoot = "Auto-Shoot", autoshoot_desc = "Automatically fires at the Murderer when visible",
+        soon = "IN DEVELOPMENT"
     },
     RU = {
         home = "Главная OS", combat = "Сражение", fun = "Троллинг", boombox = "Аудио-Ядро", settings = "Настройки", info = "О хабе",
@@ -145,7 +121,6 @@ local L = {
         enable_murd = "Подсветка Убийцы (Красная)", enable_sher = "Подсветка Шерифа (Синяя)", enable_inn = "Подсветка Мирных (Зеленая)",
         enable_gun = "Подсветка пистолета на полу", enable_tracers = "Трассеры (Линии до игроков)", enable_box = "Боксы (Коробки вокруг целей)",
         speed_slider = "Скорость бега (0-100)", enable_bhop = "Бхоп (Автоматический распрыг)", bhop_power = "Сила бхопа (Высота прыжка)", bhop_sound = "Звук бхопа (Шум ветра)",
-        -- Новые функции боя
         enable_silent = "Silent Aim (Тихий Аимбот)", silent_desc = "Незаметно перенаправляет пули/броски в цель",
         enable_killaura = "Kill Aura (Аура смерти)", killaura_desc = "Мгновенно режет всех в радиусе, когда нож в руках",
         enable_autoshoot = "Auto-Shoot (Авто-выстрел)", autoshoot_desc = "Автоматически стреляет в Убийцу при видимости"
@@ -169,6 +144,7 @@ local themedBg, themedSurface, themedAccent = {}, {}, {}
 local function ApplyTheme(themeName)
     local theme = Themes[themeName]
     if not theme then return end
+    currentThemeName = themeName
     C.bg = theme.bg; C.surface = theme.surface; C.accent = theme.accent; C.accentLight = theme.accentLight
     
     for _, item in ipairs(themedBg) do 
@@ -204,7 +180,7 @@ local function Conn(n, c) if connections[n] and typeof(connections[n]) == "RBXSc
 local function ClearConn(n) if connections[n] then if typeof(connections[n]) == "RBXScriptConnection" then connections[n]:Disconnect() end; connections[n] = nil end end
 
 ---------------------------------------------------------
--- UTILITIES & MM2 HELPERS
+-- UTILITIES & MM2 HELPERS (OPTIMIZED REMOTE CACHING)
 ---------------------------------------------------------
 local function GetChar() return player.Character end
 local function GetHum() local c = GetChar(); return c and c:FindFirstChildOfClass("Humanoid") end
@@ -220,8 +196,25 @@ local function GetTool(n) local c = GetChar(); if c and c:FindFirstChild(n) then
 local function FindGunInHand() local c = GetChar(); if not c then return nil end; for _, t in ipairs(c:GetChildren()) do if t:IsA("Tool") and (t.Name:lower():find("gun") or t.Name:lower():find("revolver")) then return t end end; return nil end
 local function FindKnifeInHand() local c = GetChar(); if not c then return nil end; for _, t in ipairs(c:GetChildren()) do if t:IsA("Tool") and t.Name:lower():find("knife") then return t end end; return nil end
 
-local function FireGunAtTarget(gun, target) if not gun or not target then return false end; for _, r in ipairs(gun:GetDescendants()) do if r:IsA("RemoteEvent") then pcall(function() r:FireServer(target.Position, target) end); return true end end; return false end
-local function ThrowKnifeAtTarget(knife, target) if not knife or not target then return false end; for _, r in ipairs(knife:GetDescendants()) do if r:IsA("RemoteEvent") then pcall(function() r:FireServer(target) end); return true end end; return false end
+-- [FIX] RemoteEvent Caching to prevent severe frame drops
+local cachedGunRemote, cachedKnifeRemote
+local function FireGunAtTarget(gun, target) 
+    if not gun or not target then return false end; 
+    if not cachedGunRemote or not cachedGunRemote.Parent then
+        for _, r in ipairs(gun:GetDescendants()) do if r:IsA("RemoteEvent") then cachedGunRemote = r; break end end
+    end
+    if cachedGunRemote then pcall(function() cachedGunRemote:FireServer(target.Position, target) end); return true end
+    return false 
+end
+
+local function ThrowKnifeAtTarget(knife, targetPos) 
+    if not knife or not targetPos then return false end; 
+    if not cachedKnifeRemote or not cachedKnifeRemote.Parent then
+        for _, r in ipairs(knife:GetDescendants()) do if r:IsA("RemoteEvent") then cachedKnifeRemote = r; break end end
+    end
+    if cachedKnifeRemote then pcall(function() cachedKnifeRemote:FireServer(targetPos) end); return true end
+    return false 
+end
 
 ---------------------------------------------------------
 -- PREMIUM NOTIFICATIONS
@@ -247,10 +240,7 @@ local function Notify(title, msg, color, dur)
     stk.Color = color; stk.Thickness = 1.2; stk.Transparency = 0.3; stk.Parent = Cd
     
     local AccentGlow = Instance.new("Frame")
-    AccentGlow.Size = UDim2.new(0, 4, 1, 0)
-    AccentGlow.BackgroundColor3 = color
-    AccentGlow.BorderSizePixel = 0
-    AccentGlow.Parent = Cd
+    AccentGlow.Size = UDim2.new(0, 4, 1, 0); AccentGlow.BackgroundColor3 = color; AccentGlow.BorderSizePixel = 0; AccentGlow.Parent = Cd
     Instance.new("UICorner", AccentGlow).CornerRadius = UDim.new(0, 4)
 
     local T = Instance.new("TextLabel"); T.Size = UDim2.new(1, -20, 0, 18); T.Position = UDim2.new(0, 12, 0, 6); T.BackgroundTransparency = 1; T.Text = title; T.TextColor3 = C.white; T.TextSize = 11; T.Font = Enum.Font.GothamBold; T.TextXAlignment = Enum.TextXAlignment.Left; T.Parent = Cd; table.insert(globalTextObjects, T)
@@ -267,36 +257,13 @@ local function Notify(title, msg, color, dur)
 end
 
 ---------------------------------------------------------
--- PREMIUM LOADING SCREEN
----------------------------------------------------------
-local LS = Instance.new("Frame")
-LS.Size = UDim2.new(1, 0, 1, 0); LS.BackgroundColor3 = Color3.fromRGB(5, 4, 10); LS.ZIndex = 100; LS.Parent = ScreenGui
-local LogoBox = Instance.new("Frame"); LogoBox.Size = UDim2.new(0, 240, 0, 240); LogoBox.Position = UDim2.new(0.5, -120, 0.5, -120); LogoBox.BackgroundTransparency = 1; LogoBox.ZIndex = 101; LogoBox.Parent = LS
-local MainLogo = Instance.new("TextLabel"); MainLogo.Size = UDim2.new(1, 0, 0, 60); MainLogo.Position = UDim2.new(0, 0, 0, 30); MainLogo.BackgroundTransparency = 1; MainLogo.Text = "linbergz"; MainLogo.TextColor3 = C.white; MainLogo.TextSize = 42; MainLogo.Font = Enum.Font.GothamBlack; MainLogo.ZIndex = 102; MainLogo.Parent = LogoBox
-local SubLogo = Instance.new("TextLabel"); SubLogo.Size = UDim2.new(1, 0, 0, 20); SubLogo.Position = UDim2.new(0, 0, 0, 90); SubLogo.BackgroundTransparency = 1; SubLogo.Text = "NEXUS COGNITION v8.0"; SubLogo.TextColor3 = C.accent; SubLogo.TextSize = 10; SubLogo.Font = Enum.Font.GothamBold; SubLogo.ZIndex = 102; SubLogo.Parent = LogoBox
-local LogLabel = Instance.new("TextLabel"); LogLabel.Size = UDim2.new(1, 0, 0, 20); LogLabel.Position = UDim2.new(0, 0, 0, 140); LogLabel.BackgroundTransparency = 1; LogLabel.Text = "INITIALIZING CORE..."; LogLabel.TextColor3 = C.textDim; LogLabel.TextSize = 8; LogLabel.Font = Enum.Font.Code; LogLabel.ZIndex = 102; LogLabel.Parent = LogoBox
-local ProgressBg = Instance.new("Frame"); ProgressBg.Size = UDim2.new(0.8, 0, 0, 2); ProgressBg.Position = UDim2.new(0.1, 0, 0, 125); ProgressBg.BackgroundColor3 = Color3.fromRGB(15, 12, 30); ProgressBg.BorderSizePixel = 0; ProgressBg.ZIndex = 102; ProgressBg.Parent = LogoBox
-local ProgressFill = Instance.new("Frame"); ProgressFill.Size = UDim2.new(0, 0, 1, 0); ProgressFill.BackgroundColor3 = C.accent; ProgressFill.BorderSizePixel = 0; ProgressFill.ZIndex = 103; ProgressFill.Parent = ProgressBg
-
-local function LaunchUI()
-    local steps = { {0.15, "DECODING MEMORY BLOCKS..."}, {0.35, "BYPASSING ROBLOX ANTIFLING..."}, {0.55, "ASSEMBLING RENDER PIPELINE..."}, {0.75, "INJECTING GRAPHICS PACKS..."}, {0.90, "POLISHING ACRYLIC INTERFACES..."}, {1.00, "SYSTEMS SECURED // WELCOME"} }
-    for _, step in ipairs(steps) do TweenService:Create(ProgressFill, TweenInfo.new(0.25, Enum.EasingStyle.Cubic), {Size = UDim2.new(step[1], 0, 1, 0)}):Play(); LogLabel.Text = step[2]; task.wait(0.3) end
-    TweenService:Create(LS, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(LogoBox, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0,0,0,0), Position=UDim2.new(0.5,0,0.5,0)}):Play()
-    task.wait(0.5); LS:Destroy()
-end
-task.spawn(LaunchUI)
-
----------------------------------------------------------
--- TOGGLE BUTTON
+-- TOGGLE BUTTON & MAIN UI
 ---------------------------------------------------------
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 48, 0, 48); ToggleBtn.Position = UDim2.new(0, 15, 0.25, 0); ToggleBtn.BackgroundColor3 = C.bg; ToggleBtn.Text = "lz"; ToggleBtn.TextColor3 = C.white; ToggleBtn.TextSize = 15; ToggleBtn.Font = Enum.Font.GothamBlack; ToggleBtn.ZIndex = 50; ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 table.insert(themedBg, ToggleBtn)
-
-local TBSk = Instance.new("UIStroke"); TBSk.Color = C.accent; TBSk.Thickness = 1.5; TBSk.Transparency = 0.2; TBSk.Parent = ToggleBtn
-table.insert(themedAccent, TBSk)
+local TBSk = Instance.new("UIStroke"); TBSk.Color = C.accent; TBSk.Thickness = 1.5; TBSk.Transparency = 0.2; TBSk.Parent = ToggleBtn; table.insert(themedAccent, TBSk)
 
 do
     local dragging, dragStart, startPos
@@ -305,25 +272,11 @@ do
     ToggleBtn.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then dragging = false end end)
 end
 
----------------------------------------------------------
--- MAIN HUB FRAME (GLASSMORPHISM)
----------------------------------------------------------
 local HUB_W, HUB_H, SIDEBAR_W = 480, 310, 130
-local Hub = Instance.new("Frame")
-Hub.Name = "Hub"
-Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
-Hub.Position = UDim2.new(0.5, -HUB_W / 2, 0.5, -HUB_H / 2)
-Hub.BackgroundColor3 = C.bg
-Hub.BackgroundTransparency = menuTransparency
-Hub.BorderSizePixel = 0
-Hub.Visible = false
-Hub.ClipsDescendants = true
-Hub.ZIndex = 10
-Hub.Parent = ScreenGui
-
+local Hub = Instance.new("CanvasGroup")
+Hub.Name = "Hub"; Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H); Hub.Position = UDim2.new(0.5, -HUB_W / 2, 0.5, -HUB_H / 2); Hub.BackgroundColor3 = C.bg; Hub.BackgroundTransparency = menuTransparency; Hub.BorderSizePixel = 0; Hub.Visible = false; Hub.ZIndex = 10; Hub.Parent = ScreenGui
 Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 12)
 table.insert(themedBg, Hub)
-
 local HSk = Instance.new("UIStroke"); HSk.Color = C.accent; HSk.Thickness = 1.2; HSk.Transparency = 0.4; HSk.Parent = Hub; table.insert(themedAccent, HSk)
 
 local Watermark = Instance.new("TextLabel")
@@ -342,9 +295,6 @@ do
     TopB.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then drag = false end end)
 end
 
----------------------------------------------------------
--- SIDEBAR
----------------------------------------------------------
 local Sidebar = Instance.new("Frame"); Sidebar.Name = "Sidebar"; Sidebar.Size = UDim2.new(0, SIDEBAR_W, 1, 0); Sidebar.BackgroundColor3 = C.sidebar; Sidebar.BackgroundTransparency = menuTransparency; Sidebar.BorderSizePixel = 0; Sidebar.ZIndex = 12; Sidebar.Parent = Hub; table.insert(themedBg, Sidebar)
 local SideLine = Instance.new("Frame"); SideLine.Size = UDim2.new(0, 1, 1, 0); SideLine.Position = UDim2.new(1, -1, 0, 0); SideLine.BackgroundColor3 = C.accent; SideLine.BorderSizePixel = 0; SideLine.BackgroundTransparency = 0.8; SideLine.ZIndex = 13; SideLine.Parent = Sidebar; table.insert(themedAccent, SideLine)
 
@@ -359,9 +309,6 @@ local TabGlider = Instance.new("Frame"); TabGlider.Size = UDim2.new(1, 0, 0, 28)
 local GliderLine = Instance.new("Frame"); GliderLine.Size = UDim2.new(0, 3.5, 1, 0); GliderLine.Position = UDim2.new(0, 0, 0, 0); GliderLine.BackgroundColor3 = C.accent; GliderLine.BorderSizePixel = 0; GliderLine.ZIndex = 13; GliderLine.Parent = TabGlider; Instance.new("UICorner", GliderLine).CornerRadius = UDim.new(1, 0)
 table.insert(themedAccent, TabGlider); table.insert(themedAccent, GliderLine)
 
----------------------------------------------------------
--- TABS GENERATION
----------------------------------------------------------
 local tabPages, tabBtns, currentTab = {}, {}, nil
 local CX, CY, CW, CH = SIDEBAR_W + 1, 36, HUB_W - SIDEBAR_W - 1, HUB_H - 36
 
@@ -370,7 +317,7 @@ local tabDefs = {
     {name = "Combat", key = "combat", icon = "⚔️", order = 2},
     {name = "Fun & Troll", key = "fun", icon = "🎭", order = 3},
     {name = "Boombox", key = "boombox", icon = "🎵", order = 4},
-    {name = "Settings", key = "settings", icon = "⚡", order = 5}, -- Заменена иконка настроек на молнию ⚡
+    {name = "Settings", key = "settings", icon = "⚡", order = 5},
     {name = "Info", key = "info", icon = "📝", order = 6},
 }
 
@@ -379,12 +326,7 @@ local function ResizeMenu(newW, newH)
     Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
     TopB.Size = UDim2.new(1, -SIDEBAR_W, 0, 36)
     Watermark.Size = UDim2.new(1, -SIDEBAR_W, 1, 0)
-    
-    local pageW = HUB_W - SIDEBAR_W - 1
-    local pageH = HUB_H - 36
-    for _, pageData in pairs(tabPages) do
-        pageData.frame.Size = UDim2.new(0, pageW, 0, pageH)
-    end
+    for _, pageData in pairs(tabPages) do pageData.frame.Size = UDim2.new(0, HUB_W - SIDEBAR_W - 1, 0, HUB_H - 36) end
 end
 
 for idx, def in ipairs(tabDefs) do
@@ -397,63 +339,29 @@ for idx, def in ipairs(tabDefs) do
     local Tb = Instance.new("TextButton")
     Tb.Size = UDim2.new(1, 0, 0, 28); Tb.BackgroundTransparency = 1; Tb.Text = "  " .. def.icon .. "  " .. def.name; Tb.TextColor3 = C.textDim; Tb.TextSize = 10; Tb.Font = Enum.Font.GothamBold; Tb.TextXAlignment = Enum.TextXAlignment.Left; Tb.AutoButtonColor = false; Tb.ZIndex = 14; Tb.Parent = TH; Instance.new("UICorner", Tb).CornerRadius = UDim.new(0, 6)
     table.insert(globalTextObjects, Tb)
-    
     tabBtns[def.name] = {btn = Tb, index = idx, icon = def.icon, label = def.name}
     
     Tb.MouseButton1Click:Connect(function()
         if currentTab == def.name then return end
-        local origSize = UDim2.new(1, 0, 0, 28)
         TweenService:Create(Tb, TweenInfo.new(0.08, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = UDim2.new(0.94, 0, 0, 26)}):Play()
-        task.delay(0.08, function() TweenService:Create(Tb, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = origSize}):Play() end)
-        
+        task.delay(0.08, function() TweenService:Create(Tb, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 28)}):Play() end)
         if currentTab and tabPages[currentTab] then tabPages[currentTab].frame.Visible = false; tabBtns[currentTab].btn.TextColor3 = C.textDim end
-        currentTab = def.name; Page.Visible = true; PT.Text = def.icon .. "  " .. (L[currentLang][def.key] or def.name); updateableLabels[PT] = def.key
-        Tb.TextColor3 = C.accentLight
-        
-        local targetY = 2 + (idx - 1) * 31
-        TweenService:Create(TabGlider, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, targetY)}):Play()
+        currentTab = def.name; Page.Visible = true; PT.Text = def.icon .. "  " .. (L[currentLang][def.key] or def.name); updateableLabels[PT] = def.key; Tb.TextColor3 = C.accentLight
+        TweenService:Create(TabGlider, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 2 + (idx - 1) * 31)}):Play()
     end)
 end
 
--- Плавное открытие/закрытие CanvasGroup
 local hubOpen = false
 local function ToggleHub()
     hubOpen = not hubOpen
     if hubOpen then
-        Hub.Visible = true
-        Hub.GroupTransparency = 1
+        Hub.Visible = true; Hub.GroupTransparency = 1
         TweenService:Create(Hub, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {GroupTransparency = 0}):Play()
     else
         local tw = TweenService:Create(Hub, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {GroupTransparency = 1})
-        tw:Play()
-        tw.Completed:Connect(function()
-            if not hubOpen then Hub.Visible = false end
-        end)
+        tw:Play(); tw.Completed:Connect(function() if not hubOpen then Hub.Visible = false end end)
     end
 end
-
-if not Hub:IsA("CanvasGroup") then
-    local oldParent = Hub.Parent
-    local CG = Instance.new("CanvasGroup")
-    CG.Name = Hub.Name
-    CG.Size = Hub.Size
-    CG.Position = Hub.Position
-    CG.BackgroundColor3 = Hub.BackgroundColor3
-    CG.BackgroundTransparency = Hub.BackgroundTransparency
-    CG.BorderSizePixel = Hub.BorderSizePixel
-    CG.Visible = Hub.Visible
-    CG.ClipsDescendants = Hub.ClipsDescendants
-    CG.ZIndex = Hub.ZIndex
-    
-    for _, child in ipairs(Hub:GetChildren()) do
-        child.Parent = CG
-    end
-    Hub:Destroy()
-    Hub = CG
-    Hub.Parent = oldParent
-    table.insert(themedBg, Hub)
-end
-
 ToggleBtn.MouseButton1Click:Connect(ToggleHub)
 ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
 task.defer(function() tabBtns["Home"].btn.MouseButton1Click:Fire() end)
@@ -473,28 +381,14 @@ local function MkToggle(tab, key, def, cb, customParent)
     local o = NO(tab); local active = def or false
     local B = Instance.new("TextButton"); B.Size = UDim2.new(1, 0, 0, 32); B.BackgroundColor3 = active and C.greenDark or C.elevated; B.Text = ""; B.AutoButtonColor = false; B.LayoutOrder = o; B.Parent = customParent or GP(tab).frame; Instance.new("UICorner", B).CornerRadius = UDim.new(0, 8)
     local BS = Instance.new("UIStroke"); BS.Color = active and C.green or C.elevated; BS.Thickness = 1; BS.Parent = B
-    
     local Lbl = Instance.new("TextLabel"); Lbl.Size = UDim2.new(1, -40, 1, 0); Lbl.Position = UDim2.new(0, 10, 0, 0); Lbl.BackgroundTransparency = 1; Lbl.Text = L[currentLang][key] or key; Lbl.TextColor3 = C.text; Lbl.TextSize = 10; Lbl.Font = currentFont; Lbl.TextXAlignment = Enum.TextXAlignment.Left; Lbl.Parent = B; updateableLabels[Lbl] = key; table.insert(globalTextObjects, Lbl)
     local TBg = Instance.new("Frame"); TBg.Size = UDim2.new(0, 28, 0, 14); TBg.Position = UDim2.new(1, -38, 0.5, -7); TBg.BackgroundColor3 = active and C.green or C.textMuted; TBg.BorderSizePixel = 0; TBg.Parent = B; Instance.new("UICorner", TBg).CornerRadius = UDim.new(1, 0)
     local TC = Instance.new("Frame"); TC.Size = UDim2.new(0, 12, 0, 12); TC.Position = active and UDim2.new(1, -13, 0.5, -6) or UDim2.new(0, 1, 0.5, -6); TC.BackgroundColor3 = C.white; TC.BorderSizePixel = 0; TC.Parent = TBg; Instance.new("UICorner", TC).CornerRadius = UDim.new(1, 0)
-    
-    local function U()
-        TweenService:Create(B, TweenInfo.new(0.2, Enum.EasingStyle.Cubic), {BackgroundColor3 = active and C.greenDark or C.elevated}):Play()
-        TweenService:Create(BS, TweenInfo.new(0.2, Enum.EasingStyle.Cubic), {Color = active and C.green or C.elevated}):Play()
-        TweenService:Create(TBg, TweenInfo.new(0.2), {BackgroundColor3 = active and C.green or C.textMuted}):Play()
-        TweenService:Create(TC, TweenInfo.new(0.2, Enum.EasingStyle.Back), {Position = active and UDim2.new(1, -13, 0.5, -6) or UDim2.new(0, 1, 0.5, -6)}):Play()
-    end
-    
+    local function U() TweenService:Create(B, TweenInfo.new(0.2, Enum.EasingStyle.Cubic), {BackgroundColor3 = active and C.greenDark or C.elevated}):Play(); TweenService:Create(BS, TweenInfo.new(0.2), {Color = active and C.green or C.elevated}):Play(); TweenService:Create(TBg, TweenInfo.new(0.2), {BackgroundColor3 = active and C.green or C.textMuted}):Play(); TweenService:Create(TC, TweenInfo.new(0.2, Enum.EasingStyle.Back), {Position = active and UDim2.new(1, -13, 0.5, -6) or UDim2.new(0, 1, 0.5, -6)}):Play() end
     B.MouseButton1Click:Connect(function() active = not active; U(); cb(active) end)
     B.MouseEnter:Connect(function() if not active then TweenService:Create(B, TweenInfo.new(0.15), {BackgroundColor3 = C.cardHover}):Play() end end)
     B.MouseLeave:Connect(function() if not active then TweenService:Create(B, TweenInfo.new(0.15), {BackgroundColor3 = C.elevated}):Play() end end)
-    
-    -- Принудительное обновление текста локализации сразу после создания
-    task.spawn(function()
-        task.wait(0.1)
-        Lbl.Text = L[currentLang][key] or key
-    end)
-    
+    task.spawn(function() task.wait(0.1); Lbl.Text = L[currentLang][key] or key end)
     return function() return active end
 end
 
@@ -502,18 +396,11 @@ local function MkButton(tab, key, color, cb, customParent)
     local o = NO(tab); local bc = color or C.elevated
     local B = Instance.new("TextButton"); B.Size = UDim2.new(1, 0, 0, 30); B.BackgroundColor3 = bc; B.Text = ""; B.AutoButtonColor = false; B.LayoutOrder = o; B.Parent = customParent or GP(tab).frame; Instance.new("UICorner", B).CornerRadius = UDim.new(0, 8)
     local BS = Instance.new("UIStroke"); BS.Color = C.accent; BS.Thickness = 0.8; BS.Transparency = 0.7; BS.Parent = B; table.insert(themedAccent, BS)
-    
     local Lbl = Instance.new("TextLabel"); Lbl.Size = UDim2.new(1, -10, 1, 0); Lbl.Position = UDim2.new(0, 5, 0, 0); Lbl.BackgroundTransparency = 1; Lbl.Text = L[currentLang][key] or key; Lbl.TextColor3 = C.text; Lbl.TextSize = 10; Lbl.Font = currentFont; Lbl.TextXAlignment = Enum.TextXAlignment.Center; Lbl.Parent = B; updateableLabels[Lbl] = key; table.insert(globalTextObjects, Lbl)
-    
     B.MouseButton1Click:Connect(function() cb(B, Lbl) end)
     B.MouseEnter:Connect(function() TweenService:Create(B, TweenInfo.new(0.15), {BackgroundColor3 = C.accent}):Play(); TweenService:Create(Lbl, TweenInfo.new(0.15), {TextColor3 = C.white}):Play() end)
     B.MouseLeave:Connect(function() TweenService:Create(B, TweenInfo.new(0.15), {BackgroundColor3 = bc}):Play(); TweenService:Create(Lbl, TweenInfo.new(0.15), {TextColor3 = C.text}):Play() end)
-    
-    task.spawn(function()
-        task.wait(0.1)
-        Lbl.Text = L[currentLang][key] or key
-    end)
-    
+    task.spawn(function() task.wait(0.1); Lbl.Text = L[currentLang][key] or key end)
     return B, Lbl
 end
 
@@ -538,12 +425,7 @@ local function MkSlider(tab, key, mn, mx, def, cb, customParent)
     Kn.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then sl = true end end)
     UserInputService.InputChanged:Connect(function(i) if sl and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then US(i.Position.X) end end)
     UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then sl = false end end)
-    
-    task.spawn(function()
-        task.wait(0.1)
-        Lb.Text = L[currentLang][key] or key
-    end)
-    
+    task.spawn(function() task.wait(0.1); Lb.Text = L[currentLang][key] or key end)
     return function() return val end
 end
 
@@ -555,105 +437,44 @@ end
 ---------------------------------------------------------
 -- ESP RENDERING ENGINE (BOXES & TRACERS)
 ---------------------------------------------------------
-local activeTracers = {}
-local activeBoxes = {}
-
+local activeTracers, activeBoxes = {}, {}
 local function ClearVisuals()
     for _, draw in ipairs(activeTracers) do pcall(function() draw:Destroy() end) end
     for _, draw in ipairs(activeBoxes) do pcall(function() draw:Destroy() end) end
-    activeTracers = {}
-    activeBoxes = {}
+    activeTracers = {}; activeBoxes = {}
 end
 
 local function DrawLine(p1, p2, col)
-    local line = Instance.new("Frame")
-    line.BorderSizePixel = 0
-    line.BackgroundColor3 = col
-    line.ZIndex = 5
-    line.Parent = ScreenGui
-    table.insert(activeTracers, line)
-    
-    local distance = (p1 - p2).Magnitude
-    line.Size = UDim2.new(0, distance, 0, 1.5)
-    line.Position = UDim2.new(0, (p1.X + p2.X)/2 - distance/2, 0, (p1.Y + p2.Y)/2)
-    line.Rotation = math.deg(math.atan2(p2.Y - p1.Y, p2.X - p1.X))
-    return line
+    local line = Instance.new("Frame"); line.BorderSizePixel = 0; line.BackgroundColor3 = col; line.ZIndex = 5; line.Parent = ScreenGui; table.insert(activeTracers, line)
+    local distance = (p1 - p2).Magnitude; line.Size = UDim2.new(0, distance, 0, 1.5); line.Position = UDim2.new(0, (p1.X + p2.X)/2 - distance/2, 0, (p1.Y + p2.Y)/2)
+    line.Rotation = math.deg(math.atan2(p2.Y - p1.Y, p2.X - p1.X)); return line
 end
 
 local function DrawBox(pos, size, col)
-    local box = Instance.new("Frame")
-    box.BackgroundColor3 = col
-    box.BackgroundTransparency = 0.85
-    box.Position = UDim2.new(0, pos.X - size.X/2, 0, pos.Y - size.Y/2)
-    box.Size = UDim2.new(0, size.X, 0, size.Y)
-    box.ZIndex = 4
-    box.Parent = ScreenGui
-    
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = col
-    stroke.Thickness = 1.5
-    stroke.Parent = box
-    
-    table.insert(activeBoxes, box)
-    return box
+    local box = Instance.new("Frame"); box.BackgroundColor3 = col; box.BackgroundTransparency = 0.85; box.Position = UDim2.new(0, pos.X - size.X/2, 0, pos.Y - size.Y/2); box.Size = UDim2.new(0, size.X, 0, size.Y); box.ZIndex = 4; box.Parent = ScreenGui
+    local stroke = Instance.new("UIStroke"); stroke.Color = col; stroke.Thickness = 1.5; stroke.Parent = box
+    table.insert(activeBoxes, box); return box
 end
 
 ---------------------------------------------------------
 -- ============ HOME TAB RESTRUCTURED ============
 ---------------------------------------------------------
-local HomeContainer = GP("Home").frame
-HomeContainer.ScrollBarThickness = 0
+local HomeContainer = GP("Home").frame; HomeContainer.ScrollBarThickness = 0
+local HomeNav = Instance.new("Frame"); HomeNav.Size = UDim2.new(1, 0, 0, 26); HomeNav.BackgroundTransparency = 1; HomeNav.LayoutOrder = 1; HomeNav.Parent = HomeContainer
+local HNavList = Instance.new("UIListLayout"); HNavList.Parent = HomeNav; HNavList.FillDirection = Enum.FillDirection.Horizontal; HNavList.HorizontalAlignment = Enum.HorizontalAlignment.Center; HNavList.Padding = UDim.new(0, 6)
 
-local HomeNav = Instance.new("Frame")
-HomeNav.Size = UDim2.new(1, 0, 0, 26)
-HomeNav.BackgroundTransparency = 1
-HomeNav.LayoutOrder = 1
-HomeNav.Parent = HomeContainer
-
-local HNavList = Instance.new("UIListLayout")
-HNavList.Parent = HomeNav; HNavList.FillDirection = Enum.FillDirection.Horizontal; HNavList.HorizontalAlignment = Enum.HorizontalAlignment.Center; HNavList.Padding = UDim.new(0, 6)
-
-local Sub_Labels = Instance.new("Frame")
-Sub_Labels.Size = UDim2.new(1, 0, 1, -30); Sub_Labels.BackgroundTransparency = 1; Sub_Labels.LayoutOrder = 2; Sub_Labels.Visible = true; Sub_Labels.Parent = HomeContainer
-local LabelsList = Instance.new("UIListLayout"); LabelsList.Parent = Sub_Labels; LabelsList.Padding = UDim.new(0, 4); LabelsList.SortOrder = Enum.SortOrder.LayoutOrder
-
-local Sub_Movement = Instance.new("Frame")
-Sub_Movement.Size = UDim2.new(1, 0, 1, -30); Sub_Movement.BackgroundTransparency = 1; Sub_Movement.LayoutOrder = 3; Sub_Movement.Visible = false; Sub_Movement.Parent = HomeContainer
-local MovList = Instance.new("UIListLayout"); MovList.Parent = Sub_Movement; MovList.Padding = UDim.new(0, 4); MovList.SortOrder = Enum.SortOrder.LayoutOrder
-
-local Sub_Automation = Instance.new("Frame")
-Sub_Automation.Size = UDim2.new(1, 0, 1, -30); Sub_Automation.BackgroundTransparency = 1; Sub_Automation.LayoutOrder = 4; Sub_Automation.Visible = false; Sub_Automation.Parent = HomeContainer
-local AutList = Instance.new("UIListLayout"); AutList.Parent = Sub_Automation; AutList.Padding = UDim.new(0, 4); AutList.SortOrder = Enum.SortOrder.LayoutOrder
+local Sub_Labels = Instance.new("Frame"); Sub_Labels.Size = UDim2.new(1, 0, 1, -30); Sub_Labels.BackgroundTransparency = 1; Sub_Labels.LayoutOrder = 2; Sub_Labels.Visible = true; Sub_Labels.Parent = HomeContainer; local LabelsList = Instance.new("UIListLayout"); LabelsList.Parent = Sub_Labels; LabelsList.Padding = UDim.new(0, 4); LabelsList.SortOrder = Enum.SortOrder.LayoutOrder
+local Sub_Movement = Instance.new("Frame"); Sub_Movement.Size = UDim2.new(1, 0, 1, -30); Sub_Movement.BackgroundTransparency = 1; Sub_Movement.LayoutOrder = 3; Sub_Movement.Visible = false; Sub_Movement.Parent = HomeContainer; local MovList = Instance.new("UIListLayout"); MovList.Parent = Sub_Movement; MovList.Padding = UDim.new(0, 4); MovList.SortOrder = Enum.SortOrder.LayoutOrder
+local Sub_Automation = Instance.new("Frame"); Sub_Automation.Size = UDim2.new(1, 0, 1, -30); Sub_Automation.BackgroundTransparency = 1; Sub_Automation.LayoutOrder = 4; Sub_Automation.Visible = false; Sub_Automation.Parent = HomeContainer; local AutList = Instance.new("UIListLayout"); AutList.Parent = Sub_Automation; AutList.Padding = UDim.new(0, 4); AutList.SortOrder = Enum.SortOrder.LayoutOrder
 
 local homeNavBtns = {}
 local function CreateHomeNavBtn(key, targetFrame)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.31, 0, 1, 0)
-    btn.BackgroundColor3 = C.elevated
-    btn.Text = L[currentLang][key] or key
-    btn.TextColor3 = C.textDim
-    btn.TextSize = 8
-    btn.Font = Enum.Font.GothamBold
-    btn.Parent = HomeNav
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-    
-    local btnStk = Instance.new("UIStroke"); btnStk.Color = C.accent; btnStk.Thickness = 0.8; btnStk.Transparency = 0.8; btnStk.Parent = btn
-    updateableLabels[btn] = key
-    table.insert(globalTextObjects, btn)
-
+    local btn = Instance.new("TextButton"); btn.Size = UDim2.new(0.31, 0, 1, 0); btn.BackgroundColor3 = C.elevated; btn.Text = L[currentLang][key] or key; btn.TextColor3 = C.textDim; btn.TextSize = 8; btn.Font = Enum.Font.GothamBold; btn.Parent = HomeNav; Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    local btnStk = Instance.new("UIStroke"); btnStk.Color = C.accent; btnStk.Thickness = 0.8; btnStk.Transparency = 0.8; btnStk.Parent = btn; updateableLabels[btn] = key; table.insert(globalTextObjects, btn)
     btn.MouseButton1Click:Connect(function()
-        Sub_Labels.Visible = false
-        Sub_Movement.Visible = false
-        Sub_Automation.Visible = false
-        for _, b in ipairs(homeNavBtns) do
-            b.BackgroundColor3 = C.elevated
-            b.TextColor3 = C.textDim
-            b:FindFirstChildOfClass("UIStroke").Transparency = 0.8
-        end
-        targetFrame.Visible = true
-        btn.BackgroundColor3 = C.accent
-        btn.TextColor3 = C.white
-        btnStk.Transparency = 0.4
+        Sub_Labels.Visible = false; Sub_Movement.Visible = false; Sub_Automation.Visible = false
+        for _, b in ipairs(homeNavBtns) do b.BackgroundColor3 = C.elevated; b.TextColor3 = C.textDim; b:FindFirstChildOfClass("UIStroke").Transparency = 0.8 end
+        targetFrame.Visible = true; btn.BackgroundColor3 = C.accent; btn.TextColor3 = C.white; btnStk.Transparency = 0.4
     end)
     table.insert(homeNavBtns, btn)
 end
@@ -661,56 +482,32 @@ end
 CreateHomeNavBtn("subtab_labels", Sub_Labels)
 CreateHomeNavBtn("subtab_movement", Sub_Movement)
 CreateHomeNavBtn("subtab_automation", Sub_Automation)
+homeNavBtns[1].BackgroundColor3 = C.accent; homeNavBtns[1].TextColor3 = C.white; homeNavBtns[1]:FindFirstChildOfClass("UIStroke").Transparency = 0.4
 
-homeNavBtns[1].BackgroundColor3 = C.accent
-homeNavBtns[1].TextColor3 = C.white
-homeNavBtns[1]:FindFirstChildOfClass("UIStroke").Transparency = 0.4
-
----------------------------------
--- СУБ-ВКЛАДКА 1: МЕТКИ (ESP) - РАЗДЕЛЬНЫЕ НАСТРОЙКИ
----------------------------------
 local espMurdEnabled, espSherEnabled, espInnEnabled = false, false, false
 local espGunEnabled, espTracersEnabled, espBoxesEnabled = false, false, false
 
-MkSep("Home", "subtab_labels", Sub_Labels)
-
 local function ClearRoles() 
     for _, p in ipairs(Players:GetPlayers()) do 
-        if p.Character and p.Character:FindFirstChild("MobileESP") then 
-            p.Character.MobileESP:Destroy() 
-        end 
+        if p.Character and p.Character:FindFirstChild("MobileESP") then p.Character.MobileESP:Destroy() end 
     end 
 end
+-- [FIX] Integrated Complete ESP Clearing System
+local function ClearESP() ClearRoles(); ClearVisuals() end
 
 local function ApplyHighlight(ch, col) 
-    if not ch then return end; 
-    if ch:FindFirstChild("MobileESP") then ch.MobileESP:Destroy() end; 
-    local h = Instance.new("Highlight"); 
-    h.Name = "MobileESP"; 
-    h.FillColor = col; 
-    h.FillTransparency = 0.55; 
-    h.OutlineColor = Color3.fromRGB(255,255,255); 
-    h.OutlineTransparency = 0.2; 
-    h.Adornee = ch; 
-    h.Parent = ch 
+    if not ch then return end; if ch:FindFirstChild("MobileESP") then ch.MobileESP:Destroy() end; 
+    local h = Instance.new("Highlight"); h.Name = "MobileESP"; h.FillColor = col; h.FillTransparency = 0.55; h.OutlineColor = Color3.fromRGB(255,255,255); h.OutlineTransparency = 0.2; h.Adornee = ch; h.Parent = ch 
 end
 
 local function UpdateTacticalESP()
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= player and p.Character then
             local isM, isS = IsMurderer(p), IsSheriff(p)
-            
-            if isM and espMurdEnabled then
-                ApplyHighlight(p.Character, Color3.fromRGB(255, 50, 50))
-            elseif isS and espSherEnabled then
-                ApplyHighlight(p.Character, Color3.fromRGB(50, 150, 255))
-            elseif not isM and not isS and espInnEnabled then
-                ApplyHighlight(p.Character, Color3.fromRGB(50, 255, 100))
-            else
-                if p.Character:FindFirstChild("MobileESP") then
-                    p.Character.MobileESP:Destroy()
-                end
-            end
+            if isM and espMurdEnabled then ApplyHighlight(p.Character, Color3.fromRGB(255, 50, 50))
+            elseif isS and espSherEnabled then ApplyHighlight(p.Character, Color3.fromRGB(50, 150, 255))
+            elseif not isM and not isS and espInnEnabled then ApplyHighlight(p.Character, Color3.fromRGB(50, 255, 100))
+            else if p.Character:FindFirstChild("MobileESP") then p.Character.MobileESP:Destroy() end end
         end
     end
 end
@@ -720,39 +517,22 @@ local function ToggleRoleLoop()
     if espMurdEnabled or espSherEnabled or espInnEnabled then
         local lastUpdate = 0
         Conn("esp_roles_loop", RunService.Heartbeat:Connect(function()
-            if tick() - lastUpdate > 0.5 then
-                lastUpdate = tick()
-                UpdateTacticalESP()
-            end
+            if tick() - lastUpdate > 0.5 then lastUpdate = tick(); UpdateTacticalESP() end
         end))
         UpdateTacticalESP()
-    else
-        ClearRoles()
-    end
+    else ClearRoles() end
 end
 
-MkToggle("Home", "enable_murd", false, function(a)
-    espMurdEnabled = a
-    ToggleRoleLoop()
-end, Sub_Labels)
-
-MkToggle("Home", "enable_sher", false, function(a)
-    espSherEnabled = a
-    ToggleRoleLoop()
-end, Sub_Labels)
-
-MkToggle("Home", "enable_inn", false, function(a)
-    espInnEnabled = a
-    ToggleRoleLoop()
-end, Sub_Labels)
+MkSep("Home", "subtab_labels", Sub_Labels)
+MkToggle("Home", "enable_murd", false, function(a) espMurdEnabled = a; ToggleRoleLoop() end, Sub_Labels)
+MkToggle("Home", "enable_sher", false, function(a) espSherEnabled = a; ToggleRoleLoop() end, Sub_Labels)
+MkToggle("Home", "enable_inn", false, function(a) espInnEnabled = a; ToggleRoleLoop() end, Sub_Labels)
 
 local gunGuis = {}
 local function ClearGunESP() for _, g in ipairs(gunGuis) do pcall(function() g:Destroy() end) end; gunGuis = {} end
 
 MkToggle("Home", "enable_gun", false, function(a)
-    espGunEnabled = a
-    ClearConn("gun_esp_conn")
-    ClearGunESP()
+    espGunEnabled = a; ClearConn("gun_esp_conn"); ClearGunESP()
     if a then 
         Conn("gun_esp_conn", RunService.Heartbeat:Connect(function() 
             for _, obj in ipairs(workspace:GetDescendants()) do 
@@ -769,43 +549,26 @@ MkToggle("Home", "enable_gun", false, function(a)
     end
 end, Sub_Labels)
 
-MkToggle("Home", "enable_tracers", false, function(a)
-    espTracersEnabled = a
-    if not a then ClearVisuals() end
-end, Sub_Labels)
-
-MkToggle("Home", "enable_box", false, function(a)
-    espBoxesEnabled = a
-    if not a then ClearVisuals() end
-end, Sub_Labels)
+MkToggle("Home", "enable_tracers", false, function(a) espTracersEnabled = a; if not a then ClearVisuals() end end, Sub_Labels)
+MkToggle("Home", "enable_box", false, function(a) espBoxesEnabled = a; if not a then ClearVisuals() end end, Sub_Labels)
 
 RunService.RenderStepped:Connect(function()
     if not espTracersEnabled and not espBoxesEnabled then return end
-    
-    for _, draw in ipairs(activeTracers) do pcall(function() draw:Destroy() end) end
-    for _, draw in ipairs(activeBoxes) do pcall(function() draw:Destroy() end) end
-    activeTracers = {}
-    activeBoxes = {}
-    
+    ClearVisuals()
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChildOfClass("Humanoid") and p.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
             local isM, isS = IsMurderer(p), IsSheriff(p)
             local isAllowed = (isM and espMurdEnabled) or (isS and espSherEnabled) or (not isM and not isS and espInnEnabled)
-            
             if isAllowed then
                 local root = p.Character.HumanoidRootPart
                 local pos, onScreen = camera:WorldToViewportPoint(root.Position)
-                
                 if onScreen then
                     local col = Color3.fromRGB(50,255,100)
-                    if isM then col = Color3.fromRGB(255,50,50)
-                    elseif isS then col = Color3.fromRGB(50,150,255) end
-                    
+                    if isM then col = Color3.fromRGB(255,50,50) elseif isS then col = Color3.fromRGB(50,150,255) end
                     if espTracersEnabled then
                         local screenCenter = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y)
                         DrawLine(screenCenter, Vector2.new(pos.X, pos.Y), col)
                     end
-                    
                     if espBoxesEnabled then
                         local height = (camera:WorldToViewportPoint(root.Position + Vector3.new(0, 3, 0)).Y - camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0)).Y)
                         local width = height * 0.6
@@ -817,75 +580,41 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
----------------------------------
--- СУБ-ВКЛАДКА 2: ПЕРЕДВИЖЕНИЕ
----------------------------------
 MkSep("Home", "subtab_movement", Sub_Movement)
-
 local customSpeed = 16
-local speedActive = false
-MkSlider("Home", "speed_slider", 16, 100, 16, function(v) 
-    customSpeed = v 
-end, Sub_Movement)
-
+MkSlider("Home", "speed_slider", 16, 100, 16, function(v) customSpeed = v end, Sub_Movement)
 MkToggle("Home", "walkspeed", false, function(a)
-    speedActive = a
     ClearConn("speed_conn")
-    if a then
-        Conn("speed_conn", RunService.Heartbeat:Connect(function()
-            local h = GetHum()
-            if h then h.WalkSpeed = customSpeed end
-        end))
-    else
-        local h = GetHum()
-        if h then h.WalkSpeed = 16 end
-    end
+    if a then Conn("speed_conn", RunService.Heartbeat:Connect(function() local h = GetHum(); if h then h.WalkSpeed = customSpeed end end))
+    else local h = GetHum(); if h then h.WalkSpeed = 16 end end
 end, Sub_Movement)
 
-local bhopEnabled, bhopPower, bhopSoundActive = false, 50, false
-
+local bhopPower, bhopSoundActive = 50, false
 local function PlayBhopSound()
     local r = GetRoot()
     if r then
-        local sound = Instance.new("Sound")
-        sound.SoundId = "rbxassetid://9114223126"
-        sound.Volume = 0.6
-        sound.Parent = r
-        sound:Play()
+        local sound = Instance.new("Sound"); sound.SoundId = "rbxassetid://9114223126"; sound.Volume = 0.6; sound.Parent = r; sound:Play()
         task.delay(1, function() sound:Destroy() end)
     end
 end
 
 MkToggle("Home", "enable_bhop", false, function(a)
-    bhopEnabled = a
     ClearConn("bhop_conn")
     if a then
         Conn("bhop_conn", RunService.Heartbeat:Connect(function()
-            local h = GetHum()
-            local r = GetRoot()
-            if h and r and h.MoveDirection.Magnitude > 0 then
-                if h.FloorMaterial ~= Enum.Material.Air then
-                    r.AssemblyLinearVelocity = Vector3.new(r.AssemblyLinearVelocity.X, bhopPower, r.AssemblyLinearVelocity.Z)
-                    if bhopSoundActive then PlayBhopSound() end
-                end
+            local h = GetHum(); local r = GetRoot()
+            if h and r and h.MoveDirection.Magnitude > 0 and h.FloorMaterial ~= Enum.Material.Air then
+                r.AssemblyLinearVelocity = Vector3.new(r.AssemblyLinearVelocity.X, bhopPower, r.AssemblyLinearVelocity.Z)
+                if bhopSoundActive then PlayBhopSound() end
             end
         end))
     end
 end, Sub_Movement)
 
-MkSlider("Home", "bhop_power", 30, 120, 50, function(v)
-    bhopPower = v
-end, Sub_Movement)
+MkSlider("Home", "bhop_power", 30, 120, 50, function(v) bhopPower = v end, Sub_Movement)
+MkToggle("Home", "bhop_sound", false, function(a) bhopSoundActive = a end, Sub_Movement)
 
-MkToggle("Home", "bhop_sound", false, function(a)
-    bhopSoundActive = a
-end, Sub_Movement)
-
----------------------------------
--- СУБ-ВКЛАДКА 3: АВТОМАТИЗАЦИЯ
----------------------------------
 MkSep("Home", "subtab_automation", Sub_Automation)
-
 MkToggle("Home", "autofarm", false, function(a)
     ClearConn("af_conn")
     if a then
@@ -898,18 +627,14 @@ MkToggle("Home", "autofarm", false, function(a)
                 if coins then
                     for _, coin in ipairs(coins:GetChildren()) do
                         if coin:IsA("BasePart") and (coin.Name == "Coin_Server" or coin.Name == "Coin") then
-                            r.CFrame = coin.CFrame
-                            task.wait(0.1)
-                            break
+                            r.CFrame = coin.CFrame; task.wait(0.1); break
                         end
                     end
                 end
             end
         end))
         Notify("Auto Farm", "Collecting Map Coins", C.green, 2)
-    else
-        Notify("Auto Farm", "Deactivated", C.red, 1.5)
-    end
+    else Notify("Auto Farm", "Deactivated", C.red, 1.5) end
 end, Sub_Automation)
 
 MkToggle("Home", "autograb", false, function(a)
@@ -930,59 +655,53 @@ MkToggle("Home", "autograb", false, function(a)
 end, Sub_Automation)
 
 ---------------------------------------------------------
--- ============ COMBAT TAB (SILENT & AURAS ENGAGED) ============
+-- ============ COMBAT TAB ============
 ---------------------------------------------------------
 MkSep("Combat", "aimbot")
 MkToggle("Combat", "aimbot", false, function(a) ClearConn("aim"); if a then Conn("aim", RunService.RenderStepped:Connect(function() local h = GetMurdererHead(); if h then camera.CFrame = CFrame.new(camera.CFrame.Position, h.Position) end end)) end end)
 
--- 1. Silent Aim (Тихий Аимбот)
+-- [FIX] Added Action Throttle/Debounce to Network Calls
 local silentAimActive = false
+local lastSilentAction = 0
 MkToggle("Combat", "enable_silent", false, function(active)
     silentAimActive = active
     ClearConn("silent_aim_loop")
     if active then
         Conn("silent_aim_loop", RunService.Heartbeat:Connect(function()
-            -- Если мы Убийца, целимся в ближайшего игрока. Если мы мирный/шериф, целимся в убийцу.
-            local gun = FindGunInHand()
-            local knife = FindKnifeInHand()
+            if tick() - lastSilentAction < 0.2 then return end -- Debounce 
+            local gun = FindGunInHand(); local knife = FindKnifeInHand()
             if gun then
-                local murdererHead = GetMurdererHead()
-                if murdererHead then
-                    FireGunAtTarget(gun, murdererHead)
-                end
+                local mHead = GetMurdererHead()
+                if mHead then FireGunAtTarget(gun, mHead); lastSilentAction = tick() end
             elseif knife then
-                -- Авто-метание ножа в ближайшую цель
                 local closestChar, minDist = nil, 200
                 for _, p in ipairs(Players:GetPlayers()) do
                     if p ~= player and p.Character and p.Character:FindFirstChild("Head") then
                         local dist = (p.Character.Head.Position - player.Character.Head.Position).Magnitude
-                        if dist < minDist then
-                            minDist = dist
-                            closestChar = p.Character
-                        end
+                        if dist < minDist then minDist = dist; closestChar = p.Character end
                     end
                 end
-                if closestChar then
-                    ThrowKnifeAtTarget(knife, closestChar.Head.Position)
-                end
+                if closestChar then ThrowKnifeAtTarget(knife, closestChar.Head.Position); lastSilentAction = tick() end
             end
         end))
     end
 end)
 
--- 2. Kill Aura (Аура смерти)
+local lastAuraAction = 0
 MkToggle("Combat", "enable_killaura", false, function(active)
     ClearConn("killaura_loop")
     if active then
         Conn("killaura_loop", RunService.Heartbeat:Connect(function()
+            if tick() - lastAuraAction < 0.15 then return end -- Anti-Kick Debounce
             local knife = FindKnifeInHand()
             if knife then
                 for _, p in ipairs(Players:GetPlayers()) do
                     if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
                         local char = p.Character
                         local dist = (char.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                        if dist <= 16 then -- Дистанция ауры резки
+                        if dist <= 16 then 
                             ThrowKnifeAtTarget(knife, char.HumanoidRootPart.Position)
+                            lastAuraAction = tick()
                         end
                     end
                 end
@@ -991,25 +710,23 @@ MkToggle("Combat", "enable_killaura", false, function(active)
     end
 end)
 
--- 3. Auto-Shoot (Авто-выстрел)
+local lastAutoShoot = 0
 MkToggle("Combat", "enable_autoshoot", false, function(active)
     ClearConn("autoshoot_loop")
     if active then
         Conn("autoshoot_loop", RunService.Heartbeat:Connect(function()
+            if tick() - lastAutoShoot < 0.3 then return end -- Shoot Rate Limit
             local gun = FindGunInHand()
             if gun then
                 local mHead = GetMurdererHead()
-                if mHead then
-                    -- Проверяем видимость (Raycast)
+                if mHead and mHead.Parent then
                     local origin = camera.CFrame.Position
                     local direction = (mHead.Position - origin).Unit * 150
-                    local raycastParams = RaycastParams.new()
-                    raycastParams.FilterDescendantsInstances = {player.Character}
-                    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
-                    
+                    local raycastParams = RaycastParams.new(); raycastParams.FilterDescendantsInstances = {player.Character}; raycastParams.FilterType = Enum.RaycastFilterType.Exclude
                     local result = workspace:Raycast(origin, direction, raycastParams)
                     if result and result.Instance:IsDescendantOf(mHead.Parent) then
                         FireGunAtTarget(gun, mHead)
+                        lastAutoShoot = tick()
                     end
                 end
             end
@@ -1072,16 +789,10 @@ MkButton("Fun & Troll", "invis", C.elevated, function()
     if c and c:FindFirstChild("LowerTorso") then
         local r = c:FindFirstChild("HumanoidRootPart")
         if r then
-            local pos = r.CFrame
-            r.CFrame = r.CFrame * CFrame.new(0, 100, 0)
-            task.wait(0.1)
-            pcall(function() c.LowerTorso:Destroy() end)
-            r.CFrame = pos
+            local pos = r.CFrame; r.CFrame = r.CFrame * CFrame.new(0, 100, 0); task.wait(0.1); pcall(function() c.LowerTorso:Destroy() end); r.CFrame = pos
             Notify("Invisibility", "Glitch Applied. You are invisible.", C.green, 2.5)
         end
-    else
-        Notify("Error", "R15 required or already invisible", C.red, 2)
-    end
+    else Notify("Error", "R15 required or already invisible", C.red, 2) end
 end)
 
 ---------------------------------------------------------
@@ -1093,12 +804,7 @@ local function PlayS(id)
     if cSnd then pcall(function() cSnd:Stop(); cSnd:Destroy() end) end
     local r = GetRoot()
     if r and tonumber(id) then 
-        cSnd = Instance.new("Sound")
-        cSnd.SoundId = "http://www.roblox.com/asset/?id="..id
-        cSnd.Volume = 3
-        cSnd.Looped = true
-        cSnd.Parent = r
-        cSnd:Play()
+        cSnd = Instance.new("Sound"); cSnd.SoundId = "http://www.roblox.com/asset/?id="..id; cSnd.Volume = 3; cSnd.Looped = true; cSnd.Parent = r; cSnd:Play()
         Notify("Boombox", "Playing Track ID: " .. id, C.green, 2.5) 
     end 
 end
@@ -1106,159 +812,65 @@ end
 local function StopS() if cSnd then pcall(function() cSnd:Stop(); cSnd:Destroy() end); cSnd = nil end end
 MkButton("Boombox", "play", C.greenDark, function() PlayS(AIn.Text) end); MkButton("Boombox", "stop", C.redDark, function() StopS() end)
 
-MkSep("Boombox", "quick_tracks")
-MkButton("Boombox", "Hardstyle Core (ID 1)", C.elevated, function() PlayS("93602974995833") end)
-MkButton("Boombox", "Phonk Cognition (ID 2)", C.elevated, function() PlayS("77318224045400") end)
-
 ---------------------------------------------------------
--- ============ ADVANCED SETTINGS TAB (RE-ENGINEERED) ============
+-- ============ SETTINGS TAB ============
 ---------------------------------------------------------
-local SettingsContainer = GP("Settings").frame
-SettingsContainer.ScrollBarThickness = 0
+local SettingsContainer = GP("Settings").frame; SettingsContainer.ScrollBarThickness = 0
+local SettingsNav = Instance.new("Frame"); SettingsNav.Size = UDim2.new(1, 0, 0, 26); SettingsNav.BackgroundTransparency = 1; SettingsNav.LayoutOrder = 1; SettingsNav.Parent = SettingsContainer
+local SNavList = Instance.new("UIListLayout"); SNavList.Parent = SettingsNav; SNavList.FillDirection = Enum.FillDirection.Horizontal; SNavList.HorizontalAlignment = Enum.HorizontalAlignment.Center; SNavList.Padding = UDim.new(0, 6)
 
-local SettingsNav = Instance.new("Frame")
-SettingsNav.Size = UDim2.new(1, 0, 0, 26)
-SettingsNav.BackgroundTransparency = 1
-SettingsNav.LayoutOrder = 1
-SettingsNav.Parent = SettingsContainer
-
-local SNavList = Instance.new("UIListLayout")
-SNavList.Parent = SettingsNav; SNavList.FillDirection = Enum.FillDirection.Horizontal; SNavList.HorizontalAlignment = Enum.HorizontalAlignment.Center; SNavList.Padding = UDim.new(0, 6)
-
-local Section_UI = Instance.new("Frame")
-Section_UI.Size = UDim2.new(1, 0, 1, -30); Section_UI.BackgroundTransparency = 1; Section_UI.LayoutOrder = 2; Section_UI.Visible = true; Section_UI.Parent = SettingsContainer
-local UI_List = Instance.new("UIListLayout"); UI_List.Parent = Section_UI; UI_List.Padding = UDim.new(0, 4); UI_List.SortOrder = Enum.SortOrder.LayoutOrder
-
-local Section_Theme = Instance.new("Frame")
-Section_Theme.Size = UDim2.new(1, 0, 1, -30); Section_Theme.BackgroundTransparency = 1; Section_Theme.LayoutOrder = 3; Section_Theme.Visible = false; Section_Theme.Parent = SettingsContainer
-local Theme_List = Instance.new("UIListLayout"); Theme_List.Parent = Section_Theme; Theme_List.Padding = UDim.new(0, 4); Theme_List.SortOrder = Enum.SortOrder.LayoutOrder
-
-local Section_Showcase = Instance.new("Frame")
-Section_Showcase.Size = UDim2.new(1, 0, 1, -30); Section_Showcase.BackgroundTransparency = 1; Section_Showcase.LayoutOrder = 4; Section_Showcase.Visible = false; Section_Showcase.Parent = SettingsContainer
-local Showcase_List = Instance.new("UIListLayout"); Showcase_List.Parent = Section_Showcase; Showcase_List.Padding = UDim.new(0, 4); Showcase_List.SortOrder = Enum.SortOrder.LayoutOrder
+local Section_UI = Instance.new("Frame"); Section_UI.Size = UDim2.new(1, 0, 1, -30); Section_UI.BackgroundTransparency = 1; Section_UI.LayoutOrder = 2; Section_UI.Visible = true; Section_UI.Parent = SettingsContainer; local UI_List = Instance.new("UIListLayout"); UI_List.Parent = Section_UI; UI_List.Padding = UDim.new(0, 4); UI_List.SortOrder = Enum.SortOrder.LayoutOrder
+local Section_Theme = Instance.new("Frame"); Section_Theme.Size = UDim2.new(1, 0, 1, -30); Section_Theme.BackgroundTransparency = 1; Section_Theme.LayoutOrder = 3; Section_Theme.Visible = false; Section_Theme.Parent = SettingsContainer; local Theme_List = Instance.new("UIListLayout"); Theme_List.Parent = Section_Theme; Theme_List.Padding = UDim.new(0, 4); Theme_List.SortOrder = Enum.SortOrder.LayoutOrder
+local Section_Showcase = Instance.new("Frame"); Section_Showcase.Size = UDim2.new(1, 0, 1, -30); Section_Showcase.BackgroundTransparency = 1; Section_Showcase.LayoutOrder = 4; Section_Showcase.Visible = false; Section_Showcase.Parent = SettingsContainer; local Showcase_List = Instance.new("UIListLayout"); Showcase_List.Parent = Section_Showcase; Showcase_List.Padding = UDim.new(0, 4); Showcase_List.SortOrder = Enum.SortOrder.LayoutOrder
 
 local navBtns = {}
 local function CreateNavBtn(key, sectionFrame)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.31, 0, 1, 0)
-    btn.BackgroundColor3 = C.elevated
-    btn.Text = L[currentLang][key] or key
-    btn.TextColor3 = C.textDim
-    btn.TextSize = 8
-    btn.Font = Enum.Font.GothamBold
-    btn.Parent = SettingsNav
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-    local btnStk = Instance.new("UIStroke"); btnStk.Color = C.accent; btnStk.Thickness = 0.8; btnStk.Transparency = 0.8; btnStk.Parent = btn
-    updateableLabels[btn] = key
-    table.insert(globalTextObjects, btn)
-
+    local btn = Instance.new("TextButton"); btn.Size = UDim2.new(0.31, 0, 1, 0); btn.BackgroundColor3 = C.elevated; btn.Text = L[currentLang][key] or key; btn.TextColor3 = C.textDim; btn.TextSize = 8; btn.Font = Enum.Font.GothamBold; btn.Parent = SettingsNav; Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    local btnStk = Instance.new("UIStroke"); btnStk.Color = C.accent; btnStk.Thickness = 0.8; btnStk.Transparency = 0.8; btnStk.Parent = btn; updateableLabels[btn] = key; table.insert(globalTextObjects, btn)
     btn.MouseButton1Click:Connect(function()
-        Section_UI.Visible = false
-        Section_Theme.Visible = false
-        Section_Showcase.Visible = false
-        for _, b in ipairs(navBtns) do
-            b.BackgroundColor3 = C.elevated
-            b.TextColor3 = C.textDim
-            b:FindFirstChildOfClass("UIStroke").Transparency = 0.8
-        end
-        sectionFrame.Visible = true
-        btn.BackgroundColor3 = C.accent
-        btn.TextColor3 = C.white
-        btnStk.Transparency = 0.4
+        Section_UI.Visible = false; Section_Theme.Visible = false; Section_Showcase.Visible = false
+        for _, b in ipairs(navBtns) do b.BackgroundColor3 = C.elevated; b.TextColor3 = C.textDim; b:FindFirstChildOfClass("UIStroke").Transparency = 0.8 end
+        sectionFrame.Visible = true; btn.BackgroundColor3 = C.accent; btn.TextColor3 = C.white; btnStk.Transparency = 0.4
     end)
     table.insert(navBtns, btn)
 end
 
-CreateNavBtn("tab_ui", Section_UI)
-CreateNavBtn("tab_theme", Section_Theme)
-CreateNavBtn("tab_showcase", Section_Showcase)
+CreateNavBtn("tab_ui", Section_UI); CreateNavBtn("tab_theme", Section_Theme); CreateNavBtn("tab_showcase", Section_Showcase)
+navBtns[1].BackgroundColor3 = C.accent; navBtns[1].TextColor3 = C.white; navBtns[1]:FindFirstChildOfClass("UIStroke").Transparency = 0.4
 
-navBtns[1].BackgroundColor3 = C.accent
-navBtns[1].TextColor3 = C.white
-navBtns[1]:FindFirstChildOfClass("UIStroke").Transparency = 0.4
-
----------------------------------
--- НАПОЛНЕНИЕ ВКЛАДКИ 1: UI
----------------------------------
 MkSep("Settings", "menu_size", Section_UI)
-MkSlider("Settings", "menu_size", 300, 700, 480, function(v)
-    ResizeMenu(v, HUB_H)
-end, Section_UI)
-
+MkSlider("Settings", "menu_size", 300, 700, 480, function(v) ResizeMenu(v, HUB_H) end, Section_UI)
 MkSep("Settings", "menu_transparency", Section_UI)
-MkSlider("Settings", "menu_transparency", 0, 90, 15, function(v)
-    menuTransparency = v / 100
-    Hub.BackgroundTransparency = menuTransparency
-    Sidebar.BackgroundTransparency = menuTransparency
-    TopB.BackgroundTransparency = menuTransparency
-end, Section_UI)
+MkSlider("Settings", "menu_transparency", 0, 90, 15, function(v) menuTransparency = v / 100; Hub.BackgroundTransparency = menuTransparency; Sidebar.BackgroundTransparency = menuTransparency; TopB.BackgroundTransparency = menuTransparency end, Section_UI)
 
 MkSep("Settings", "change_font", Section_UI)
-local fontIndex = 1
-local availableFonts = {Enum.Font.GothamSemibold, Enum.Font.Code, Enum.Font.Arial, Enum.Font.SourceSans}
-local fontNames = {"Gotham Premium", "Digital Code", "Classic Arial", "Source Sans"}
-
-local FontToggleBtn = Instance.new("TextButton")
-FontToggleBtn.Size = UDim2.new(1, 0, 0, 28)
-FontToggleBtn.BackgroundColor3 = C.elevated
-FontToggleBtn.Text = "Font: Gotham Premium"
-FontToggleBtn.TextColor3 = C.white
-FontToggleBtn.TextSize = 10
-FontToggleBtn.Font = Enum.Font.GothamBold
-FontToggleBtn.Parent = Section_UI
-Instance.new("UICorner", FontToggleBtn).CornerRadius = UDim.new(0, 8)
-
+local fontIndex = 1; local availableFonts = {Enum.Font.GothamSemibold, Enum.Font.Code, Enum.Font.Arial, Enum.Font.SourceSans}; local fontNames = {"Gotham Premium", "Digital Code", "Classic Arial", "Source Sans"}
+local FontToggleBtn = Instance.new("TextButton"); FontToggleBtn.Size = UDim2.new(1, 0, 0, 28); FontToggleBtn.BackgroundColor3 = C.elevated; FontToggleBtn.Text = "Font: Gotham Premium"; FontToggleBtn.TextColor3 = C.white; FontToggleBtn.TextSize = 10; FontToggleBtn.Font = Enum.Font.GothamBold; FontToggleBtn.Parent = Section_UI; Instance.new("UICorner", FontToggleBtn).CornerRadius = UDim.new(0, 8)
 FontToggleBtn.MouseButton1Click:Connect(function()
-    fontIndex = fontIndex + 1
-    if fontIndex > #availableFonts then fontIndex = 1 end
-    currentFont = availableFonts[fontIndex]
-    FontToggleBtn.Text = "Font: " .. fontNames[fontIndex]
-    
-    for _, textObj in ipairs(globalTextObjects) do
-        if textObj.Parent then
-            textObj.Font = currentFont
-        end
-    end
-    Notify("UI Engine", "Font changed to " .. fontNames[fontIndex], C.accent, 2)
+    fontIndex = fontIndex + 1; if fontIndex > #availableFonts then fontIndex = 1 end
+    currentFont = availableFonts[fontIndex]; FontToggleBtn.Text = "Font: " .. fontNames[fontIndex]
+    for _, textObj in ipairs(globalTextObjects) do if textObj.Parent then textObj.Font = currentFont end end
 end)
 
 MkSep("Settings", "system", Section_UI)
-
 local LangToggleBtn = Instance.new("TextButton"); LangToggleBtn.Size = UDim2.new(1,0,0,28); LangToggleBtn.BackgroundColor3 = C.elevated; LangToggleBtn.Text = "Русский / Russian"; LangToggleBtn.TextColor3 = C.white; LangToggleBtn.TextSize = 10; LangToggleBtn.Font = Enum.Font.GothamBold; LangToggleBtn.Parent = Section_UI; Instance.new("UICorner", LangToggleBtn).CornerRadius = UDim.new(0,8)
 LangToggleBtn.MouseButton1Click:Connect(function() if currentLang == "RU" then UpdateLanguage("EN"); LangToggleBtn.Text = "English" else UpdateLanguage("RU"); LangToggleBtn.Text = "Русский / Russian" end end)
 
 MkButton("Settings", "reset", C.elevated, function() local h = GetHum(); if h then h.Health = 0 end end, Section_UI)
 MkButton("Settings", "copy", C.elevated, function() pcall(function() setclipboard("Roblox.GameLauncher.joinGameInstance(" .. game.PlaceId .. ", '" .. game.JobId .. "')") end) end, Section_UI)
-MkButton("Settings", "destroy", C.redDark, function() ClearVisuals(); ClearESP(); ClearGunESP(); StopS(); for _, c in pairs(connections) do if typeof(c) == "RBXScriptConnection" then c:Disconnect() end end; ScreenGui:Destroy() end, Section_UI)
+-- [FIX] Added clearESP callback missing from original destruct logic
+MkButton("Settings", "destroy", C.redDark, function() ClearESP(); ClearGunESP(); StopS(); for _, c in pairs(connections) do if typeof(c) == "RBXScriptConnection" then c:Disconnect() end end; ScreenGui:Destroy() end, Section_UI)
 
----------------------------------
--- НАПОЛНЕНИЕ ВКЛАДКИ 2: THEME
----------------------------------
 MkSep("Settings", "theme", Section_Theme)
 local ThemeList = Instance.new("Frame"); ThemeList.Size = UDim2.new(1,0,0,36); ThemeList.BackgroundTransparency = 1; ThemeList.Parent = Section_Theme
 local TLList = Instance.new("UIListLayout"); TLList.Parent = ThemeList; TLList.FillDirection = Enum.FillDirection.Horizontal; TLList.Padding = UDim.new(0,5); TLList.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
-for _, tName in ipairs({"Purple", "Red", "Blue", "Green", "Dark"}) do 
-    local tc = Themes[tName].accent
-    local tBtn = Instance.new("TextButton")
-    tBtn.Size = UDim2.new(0.18,0,1,0)
-    tBtn.BackgroundColor3 = tc
-    tBtn.Text = tName:sub(1,1)
-    tBtn.TextColor3 = C.white
-    tBtn.Font = Enum.Font.GothamBold
-    tBtn.TextSize = 11
-    tBtn.Parent = ThemeList
-    Instance.new("UICorner", tBtn).CornerRadius = UDim.new(0,6)
-    
-    tBtn.MouseButton1Click:Connect(function() 
-        ApplyTheme(tName)
-        Notify("linbergz", "Accent color set to "..tName, C.accent, 2) 
-    end) 
+-- [FIX] Re-engineered theme loops to utilize actual keys available in 'Themes' table
+for tName, tData in pairs(Themes) do 
+    local tBtn = Instance.new("TextButton"); tBtn.Size = UDim2.new(0.18,0,1,0); tBtn.BackgroundColor3 = tData.accent; tBtn.Text = tName:sub(1,1); tBtn.TextColor3 = C.white; tBtn.Font = Enum.Font.GothamBold; tBtn.TextSize = 11; tBtn.Parent = ThemeList; Instance.new("UICorner", tBtn).CornerRadius = UDim.new(0,6)
+    tBtn.MouseButton1Click:Connect(function() ApplyTheme(tName); Notify("linbergz", "Accent color set to "..tName, tData.accent, 2) end) 
 end
 
----------------------------------
--- НАПОЛНЕНИЕ ВКЛАДКИ 3: SHOWCASE (LIVE TEMPLATES)
----------------------------------
 MkSep("Settings", "soon", Section_Showcase)
 MkInfoBox("Settings", "System Templates are currently active under OS bypass protection.", Section_Showcase)
 
@@ -1268,27 +880,18 @@ MkInfoBox("Settings", "System Templates are currently active under OS bypass pro
 MkSep("Info", "about")
 local InfoChange = MkInfoBox("Info", "Loading updates...")
 local function RefreshLog()
-    if currentLang == "RU" then InfoChange.Text = "Премиум Редизайн v9.5 Nexus Mobile:\n\n- [NEW] Боевые Опции: Добавлен Silent Aim, Kill Aura и Auto-Shoot для полного доминирования.\n- [NEW] Авто-Сохранение: Ваши настройки холста, шрифта, прозрачности сохраняются при перезапуске.\n- [NEW] Оптимизация Настроек: Переработана вкладка настроек, эмодзи шестеренки заменен на неоновое молниеносное ядро.\n- [NEW] Метки: Добавлены раздельные Tracers (Линии) и Box ESP (2D-Коробки) для каждой роли индивидуально."
-    else InfoChange.Text = "Premium Redesign v9.5 Nexus Mobile:\n\n- [NEW] Combat Integration: Added Silent Aim, Kill Aura, and Auto-Shoot.\n- [NEW] Auto-Save System: Canvas bounds, custom transparency, and font layouts are saved automatically.\n- [NEW] Settings Redesign: Overhauled configuration sub-panel and updated system control triggers.\n- [NEW] Dynamic ESP: Independent lines (Tracers) and box overlays for Murderer, Sheriff, and Innocents." end
+    if currentLang == "RU" then InfoChange.Text = "Премиум Редизайн v9.5 Nexus Mobile:\n\n- [NEW] Боевые Опции: Silent Aim, Kill Aura (Anti-Kick), Auto-Shoot.\n- [NEW] Network Optimization: Умное кеширование RemoteEvent для максимального FPS.\n- [NEW] Авто-Сохранение: JSON Config Loader."
+    else InfoChange.Text = "Premium Redesign v9.5 Nexus Mobile:\n\n- [NEW] Combat Integration: Silent Aim, Kill Aura (Anti-Kick), Auto-Shoot.\n- [NEW] Network Optimization: Smart RemoteEvent caching for maximum frame-time.\n- [NEW] Configuration Core: JSON Config Loader." end
 end
 RefreshLog(); LangToggleBtn.MouseButton1Click:Connect(RefreshLog)
 
 ---------------------------------------------------------
--- CONFIGURATION STATE DRIVER (AUTO-SAVE & LOAD)
+-- CONFIGURATION STATE DRIVER
 ---------------------------------------------------------
 local ConfigFile = "linbergz_nexus_config.json"
 local function SaveConfig()
-    local cfg = {
-        Size = HUB_W,
-        Transparency = menuTransparency * 100,
-        Font = fontIndex,
-        Lang = currentLang
-    }
-    pcall(function()
-        if writefile then
-            writefile(ConfigFile, HttpService:JSONEncode(cfg))
-        end
-    end)
+    local cfg = { Size = HUB_W, Transparency = menuTransparency * 100, Font = fontIndex, Lang = currentLang, Theme = currentThemeName }
+    pcall(function() if writefile then writefile(ConfigFile, HttpService:JSONEncode(cfg)) end end)
 end
 
 local function LoadConfig()
@@ -1297,37 +900,17 @@ local function LoadConfig()
             local data = HttpService:JSONDecode(readfile(ConfigFile))
             if data then
                 if data.Size then ResizeMenu(data.Size, HUB_H) end
-                if data.Transparency then 
-                    menuTransparency = data.Transparency / 100
-                    Hub.BackgroundTransparency = menuTransparency
-                    Sidebar.BackgroundTransparency = menuTransparency
-                    TopB.BackgroundTransparency = menuTransparency
-                end
-                if data.Font then 
-                    fontIndex = data.Font
-                    currentFont = availableFonts[fontIndex]
-                    FontToggleBtn.Text = "Font: " .. fontNames[fontIndex]
-                end
-                if data.Lang then 
-                    UpdateLanguage(data.Lang)
-                    if data.Lang == "RU" then LangToggleBtn.Text = "Русский / Russian" else LangToggleBtn.Text = "English" end
-                end
+                if data.Transparency then menuTransparency = data.Transparency / 100; Hub.BackgroundTransparency = menuTransparency; Sidebar.BackgroundTransparency = menuTransparency; TopB.BackgroundTransparency = menuTransparency end
+                if data.Font then fontIndex = data.Font; currentFont = availableFonts[fontIndex]; FontToggleBtn.Text = "Font: " .. fontNames[fontIndex] end
+                if data.Lang then UpdateLanguage(data.Lang); if data.Lang == "RU" then LangToggleBtn.Text = "Русский / Russian" else LangToggleBtn.Text = "English" end end
+                if data.Theme then ApplyTheme(data.Theme) end
             end
         end
     end)
 end
 
--- Автосохранение при закрытии/дестрое
 task.spawn(LoadConfig)
-RunService.Heartbeat:Connect(function()
-    -- Периодическое сохранение
-    if math.random(1, 1500) == 100 then
-        SaveConfig()
-    end
-end)
+RunService.Heartbeat:Connect(function() if math.random(1, 1500) == 100 then SaveConfig() end end)
 
----------------------------------------------------------
--- INITIALIZATION PIPELINE
----------------------------------------------------------
 UpdateLanguage("RU")
 task.delay(1.5, function() Notify("linbergz Team", "Nexus Engine v9.5 Engaged!", C.gold, 3.5) end)
