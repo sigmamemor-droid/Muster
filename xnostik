@@ -1,9 +1,16 @@
--- linbergz Team MM2 PREMIUM MOBILE HUB v8.0 (Nexus Redesign Update - HOTFIXED)
--- Ironclad Anti-Fling & Advanced Physics Fling Engine + MM2 Auto Features
--- Fully Unabbreviated & Mobile Optimized Code with Premium Glassmorphism UI
+--[[
+    _ _       _                                _____ ____  
+   | (_)_ __ | |__   ___ _ __ __ _ _____      |  ___/ ___| 
+   | | | '_ \| '_ \ / _ \ '__/ _` |_  / _ \____| |_  \___ \ 
+   | | | | | | |_) |  __/ | | (_| |/ /  __/_____|  _|  ___) |
+   |_|_|_| |_|_.__/ \___|_|  \__, /___\___|     |_|   |____/ 
+                             |___/                          
+   linbergz Team // MM2 PREMIUM MOBILE HUB v9.0 "Aether OS"
+   Designed by linbergz Core. Fully Optimized, Unabbreviated, and Powered by Aether UI.
+]]
 
 ---------------------------------------------------------
--- SERVICES
+-- CORE SERVICES
 ---------------------------------------------------------
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -11,6 +18,7 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 if not player then
@@ -36,32 +44,63 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
 
 ---------------------------------------------------------
--- THEME SYSTEM CONFIGURATION (PREMIUM PALETTES)
+-- THEME SYSTEM CONFIGURATION (AETHER PREMIUM PALETTES)
 ---------------------------------------------------------
 local Themes = {
-    Purple = { accent = Color3.fromRGB(150, 80, 255), accentLight = Color3.fromRGB(190, 130, 255), bg = Color3.fromRGB(10, 8, 18), surface = Color3.fromRGB(16, 12, 28) },
-    Red = { accent = Color3.fromRGB(255, 60, 80), accentLight = Color3.fromRGB(255, 110, 140), bg = Color3.fromRGB(14, 6, 8), surface = Color3.fromRGB(22, 10, 14) },
-    Blue = { accent = Color3.fromRGB(0, 160, 255), accentLight = Color3.fromRGB(100, 210, 255), bg = Color3.fromRGB(6, 10, 18), surface = Color3.fromRGB(10, 16, 28) },
-    Green = { accent = Color3.fromRGB(0, 230, 120), accentLight = Color3.fromRGB(120, 255, 180), bg = Color3.fromRGB(5, 14, 10), surface = Color3.fromRGB(8, 24, 16) },
-    Dark = { accent = Color3.fromRGB(220, 220, 220), accentLight = Color3.fromRGB(255, 255, 255), bg = Color3.fromRGB(8, 8, 8), surface = Color3.fromRGB(14, 14, 14) }
+    Nebula = { 
+        accent = Color3.fromRGB(160, 70, 255), 
+        accentLight = Color3.fromRGB(210, 150, 255), 
+        bg = Color3.fromRGB(9, 7, 16), 
+        surface = Color3.fromRGB(15, 11, 26),
+        gradient = {Color3.fromRGB(160, 70, 255), Color3.fromRGB(80, 30, 180)}
+    },
+    Supernova = { 
+        accent = Color3.fromRGB(255, 75, 45), 
+        accentLight = Color3.fromRGB(255, 140, 100), 
+        bg = Color3.fromRGB(12, 6, 6), 
+        surface = Color3.fromRGB(22, 10, 10),
+        gradient = {Color3.fromRGB(255, 75, 45), Color3.fromRGB(180, 25, 10)}
+    },
+    DeepOcean = { 
+        accent = Color3.fromRGB(0, 180, 255), 
+        accentLight = Color3.fromRGB(120, 220, 255), 
+        bg = Color3.fromRGB(5, 9, 16), 
+        surface = Color3.fromRGB(9, 16, 28),
+        gradient = {Color3.fromRGB(0, 180, 255), Color3.fromRGB(0, 80, 180)}
+    },
+    Matrix = { 
+        accent = Color3.fromRGB(0, 240, 100), 
+        accentLight = Color3.fromRGB(140, 255, 180), 
+        bg = Color3.fromRGB(4, 10, 6), 
+        surface = Color3.fromRGB(8, 20, 12),
+        gradient = {Color3.fromRGB(0, 240, 100), Color3.fromRGB(0, 120, 40)}
+    },
+    Eclipse = { 
+        accent = Color3.fromRGB(240, 240, 240), 
+        accentLight = Color3.fromRGB(255, 255, 255), 
+        bg = Color3.fromRGB(8, 8, 8), 
+        surface = Color3.fromRGB(14, 14, 14),
+        gradient = {Color3.fromRGB(180, 180, 180), Color3.fromRGB(40, 40, 40)}
+    }
 }
 
 local C = {
-    bg = Themes.Purple.bg, sidebar = Color3.fromRGB(6, 5, 12), surface = Themes.Purple.surface,
-    elevated = Color3.fromRGB(24, 18, 40), cardHover = Color3.fromRGB(36, 28, 60),
-    accent = Themes.Purple.accent, accentLight = Themes.Purple.accentLight,
-    green = Color3.fromRGB(0, 230, 120), greenDark = Color3.fromRGB(10, 40, 25),
-    red = Color3.fromRGB(255, 60, 80), redDark = Color3.fromRGB(45, 12, 18),
-    gold = Color3.fromRGB(255, 200, 50), goldDark = Color3.fromRGB(40, 30, 8),
+    bg = Themes.Nebula.bg, sidebar = Color3.fromRGB(5, 4, 10), surface = Themes.Nebula.surface,
+    elevated = Color3.fromRGB(22, 16, 38), cardHover = Color3.fromRGB(34, 25, 58),
+    accent = Themes.Nebula.accent, accentLight = Themes.Nebula.accentLight,
+    green = Color3.fromRGB(0, 240, 100), greenDark = Color3.fromRGB(10, 42, 20),
+    red = Color3.fromRGB(255, 75, 45), redDark = Color3.fromRGB(42, 12, 12),
+    gold = Color3.fromRGB(255, 200, 50), goldDark = Color3.fromRGB(42, 32, 8),
     white = Color3.fromRGB(255, 255, 255), black = Color3.fromRGB(0, 0, 0),
     text = Color3.fromRGB(245, 245, 250), textSec = Color3.fromRGB(175, 170, 195),
-    textDim = Color3.fromRGB(115, 110, 135), textMuted = Color3.fromRGB(70, 65, 85),
-    separator = Color3.fromRGB(32, 26, 54),
+    textDim = Color3.fromRGB(115, 110, 135), textMuted = Color3.fromRGB(68, 62, 82),
+    separator = Color3.fromRGB(30, 24, 52),
 }
 
 local currentFont = Enum.Font.GothamSemibold
 local globalTextObjects = {}
-local menuTransparency = 0.15
+local menuTransparency = 0.12
+local currentThemeName = "Nebula"
 
 ---------------------------------------------------------
 -- LOCALIZATION ENGINE (RU/EN)
@@ -71,28 +110,28 @@ local updateableLabels = {}
 
 local L = {
     EN = {
-        home = "Main Hub", combat = "Combat", fun = "Trolling", boombox = "Boombox", settings = "Settings", info = "Info/Logs",
-        movement = "PHYSICS & MOVEMENT", walkspeed = "Custom Walk Speed", jumppower = "Custom Jump Power", infjump = "Air Jump (Infinite)",
-        protection = "SECURITY SHIELDS", antifling = "Ironclad Anti-Fling", noclip = "Noclip (Wall-Pass)", fly = "Fly [Mobile Engine]", fullbright = "Ambient Fullbright",
-        automation = "MM2 AUTOMATION", autofarm = "Gold Coin Auto Farm", tplobby = "Teleport to Lobby", tpmap = "Teleport to Active Map",
-        aimbot = "Aimbot on Murderer", shootbtn = "Screen Shoot Button", magicshot = "Screen Magic Shot",
-        autograb = "Auto Loot Gun", killall = "[💥] Kill Server (Knife)", teleport = "MAP TELEPORTS", tpmurder = "Chase Murderer", tpsheriff = "Retrieve Sheriff",
-        players_esp = "Global Player ESP", roles_esp = "Tactical Role ESP", gun_esp = "Lootable Gun ESP",
-        announce = "Broadcast Roles to Chat", audioplayer = "DIGITAL AUDIO PLAYER", play = "INITIALIZE ID", stop = "TERMINATE ID", system = "HUB CONTROL PANEL", copy = "Extract Server Link",
-        reset = "Instant Character Reset", destroy = "Self-Destruct Hub", theme = "Theme Palette", language = "Menu Language",
-        about = "linbergz ARCHITECTURE", quick_tracks = "HOT AUDIO PRESETS", flinger = "PHYSICS FLING SYSTEM", touch_fling = "Kinetic Touch Fling",
-        select_target = "Select Target Profile", fling_btn = "Launch Target to Orbit", invis = "R15 Glitch Cloak", role_info = "LIVE ROLE ANALYTICS",
-        soon = "DEVELOPMENT",
-        menu_size = "UI Scaling (Width)", menu_transparency = "Acrylic Transparency", change_font = "Typography Font Style",
-        tab_ui = "Interface", tab_theme = "Color Schemes", tab_showcase = "Presets (soon)",
-        subtab_labels = "ESP Tags", subtab_movement = "Movement", subtab_automation = "Auto-Play",
-        enable_roles = "Enable Role ESP", enable_gun = "Enable Gun ESP", enable_tracers = "Enable Tracers ESP", enable_box = "Enable 2D Box ESP",
-        speed_slider = "Walkspeed (0-100)", enable_bhop = "Activate BunnyHop", bhop_power = "Bhop Jump Power", bhop_sound = "Bhop Sound Effects"
+        home = "Main OS", combat = "Combat", fun = "Trolling", boombox = "Aether Audio", settings = "Settings", info = "Architecture",
+        movement = "DYNAMICS & PHYSICS", walkspeed = "Target Speed Engine", jumppower = "Kinetic Jump", infjump = "Aether Fly Jump",
+        protection = "SECURITY SYSTEM", antifling = "Ironclad Anti-Fling Plus", noclip = "Phasing (Noclip)", fly = "Gravity Flight", fullbright = "Quantum Fullbright",
+        automation = "MM2 PROTOCOLS", autofarm = "Auto Farm Coins", tplobby = "Relocate to Lobby", tpmap = "Relocate to Map",
+        aimbot = "Aimbot Calibration", shootbtn = "Tactical Fire Trigger", magicshot = "Singularity Shot",
+        autograb = "Auto-Loot Revolver", killall = "[💥] Decimate Server (Knife)", teleport = "SPATIAL TELEPORTS", tpmurder = "Chase Murderer", tpsheriff = "Retrieve Sheriff",
+        players_esp = "Biological Scanner", roles_esp = "Threat Matrix ESP", gun_esp = "Dropped Armament ESP",
+        announce = "Broadcast Intel to Chat", audioplayer = "DECENTRALIZED AUDIO SYSTEM", play = "ENGAGE AUDIO ID", stop = "TERMINATE ID", system = "OS SYSTEM DRIVERS", copy = "Extract Server Link",
+        reset = "Forced Terminal Reset", destroy = "Purge Hub Core", theme = "UI Palette Presets", language = "Menu Language",
+        about = "AETHER COGNITION", quick_tracks = "HOT AUDIO PRESETS", flinger = "VELOCITY FLINGER", touch_fling = "Kinetic Touch Fling",
+        select_target = "Select Target Vector", fling_btn = "Banish to Stratosphere", invis = "R15 Phase Shift Cloak", role_info = "LIVE STRATEGIC METRICS",
+        menu_size = "Aether Canvas Scale", menu_transparency = "Acrylic Density", change_font = "Typography Framework",
+        tab_ui = "OS Shell Interface", tab_theme = "Color Core", tab_showcase = "Theme Showcase",
+        subtab_labels = "Tactical ESP", subtab_movement = "Kinetic Control", subtab_automation = "MM2 Engines",
+        enable_murd = "ESP Murderer", enable_sher = "ESP Sheriff", enable_inn = "ESP Innocent",
+        enable_gun = "Highlight Drop Revolver", enable_tracers = "Render Tactical Tracers", enable_box = "Render 2D Threat Boxes",
+        speed_slider = "Dynamic Velocity", enable_bhop = "Aerodynamic BunnyHop", bhop_power = "Kinetic Bounce Velocity", bhop_sound = "Acoustic Air Displacement"
     },
     RU = {
-        home = "Главная", combat = "Сражение", fun = "Троллинг", boombox = "Музыка", settings = "Настройки", info = "О хабе",
-        movement = "ФИЗИКА И ПЕРЕДВИЖЕНИЕ", walkspeed = "Настройка скорости", jumppower = "Высота прыжка", infjump = "Прыжки в воздухе",
-        protection = "МОДУЛИ ЗАЩИТЫ", antifling = "Анти-Флинг система", noclip = "Хождение сквозь стены", fly = "Полет [Mobile]", fullbright = "Режим Яркого Света",
+        home = "Главная OS", combat = "Сражение", fun = "Троллинг", boombox = "Аудио-Ядро", settings = "Настройки", info = "О хабе",
+        movement = "ФИЗИКА И ПЕРЕДВИЖЕНИЕ", walkspeed = "Регулировка скорости", jumppower = "Высота прыжка", infjump = "Прыжки в воздухе",
+        protection = "МОДУЛИ ЗАЩИТЫ", antifling = "Ironclad Анти-Флинг +", noclip = "Фазовый сдвиг (Noclip)", fly = "Полет [Mobile]", fullbright = "Режим Яркого Света",
         automation = "АВТОМАТИЗАЦИЯ", autofarm = "Авто-фарм золота", tplobby = "ТП в Лобби", tpmap = "ТП на игровую арену",
         aimbot = "Аимбот на убийцу", shootbtn = "Кнопка выстрела на экране", magicshot = "Кнопка Магического выстрела",
         autograb = "Авто-подбор оружия", killall = "[💥] Убить весь сервер (Нож)", teleport = "ТЕЛЕПОРТАЦИЯ", tpmurder = "Телепорт к Убийце", tpsheriff = "Телепорт к Шерифу",
@@ -105,7 +144,8 @@ local L = {
         menu_size = "Размер интерфейса", menu_transparency = "Прозрачность акрила", change_font = "Стиль шрифтов",
         tab_ui = "Интерфейс", tab_theme = "Цветовые темы", tab_showcase = "Витрина (soon)",
         subtab_labels = "Метки", subtab_movement = "Передвижение", subtab_automation = "Автоматизация",
-        enable_roles = "Включить ESP ролей", enable_gun = "ESP пистолета", enable_tracers = "Tracers (Линии)", enable_box = "Box ESP (Коробки)",
+        enable_murd = "ESP Убийца (Murderer)", enable_sher = "ESP Шериф (Sheriff)", enable_inn = "ESP Мирные (Innocent)",
+        enable_gun = "ESP пистолета", enable_tracers = "Tracers (Линии)", enable_box = "Box ESP (Коробки)",
         speed_slider = "Скорость (0-100)", enable_bhop = "Бхоп (Bunnyhop)", bhop_power = "Сила бхопа", bhop_sound = "Звук бхопа"
     }
 }
@@ -373,7 +413,7 @@ for idx, def in ipairs(tabDefs) do
     end)
 end
 
--- Анимация переключения меню исправлена (Без изменения геометрии scale, только прозрачность и видимость)
+-- Плавное открытие/закрытие CanvasGroup
 local hubOpen = false
 local function ToggleHub()
     hubOpen = not hubOpen
@@ -390,7 +430,6 @@ local function ToggleHub()
     end
 end
 
--- Добавление CanvasGroup для плавной анимации прозрачности всего меню
 if not Hub:IsA("CanvasGroup") then
     local oldParent = Hub.Parent
     local CG = Instance.new("CanvasGroup")
@@ -502,10 +541,8 @@ local espConnections = {}
 local function ClearVisuals()
     for _, draw in ipairs(activeTracers) do pcall(function() draw:Destroy() end) end
     for _, draw in ipairs(activeBoxes) do pcall(function() draw:Destroy() end) end
-    for _, c in pairs(espConnections) do pcall(function() c:Disconnect() end) end
     activeTracers = {}
     activeBoxes = {}
-    espConnections = {}
 end
 
 local function DrawLine(p1, p2, col)
@@ -610,40 +647,92 @@ homeNavBtns[1].TextColor3 = C.white
 homeNavBtns[1]:FindFirstChildOfClass("UIStroke").Transparency = 0.4
 
 ---------------------------------
--- СУБ-ВКЛАДКА 1: МЕТКИ (ESP)
+-- СУБ-ВКЛАДКА 1: МЕТКИ (ESP) - РАЗДЕЛЬНЫЕ НАСТРОЙКИ
 ---------------------------------
-local espRolesEnabled, espGunEnabled, espTracersEnabled, espBoxesEnabled = false, false, false, false
+local espMurdEnabled, espSherEnabled, espInnEnabled = false, false, false
+local espGunEnabled, espTracersEnabled, espBoxesEnabled = false, false, false
 
 MkSep("Home", "subtab_labels", Sub_Labels)
 
-local function ClearRoles() for _, p in ipairs(Players:GetPlayers()) do if p.Character and p.Character:FindFirstChild("MobileESP") then p.Character.MobileESP:Destroy() end end end
-local function ApplyHighlight(ch, col) if not ch then return end; if ch:FindFirstChild("MobileESP") then ch.MobileESP:Destroy() end; local h = Instance.new("Highlight"); h.Name = "MobileESP"; h.FillColor = col; h.FillTransparency = 0.55; h.OutlineColor = Color3.fromRGB(255,255,255); h.OutlineTransparency = 0.2; h.Adornee = ch; h.Parent = ch end
+local function ClearRoles() 
+    for _, p in ipairs(Players:GetPlayers()) do 
+        if p.Character and p.Character:FindFirstChild("MobileESP") then 
+            p.Character.MobileESP:Destroy() 
+        end 
+    end 
+end
 
-MkToggle("Home", "enable_roles", false, function(a)
-    espRolesEnabled = a
-    ClearRoles()
-    ClearConn("esp_roles")
-    if a then
-        local function UpdateRoles() 
-            for _, p in ipairs(Players:GetPlayers()) do 
-                if p ~= player and p.Character then 
-                    if IsMurderer(p) then ApplyHighlight(p.Character, Color3.fromRGB(255,50,50)) 
-                    elseif IsSheriff(p) then ApplyHighlight(p.Character, Color3.fromRGB(50,150,255)) 
-                    else ApplyHighlight(p.Character, Color3.fromRGB(50,255,100)) end 
-                end 
-            end 
+local function ApplyHighlight(ch, col) 
+    if not ch then return end; 
+    if ch:FindFirstChild("MobileESP") then ch.MobileESP:Destroy() end; 
+    local h = Instance.new("Highlight"); 
+    h.Name = "MobileESP"; 
+    h.FillColor = col; 
+    h.FillTransparency = 0.55; 
+    h.OutlineColor = Color3.fromRGB(255,255,255); 
+    h.OutlineTransparency = 0.2; 
+    h.Adornee = ch; 
+    h.Parent = ch 
+end
+
+-- Единая функция обновления ролей на основе раздельных тумблеров
+local function UpdateTacticalESP()
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= player and p.Character then
+            local isM, isS = IsMurderer(p), IsSheriff(p)
+            
+            if isM and espMurdEnabled then
+                ApplyHighlight(p.Character, Color3.fromRGB(255, 50, 50))
+            elseif isS and espSherEnabled then
+                ApplyHighlight(p.Character, Color3.fromRGB(50, 150, 255))
+            elseif not isM and not isS and espInnEnabled then
+                ApplyHighlight(p.Character, Color3.fromRGB(50, 255, 100))
+            else
+                -- Убираем подсветку, если роль выключена
+                if p.Character:FindFirstChild("MobileESP") then
+                    p.Character.MobileESP:Destroy()
+                end
+            end
         end
-        UpdateRoles()
-        local lastUpdate = 0
-        Conn("esp_roles", RunService.Heartbeat:Connect(function() 
-            if tick() - lastUpdate > 0.5 then 
-                lastUpdate = tick()
-                UpdateRoles() 
-            end 
-        end))
     end
+end
+
+-- Включение циклической проверки ролей при изменении настроек
+local function ToggleRoleLoop()
+    ClearConn("esp_roles_loop")
+    if espMurdEnabled or espSherEnabled or espInnEnabled then
+        local lastUpdate = 0
+        Conn("esp_roles_loop", RunService.Heartbeat:Connect(function()
+            if tick() - lastUpdate > 0.5 then
+                lastUpdate = tick()
+                UpdateTacticalESP()
+            end
+        end))
+        UpdateTacticalESP()
+    else
+        ClearRoles()
+    end
+end
+
+-- Тумблер 1: Убийца
+MkToggle("Home", "enable_murd", false, function(a)
+    espMurdEnabled = a
+    ToggleRoleLoop()
 end, Sub_Labels)
 
+-- Тумблер 2: Шериф
+MkToggle("Home", "enable_sher", false, function(a)
+    espSherEnabled = a
+    ToggleRoleLoop()
+end, Sub_Labels)
+
+-- Тумблер 3: Мирные
+MkToggle("Home", "enable_inn", false, function(a)
+    espInnEnabled = a
+    ToggleRoleLoop()
+end, Sub_Labels)
+
+-- ESP пистолета на полу
 local gunGuis = {}
 local function ClearGunESP() for _, g in ipairs(gunGuis) do pcall(function() g:Destroy() end) end; gunGuis = {} end
 
@@ -677,6 +766,7 @@ MkToggle("Home", "enable_box", false, function(a)
     if not a then ClearVisuals() end
 end, Sub_Labels)
 
+-- Рендер циклы для Трасеров и Коробок с учетом активных ролей
 RunService.RenderStepped:Connect(function()
     if not espTracersEnabled and not espBoxesEnabled then return end
     
@@ -687,23 +777,30 @@ RunService.RenderStepped:Connect(function()
     
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChildOfClass("Humanoid") and p.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
-            local root = p.Character.HumanoidRootPart
-            local pos, onScreen = camera:WorldToViewportPoint(root.Position)
+            local isM, isS = IsMurderer(p), IsSheriff(p)
             
-            if onScreen then
-                local col = Color3.fromRGB(50,255,100)
-                if IsMurderer(p) then col = Color3.fromRGB(255,50,50)
-                elseif IsSheriff(p) then col = Color3.fromRGB(50,150,255) end
+            -- Проверяем, разрешен ли показ этой роли настройками
+            local isAllowed = (isM and espMurdEnabled) or (isS and espSherEnabled) or (not isM and not isS and espInnEnabled)
+            
+            if isAllowed then
+                local root = p.Character.HumanoidRootPart
+                local pos, onScreen = camera:WorldToViewportPoint(root.Position)
                 
-                if espTracersEnabled then
-                    local screenCenter = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y)
-                    DrawLine(screenCenter, Vector2.new(pos.X, pos.Y), col)
-                end
-                
-                if espBoxesEnabled then
-                    local height = (camera:WorldToViewportPoint(root.Position + Vector3.new(0, 3, 0)).Y - camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0)).Y)
-                    local width = height * 0.6
-                    DrawBox(Vector2.new(pos.X, pos.Y), Vector2.new(width, height), col)
+                if onScreen then
+                    local col = Color3.fromRGB(50,255,100)
+                    if isM then col = Color3.fromRGB(255,50,50)
+                    elseif isS then col = Color3.fromRGB(50,150,255) end
+                    
+                    if espTracersEnabled then
+                        local screenCenter = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y)
+                        DrawLine(screenCenter, Vector2.new(pos.X, pos.Y), col)
+                    end
+                    
+                    if espBoxesEnabled then
+                        local height = (camera:WorldToViewportPoint(root.Position + Vector3.new(0, 3, 0)).Y - camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0)).Y)
+                        local width = height * 0.6
+                        DrawBox(Vector2.new(pos.X, pos.Y), Vector2.new(width, height), col)
+                    end
                 end
             end
         end
@@ -1083,8 +1180,8 @@ MkInfoBox("Settings", "linbergz Hub v8.0 (Nexus Redesign)\nPlatform: Mobile Opti
 MkSep("Info", "about")
 local InfoChange = MkInfoBox("Info", "Loading updates...")
 local function RefreshLog()
-    if currentLang == "RU" then InfoChange.Text = "Премиум Редизайн v8.0 Nexus Mobile:\n\n- [NEW] Glassmorphism UI: Полностью обновленный дизайн меню с эффектом стекла и мягкими неоновыми контурами.\n- [NEW] Мульти-вкладка HOME: Все инструменты упорядочены в одном окне.\n- [NEW] Метки: Добавлены Tracers (Линии) и Box ESP (2D-Коробки).\n- [NEW] Продвинутый Bunnyhop: Физический распрыг с настройкой высоты прыжка и динамическим аудиоэффектом.\n- [NEW] Бумбокс: 100% рабочая поддержка длинных ID-аудиокодов нового поколения."
-    else InfoChange.Text = "Premium Redesign v8.0 Nexus Mobile:\n\n- [NEW] Glassmorphism UI: Overhauled design using frosted glass effects and neon acrylic highlights.\n- [NEW] HOME Multi-Subtabs: Dynamic structure sorting all core visual and physics scripts.\n- [NEW] ESP Features: Added lines (Tracers) and robust 2D Player Box ESP.\n- [NEW] Advanced Bunnyhop: Smooth jump spam with custom jump-force slider and 3D swoop sounds.\n- [NEW] Boombox Update: Absolute support for high-digit Roblox audios." end
+    if currentLang == "RU" then InfoChange.Text = "Премиум Редизайн v8.0 Nexus Mobile:\n\n- [NEW] Раздельный ESP: Добавлена независимая подсветка для ролей (Murderer, Sheriff, Innocent).\n- [NEW] Glassmorphism UI: Полностью обновленный дизайн меню с эффектом стекла и мягкими неоновыми контурами.\n- [NEW] Мульти-вкладка HOME: Все инструменты упорядочены в одном окне.\n- [NEW] Метки: Добавлены Tracers (Линии) и Box ESP (2D-Коробки).\n- [NEW] Продвинутый Bunnyhop: Физический распрыг с настройкой высоты прыжка и звуковым эффектом.\n- [NEW] Бумбокс: Поддержка длинных ID-аудиокодов нового поколения."
+    else InfoChange.Text = "Premium Redesign v8.0 Nexus Mobile:\n\n- [NEW] Separated ESP: Independent toggles for Murderer, Sheriff, and Innocent players.\n- [NEW] Glassmorphism UI: Overhauled design using frosted glass effects and neon acrylic highlights.\n- [NEW] HOME Multi-Subtabs: Dynamic structure sorting all core scripts.\n- [NEW] Visual Additions: Added tactical lines (Tracers) and robust 2D Player Box ESP.\n- [NEW] Advanced Bunnyhop: Smooth jump spam with custom force slider and 3D sounds.\n- [NEW] Boombox Update: Absolute support for high-digit Roblox audios." end
 end
 RefreshLog(); LangToggleBtn.MouseButton1Click:Connect(RefreshLog)
 
