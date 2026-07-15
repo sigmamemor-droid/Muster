@@ -5,7 +5,7 @@
    | | | | | | |_) |  __/ | | (_| |/ /  __/_____|  _|  ___) |
    |_|_|_| |_|_.__/ \___|_|  \__, /___\___|     |_|   |____/ 
                              |___/                          
-   linbergz Team // MM2 PREMIUM MOBILE HUB v9.0 "Aether OS"
+   linbergz Team // MM2 PREMIUM MOBILE HUB v9.1 "Aether OS" - FIX EDITION
    Designed by linbergz Core. Fully Optimized, Unabbreviated, and Powered by Aether UI.
 ]]
 
@@ -18,7 +18,6 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 if not player then
@@ -44,43 +43,38 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
 
 ---------------------------------------------------------
--- THEME SYSTEM CONFIGURATION (AETHER PREMIUM PALETTES)
+-- THEME SYSTEM CONFIGURATION
 ---------------------------------------------------------
 local Themes = {
     Nebula = { 
         accent = Color3.fromRGB(160, 70, 255), 
         accentLight = Color3.fromRGB(210, 150, 255), 
         bg = Color3.fromRGB(9, 7, 16), 
-        surface = Color3.fromRGB(15, 11, 26),
-        gradient = {Color3.fromRGB(160, 70, 255), Color3.fromRGB(80, 30, 180)}
+        surface = Color3.fromRGB(15, 11, 26)
     },
     Supernova = { 
         accent = Color3.fromRGB(255, 75, 45), 
         accentLight = Color3.fromRGB(255, 140, 100), 
         bg = Color3.fromRGB(12, 6, 6), 
-        surface = Color3.fromRGB(22, 10, 10),
-        gradient = {Color3.fromRGB(255, 75, 45), Color3.fromRGB(180, 25, 10)}
+        surface = Color3.fromRGB(22, 10, 10)
     },
     DeepOcean = { 
         accent = Color3.fromRGB(0, 180, 255), 
         accentLight = Color3.fromRGB(120, 220, 255), 
         bg = Color3.fromRGB(5, 9, 16), 
-        surface = Color3.fromRGB(9, 16, 28),
-        gradient = {Color3.fromRGB(0, 180, 255), Color3.fromRGB(0, 80, 180)}
+        surface = Color3.fromRGB(9, 16, 28)
     },
     Matrix = { 
         accent = Color3.fromRGB(0, 240, 100), 
         accentLight = Color3.fromRGB(140, 255, 180), 
         bg = Color3.fromRGB(4, 10, 6), 
-        surface = Color3.fromRGB(8, 20, 12),
-        gradient = {Color3.fromRGB(0, 240, 100), Color3.fromRGB(0, 120, 40)}
+        surface = Color3.fromRGB(8, 20, 12)
     },
     Eclipse = { 
         accent = Color3.fromRGB(240, 240, 240), 
         accentLight = Color3.fromRGB(255, 255, 255), 
         bg = Color3.fromRGB(8, 8, 8), 
-        surface = Color3.fromRGB(14, 14, 14),
-        gradient = {Color3.fromRGB(180, 180, 180), Color3.fromRGB(40, 40, 40)}
+        surface = Color3.fromRGB(14, 14, 14)
     }
 }
 
@@ -111,42 +105,42 @@ local updateableLabels = {}
 local L = {
     EN = {
         home = "Main OS", combat = "Combat", fun = "Trolling", boombox = "Aether Audio", settings = "Settings", info = "Architecture",
-        movement = "DYNAMICS & PHYSICS", walkspeed = "Target Speed Engine", jumppower = "Kinetic Jump", infjump = "Aether Fly Jump",
-        protection = "SECURITY SYSTEM", antifling = "Ironclad Anti-Fling Plus", noclip = "Phasing (Noclip)", fly = "Gravity Flight", fullbright = "Quantum Fullbright",
-        automation = "MM2 PROTOCOLS", autofarm = "Auto Farm Coins", tplobby = "Relocate to Lobby", tpmap = "Relocate to Map",
-        aimbot = "Aimbot Calibration", shootbtn = "Tactical Fire Trigger", magicshot = "Singularity Shot",
-        autograb = "Auto-Loot Revolver", killall = "[💥] Decimate Server (Knife)", teleport = "SPATIAL TELEPORTS", tpmurder = "Chase Murderer", tpsheriff = "Retrieve Sheriff",
+        movement = "PHYSICS & MOVEMENT", walkspeed = "Toggle Walk Speed", jumppower = "Custom Jump Power", infjump = "Air Jump (Infinite)",
+        protection = "SECURITY SHIELDS", antifling = "Ironclad Anti-Fling", noclip = "Noclip (Wall-Pass)", fly = "Gravity Flight", fullbright = "Quantum Fullbright",
+        automation = "MM2 AUTOMATION", autofarm = "Gold Coin Auto Farm", tplobby = "Relocate to Lobby", tpmap = "Relocate to active Map",
+        aimbot = "Aimbot on Murderer", shootbtn = "Screen Shoot Button", magicshot = "Screen Magic Shot",
+        autograb = "Auto-Loot Drop Gun", killall = "[💥] Decimate Server (Knife)", teleport = "SPATIAL TELEPORTS", tpmurder = "TP to Murderer", tpsheriff = "TP to Sheriff",
         players_esp = "Biological Scanner", roles_esp = "Threat Matrix ESP", gun_esp = "Dropped Armament ESP",
         announce = "Broadcast Intel to Chat", audioplayer = "DECENTRALIZED AUDIO SYSTEM", play = "ENGAGE AUDIO ID", stop = "TERMINATE ID", system = "OS SYSTEM DRIVERS", copy = "Extract Server Link",
-        reset = "Forced Terminal Reset", destroy = "Purge Hub Core", theme = "UI Palette Presets", language = "Menu Language",
+        reset = "Forced Terminal Reset", destroy = "Purge Hub Core", theme = "UI Palette Presets", language = "Core Language",
         about = "AETHER COGNITION", quick_tracks = "HOT AUDIO PRESETS", flinger = "VELOCITY FLINGER", touch_fling = "Kinetic Touch Fling",
         select_target = "Select Target Vector", fling_btn = "Banish to Stratosphere", invis = "R15 Phase Shift Cloak", role_info = "LIVE STRATEGIC METRICS",
         menu_size = "Aether Canvas Scale", menu_transparency = "Acrylic Density", change_font = "Typography Framework",
         tab_ui = "OS Shell Interface", tab_theme = "Color Core", tab_showcase = "Theme Showcase",
         subtab_labels = "Tactical ESP", subtab_movement = "Kinetic Control", subtab_automation = "MM2 Engines",
-        enable_murd = "ESP Murderer", enable_sher = "ESP Sheriff", enable_inn = "ESP Innocent",
-        enable_gun = "Highlight Drop Revolver", enable_tracers = "Render Tactical Tracers", enable_box = "Render 2D Threat Boxes",
-        speed_slider = "Dynamic Velocity", enable_bhop = "Aerodynamic BunnyHop", bhop_power = "Kinetic Bounce Velocity", bhop_sound = "Acoustic Air Displacement"
+        enable_murd = "ESP Murderer (Red Glow)", enable_sher = "ESP Sheriff (Blue Glow)", enable_inn = "ESP Innocents (Green Glow)",
+        enable_gun = "ESP Gun on Ground", enable_tracers = "Tracers (Tactical Lines)", enable_box = "Box ESP (3D Outline)",
+        speed_slider = "Walkspeed (0-100)", enable_bhop = "Aerodynamic BunnyHop", bhop_power = "Kinetic Bounce Force", bhop_sound = "Bhop Sound Effects"
     },
     RU = {
         home = "Главная OS", combat = "Сражение", fun = "Троллинг", boombox = "Аудио-Ядро", settings = "Настройки", info = "О хабе",
-        movement = "ФИЗИКА И ПЕРЕДВИЖЕНИЕ", walkspeed = "Регулировка скорости", jumppower = "Высота прыжка", infjump = "Прыжки в воздухе",
-        protection = "МОДУЛИ ЗАЩИТЫ", antifling = "Ironclad Анти-Флинг +", noclip = "Фазовый сдвиг (Noclip)", fly = "Полет [Mobile]", fullbright = "Режим Яркого Света",
+        movement = "ДИНАМИКА И ФИЗИКА", walkspeed = "Включить скорость бега", jumppower = "Высота прыжка", infjump = "Бесконечный прыжок",
+        protection = "СИСТЕМА БЕЗОПАСНОСТИ", antifling = "Ironclad Анти-Флинг", noclip = "Фазовый сдвиг (Noclip)", fly = "Полет [Mobile]", fullbright = "Режим Яркого Света",
         automation = "АВТОМАТИЗАЦИЯ", autofarm = "Авто-фарм золота", tplobby = "ТП в Лобби", tpmap = "ТП на игровую арену",
         aimbot = "Аимбот на убийцу", shootbtn = "Кнопка выстрела на экране", magicshot = "Кнопка Магического выстрела",
-        autograb = "Авто-подбор оружия", killall = "[💥] Убить весь сервер (Нож)", teleport = "ТЕЛЕПОРТАЦИЯ", tpmurder = "Телепорт к Убийце", tpsheriff = "Телепорт к Шерифу",
-        players_esp = "Подсветка игроков (ESP)", roles_esp = "Отображение ролей", gun_esp = "Подсветка оружия",
+        autograb = "Авто-подбор оружия", killall = "[💥] Стереть весь сервер (Нож)", teleport = "ТЕЛЕПОРТАЦИЯ", tpmurder = "Телепорт к Убийце", tpsheriff = "Телепорт к Шерифу",
+        players_esp = "Подсветка игроков", roles_esp = "Отображение ролей", gun_esp = "Подсветка оружия",
         announce = "Объявить роли в чат", audioplayer = "ПРОИГРЫВАТЕЛЬ АУДИО", play = "ВОСПРОИЗВЕСТИ ID", stop = "ОСТАНОВИТЬ", system = "ПАНЕЛЬ УПРАВЛЕНИЯ", copy = "Скопировать ссылку",
-        reset = "Быстрый суицид", destroy = "Полное удаление чита", theme = "Цветовая гамма", language = "Язык интерфейса",
+        reset = "Быстрый суицид (Ресет)", destroy = "Полное удаление чита", theme = "Цветовая гамма", language = "Язык интерфейса",
         about = "О ХАБЕ", quick_tracks = "ГОРЯЧИЕ АУДИОТРЕКИ", flinger = "ФИЗИЧЕСКИЙ ФЛИНГЕР", touch_fling = "Тач-флинг (Убийца физикой)",
         select_target = "Выбрать жертву", fling_btn = "Запустить цель в орбиту", invis = "Невидимость (R15 Глитч)", role_info = "АНАЛИТИКА РОЛЕЙ",
         soon = "В РАЗРАБОТКЕ",
         menu_size = "Размер интерфейса", menu_transparency = "Прозрачность акрила", change_font = "Стиль шрифтов",
-        tab_ui = "Интерфейс", tab_theme = "Цветовые темы", tab_showcase = "Витрина (soon)",
-        subtab_labels = "Метки", subtab_movement = "Передвижение", subtab_automation = "Автоматизация",
-        enable_murd = "ESP Убийца (Murderer)", enable_sher = "ESP Шериф (Sheriff)", enable_inn = "ESP Мирные (Innocent)",
-        enable_gun = "ESP пистолета", enable_tracers = "Tracers (Линии)", enable_box = "Box ESP (Коробки)",
-        speed_slider = "Скорость (0-100)", enable_bhop = "Бхоп (Bunnyhop)", bhop_power = "Сила бхопа", bhop_sound = "Звук бхопа"
+        tab_ui = "Интерфейс", tab_theme = "Цветовые темы", tab_showcase = "Витрина",
+        subtab_labels = "Метки (ESP)", subtab_movement = "Передвижение", subtab_automation = "Автоматизация",
+        enable_murd = "Подсветка Убийцы (Красная)", enable_sher = "Подсветка Шерифа (Синяя)", enable_inn = "Подсветка Мирных (Зеленая)",
+        enable_gun = "Подсветка пистолета на полу", enable_tracers = "Трассеры (Линии до игроков)", enable_box = "Боксы (Коробки вокруг целей)",
+        speed_slider = "Скорость бега (0-100)", enable_bhop = "Бхоп (Автоматический распрыг)", bhop_power = "Сила бхопа (Высота прыжка)", bhop_sound = "Звук бхопа (Шум ветра)"
     }
 }
 
@@ -154,7 +148,7 @@ local function UpdateLanguage(lang)
     currentLang = lang
     for item, key in pairs(updateableLabels) do
         if typeof(item) == "Instance" and (item:IsA("TextLabel") or item:IsA("TextButton") or item:IsA("TextBox")) then
-            item.Text = L[currentLang][key] or item.Text
+            item.Text = L[currentLang][key] or key
         end
     end
 end
@@ -464,7 +458,7 @@ local function NO(t) local p = GP(t); p.oc = p.oc + 1; return p.oc end
 
 local function MkSep(tab, key, customParent)
     local o = NO(tab); local F = Instance.new("Frame"); F.Size = UDim2.new(1, 0, 0, 20); F.BackgroundTransparency = 1; F.LayoutOrder = o; F.Parent = customParent or GP(tab).frame
-    local Lb = Instance.new("TextLabel"); Lb.Size = UDim2.new(1, 0, 1, 0); Lb.BackgroundTransparency = 1; Lb.Text = ""; Lb.TextColor3 = C.accentLight; Lb.TextSize = 9; Lb.Font = Enum.Font.GothamBold; Lb.TextXAlignment = Enum.TextXAlignment.Left; Lb.Parent = F; updateableLabels[Lb] = key; table.insert(themedAccent, Lb); table.insert(globalTextObjects, Lb)
+    local Lb = Instance.new("TextLabel"); Lb.Size = UDim2.new(1, 0, 1, 0); Lb.BackgroundTransparency = 1; Lb.Text = L[currentLang][key] or key; Lb.TextColor3 = C.accentLight; Lb.TextSize = 9; Lb.Font = Enum.Font.GothamBold; Lb.TextXAlignment = Enum.TextXAlignment.Left; Lb.Parent = F; updateableLabels[Lb] = key; table.insert(themedAccent, Lb); table.insert(globalTextObjects, Lb)
 end
 
 local function MkToggle(tab, key, def, cb, customParent)
@@ -472,7 +466,7 @@ local function MkToggle(tab, key, def, cb, customParent)
     local B = Instance.new("TextButton"); B.Size = UDim2.new(1, 0, 0, 32); B.BackgroundColor3 = active and C.greenDark or C.elevated; B.Text = ""; B.AutoButtonColor = false; B.LayoutOrder = o; B.Parent = customParent or GP(tab).frame; Instance.new("UICorner", B).CornerRadius = UDim.new(0, 8)
     local BS = Instance.new("UIStroke"); BS.Color = active and C.green or C.elevated; BS.Thickness = 1; BS.Parent = B
     
-    local Lbl = Instance.new("TextLabel"); Lbl.Size = UDim2.new(1, -40, 1, 0); Lbl.Position = UDim2.new(0, 10, 0, 0); Lbl.BackgroundTransparency = 1; Lbl.Text = ""; Lbl.TextColor3 = C.text; Lbl.TextSize = 10; Lbl.Font = currentFont; Lbl.TextXAlignment = Enum.TextXAlignment.Left; Lbl.Parent = B; updateableLabels[Lbl] = key; table.insert(globalTextObjects, Lbl)
+    local Lbl = Instance.new("TextLabel"); Lbl.Size = UDim2.new(1, -40, 1, 0); Lbl.Position = UDim2.new(0, 10, 0, 0); Lbl.BackgroundTransparency = 1; Lbl.Text = L[currentLang][key] or key; Lbl.TextColor3 = C.text; Lbl.TextSize = 10; Lbl.Font = currentFont; Lbl.TextXAlignment = Enum.TextXAlignment.Left; Lbl.Parent = B; updateableLabels[Lbl] = key; table.insert(globalTextObjects, Lbl)
     local TBg = Instance.new("Frame"); TBg.Size = UDim2.new(0, 28, 0, 14); TBg.Position = UDim2.new(1, -38, 0.5, -7); TBg.BackgroundColor3 = active and C.green or C.textMuted; TBg.BorderSizePixel = 0; TBg.Parent = B; Instance.new("UICorner", TBg).CornerRadius = UDim.new(1, 0)
     local TC = Instance.new("Frame"); TC.Size = UDim2.new(0, 12, 0, 12); TC.Position = active and UDim2.new(1, -13, 0.5, -6) or UDim2.new(0, 1, 0.5, -6); TC.BackgroundColor3 = C.white; TC.BorderSizePixel = 0; TC.Parent = TBg; Instance.new("UICorner", TC).CornerRadius = UDim.new(1, 0)
     
@@ -494,7 +488,7 @@ local function MkButton(tab, key, color, cb, customParent)
     local B = Instance.new("TextButton"); B.Size = UDim2.new(1, 0, 0, 30); B.BackgroundColor3 = bc; B.Text = ""; B.AutoButtonColor = false; B.LayoutOrder = o; B.Parent = customParent or GP(tab).frame; Instance.new("UICorner", B).CornerRadius = UDim.new(0, 8)
     local BS = Instance.new("UIStroke"); BS.Color = C.accent; BS.Thickness = 0.8; BS.Transparency = 0.7; BS.Parent = B; table.insert(themedAccent, BS)
     
-    local Lbl = Instance.new("TextLabel"); Lbl.Size = UDim2.new(1, -10, 1, 0); Lbl.Position = UDim2.new(0, 5, 0, 0); Lbl.BackgroundTransparency = 1; Lbl.Text = ""; Lbl.TextColor3 = C.text; Lbl.TextSize = 10; Lbl.Font = currentFont; Lbl.TextXAlignment = Enum.TextXAlignment.Center; Lbl.Parent = B; updateableLabels[Lbl] = key; table.insert(globalTextObjects, Lbl)
+    local Lbl = Instance.new("TextLabel"); Lbl.Size = UDim2.new(1, -10, 1, 0); Lbl.Position = UDim2.new(0, 5, 0, 0); Lbl.BackgroundTransparency = 1; Lbl.Text = L[currentLang][key] or key; Lbl.TextColor3 = C.text; Lbl.TextSize = 10; Lbl.Font = currentFont; Lbl.TextXAlignment = Enum.TextXAlignment.Center; Lbl.Parent = B; updateableLabels[Lbl] = key; table.insert(globalTextObjects, Lbl)
     
     B.MouseButton1Click:Connect(function() cb(B, Lbl) end)
     B.MouseEnter:Connect(function() TweenService:Create(B, TweenInfo.new(0.15), {BackgroundColor3 = C.accent}):Play(); TweenService:Create(Lbl, TweenInfo.new(0.15), {TextColor3 = C.white}):Play() end)
@@ -511,7 +505,7 @@ end
 local function MkSlider(tab, key, mn, mx, def, cb, customParent)
     local o = NO(tab); local val = def or mn
     local Ct = Instance.new("Frame"); Ct.Size = UDim2.new(1, 0, 0, 38); Ct.BackgroundColor3 = C.elevated; Ct.BorderSizePixel = 0; Ct.LayoutOrder = o; Ct.Parent = customParent or GP(tab).frame; Instance.new("UICorner", Ct).CornerRadius = UDim.new(0, 8)
-    local Lb = Instance.new("TextLabel"); Lb.Size = UDim2.new(0.6, 0, 0, 16); Lb.Position = UDim2.new(0, 10, 0, 3); Lb.BackgroundTransparency = 1; Lb.Text = ""; Lb.TextColor3 = C.text; Lb.TextSize = 9; Lb.Font = currentFont; Lb.TextXAlignment = Enum.TextXAlignment.Left; Lb.Parent = Ct; updateableLabels[Lb] = key; table.insert(globalTextObjects, Lb)
+    local Lb = Instance.new("TextLabel"); Lb.Size = UDim2.new(0.6, 0, 0, 16); Lb.Position = UDim2.new(0, 10, 0, 3); Lb.BackgroundTransparency = 1; Lb.Text = L[currentLang][key] or key; Lb.TextColor3 = C.text; Lb.TextSize = 9; Lb.Font = currentFont; Lb.TextXAlignment = Enum.TextXAlignment.Left; Lb.Parent = Ct; updateableLabels[Lb] = key; table.insert(globalTextObjects, Lb)
     local VL = Instance.new("TextLabel"); VL.Size = UDim2.new(0.35, 0, 0, 16); VL.Position = UDim2.new(0.65, -10, 0, 3); VL.BackgroundTransparency = 1; VL.Text = tostring(val); VL.TextColor3 = C.accentLight; VL.TextSize = 9; VL.Font = Enum.Font.GothamBold; VL.TextXAlignment = Enum.TextXAlignment.Right; VL.Parent = Ct; table.insert(themedAccent, VL); table.insert(globalTextObjects, VL)
     local SBG = Instance.new("Frame"); SBG.Size = UDim2.new(1, -20, 0, 4); SBG.Position = UDim2.new(0, 10, 0, 25); SBG.BackgroundColor3 = C.bg; SBG.BorderSizePixel = 0; SBG.Parent = Ct; Instance.new("UICorner", SBG).CornerRadius = UDim.new(1, 0)
     local fp = (val - mn) / (mx - mn)
@@ -675,7 +669,6 @@ local function ApplyHighlight(ch, col)
     h.Parent = ch 
 end
 
--- Единая функция обновления ролей на основе раздельных тумблеров
 local function UpdateTacticalESP()
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= player and p.Character then
@@ -688,7 +681,6 @@ local function UpdateTacticalESP()
             elseif not isM and not isS and espInnEnabled then
                 ApplyHighlight(p.Character, Color3.fromRGB(50, 255, 100))
             else
-                -- Убираем подсветку, если роль выключена
                 if p.Character:FindFirstChild("MobileESP") then
                     p.Character.MobileESP:Destroy()
                 end
@@ -697,7 +689,6 @@ local function UpdateTacticalESP()
     end
 end
 
--- Включение циклической проверки ролей при изменении настроек
 local function ToggleRoleLoop()
     ClearConn("esp_roles_loop")
     if espMurdEnabled or espSherEnabled or espInnEnabled then
@@ -714,25 +705,21 @@ local function ToggleRoleLoop()
     end
 end
 
--- Тумблер 1: Убийца
 MkToggle("Home", "enable_murd", false, function(a)
     espMurdEnabled = a
     ToggleRoleLoop()
 end, Sub_Labels)
 
--- Тумблер 2: Шериф
 MkToggle("Home", "enable_sher", false, function(a)
     espSherEnabled = a
     ToggleRoleLoop()
 end, Sub_Labels)
 
--- Тумблер 3: Мирные
 MkToggle("Home", "enable_inn", false, function(a)
     espInnEnabled = a
     ToggleRoleLoop()
 end, Sub_Labels)
 
--- ESP пистолета на полу
 local gunGuis = {}
 local function ClearGunESP() for _, g in ipairs(gunGuis) do pcall(function() g:Destroy() end) end; gunGuis = {} end
 
@@ -766,7 +753,6 @@ MkToggle("Home", "enable_box", false, function(a)
     if not a then ClearVisuals() end
 end, Sub_Labels)
 
--- Рендер циклы для Трасеров и Коробок с учетом активных ролей
 RunService.RenderStepped:Connect(function()
     if not espTracersEnabled and not espBoxesEnabled then return end
     
@@ -778,8 +764,6 @@ RunService.RenderStepped:Connect(function()
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChildOfClass("Humanoid") and p.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
             local isM, isS = IsMurderer(p), IsSheriff(p)
-            
-            -- Проверяем, разрешен ли показ этой роли настройками
             local isAllowed = (isM and espMurdEnabled) or (isS and espSherEnabled) or (not isM and not isS and espInnEnabled)
             
             if isAllowed then
