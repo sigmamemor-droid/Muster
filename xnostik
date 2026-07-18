@@ -1,5 +1,5 @@
 -- linbergz Team MM2 PREMIUM MOBILE HUB v8.00 (Nexus Update)
--- Ironclad Anti-Fling & Advanced Physics Fling Engine + MM2 Auto Features
+-- Ironclad Anti-Fling, Advanced Physics Fling Engine, Hitbox Expander, Auto-Stab KillAll
 -- Fully Unabbreviated & Mobile Optimized Code
 
 ---------------------------------------------------------
@@ -11,6 +11,7 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CoreGui = game:GetService("CoreGui")
 
 local player = Players.LocalPlayer
 if not player then
@@ -75,9 +76,9 @@ local L = {
         movement = "MOVEMENT", walkspeed = "Walk Speed", jumppower = "Jump Power", infjump = "Infinite Jump",
         protection = "PROTECTION", antifling = "Ironclad Anti-Fling", noclip = "Noclip", fly = "Fly [Mobile]", fullbright = "Fullbright",
         automation = "MM2 AUTOMATION", autofarm = "Auto Farm Coins", tplobby = "TP to Lobby", tpmap = "TP to Map",
-        aimbot = "Aimbot on Murderer", shootbtn = "Shoot Button [Screen]", magicshot = "Magic Shot [Screen]",
-        autograb = "Auto Grab Gun (On Drop)", killall = "[!] Kill All (Knife)", teleport = "TELEPORTS", tpmurder = "TP to Murderer", tpsheriff = "TP to Sheriff",
-        players_esp = "ESP All Players", roles_esp = "ESP Roles [Murd, Sher, Inn]", gun_esp = "Gun ESP [Dropped]",
+        aimbot = "Aimbot (Camera)", shootbtn = "Shoot Button [Screen]", magicshot = "Magic Shot [Screen]", hitbox = "Expand Murderer Hitbox",
+        autograb = "Auto Grab Gun (On Drop)", killall = "[!] Kill All (Knife Auto-Stab)", teleport = "TELEPORTS", tpmurder = "TP to Murderer", tpsheriff = "TP to Sheriff",
+        players_esp = "ESP All Players", roles_esp = "ESP Roles [Murd, Sher, Inn]", gun_esp = "Gun ESP [Dropped]", coin_esp = "Coin ESP",
         announce = "Announce Roles in Chat", audioplayer = "AUDIO ID PLAYER", play = "PLAY", stop = "STOP", system = "SYSTEM CONTROL", copy = "Copy Server Link",
         reset = "Reset Character", destroy = "Destroy Hub", theme = "Theme", language = "Language",
         about = "ABOUT HUB", quick_tracks = "QUICK AUDIO TRACKS", flinger = "FLING SYSTEM", touch_fling = "Touch Fling (Max Physics)",
@@ -93,9 +94,9 @@ local L = {
         movement = "ПЕРЕДВИЖЕНИЕ", walkspeed = "Скорость бега", jumppower = "Высота прыжка", infjump = "Бесконечный прыжок",
         protection = "ЗАЩИТА", antifling = "Железобетонный Анти-Флинг", noclip = "Проход сквозь стены", fly = "Полет [Мобильный]", fullbright = "Яркий свет",
         automation = "MM2 АВТОМАТИЗАЦИЯ", autofarm = "Авто-фарм монет", tplobby = "ТП в Лобби", tpmap = "ТП на Карту",
-        aimbot = "Аимбот на убийцу", shootbtn = "Кнопка выстрела [Экран]", magicshot = "Магический выстрел [Экран]",
-        autograb = "Авто-подбор оружия", killall = "[!] Убить всех (Нож)", teleport = "ТЕЛЕПОРТАЦИЯ", tpmurder = "ТП к Убийце", tpsheriff = "ТП к Шерифу",
-        players_esp = "Подсветка игроков", roles_esp = "Показ ролей [Убийца, Шериф, Мирные]", gun_esp = "Подсветка оружия [На полу]",
+        aimbot = "Аимбот (Камера)", shootbtn = "Кнопка выстрела [Экран]", magicshot = "Магический выстрел [Экран]", hitbox = "Увеличить Хитбокс Убийцы",
+        autograb = "Авто-подбор оружия", killall = "[!] Убить всех (Авто-Удар ножом)", teleport = "ТЕЛЕПОРТАЦИЯ", tpmurder = "ТП к Убийце", tpsheriff = "ТП к Шерифу",
+        players_esp = "Подсветка игроков", roles_esp = "Показ ролей [Убийца, Шериф, Мирные]", gun_esp = "Подсветка оружия [На полу]", coin_esp = "ВХ на Монеты",
         announce = "Огласить роли в чат", audioplayer = "ПРОИГРЫВАТЕЛЬ АУДИО", play = "ЗАПУСК", stop = "СТОП", system = "СИСТЕМА", copy = "Скопировать линк",
         reset = "Умереть (Ресет)", destroy = "Закрыть чит полностью", theme = "Цветовая схема", language = "Язык меню",
         about = "О ХАБЕ", quick_tracks = "БЫСТРЫЕ ТРЕКИ", flinger = "СИСТЕМА ФЛИНГА", touch_fling = "Тач Флинг (Макс Физика)",
@@ -185,7 +186,6 @@ local function FindGunInHand() local c = GetChar(); if not c then return nil end
 local function FindKnifeInHand() local c = GetChar(); if not c then return nil end; for _, t in ipairs(c:GetChildren()) do if t:IsA("Tool") and t.Name:lower():find("knife") then return t end end; return nil end
 
 local function FireGunAtTarget(gun, target) if not gun or not target then return false end; for _, r in ipairs(gun:GetDescendants()) do if r:IsA("RemoteEvent") then pcall(function() r:FireServer(target.Position, target) end); return true end end; return false end
-local function ThrowKnifeAtTarget(knife, target) if not knife or not target then return false end; for _, r in ipairs(knife:GetDescendants()) do if r:IsA("RemoteEvent") then pcall(function() r:FireServer(target) end); return true end end; return false end
 
 ---------------------------------------------------------
 -- MOBILE NOTIFICATIONS
@@ -219,54 +219,30 @@ local function Notify(title, msg, color, dur)
 end
 
 ---------------------------------------------------------
--- LOADING SCREEN
----------------------------------------------------------
-local LS = Instance.new("Frame")
-LS.Size = UDim2.new(1, 0, 1, 0); LS.BackgroundColor3 = Color3.fromRGB(6, 4, 10); LS.ZIndex = 100; LS.Parent = ScreenGui
-local LogoBox = Instance.new("Frame"); LogoBox.Size = UDim2.new(0, 200, 0, 200); LogoBox.Position = UDim2.new(0.5, -100, 0.5, -100); LogoBox.BackgroundTransparency = 1; LogoBox.ZIndex = 101; LogoBox.Parent = LS
-local MainLogo = Instance.new("TextLabel"); MainLogo.Size = UDim2.new(1, 0, 0, 60); MainLogo.Position = UDim2.new(0, 0, 0, 30); MainLogo.BackgroundTransparency = 1; MainLogo.Text = "linbergz"; MainLogo.TextColor3 = C.white; MainLogo.TextSize = 38; MainLogo.Font = Enum.Font.GothamBlack; MainLogo.ZIndex = 102; MainLogo.Parent = LogoBox
-local SubLogo = Instance.new("TextLabel"); SubLogo.Size = UDim2.new(1, 0, 0, 20); SubLogo.Position = UDim2.new(0, 0, 0, 90); SubLogo.BackgroundTransparency = 1; SubLogo.Text = "NEXUS UPDATE v8.0"; SubLogo.TextColor3 = C.textDim; SubLogo.TextSize = 10; SubLogo.Font = Enum.Font.GothamBold; SubLogo.ZIndex = 102; SubLogo.Parent = LogoBox
-local LogLabel = Instance.new("TextLabel"); LogLabel.Size = UDim2.new(1, 0, 0, 20); LogLabel.Position = UDim2.new(0, 0, 0, 140); LogLabel.BackgroundTransparency = 1; LogLabel.Text = "Initializing..."; LogLabel.TextColor3 = C.accentLight; LogLabel.TextSize = 9; LogLabel.Font = Enum.Font.Code; LogLabel.ZIndex = 102; LogLabel.Parent = LogoBox
-local ProgressBg = Instance.new("Frame"); ProgressBg.Size = UDim2.new(0.8, 0, 0, 3); ProgressBg.Position = UDim2.new(0.1, 0, 0, 125); ProgressBg.BackgroundColor3 = Color3.fromRGB(20, 15, 30); ProgressBg.BorderSizePixel = 0; ProgressBg.ZIndex = 102; ProgressBg.Parent = LogoBox
-local ProgressFill = Instance.new("Frame"); ProgressFill.Size = UDim2.new(0, 0, 1, 0); ProgressFill.BackgroundColor3 = C.accent; ProgressFill.BorderSizePixel = 0; ProgressFill.ZIndex = 103; ProgressFill.Parent = ProgressBg
-
-local function LaunchUI()
-    local steps = { {0.15, "LINBERGZ CORE ENGINE ACTIVE..."}, {0.35, "INJECTING NEXUS PROT..."}, {0.55, "OPTIMIZING MOBILE JOYSTICK..."}, {0.75, "ESTABLISHING MM2 DATA FEED..."}, {0.90, "APPLYING PRE-THEMING..."}, {1.00, "READY // SUCCESSFUL START"} }
-    for _, step in ipairs(steps) do TweenService:Create(ProgressFill, TweenInfo.new(0.2), {Size = UDim2.new(step[1], 0, 1, 0)}):Play(); LogLabel.Text = step[2]; task.wait(0.25) end
-    TweenService:Create(LS, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(LogoBox, TweenInfo.new(0.3), {Size = UDim2.new(0,0,0,0), Position=UDim2.new(0.5,0,0.5,0)}):Play()
-    task.wait(0.4); LS:Destroy()
-end
-task.spawn(LaunchUI)
-
----------------------------------------------------------
--- SLEEK TOGGLE BAR (REPLACED FROM CIRCLE TO PILL BAR)
+-- ULTRA-SLEEK TOGGLE BAR (100x BETTER)
 ---------------------------------------------------------
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "TogglePill"
-ToggleBtn.Size = UDim2.new(0, 115, 0, 36)
+ToggleBtn.Size = UDim2.new(0, 130, 0, 40)
 ToggleBtn.Position = UDim2.new(0, 15, 0.25, 0)
-ToggleBtn.BackgroundColor3 = C.accent
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 ToggleBtn.Text = ""
 ToggleBtn.AutoButtonColor = false
 ToggleBtn.ZIndex = 90
 ToggleBtn.Parent = ScreenGui
 
--- Perfect rounding for the pill bar
 local ToggleCorner = Instance.new("UICorner")
 ToggleCorner.CornerRadius = UDim.new(1, 0)
 ToggleCorner.Parent = ToggleBtn
 
--- Glowing Border
 local ToggleStroke = Instance.new("UIStroke")
 ToggleStroke.Color = C.white
-ToggleStroke.Thickness = 1.2
-ToggleStroke.Transparency = 0.4
+ToggleStroke.Thickness = 2
+ToggleStroke.Transparency = 0.2
 ToggleStroke.Parent = ToggleBtn
 
--- Cool Gradient Background
 local ToggleGrad = Instance.new("UIGradient")
-ToggleGrad.Rotation = 45
+ToggleGrad.Rotation = 0
 ToggleGrad.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Themes.Purple.accent),
     ColorSequenceKeypoint.new(1, Themes.Purple.gradient[2])
@@ -274,31 +250,36 @@ ToggleGrad.Color = ColorSequence.new({
 ToggleGrad.Parent = ToggleBtn
 table.insert(themedGradients, ToggleGrad)
 
--- Crown Premium Icon inside the pill
-local ToggleIcon = Instance.new("ImageLabel")
+-- Animating the Gradient for a cyber-fluid look
+RunService.RenderStepped:Connect(function()
+    if ToggleGrad.Parent then
+        ToggleGrad.Rotation = ToggleGrad.Rotation + 1.5
+    end
+end)
+
+local ToggleIcon = Instance.new("TextLabel")
 ToggleIcon.Size = UDim2.new(0, 20, 0, 20)
-ToggleIcon.Position = UDim2.new(0, 10, 0.5, -10)
+ToggleIcon.Position = UDim2.new(0, 12, 0.5, -10)
 ToggleIcon.BackgroundTransparency = 1
-ToggleIcon.Image = "rbxassetid://10734913214" -- Beautiful Glowing Cyber Crown Logo
-ToggleIcon.ImageColor3 = C.white
+ToggleIcon.Text = "❖"
+ToggleIcon.TextColor3 = C.white
+ToggleIcon.TextSize = 18
+ToggleIcon.Font = Enum.Font.GothamBlack
 ToggleIcon.ZIndex = 91
 ToggleIcon.Parent = ToggleBtn
 
--- Label Text inside the pill
 local ToggleText = Instance.new("TextLabel")
 ToggleText.Size = UDim2.new(1, -40, 1, 0)
-ToggleText.Position = UDim2.new(0, 34, 0, 0)
+ToggleText.Position = UDim2.new(0, 36, 0, 0)
 ToggleText.BackgroundTransparency = 1
-ToggleText.Text = "linbergz Hub"
+ToggleText.Text = "linbergz"
 ToggleText.TextColor3 = C.white
-ToggleText.TextSize = 11
+ToggleText.TextSize = 13
 ToggleText.Font = Enum.Font.GothamBold
 ToggleText.TextXAlignment = Enum.TextXAlignment.Left
 ToggleText.ZIndex = 91
 ToggleText.Parent = ToggleBtn
 table.insert(globalTextObjects, ToggleText)
-
-table.insert(themedAccent, ToggleBtn)
 
 -- Smooth Touch Dragging for Pill Bar
 do
@@ -308,8 +289,8 @@ do
             dragging = true
             dragStart = i.Position
             startPos = ToggleBtn.Position 
-            -- Press effect animation
-            TweenService:Create(ToggleBtn, TweenInfo.new(0.15), {Scale = Vector3.new(0.92, 0.92, 1)}):Play()
+            TweenService:Create(ToggleBtn, TweenInfo.new(0.15), {Scale = Vector3.new(0.9, 0.9, 1)}):Play()
+            TweenService:Create(ToggleStroke, TweenInfo.new(0.15), {Thickness = 3, Transparency = 0}):Play()
         end 
     end)
     UserInputService.InputChanged:Connect(function(i) 
@@ -321,8 +302,8 @@ do
     UserInputService.InputEnded:Connect(function(i) 
         if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then 
             dragging = false 
-            -- Revert press animation
             TweenService:Create(ToggleBtn, TweenInfo.new(0.15), {Scale = Vector3.new(1, 1, 1)}):Play()
+            TweenService:Create(ToggleStroke, TweenInfo.new(0.15), {Thickness = 2, Transparency = 0.2}):Play()
         end 
     end)
 end
@@ -330,7 +311,7 @@ end
 ---------------------------------------------------------
 -- MAIN HUB FRAME (WITH ADVANCED AESTHETIC GRADIENTS)
 ---------------------------------------------------------
-local HUB_W, HUB_H, SIDEBAR_W = 480, 310, 125
+local HUB_W, HUB_H, SIDEBAR_W = 500, 320, 135
 local Hub = Instance.new("Frame")
 Hub.Name = "Hub"
 Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
@@ -354,7 +335,6 @@ HSk.Transparency = 0.2
 HSk.Parent = Hub
 table.insert(themedAccent, HSk)
 
--- Beautiful Background Subtle Gradient
 local FrameGrad = Instance.new("UIGradient")
 FrameGrad.Rotation = 135
 FrameGrad.Color = ColorSequence.new({
@@ -369,7 +349,7 @@ Watermark.Position = UDim2.new(0, SIDEBAR_W, 0, 0)
 Watermark.BackgroundTransparency = 1
 Watermark.Text = "lz"
 Watermark.TextColor3 = Color3.fromRGB(25, 18, 38)
-Watermark.TextSize = 140
+Watermark.TextSize = 160
 Watermark.Font = Enum.Font.GothamBlack
 Watermark.ZIndex = 9
 Watermark.Parent = Hub
@@ -384,7 +364,6 @@ TopB.ZIndex = 12
 TopB.Parent = Hub
 table.insert(themedSurface, TopB)
 
--- Topbar bottom separator border
 local TopB_Line = Instance.new("Frame")
 TopB_Line.Size = UDim2.new(1, 0, 0, 1)
 TopB_Line.Position = UDim2.new(0, 0, 1, -1)
@@ -417,12 +396,8 @@ ClB.TextSize = 16
 ClB.Font = Enum.Font.GothamBold
 ClB.ZIndex = 13
 ClB.Parent = TopB
+Instance.new("UICorner", ClB).CornerRadius = UDim.new(0, 6)
 
-local ClBCorner = Instance.new("UICorner")
-ClBCorner.CornerRadius = UDim.new(0, 6)
-ClBCorner.Parent = ClB
-
--- Dragging Handler for TopBar
 do
     local drag, dStart, sPos
     TopB.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then drag = true; dStart = i.Position; sPos = Hub.Position end end)
@@ -442,7 +417,6 @@ Sidebar.ZIndex = 12
 Sidebar.Parent = Hub
 table.insert(themedBg, Sidebar)
 
--- Sidebar right border line
 local SideLine = Instance.new("Frame")
 SideLine.Size = UDim2.new(0, 1, 1, 0)
 SideLine.Position = UDim2.new(1, -1, 0, 0)
@@ -466,7 +440,6 @@ STi.Font = Enum.Font.GothamBlack
 STi.Parent = SLogo
 table.insert(globalTextObjects, STi)
 
--- Logo neon underline
 local LogoLine = Instance.new("Frame")
 LogoLine.Size = UDim2.new(0.6, 0, 0, 2)
 LogoLine.Position = UDim2.new(0.2, 0, 1, -2)
@@ -483,13 +456,10 @@ TH.ZIndex = 13
 TH.Parent = Sidebar
 
 local THL = Instance.new("UIListLayout")
-THL.Parent = TH
-THL.Padding = UDim.new(0, 4)
+THL.Parent = TH; THL.Padding = UDim.new(0, 4)
 
 local THP = Instance.new("UIPadding")
-THP.PaddingLeft = UDim.new(0, 8)
-THP.PaddingRight = UDim.new(0, 8)
-THP.PaddingTop = UDim.new(0, 6)
+THP.PaddingLeft = UDim.new(0, 8); THP.PaddingRight = UDim.new(0, 8); THP.PaddingTop = UDim.new(0, 6)
 THP.Parent = TH
 
 local TabGlider = Instance.new("Frame")
@@ -499,10 +469,7 @@ TabGlider.BackgroundTransparency = 0.86
 TabGlider.ZIndex = 12
 TabGlider.Visible = true
 TabGlider.Parent = TH
-
-local TabGliderCorner = Instance.new("UICorner")
-TabGliderCorner.CornerRadius = UDim.new(0, 6)
-TabGliderCorner.Parent = TabGlider
+Instance.new("UICorner", TabGlider).CornerRadius = UDim.new(0, 6)
 
 local GliderLine = Instance.new("Frame")
 GliderLine.Size = UDim2.new(0, 3, 1, 0)
@@ -511,10 +478,7 @@ GliderLine.BackgroundColor3 = C.accent
 GliderLine.BorderSizePixel = 0
 GliderLine.ZIndex = 13
 GliderLine.Parent = TabGlider
-
-local GliderLineCorner = Instance.new("UICorner")
-GliderLineCorner.CornerRadius = UDim.new(1, 0)
-GliderLineCorner.Parent = GliderLine
+Instance.new("UICorner", GliderLine).CornerRadius = UDim.new(1, 0)
 
 table.insert(themedAccent, TabGlider)
 table.insert(themedAccent, GliderLine)
@@ -525,15 +489,16 @@ table.insert(themedAccent, GliderLine)
 local tabPages, tabBtns, currentTab = {}, {}, nil
 local CX, CY, CW, CH = SIDEBAR_W + 1, 36, HUB_W - SIDEBAR_W - 1, HUB_H - 36
 
+-- NEW TEXT SYMBOLS INSTEAD OF EMOJIS
 local tabDefs = {
-    {name = "Home", key = "home", icon = "🏠", order = 1},
-    {name = "Combat", key = "combat", icon = "⚔️", order = 2},
-    {name = "ESP", key = "esp", icon = "👁️", order = 3},
-    {name = "Fun & Troll", key = "fun", icon = "🎭", order = 4},
-    {name = "Boombox", key = "boombox", icon = "🎵", order = 5},
-    {name = "Nexus", key = "nexus", icon = "💎", order = 6},
-    {name = "Settings", key = "settings", icon = "⚙️", order = 7},
-    {name = "Info", key = "info", icon = "📝", order = 8},
+    {name = "Home", key = "home", icon = "⌂", order = 1},
+    {name = "Combat", key = "combat", icon = "⚔", order = 2},
+    {name = "ESP", key = "esp", icon = "◎", order = 3},
+    {name = "Fun & Troll", key = "fun", icon = "✧", order = 4},
+    {name = "Boombox", key = "boombox", icon = "♪", order = 5},
+    {name = "Nexus", key = "nexus", icon = "❖", order = 6},
+    {name = "Settings", key = "settings", icon = "⚙", order = 7},
+    {name = "Info", key = "info", icon = "ℹ", order = 8},
 }
 
 local function ResizeMenu(newW, newH)
@@ -541,9 +506,7 @@ local function ResizeMenu(newW, newH)
     Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
     TopB.Size = UDim2.new(1, -SIDEBAR_W, 0, 36)
     Watermark.Size = UDim2.new(1, -SIDEBAR_W, 1, 0)
-    
-    local pageW = HUB_W - SIDEBAR_W - 1
-    local pageH = HUB_H - 36
+    local pageW, pageH = HUB_W - SIDEBAR_W - 1, HUB_H - 36
     for _, pageData in pairs(tabPages) do
         pageData.frame.Size = UDim2.new(0, pageW, 0, pageH)
     end
@@ -559,7 +522,6 @@ for idx, def in ipairs(tabDefs) do
     local Tb = Instance.new("TextButton")
     Tb.Size = UDim2.new(1, 0, 0, 28); Tb.BackgroundTransparency = 1; Tb.Text = def.icon .. "  " .. def.name; Tb.TextColor3 = C.textDim; Tb.TextSize = 11; Tb.Font = Enum.Font.GothamBold; Tb.AutoButtonColor = false; Tb.ZIndex = 14; Tb.Parent = TH; Instance.new("UICorner", Tb).CornerRadius = UDim.new(0, 6)
     table.insert(globalTextObjects, Tb)
-    
     if def.name == "Nexus" then Tb.TextColor3 = C.gold end
     tabBtns[def.name] = {btn = Tb, index = idx, icon = def.icon, label = def.name}
     
@@ -582,16 +544,11 @@ local hubOpen = false
 local function ToggleHub()
     hubOpen = not hubOpen
     if hubOpen then 
-        Hub.Visible = true; 
-        Hub.Size = UDim2.new(0, HUB_W, 0, 0); 
+        Hub.Visible = true; Hub.Size = UDim2.new(0, HUB_W, 0, 0)
         TweenService:Create(Hub, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, HUB_W, 0, HUB_H)}):Play()
     else 
-        local tw = TweenService:Create(Hub, TweenInfo.new(0.22, Enum.EasingStyle.Quad), {Size = UDim2.new(0, HUB_W, 0, 0)}); 
-        tw:Play(); 
-        tw.Completed:Connect(function() 
-            Hub.Visible = false; 
-            Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H) 
-        end) 
+        local tw = TweenService:Create(Hub, TweenInfo.new(0.22, Enum.EasingStyle.Quad), {Size = UDim2.new(0, HUB_W, 0, 0)}) 
+        tw:Play(); tw.Completed:Connect(function() Hub.Visible = false; Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H) end) 
     end
 end
 ToggleBtn.MouseButton1Click:Connect(ToggleHub)
@@ -599,7 +556,7 @@ ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
 task.defer(function() tabBtns["Home"].btn.MouseButton1Click:Fire() end)
 
 ---------------------------------------------------------
--- UI ELEMENT FACTORY (SLEEK GLASS DESIGNS)
+-- UI ELEMENT FACTORY
 ---------------------------------------------------------
 local function GP(t) return tabPages[t] end
 local function NO(t) local p = GP(t); p.oc = p.oc + 1; return p.oc end
@@ -623,10 +580,7 @@ local function MkToggle(tab, key, def, cb, customParent)
         TweenService:Create(TBg, TweenInfo.new(0.18), {BackgroundColor3 = active and C.green or C.textMuted}):Play()
         TweenService:Create(TC, TweenInfo.new(0.18, Enum.EasingStyle.Back), {Position = active and UDim2.new(1, -13, 0.5, -6) or UDim2.new(0, 1, 0.5, -6)}):Play()
     end
-    
     B.MouseButton1Click:Connect(function() active = not active; U(); cb(active) end)
-    B.MouseEnter:Connect(function() if not active then TweenService:Create(B, TweenInfo.new(0.1), {BackgroundColor3 = C.cardHover}):Play() end end)
-    B.MouseLeave:Connect(function() if not active then TweenService:Create(B, TweenInfo.new(0.1), {BackgroundColor3 = C.elevated}):Play() end end)
     return function() return active end
 end
 
@@ -635,14 +589,11 @@ local function MkButton(tab, key, color, cb, customParent)
     local B = Instance.new("TextButton"); B.Size = UDim2.new(1, 0, 0, 28); B.BackgroundColor3 = bc; B.Text = ""; B.AutoButtonColor = false; B.LayoutOrder = o; B.Parent = customParent or GP(tab).frame; Instance.new("UICorner", B).CornerRadius = UDim.new(0, 6)
     local BS = Instance.new("UIStroke"); BS.Color = Color3.fromRGB(45, 38, 70); BS.Thickness = 0.8; BS.Parent = B
     local Lbl = Instance.new("TextLabel"); Lbl.Size = UDim2.new(1, -10, 1, 0); Lbl.Position = UDim2.new(0, 5, 0, 0); Lbl.BackgroundTransparency = 1; Lbl.Text = ""; Lbl.TextColor3 = C.text; Lbl.TextSize = 11; Lbl.Font = currentFont; Lbl.TextXAlignment = Enum.TextXAlignment.Center; Lbl.Parent = B; updateableLabels[Lbl] = key; table.insert(globalTextObjects, Lbl)
-    
     B.MouseButton1Click:Connect(function() 
         TweenService:Create(B, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Scale = Vector3.new(0.96, 0.96, 1)}):Play()
         task.delay(0.08, function() TweenService:Create(B, TweenInfo.new(0.1, Enum.EasingStyle.Back), {Scale = Vector3.new(1, 1, 1)}):Play() end)
         cb(B, Lbl) 
     end)
-    B.MouseEnter:Connect(function() TweenService:Create(B, TweenInfo.new(0.12), {BackgroundColor3 = C.accent}):Play(); TweenService:Create(Lbl, TweenInfo.new(0.12), {TextColor3 = C.white}):Play() end)
-    B.MouseLeave:Connect(function() TweenService:Create(B, TweenInfo.new(0.12), {BackgroundColor3 = bc}):Play(); TweenService:Create(Lbl, TweenInfo.new(0.12), {TextColor3 = C.text}):Play() end)
     return B, Lbl
 end
 
@@ -681,24 +632,20 @@ MkSep("Home", "automation")
 MkToggle("Home", "autofarm", false, function(a)
     ClearConn("af_conn")
     if a then
-        Conn("af_conn", RunService.Stepped:Connect(function()
+        Conn("af_conn", RunService.RenderStepped:Connect(function()
             local r = GetRoot()
             if not r then return end
             local normal = workspace:FindFirstChild("Normal")
-            if normal then
-                local coins = normal:FindFirstChild("CoinContainer")
-                if coins then
-                    for _, coin in ipairs(coins:GetChildren()) do
-                        if coin:IsA("BasePart") and (coin.Name == "Coin_Server" or coin.Name == "Coin") then
-                            r.CFrame = coin.CFrame
-                            task.wait(0.1)
-                            break
-                        end
+            if normal and normal:FindFirstChild("CoinContainer") then
+                for _, coin in ipairs(normal.CoinContainer:GetChildren()) do
+                    if coin:IsA("BasePart") and coin.Name == "Coin_Server" and coin.Transparency == 0 then
+                        r.CFrame = coin.CFrame
+                        break
                     end
                 end
             end
         end))
-        Notify("Auto Farm", "Collecting Map Coins", C.green, 2)
+        Notify("Auto Farm", "Collecting Map Coins Smoothly", C.green, 2)
     else
         Notify("Auto Farm", "Deactivated", C.red, 1.5)
     end
@@ -732,39 +679,32 @@ end)
 
 MkToggle("Home", "noclip", false, function(a) ClearConn("noclip"); if a then Conn("noclip", RunService.Stepped:Connect(function() local c = GetChar(); if not c then return end; for _, p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide = false end end end)) end end)
 
-local flyOn = false
-MkToggle("Home", "fly", false, function(a)
-    flyOn = a; ClearConn("fly"); local r = GetRoot(); local h = GetHum()
-    if a and r and h then
-        local bv = Instance.new("BodyVelocity"); bv.Velocity = Vector3.zero; bv.MaxForce = Vector3.new(1e9,1e9,1e9); bv.Parent = r
-        local bg = Instance.new("BodyGyro"); bg.MaxTorque = Vector3.new(1e9,1e9,1e9); bg.P = 9000; bg.Parent = r
-        h.PlatformStand = true
-        Conn("fly", RunService.RenderStepped:Connect(function()
-            if not flyOn or not r or not bv or not bv.Parent then return end
-            local cf = camera.CFrame; local moveVec = h.MoveDirection; local flySpeed = 65
-            local worldDir = cf:VectorToWorldSpace(moveVec); if worldDir.Magnitude > 0 then worldDir = worldDir.Unit end
-            bv.Velocity = worldDir * flySpeed; bg.CFrame = cf
-        end))
-    else
-        if h then h.PlatformStand = false end; pcall(function() if r then r:FindFirstChildOfClass("BodyVelocity"):Destroy() r:FindFirstChildOfClass("BodyGyro"):Destroy() end end)
-    end
-end)
-
-MkToggle("Home", "fullbright", false, function(a) if a then Lighting.Brightness = 2; Lighting.ClockTime = 14; Lighting.FogEnd = 1e5; Lighting.GlobalShadows = false else Lighting.Brightness = 1; Lighting.GlobalShadows = true end end)
-
 ---------------------------------------------------------
 -- ============ COMBAT TAB ============
 ---------------------------------------------------------
 MkSep("Combat", "aimbot")
 MkToggle("Combat", "aimbot", false, function(a) ClearConn("aim"); if a then Conn("aim", RunService.RenderStepped:Connect(function() local h = GetMurdererHead(); if h then camera.CFrame = CFrame.new(camera.CFrame.Position, h.Position) end end)) end end)
 
+MkToggle("Combat", "hitbox", false, function(a)
+    ClearConn("hb_expand")
+    if a then
+        Conn("hb_expand", RunService.Heartbeat:Connect(function()
+            local mr = GetMurdererRoot()
+            if mr then
+                mr.Size = Vector3.new(15, 15, 15)
+                mr.Transparency = 0.7
+                mr.CanCollide = false
+            end
+        end))
+    else
+        local mr = GetMurdererRoot()
+        if mr then mr.Size = Vector3.new(2, 2, 1); mr.Transparency = 1 end
+    end
+end)
+
 local ShotBtn = Instance.new("TextButton"); ShotBtn.Size = UDim2.new(0, 75, 0, 36); ShotBtn.Position = UDim2.new(1, -85, 0.4, 0); ShotBtn.BackgroundColor3 = C.red; ShotBtn.Text = "SHOOT"; ShotBtn.TextColor3 = C.white; ShotBtn.TextSize = 11; ShotBtn.Font = Enum.Font.GothamBold; ShotBtn.Visible = false; ShotBtn.ZIndex = 50; ShotBtn.Parent = ScreenGui; Instance.new("UICorner", ShotBtn).CornerRadius = UDim.new(0, 8)
 ShotBtn.MouseButton1Click:Connect(function() local g = FindGunInHand(); if not g then local t = GetTool("Gun"); if t then GetHum():EquipTool(t); task.wait(0.2); g = FindGunInHand() end end; if not g then Notify("linbergz", "No Gun!", C.red, 1.5); return end; local h = GetMurdererHead(); if h then FireGunAtTarget(g, h) else Notify("linbergz", "Murderer not found", C.red, 1) end end)
 MkToggle("Combat", "shootbtn", false, function(a) ShotBtn.Visible = a end)
-
-local MagBtn = Instance.new("TextButton"); MagBtn.Size = UDim2.new(0, 75, 0, 36); MagBtn.Position = UDim2.new(1, -85, 0.4, 42); MagBtn.BackgroundColor3 = C.accent; MagBtn.Text = "MAGIC"; MagBtn.TextColor3 = C.white; MagBtn.TextSize = 11; MagBtn.Font = Enum.Font.GothamBold; MagBtn.Visible = false; MagBtn.ZIndex = 50; MagBtn.Parent = ScreenGui; Instance.new("UICorner", MagBtn).CornerRadius = UDim.new(0, 8)
-MagBtn.MouseButton1Click:Connect(function() local h = GetMurdererHead(); local r = GetRoot(); if not h or not r then return end; local g = FindGunInHand(); if not g then local t = GetTool("Gun"); if t then GetHum():EquipTool(t); task.wait(0.2); g = FindGunInHand() end end; if not g then return end; local p = r.CFrame; r.CFrame = CFrame.new(h.Position + Vector3.new(0,-3,2), h.Position); task.wait(0.15); FireGunAtTarget(g, h); task.wait(0.1); r.CFrame = p end)
-MkToggle("Combat", "magicshot", false, function(a) MagBtn.Visible = a end)
 
 MkToggle("Combat", "autograb", false, function(a)
     ClearConn("ag_conn")
@@ -775,7 +715,7 @@ MkToggle("Combat", "autograb", false, function(a)
             for _, obj in ipairs(workspace:GetDescendants()) do
                 if obj:IsA("Tool") and (obj.Name == "GunDrop" or obj.Name == "Gun") then
                     local h = obj:FindFirstChild("Handle")
-                    if h then r.CFrame = h.CFrame end
+                    if h then r.CFrame = h.CFrame * CFrame.new(0, 1, 0) end
                 end
             end
         end))
@@ -784,7 +724,40 @@ MkToggle("Combat", "autograb", false, function(a)
 end)
 
 MkSep("Combat", "killall")
-MkButton("Combat", "killall", C.redDark, function() local k = FindKnifeInHand(); if not k then local t = GetTool("Knife"); if t then GetHum():EquipTool(t); task.wait(0.2); k = FindKnifeInHand() end end; if not k then Notify("linbergz", "Equip Knife!", C.red, 2); return end; for _, p in ipairs(Players:GetPlayers()) do if p ~= player and p.Character then local h = p.Character:FindFirstChild("Head"); if h then ThrowKnifeAtTarget(k, h.Position); task.wait(0.05) end end end end)
+-- REBUILT KILL ALL: Uses TP + Stab (100% Reliable in MM2 compared to throwing)
+MkButton("Combat", "killall", C.redDark, function() 
+    local knife = FindKnifeInHand()
+    if not knife then 
+        local t = GetTool("Knife")
+        if t then GetHum():EquipTool(t); task.wait(0.2); knife = FindKnifeInHand() end
+    end
+    if not knife then Notify("linbergz", "Equip Knife to use Kill All!", C.red, 2); return end
+    
+    Notify("Kill All", "Executing Auto-Stab Sequence...", C.red, 2)
+    local r = GetRoot()
+    local ogPos = r.CFrame
+
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= player and p.Character then
+            local tr = p.Character:FindFirstChild("HumanoidRootPart")
+            if tr then
+                -- Teleport behind player
+                r.CFrame = tr.CFrame * CFrame.new(0, 0, 1.5)
+                task.wait(0.05)
+                
+                -- Fire Stab and Slash Remotes
+                local slash = knife:FindFirstChild("Slash")
+                if slash then pcall(function() slash:FireServer(1) end) end
+                
+                local stab = knife:FindFirstChild("Stab")
+                if stab then pcall(function() stab:FireServer(1) end) end
+                task.wait(0.1)
+            end
+        end
+    end
+    -- Return to original position
+    r.CFrame = ogPos
+end)
 
 MkSep("Combat", "teleport")
 MkButton("Combat", "tpmurder", C.elevated, function() local r = GetRoot(); local m = GetMurdererRoot(); if r and m then r.CFrame = m.CFrame * CFrame.new(0,0,4) end end)
@@ -811,8 +784,40 @@ MkToggle("ESP", "roles_esp", false, function(a)
 end)
 
 local gunEspActive, gunGuis = false, {}
-local function ClearGunESP() for _, g in ipairs(gunGuis) do pcall(function() g:Destroy() end) end; gunGuis = {} end
-MkToggle("ESP", "gun_esp", false, function(a) gunEspActive = a; ClearConn("gun_esp_conn"); ClearGunESP(); if a then Conn("gun_esp_conn", RunService.Heartbeat:Connect(function() for _, obj in ipairs(workspace:GetDescendants()) do if obj:IsA("Tool") and (obj.Name:lower():find("gun") or obj.Name:lower():find("revolver")) then local h = obj:FindFirstChild("Handle"); if h and not h:FindFirstChild("GunESP") then local b = Instance.new("BillboardGui"); b.Name="GunESP"; b.Adornee=h; b.Size=UDim2.new(0,60,0,20); b.AlwaysOnTop=true; b.Parent=h; local t = Instance.new("TextLabel"); t.Size=UDim2.new(1,0,1,0); t.BackgroundTransparency=1; t.Text="GUN"; t.TextColor3=C.gold; t.TextSize=10; t.Font=Enum.Font.GothamBold; t.Parent=b; table.insert(gunGuis, b) end end end end)) end end)
+local function ClearItemESP() for _, g in ipairs(gunGuis) do pcall(function() g:Destroy() end) end; gunGuis = {} end
+MkToggle("ESP", "gun_esp", false, function(a) 
+    gunEspActive = a; ClearConn("gun_esp_conn"); ClearItemESP(); 
+    if a then 
+        Conn("gun_esp_conn", RunService.Heartbeat:Connect(function() 
+            for _, obj in ipairs(workspace:GetDescendants()) do 
+                if obj:IsA("Tool") and (obj.Name:lower():find("gun") or obj.Name:lower():find("revolver")) then 
+                    local h = obj:FindFirstChild("Handle"); 
+                    if h and not h:FindFirstChild("GunESP") then 
+                        local b = Instance.new("BillboardGui"); b.Name="GunESP"; b.Adornee=h; b.Size=UDim2.new(0,60,0,20); b.AlwaysOnTop=true; b.Parent=h; 
+                        local t = Instance.new("TextLabel"); t.Size=UDim2.new(1,0,1,0); t.BackgroundTransparency=1; t.Text="GUN"; t.TextColor3=C.gold; t.TextSize=10; t.Font=Enum.Font.GothamBold; t.Parent=b; table.insert(gunGuis, b) 
+                    end 
+                end 
+            end 
+        end)) 
+    end 
+end)
+
+MkToggle("ESP", "coin_esp", false, function(a)
+    ClearConn("coin_esp_conn"); 
+    if a then 
+        Conn("coin_esp_conn", RunService.Heartbeat:Connect(function() 
+            local normal = workspace:FindFirstChild("Normal")
+            if normal and normal:FindFirstChild("CoinContainer") then
+                for _, coin in ipairs(normal.CoinContainer:GetChildren()) do
+                    if coin:IsA("BasePart") and not coin:FindFirstChild("CoinESP") and coin.Transparency == 0 then
+                        local b = Instance.new("BillboardGui"); b.Name="CoinESP"; b.Adornee=coin; b.Size=UDim2.new(0,40,0,20); b.AlwaysOnTop=true; b.Parent=coin; 
+                        local t = Instance.new("TextLabel"); t.Size=UDim2.new(1,0,1,0); t.BackgroundTransparency=1; t.Text="🪙"; t.TextColor3=C.gold; t.TextSize=12; t.Parent=b; table.insert(gunGuis, b)
+                    end
+                end
+            end
+        end)) 
+    end
+end)
 
 MkSep("ESP", "role_info")
 local InfoBox = MkInfoBox("ESP", "Waiting for data...")
@@ -824,7 +829,7 @@ MkButton("ESP", "announce", C.accent, function()
         if IsMurderer(p) then mN = p.Name end
         if IsSheriff(p) then sN = p.Name end
     end
-    local msg = "[linbergz Analytics] Murderer: " .. mN .. " | Sheriff: " .. sN
+    local msg = "[linbergz] Murderer is " .. mN .. " | Sheriff is " .. sN
     pcall(function() ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All") end)
 end)
 
@@ -900,191 +905,64 @@ local function MkSoonButton(tab, key)
     local Lbl = Instance.new("TextLabel"); Lbl.Size = UDim2.new(0.7, 0, 1, 0); Lbl.Position = UDim2.new(0, 8, 0, 0); Lbl.BackgroundTransparency = 1; Lbl.Text = ""; Lbl.TextColor3 = C.gold; Lbl.TextSize = 11; Lbl.Font = Enum.Font.GothamSemibold; Lbl.TextXAlignment = Enum.TextXAlignment.Left; Lbl.Parent = B; updateableLabels[Lbl] = key; table.insert(globalTextObjects, Lbl)
     local Soon = Instance.new("TextLabel"); Soon.Size = UDim2.new(0.25, 0, 1, 0); Soon.Position = UDim2.new(0.75, 0, 0, 0); Soon.BackgroundTransparency = 1; Soon.Text = "SOON"; Soon.TextColor3 = C.textDim; Soon.TextSize = 10; Soon.Font = Enum.Font.GothamBold; Soon.TextXAlignment = Enum.TextXAlignment.Right; Soon.Parent = B; updateableLabels[Soon] = "soon"; table.insert(globalTextObjects, Soon)
     B.MouseButton1Click:Connect(function() Notify("Nexus Engine", "This feature is currently in development!", C.gold, 3) end)
-    B.MouseEnter:Connect(function() TweenService:Create(B, TweenInfo.new(0.12), {BackgroundColor3 = C.elevated}):Play() end)
-    B.MouseLeave:Connect(function() TweenService:Create(B, TweenInfo.new(0.12), {BackgroundColor3 = C.goldDark}):Play() end)
 end
-
-MkSoonButton("Nexus", "nexus_1")
-MkSoonButton("Nexus", "nexus_2")
-MkSoonButton("Nexus", "nexus_3")
+MkSoonButton("Nexus", "nexus_1"); MkSoonButton("Nexus", "nexus_2"); MkSoonButton("Nexus", "nexus_3")
 
 ---------------------------------------------------------
 -- ============ SETTINGS TAB ============
 ---------------------------------------------------------
-local SettingsContainer = GP("Settings").frame
-SettingsContainer.ScrollBarThickness = 0
+local SettingsContainer = GP("Settings").frame; SettingsContainer.ScrollBarThickness = 0
+local SettingsNav = Instance.new("Frame"); SettingsNav.Size = UDim2.new(1, 0, 0, 24); SettingsNav.BackgroundTransparency = 1; SettingsNav.LayoutOrder = 1; SettingsNav.Parent = SettingsContainer
+local SNavList = Instance.new("UIListLayout"); SNavList.Parent = SettingsNav; SNavList.FillDirection = Enum.FillDirection.Horizontal; SNavList.HorizontalAlignment = Enum.HorizontalAlignment.Center; SNavList.Padding = UDim.new(0, 4)
 
-local SettingsNav = Instance.new("Frame")
-SettingsNav.Size = UDim2.new(1, 0, 0, 24)
-SettingsNav.BackgroundTransparency = 1
-SettingsNav.LayoutOrder = 1
-SettingsNav.Parent = SettingsContainer
+local Section_UI = Instance.new("Frame"); Section_UI.Size = UDim2.new(1, 0, 0, 200); Section_UI.AutomaticSize = Enum.AutomaticSize.Y; Section_UI.BackgroundTransparency = 1; Section_UI.LayoutOrder = 2; Section_UI.Visible = true; Section_UI.Parent = SettingsContainer
+local UI_List = Instance.new("UIListLayout"); UI_List.Parent = Section_UI; UI_List.Padding = UDim.new(0, 4); UI_List.SortOrder = Enum.SortOrder.LayoutOrder
 
-local SNavList = Instance.new("UIListLayout")
-SNavList.Parent = SettingsNav
-SNavList.FillDirection = Enum.FillDirection.Horizontal
-SNavList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-SNavList.Padding = UDim.new(0, 4)
+local Section_Theme = Instance.new("Frame"); Section_Theme.Size = UDim2.new(1, 0, 0, 200); Section_Theme.AutomaticSize = Enum.AutomaticSize.Y; Section_Theme.BackgroundTransparency = 1; Section_Theme.LayoutOrder = 3; Section_Theme.Visible = false; Section_Theme.Parent = SettingsContainer
+local Theme_List = Instance.new("UIListLayout"); Theme_List.Parent = Section_Theme; Theme_List.Padding = UDim.new(0, 4); Theme_List.SortOrder = Enum.SortOrder.LayoutOrder
 
-local Section_UI = Instance.new("Frame")
-Section_UI.Size = UDim2.new(1, 0, 0, 200)
-Section_UI.AutomaticSize = Enum.AutomaticSize.Y
-Section_UI.BackgroundTransparency = 1
-Section_UI.LayoutOrder = 2
-Section_UI.Visible = true
-Section_UI.Parent = SettingsContainer
+local Section_Showcase = Instance.new("Frame"); Section_Showcase.Size = UDim2.new(1, 0, 0, 200); Section_Showcase.AutomaticSize = Enum.AutomaticSize.Y; Section_Showcase.BackgroundTransparency = 1; Section_Showcase.LayoutOrder = 4; Section_Showcase.Visible = false; Section_Showcase.Parent = SettingsContainer
+local Showcase_List = Instance.new("UIListLayout"); Showcase_List.Parent = Section_Showcase; Showcase_List.Padding = UDim.new(0, 4); Showcase_List.SortOrder = Enum.SortOrder.LayoutOrder
 
-local UI_List = Instance.new("UIListLayout")
-UI_List.Parent = Section_UI; UI_List.Padding = UDim.new(0, 4); UI_List.SortOrder = Enum.SortOrder.LayoutOrder
-
-local Section_Theme = Instance.new("Frame")
-Section_Theme.Size = UDim2.new(1, 0, 0, 200)
-Section_Theme.AutomaticSize = Enum.AutomaticSize.Y
-Section_Theme.BackgroundTransparency = 1
-Section_Theme.LayoutOrder = 3
-Section_Theme.Visible = false
-Section_Theme.Parent = SettingsContainer
-
-local Theme_List = Instance.new("UIListLayout")
-Theme_List.Parent = Section_Theme; Theme_List.Padding = UDim.new(0, 4); Theme_List.SortOrder = Enum.SortOrder.LayoutOrder
-
-local Section_Showcase = Instance.new("Frame")
-Section_Showcase.Size = UDim2.new(1, 0, 0, 200)
-Section_Showcase.AutomaticSize = Enum.AutomaticSize.Y
-Section_Showcase.BackgroundTransparency = 1
-Section_Showcase.LayoutOrder = 4
-Section_Showcase.Visible = false
-Section_Showcase.Parent = SettingsContainer
-
-local Showcase_List = Instance.new("UIListLayout")
-Showcase_List.Parent = Section_Showcase; Showcase_List.Padding = UDim.new(0, 4); Showcase_List.SortOrder = Enum.SortOrder.LayoutOrder
-
--- Custom settings navigation tabs
 local navBtns = {}
 local function CreateNavBtn(key, sectionFrame)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.31, 0, 1, 0)
-    btn.BackgroundColor3 = C.elevated
-    btn.Text = L[currentLang][key] or key
-    btn.TextColor3 = C.textDim
-    btn.TextSize = 9
-    btn.Font = Enum.Font.GothamBold
-    btn.Parent = SettingsNav
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
-    updateableLabels[btn] = key
-    table.insert(globalTextObjects, btn)
-
-    btn.MouseButton1Click:Connect(function()
-        Section_UI.Visible = false
-        Section_Theme.Visible = false
-        Section_Showcase.Visible = false
-        
-        for _, b in ipairs(navBtns) do
-            b.BackgroundColor3 = C.elevated
-            b.TextColor3 = C.textDim
-        end
-        
-        sectionFrame.Visible = true
-        btn.BackgroundColor3 = C.accent
-        btn.TextColor3 = C.white
-    end)
+    local btn = Instance.new("TextButton"); btn.Size = UDim2.new(0.31, 0, 1, 0); btn.BackgroundColor3 = C.elevated; btn.Text = L[currentLang][key] or key; btn.TextColor3 = C.textDim; btn.TextSize = 9; btn.Font = Enum.Font.GothamBold; btn.Parent = SettingsNav; Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5); updateableLabels[btn] = key; table.insert(globalTextObjects, btn)
+    btn.MouseButton1Click:Connect(function() Section_UI.Visible = false; Section_Theme.Visible = false; Section_Showcase.Visible = false; for _, b in ipairs(navBtns) do b.BackgroundColor3 = C.elevated; b.TextColor3 = C.textDim end; sectionFrame.Visible = true; btn.BackgroundColor3 = C.accent; btn.TextColor3 = C.white end)
     table.insert(navBtns, btn)
 end
+CreateNavBtn("tab_ui", Section_UI); CreateNavBtn("tab_theme", Section_Theme); CreateNavBtn("tab_showcase", Section_Showcase)
+navBtns[1].BackgroundColor3 = C.accent; navBtns[1].TextColor3 = C.white
 
-CreateNavBtn("tab_ui", Section_UI)
-CreateNavBtn("tab_theme", Section_Theme)
-CreateNavBtn("tab_showcase", Section_Showcase)
-
-navBtns[1].BackgroundColor3 = C.accent
-navBtns[1].TextColor3 = C.white
-
----------------------------------
--- SECTIONS CODES & ACTIONS
----------------------------------
 MkSep("Settings", "menu_size", Section_UI)
-MkSlider("Settings", "menu_size", 300, 700, 480, function(v)
-    ResizeMenu(v, HUB_H)
-end, Section_UI)
+MkSlider("Settings", "menu_size", 300, 700, 500, function(v) ResizeMenu(v, HUB_H) end, Section_UI)
 
 MkSep("Settings", "menu_transparency", Section_UI)
-MkSlider("Settings", "menu_transparency", 0, 90, 0, function(v)
-    menuTransparency = v / 100
-    Hub.BackgroundTransparency = menuTransparency
-    Sidebar.BackgroundTransparency = menuTransparency
-    TopB.BackgroundTransparency = menuTransparency
-end, Section_UI)
+MkSlider("Settings", "menu_transparency", 0, 90, 0, function(v) menuTransparency = v / 100; Hub.BackgroundTransparency = menuTransparency; Sidebar.BackgroundTransparency = menuTransparency; TopB.BackgroundTransparency = menuTransparency end, Section_UI)
 
 MkSep("Settings", "change_font", Section_UI)
-local fontIndex = 1
-local availableFonts = {Enum.Font.GothamSemibold, Enum.Font.Code, Enum.Font.Arial, Enum.Font.SourceSans}
-local fontNames = {"Gotham", "Monospace Code", "Classic Arial", "Source Sans"}
-
-local FontToggleBtn = Instance.new("TextButton")
-FontToggleBtn.Size = UDim2.new(1, 0, 0, 28)
-FontToggleBtn.BackgroundColor3 = C.elevated
-FontToggleBtn.Text = "Font: Gotham"
-FontToggleBtn.TextColor3 = C.white
-FontToggleBtn.TextSize = 11
-FontToggleBtn.Font = Enum.Font.GothamBold
-FontToggleBtn.Parent = Section_UI
-Instance.new("UICorner", FontToggleBtn).CornerRadius = UDim.new(0, 6)
-
-FontToggleBtn.MouseButton1Click:Connect(function()
-    fontIndex = fontIndex + 1
-    if fontIndex > #availableFonts then fontIndex = 1 end
-    currentFont = availableFonts[fontIndex]
-    FontToggleBtn.Text = "Font: " .. fontNames[fontIndex]
-    
-    for _, textObj in ipairs(globalTextObjects) do
-        if textObj.Parent then
-            textObj.Font = currentFont
-        end
-    end
-    Notify("UI Engine", "Font changed to " .. fontNames[fontIndex], C.accent, 2)
-end)
+local fontIndex = 1; local availableFonts = {Enum.Font.GothamSemibold, Enum.Font.Code, Enum.Font.Arial, Enum.Font.SourceSans}; local fontNames = {"Gotham", "Monospace Code", "Classic Arial", "Source Sans"}
+local FontToggleBtn = Instance.new("TextButton"); FontToggleBtn.Size = UDim2.new(1, 0, 0, 28); FontToggleBtn.BackgroundColor3 = C.elevated; FontToggleBtn.Text = "Font: Gotham"; FontToggleBtn.TextColor3 = C.white; FontToggleBtn.TextSize = 11; FontToggleBtn.Font = Enum.Font.GothamBold; FontToggleBtn.Parent = Section_UI; Instance.new("UICorner", FontToggleBtn).CornerRadius = UDim.new(0, 6)
+FontToggleBtn.MouseButton1Click:Connect(function() fontIndex = fontIndex + 1; if fontIndex > #availableFonts then fontIndex = 1 end; currentFont = availableFonts[fontIndex]; FontToggleBtn.Text = "Font: " .. fontNames[fontIndex]; for _, textObj in ipairs(globalTextObjects) do if textObj.Parent then textObj.Font = currentFont end end; Notify("UI Engine", "Font changed to " .. fontNames[fontIndex], C.accent, 2) end)
 
 MkSep("Settings", "system", Section_UI)
-
 local LangToggleBtn = Instance.new("TextButton"); LangToggleBtn.Size = UDim2.new(1,0,0,28); LangToggleBtn.BackgroundColor3 = C.elevated; LangToggleBtn.Text = "Русский / Russian"; LangToggleBtn.TextColor3 = C.white; LangToggleBtn.TextSize = 11; LangToggleBtn.Font = Enum.Font.GothamBold; LangToggleBtn.Parent = Section_UI; Instance.new("UICorner", LangToggleBtn).CornerRadius = UDim.new(0,6)
 LangToggleBtn.MouseButton1Click:Connect(function() if currentLang == "RU" then UpdateLanguage("EN"); LangToggleBtn.Text = "English" else UpdateLanguage("RU"); LangToggleBtn.Text = "Русский / Russian" end end)
 
 MkButton("Settings", "reset", C.elevated, function() local h = GetHum(); if h then h.Health = 0 end end, Section_UI)
 MkButton("Settings", "copy", C.elevated, function() pcall(function() setclipboard("Roblox.GameLauncher.joinGameInstance(" .. game.PlaceId .. ", '" .. game.JobId .. "')") end) end, Section_UI)
-MkButton("Settings", "destroy", C.redDark, function() ClearESP(); ClearGunESP(); StopS(); for _, c in pairs(connections) do if typeof(c) == "RBXScriptConnection" then c:Disconnect() end end; ScreenGui:Destroy() end, Section_UI)
+MkButton("Settings", "destroy", C.redDark, function() ClearESP(); ClearItemESP(); StopS(); for _, c in pairs(connections) do if typeof(c) == "RBXScriptConnection" then c:Disconnect() end end; ScreenGui:Destroy() end, Section_UI)
 
----------------------------------
--- SECTIONS 2: THEMES
----------------------------------
 MkSep("Settings", "theme", Section_Theme)
 local ThemeList = Instance.new("Frame"); ThemeList.Size = UDim2.new(1,0,0,36); ThemeList.BackgroundTransparency = 1; ThemeList.Parent = Section_Theme
 local TLList = Instance.new("UIListLayout"); TLList.Parent = ThemeList; TLList.FillDirection = Enum.FillDirection.Horizontal; TLList.Padding = UDim.new(0,5); TLList.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 for _, tName in ipairs({"Purple", "Red", "Blue", "Green", "Dark"}) do 
-    local tc = Themes[tName].accent
-    local tBtn = Instance.new("TextButton")
-    tBtn.Size = UDim2.new(0.18,0,1,0)
-    tBtn.BackgroundColor3 = tc
-    tBtn.Text = tName:sub(1,1)
-    tBtn.TextColor3 = C.white
-    tBtn.Font = Enum.Font.GothamBold
-    tBtn.TextSize = 12
-    tBtn.Parent = ThemeList
-    Instance.new("UICorner", tBtn).CornerRadius = UDim.new(0,6)
-    
-    tBtn.MouseButton1Click:Connect(function() 
-        ApplyTheme(tName)
-        Notify("linbergz", "Accent color set to "..tName, C.accent, 2) 
-    end) 
+    local tc = Themes[tName].accent; local tBtn = Instance.new("TextButton"); tBtn.Size = UDim2.new(0.18,0,1,0); tBtn.BackgroundColor3 = tc; tBtn.Text = tName:sub(1,1); tBtn.TextColor3 = C.white; tBtn.Font = Enum.Font.GothamBold; tBtn.TextSize = 12; tBtn.Parent = ThemeList; Instance.new("UICorner", tBtn).CornerRadius = UDim.new(0,6)
+    tBtn.MouseButton1Click:Connect(function() ApplyTheme(tName); Notify("linbergz", "Accent color set to "..tName, C.accent, 2) end) 
 end
 
----------------------------------
--- SECTIONS 3: SHOWCASE [SOON]
----------------------------------
 MkSep("Settings", "soon", Section_Showcase)
 MkInfoBox("Settings", "Here you will be able to preview and save customized templates!\nFollow linbergz updates.", Section_Showcase)
-
-MkSep("Settings", "about")
-MkInfoBox("Settings", "linbergz Hub v8.0 (Nexus)\nPlatform: Mobile Optimized\nCreator: linbergz Team")
 
 ---------------------------------------------------------
 -- ============ INFO TAB ============
@@ -1092,8 +970,8 @@ MkInfoBox("Settings", "linbergz Hub v8.0 (Nexus)\nPlatform: Mobile Optimized\nCr
 MkSep("Info", "about")
 local InfoChange = MkInfoBox("Info", "Loading updates...")
 local function RefreshLog()
-    if currentLang == "RU" then InfoChange.Text = "Обновление v8.0 Nexus Mobile:\n\n- [NEW] Auto-Grab: Моментальный подбор оружия после смерти шерифа.\n- [NEW] Auto-Farm: Автоматический сбор монет на карте.\n- [NEW] Chat Announcer: Палит убийцу и шерифа в чат всем.\n- [NEW] Glitch Invisibility: Делает вас невидимым через баг R15.\n- [NEW] Настройки UI: Размер меню, Настройка прозрачности и Шрифты!\n- [NEW] Добавлены телепорты (Лобби, Карта).\n- [FIX] Флинг адаптирован под лимиты физики."
-    else InfoChange.Text = "Update v8.0 Nexus Mobile:\n\n- [NEW] Auto-Grab: Instantly grab sheriff's gun when dropped.\n- [NEW] Auto-Farm: Automatically collect coins around the map.\n- [NEW] Chat Announcer: Leaks murderer and sheriff in chat.\n- [NEW] Glitch Invisibility: Become invisible using R15 exploit.\n- [NEW] UI Settings: Added menu scaling, transparency control & fonts!\n- [NEW] Added teleports (Lobby, Map).\n- [FIX] Fling adapted to physics limits." end
+    if currentLang == "RU" then InfoChange.Text = "Обновление v8.0 Nexus Mobile:\n\n- [NEW] Auto-Stab KillAll: Мгновенное убийство телепортом.\n- [NEW] Hitbox Expander: Увеличивает модель убийцы.\n- [NEW] Coin ESP: Показ всех монеток.\n- [NEW] Smooth Auto-Farm: Оптимизированный фарм."
+    else InfoChange.Text = "Update v8.0 Nexus Mobile:\n\n- [NEW] Auto-Stab KillAll: Teleport-stab instantly kills.\n- [NEW] Hitbox Expander: Make murderer giant for Sheriff.\n- [NEW] Coin ESP: See all coins around map.\n- [NEW] Smooth Auto-Farm: Safer & accurate." end
 end
 RefreshLog(); LangToggleBtn.MouseButton1Click:Connect(RefreshLog)
 
