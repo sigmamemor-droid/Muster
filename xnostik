@@ -1,6 +1,6 @@
--- linbergz Team MM2 PREMIUM MOBILE HUB v8.00 (Nexus Update)
+-- linbergz Team MM2 PREMIUM MOBILE HUB v8.01 (Nexus Update — ENI Visual Polish)
 -- Ironclad Anti-Fling, Advanced Physics Fling Engine, Hitbox Expander, Auto-Stab KillAll
--- Fully Unabbreviated & Mobile Optimized Code
+-- UI Overhaul: Blur Depth, Drop Shadows, Hover States, Stagger Animations, Glow FX
 
 ---------------------------------------------------------
 -- SERVICES
@@ -25,6 +25,8 @@ local camera = workspace.CurrentCamera
 ---------------------------------------------------------
 local oldGui = player.PlayerGui:FindFirstChild("MM2HubMobile")
 if oldGui then oldGui:Destroy() end
+local oldBlur = Lighting:FindFirstChild("HubBlur")
+if oldBlur then oldBlur:Destroy() end
 
 ---------------------------------------------------------
 -- SCREENGUI SETUP
@@ -37,7 +39,15 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
 
 ---------------------------------------------------------
--- THEME SYSTEM CONFIGURATION (PREMIUM PALETTES)
+-- BACKGROUND BLUR (toggles with hub)
+---------------------------------------------------------
+local HubBlur = Instance.new("BlurEffect")
+HubBlur.Name = "HubBlur"
+HubBlur.Size = 0
+HubBlur.Parent = Lighting
+
+---------------------------------------------------------
+-- THEME SYSTEM CONFIGURATION
 ---------------------------------------------------------
 local Themes = {
     Purple = { accent = Color3.fromRGB(155, 80, 255), accentLight = Color3.fromRGB(195, 130, 255), bg = Color3.fromRGB(11, 9, 18), surface = Color3.fromRGB(16, 12, 26), gradient = {Color3.fromRGB(155, 80, 255), Color3.fromRGB(90, 40, 200)} },
@@ -47,6 +57,7 @@ local Themes = {
     Dark = { accent = Color3.fromRGB(200, 200, 200), accentLight = Color3.fromRGB(255, 255, 255), bg = Color3.fromRGB(12, 12, 12), surface = Color3.fromRGB(20, 20, 20), gradient = {Color3.fromRGB(180, 180, 180), Color3.fromRGB(60, 60, 60)} }
 }
 
+local currentThemeName = "Purple"
 local C = {
     bg = Themes.Purple.bg, sidebar = Color3.fromRGB(7, 5, 11), surface = Themes.Purple.surface,
     elevated = Color3.fromRGB(22, 17, 34), cardHover = Color3.fromRGB(32, 26, 48),
@@ -62,7 +73,7 @@ local C = {
 
 local currentFont = Enum.Font.GothamSemibold
 local globalTextObjects = {}
-local menuTransparency = 0 
+local menuTransparency = 0
 
 ---------------------------------------------------------
 -- LOCALIZATION ENGINE (RU/EN)
@@ -119,18 +130,23 @@ local function UpdateLanguage(lang)
 end
 
 ---------------------------------------------------------
--- THEME CONTROLLER & GRADIENTS
+-- THEME CONTROLLER & GRADIENTS (with smooth tweening)
 ---------------------------------------------------------
 local themedBg, themedSurface, themedAccent, themedGradients = {}, {}, {}, {}
 
 local function ApplyTheme(themeName)
     local theme = Themes[themeName]
     if not theme then return end
+    currentThemeName = themeName
+    
+    -- Tween all color changes for smooth transition
+    local tweenInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    
     C.bg = theme.bg; C.surface = theme.surface; C.accent = theme.accent; C.accentLight = theme.accentLight
     
     for _, item in ipairs(themedBg) do 
         if item.Parent then 
-            item.BackgroundColor3 = C.bg 
+            TweenService:Create(item, tweenInfo, {BackgroundColor3 = C.bg}):Play()
             if item.Name == "Hub" or item.Name == "Sidebar" or item.Name == "TopBar" then
                 item.BackgroundTransparency = menuTransparency
             end
@@ -138,7 +154,7 @@ local function ApplyTheme(themeName)
     end
     for _, item in ipairs(themedSurface) do 
         if item.Parent then 
-            item.BackgroundColor3 = C.surface 
+            TweenService:Create(item, tweenInfo, {BackgroundColor3 = C.surface}):Play()
             if item.Name == "TopBar" then
                 item.BackgroundTransparency = menuTransparency
             end
@@ -146,17 +162,23 @@ local function ApplyTheme(themeName)
     end
     for _, item in ipairs(themedAccent) do 
         if item.Parent then
-            if item:IsA("Frame") or item:IsA("TextButton") then item.BackgroundColor3 = C.accent
-            elseif item:IsA("TextLabel") then item.TextColor3 = C.accentLight
-            elseif item:IsA("UIStroke") then item.Color = C.accent end
+            if item:IsA("Frame") or item:IsA("TextButton") then
+                TweenService:Create(item, tweenInfo, {BackgroundColor3 = C.accent}):Play()
+            elseif item:IsA("TextLabel") then
+                TweenService:Create(item, tweenInfo, {TextColor3 = C.accentLight}):Play()
+            elseif item:IsA("UIStroke") then
+                TweenService:Create(item, tweenInfo, {Color = C.accent}):Play()
+            end
         end
     end
     for _, grad in ipairs(themedGradients) do
         if grad.Parent then
-            grad.Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, theme.accent),
-                ColorSequenceKeypoint.new(1, theme.gradient[2])
-            })
+            TweenService:Create(grad, tweenInfo, {
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, theme.accent),
+                    ColorSequenceKeypoint.new(1, theme.gradient[2])
+                })
+            }):Play()
         end
     end
 end
@@ -169,7 +191,7 @@ local function Conn(n, c) if connections[n] and typeof(connections[n]) == "RBXSc
 local function ClearConn(n) if connections[n] then if typeof(connections[n]) == "RBXScriptConnection" then connections[n]:Disconnect() end; connections[n] = nil end end
 
 ---------------------------------------------------------
--- MATH & PHYSICAL UTILITIES (MM2 SPECIFIC)
+-- MATH & PHYSICAL UTILITIES
 ---------------------------------------------------------
 local function GetChar() return player.Character end
 local function GetHum() local c = GetChar(); return c and c:FindFirstChildOfClass("Humanoid") end
@@ -188,38 +210,50 @@ local function FindKnifeInHand() local c = GetChar(); if not c then return nil e
 local function FireGunAtTarget(gun, target) if not gun or not target then return false end; for _, r in ipairs(gun:GetDescendants()) do if r:IsA("RemoteEvent") then pcall(function() r:FireServer(target.Position, target) end); return true end end; return false end
 
 ---------------------------------------------------------
--- MOBILE NOTIFICATIONS
+-- MOBILE NOTIFICATIONS (with accent bar + shadow)
 ---------------------------------------------------------
 local NotifHolder = Instance.new("Frame")
-NotifHolder.Size = UDim2.new(0, 220, 1, -20)
-NotifHolder.Position = UDim2.new(1, -230, 0, 10)
+NotifHolder.Size = UDim2.new(0, 230, 1, -20)
+NotifHolder.Position = UDim2.new(1, -240, 0, 10)
 NotifHolder.BackgroundTransparency = 1
 NotifHolder.ZIndex = 200
 NotifHolder.Parent = ScreenGui
 
 local NLay = Instance.new("UIListLayout")
-NLay.Parent = NotifHolder; NLay.SortOrder = Enum.SortOrder.LayoutOrder; NLay.Padding = UDim.new(0, 4); NLay.VerticalAlignment = Enum.VerticalAlignment.Bottom
+NLay.Parent = NotifHolder; NLay.SortOrder = Enum.SortOrder.LayoutOrder; NLay.Padding = UDim.new(0, 6); NLay.VerticalAlignment = Enum.VerticalAlignment.Bottom
 
 local nOrd = 0
 local function Notify(title, msg, color, dur)
     nOrd = nOrd + 1; color = color or C.accent; dur = dur or 2.5
     local Cd = Instance.new("Frame")
-    Cd.Size = UDim2.new(1, 0, 0, 46); Cd.BackgroundColor3 = C.surface; Cd.BorderSizePixel = 0; Cd.LayoutOrder = nOrd; Cd.ClipsDescendants = true; Cd.ZIndex = 201; Cd.Parent = NotifHolder
-    Instance.new("UICorner", Cd).CornerRadius = UDim.new(0, 6)
-    local stk = Instance.new("UIStroke"); stk.Color = color; stk.Thickness = 1; stk.Parent = Cd
-    local T = Instance.new("TextLabel"); T.Size = UDim2.new(1, -12, 0, 16); T.Position = UDim2.new(0, 8, 0, 4); T.BackgroundTransparency = 1; T.Text = title; T.TextColor3 = color; T.TextSize = 11; T.Font = currentFont; T.TextXAlignment = Enum.TextXAlignment.Left; T.Parent = Cd; table.insert(globalTextObjects, T)
-    local M = Instance.new("TextLabel"); M.Size = UDim2.new(1, -12, 0, 20); M.Position = UDim2.new(0, 8, 0, 20); M.BackgroundTransparency = 1; M.Text = msg; M.TextColor3 = C.textSec; M.TextSize = 10; M.Font = currentFont; M.TextXAlignment = Enum.TextXAlignment.Left; M.Parent = Cd; table.insert(globalTextObjects, M)
+    Cd.Size = UDim2.new(1, 0, 0, 50); Cd.BackgroundColor3 = C.surface; Cd.BorderSizePixel = 0; Cd.LayoutOrder = nOrd; Cd.ClipsDescendants = true; Cd.ZIndex = 201; Cd.Parent = NotifHolder
+    Instance.new("UICorner", Cd).CornerRadius = UDim.new(0, 8)
+    
+    -- Accent left bar
+    local Bar = Instance.new("Frame")
+    Bar.Size = UDim2.new(0, 3, 1, 0)
+    Bar.BackgroundColor3 = color
+    Bar.BorderSizePixel = 0
+    Bar.ZIndex = 202
+    Bar.Parent = Cd
+    Instance.new("UICorner", Bar).CornerRadius = UDim.new(0, 2)
+    
+    -- Glow stroke
+    local stk = Instance.new("UIStroke"); stk.Color = color; stk.Thickness = 1; stk.Transparency = 0.5; stk.Parent = Cd
+    
+    local T = Instance.new("TextLabel"); T.Size = UDim2.new(1, -20, 0, 16); T.Position = UDim2.new(0, 14, 0, 6); T.BackgroundTransparency = 1; T.Text = title; T.TextColor3 = color; T.TextSize = 11; T.Font = Enum.Font.GothamBold; T.TextXAlignment = Enum.TextXAlignment.Left; T.Parent = Cd; table.insert(globalTextObjects, T)
+    local M = Instance.new("TextLabel"); M.Size = UDim2.new(1, -20, 0, 20); M.Position = UDim2.new(0, 14, 0, 22); M.BackgroundTransparency = 1; M.Text = msg; M.TextColor3 = C.textSec; M.TextSize = 10; M.Font = currentFont; T.TextXAlignment = Enum.TextXAlignment.Left; M.Parent = Cd; table.insert(globalTextObjects, M)
     Cd.Position = UDim2.new(1.2, 0, 0, 0)
-    TweenService:Create(Cd, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
+    TweenService:Create(Cd, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
     task.delay(dur, function()
         if not Cd.Parent then return end
-        local tw = TweenService:Create(Cd, TweenInfo.new(0.25), {Position = UDim2.new(1.2, 0, 0, 0)}); tw:Play()
+        local tw = TweenService:Create(Cd, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Position = UDim2.new(1.2, 0, 0, 0)}); tw:Play()
         tw.Completed:Connect(function() pcall(function() Cd:Destroy() end) end)
     end)
 end
 
 ---------------------------------------------------------
--- ULTRA-SLEEK TOGGLE BAR (100x BETTER)
+-- GLOWING TOGGLE PILL (with pulsing glow)
 ---------------------------------------------------------
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "TogglePill"
@@ -235,10 +269,18 @@ local ToggleCorner = Instance.new("UICorner")
 ToggleCorner.CornerRadius = UDim.new(1, 0)
 ToggleCorner.Parent = ToggleBtn
 
+-- Outer glow stroke (pulsing)
+local ToggleGlow = Instance.new("UIStroke")
+ToggleGlow.Color = C.accent
+ToggleGlow.Thickness = 2.5
+ToggleGlow.Transparency = 0.4
+ToggleGlow.Parent = ToggleBtn
+table.insert(themedAccent, ToggleGlow)
+
 local ToggleStroke = Instance.new("UIStroke")
 ToggleStroke.Color = C.white
-ToggleStroke.Thickness = 2
-ToggleStroke.Transparency = 0.2
+ToggleStroke.Thickness = 1.5
+ToggleStroke.Transparency = 0.3
 ToggleStroke.Parent = ToggleBtn
 
 local ToggleGrad = Instance.new("UIGradient")
@@ -250,10 +292,14 @@ ToggleGrad.Color = ColorSequence.new({
 ToggleGrad.Parent = ToggleBtn
 table.insert(themedGradients, ToggleGrad)
 
--- Animating the Gradient for a cyber-fluid look
-RunService.RenderStepped:Connect(function()
-    if ToggleGrad.Parent then
-        ToggleGrad.Rotation = ToggleGrad.Rotation + 1.5
+-- Animated gradient + pulsing glow
+task.spawn(function()
+    local pulseTime = 0
+    while ToggleBtn.Parent do
+        ToggleGrad.Rotation = ToggleGrad.Rotation + 1.2
+        pulseTime = pulseTime + 0.04
+        ToggleGlow.Transparency = 0.35 + math.sin(pulseTime) * 0.2
+        RunService.RenderStepped:Wait()
     end
 end)
 
@@ -281,7 +327,7 @@ ToggleText.ZIndex = 91
 ToggleText.Parent = ToggleBtn
 table.insert(globalTextObjects, ToggleText)
 
--- Smooth Touch Dragging for Pill Bar
+-- Smooth Touch Dragging
 do
     local dragging, dragStart, startPos
     ToggleBtn.InputBegan:Connect(function(i) 
@@ -289,7 +335,7 @@ do
             dragging = true
             dragStart = i.Position
             startPos = ToggleBtn.Position 
-            TweenService:Create(ToggleBtn, TweenInfo.new(0.15), {Scale = Vector3.new(0.9, 0.9, 1)}):Play()
+            TweenService:Create(ToggleBtn, TweenInfo.new(0.15), {Size = UDim2.new(0, 120, 0, 37)}):Play()
             TweenService:Create(ToggleStroke, TweenInfo.new(0.15), {Thickness = 3, Transparency = 0}):Play()
         end 
     end)
@@ -302,16 +348,33 @@ do
     UserInputService.InputEnded:Connect(function(i) 
         if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then 
             dragging = false 
-            TweenService:Create(ToggleBtn, TweenInfo.new(0.15), {Scale = Vector3.new(1, 1, 1)}):Play()
-            TweenService:Create(ToggleStroke, TweenInfo.new(0.15), {Thickness = 2, Transparency = 0.2}):Play()
+            TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 130, 0, 40)}):Play()
+            TweenService:Create(ToggleStroke, TweenInfo.new(0.15), {Thickness = 1.5, Transparency = 0.3}):Play()
         end 
     end)
 end
 
 ---------------------------------------------------------
--- MAIN HUB FRAME (WITH ADVANCED AESTHETIC GRADIENTS)
+-- DROP SHADOW FRAME (behind hub)
 ---------------------------------------------------------
-local HUB_W, HUB_H, SIDEBAR_W = 500, 320, 135
+local Shadow = Instance.new("ImageLabel")
+Shadow.Name = "HubShadow"
+Shadow.Size = UDim2.new(1, 30, 1, 30)
+Shadow.Position = UDim2.new(0, -15, 0, -15)
+Shadow.BackgroundTransparency = 1
+Shadow.Image = "rbxassetid://1316045217"
+Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+Shadow.ImageTransparency = 0.4
+Shadow.ScaleType = Enum.ScaleType.Slice
+Shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+Shadow.ZIndex = 9
+Shadow.Visible = false
+Shadow.Parent = ScreenGui
+
+---------------------------------------------------------
+-- MAIN HUB FRAME
+---------------------------------------------------------
+local HUB_W, HUB_H, SIDEBAR_W = 500, 340, 135
 local Hub = Instance.new("Frame")
 Hub.Name = "Hub"
 Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
@@ -323,8 +386,11 @@ Hub.ClipsDescendants = true
 Hub.ZIndex = 10
 Hub.Parent = ScreenGui
 
+-- Reparent shadow to follow hub
+Shadow.Position = UDim2.new(0.5, -HUB_W / 2 - 15, 0.5, -HUB_H / 2 - 15)
+
 local HubCorner = Instance.new("UICorner")
-HubCorner.CornerRadius = UDim.new(0, 12)
+HubCorner.CornerRadius = UDim.new(0, 14)
 HubCorner.Parent = Hub
 table.insert(themedBg, Hub)
 
@@ -343,17 +409,57 @@ FrameGrad.Color = ColorSequence.new({
 })
 FrameGrad.Parent = Hub
 
+-- Corner accent decorations
+local function MkCornerDecor(xScale, yScale, rot)
+    local cd = Instance.new("Frame")
+    cd.Size = UDim2.new(0, 16, 0, 16)
+    cd.Position = UDim2.new(xScale, xScale > 0.5 and -8 or 8, yScale, yScale > 0.5 and -8 or 8)
+    cd.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    cd.BackgroundTransparency = 1
+    cd.ZIndex = 15
+    cd.Parent = Hub
+    local l1 = Instance.new("Frame")
+    l1.Size = UDim2.new(0, 10, 0, 2)
+    l1.Position = UDim2.new(0, 0, 0, 0)
+    l1.BackgroundColor3 = C.accent
+    l1.BorderSizePixel = 0
+    l1.Parent = cd
+    table.insert(themedAccent, l1)
+    local l2 = Instance.new("Frame")
+    l2.Size = UDim2.new(0, 2, 0, 10)
+    l2.Position = UDim2.new(0, 0, 0, 0)
+    l2.BackgroundColor3 = C.accent
+    l2.BorderSizePixel = 0
+    l2.Parent = cd
+    table.insert(themedAccent, l2)
+    cd.Rotation = rot
+end
+MkCornerDecor(0, 0, 0)
+MkCornerDecor(1, 0, 90)
+MkCornerDecor(1, 1, 180)
+MkCornerDecor(0, 1, 270)
+
+-- Watermark (lower opacity, gradient text)
 local Watermark = Instance.new("TextLabel")
 Watermark.Size = UDim2.new(1, -SIDEBAR_W, 1, 0)
 Watermark.Position = UDim2.new(0, SIDEBAR_W, 0, 0)
 Watermark.BackgroundTransparency = 1
 Watermark.Text = "lz"
-Watermark.TextColor3 = Color3.fromRGB(25, 18, 38)
-Watermark.TextSize = 160
+Watermark.TextColor3 = Color3.fromRGB(30, 22, 45)
+Watermark.TextSize = 150
 Watermark.Font = Enum.Font.GothamBlack
 Watermark.ZIndex = 9
 Watermark.Parent = Hub
 
+local WMGrad = Instance.new("UIGradient")
+WMGrad.Rotation = 45
+WMGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 25, 55)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 10, 25))
+})
+WMGrad.Parent = Watermark
+
+-- Top Bar
 local TopB = Instance.new("Frame")
 TopB.Name = "TopBar"
 TopB.Size = UDim2.new(1, -SIDEBAR_W, 0, 36)
@@ -367,10 +473,12 @@ table.insert(themedSurface, TopB)
 local TopB_Line = Instance.new("Frame")
 TopB_Line.Size = UDim2.new(1, 0, 0, 1)
 TopB_Line.Position = UDim2.new(0, 0, 1, -1)
-TopB_Line.BackgroundColor3 = Color3.fromRGB(45, 38, 70)
+TopB_Line.BackgroundColor3 = C.accent
+TopB_Line.BackgroundTransparency = 0.5
 TopB_Line.BorderSizePixel = 0
 TopB_Line.ZIndex = 13
 TopB_Line.Parent = TopB
+table.insert(themedAccent, TopB_Line)
 
 local PT = Instance.new("TextLabel")
 PT.Size = UDim2.new(1, -60, 1, 0)
@@ -398,10 +506,14 @@ ClB.ZIndex = 13
 ClB.Parent = TopB
 Instance.new("UICorner", ClB).CornerRadius = UDim.new(0, 6)
 
+-- Close button hover
+ClB.MouseEnter:Connect(function() TweenService:Create(ClB, TweenInfo.new(0.15), {BackgroundColor3 = C.red}):Play() end)
+ClB.MouseLeave:Connect(function() TweenService:Create(ClB, TweenInfo.new(0.15), {BackgroundColor3 = C.redDark}):Play() end)
+
 do
     local drag, dStart, sPos
     TopB.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then drag = true; dStart = i.Position; sPos = Hub.Position end end)
-    UserInputService.InputChanged:Connect(function(i) if drag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then local d = i.Position - dStart; Hub.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y) end end)
+    UserInputService.InputChanged:Connect(function(i) if drag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then local d = i.Position - dStart; local newPos = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y); Hub.Position = newPos; Shadow.Position = UDim2.new(newPos.X.Scale, newPos.X.Offset - 15, newPos.Y.Scale, newPos.Y.Offset - 15) end end)
     TopB.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then drag = false end end)
 end
 
@@ -420,10 +532,12 @@ table.insert(themedBg, Sidebar)
 local SideLine = Instance.new("Frame")
 SideLine.Size = UDim2.new(0, 1, 1, 0)
 SideLine.Position = UDim2.new(1, -1, 0, 0)
-SideLine.BackgroundColor3 = Color3.fromRGB(45, 38, 70)
+SideLine.BackgroundColor3 = C.accent
+SideLine.BackgroundTransparency = 0.5
 SideLine.BorderSizePixel = 0
 SideLine.ZIndex = 13
 SideLine.Parent = Sidebar
+table.insert(themedAccent, SideLine)
 
 local SLogo = Instance.new("Frame")
 SLogo.Size = UDim2.new(1, 0, 0, 42)
@@ -440,6 +554,16 @@ STi.Font = Enum.Font.GothamBlack
 STi.Parent = SLogo
 table.insert(globalTextObjects, STi)
 
+-- Gradient on logo text
+local STiGrad = Instance.new("UIGradient")
+STiGrad.Rotation = 0
+STiGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, C.accentLight),
+    ColorSequenceKeypoint.new(1, C.white)
+})
+STiGrad.Parent = STi
+table.insert(themedGradients, STiGrad)
+
 local LogoLine = Instance.new("Frame")
 LogoLine.Size = UDim2.new(0.6, 0, 0, 2)
 LogoLine.Position = UDim2.new(0.2, 0, 1, -2)
@@ -447,6 +571,16 @@ LogoLine.BackgroundColor3 = C.accent
 LogoLine.BorderSizePixel = 0
 LogoLine.Parent = SLogo
 table.insert(themedAccent, LogoLine)
+
+local LogoLineGrad = Instance.new("UIGradient")
+LogoLineGrad.Rotation = 0
+LogoLineGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, C.accent),
+    ColorSequenceKeypoint.new(0.5, C.accentLight),
+    ColorSequenceKeypoint.new(1, C.accent)
+})
+LogoLineGrad.Parent = LogoLine
+table.insert(themedGradients, LogoLineGrad)
 
 local TH = Instance.new("Frame")
 TH.Size = UDim2.new(1, 0, 1, -42)
@@ -462,6 +596,7 @@ local THP = Instance.new("UIPadding")
 THP.PaddingLeft = UDim.new(0, 8); THP.PaddingRight = UDim.new(0, 8); THP.PaddingTop = UDim.new(0, 6)
 THP.Parent = TH
 
+-- Tab glider with glow
 local TabGlider = Instance.new("Frame")
 TabGlider.Size = UDim2.new(1, 0, 0, 28)
 TabGlider.BackgroundColor3 = C.accent
@@ -470,6 +605,24 @@ TabGlider.ZIndex = 12
 TabGlider.Visible = true
 TabGlider.Parent = TH
 Instance.new("UICorner", TabGlider).CornerRadius = UDim.new(0, 6)
+
+-- Glider glow stroke
+local GliderGlow = Instance.new("UIStroke")
+GliderGlow.Color = C.accent
+GliderGlow.Thickness = 1.2
+GliderGlow.Transparency = 0.6
+GliderGlow.Parent = TabGlider
+table.insert(themedAccent, GliderGlow)
+
+-- Pulsing glow on glider
+task.spawn(function()
+    local pulse = 0
+    while TabGlider.Parent do
+        pulse = pulse + 0.05
+        GliderGlow.Transparency = 0.4 + math.sin(pulse) * 0.25
+        task.wait(0.03)
+    end
+end)
 
 local GliderLine = Instance.new("Frame")
 GliderLine.Size = UDim2.new(0, 3, 1, 0)
@@ -489,7 +642,6 @@ table.insert(themedAccent, GliderLine)
 local tabPages, tabBtns, currentTab = {}, {}, nil
 local CX, CY, CW, CH = SIDEBAR_W + 1, 36, HUB_W - SIDEBAR_W - 1, HUB_H - 36
 
--- NEW TEXT SYMBOLS INSTEAD OF EMOJIS
 local tabDefs = {
     {name = "Home", key = "home", icon = "⌂", order = 1},
     {name = "Combat", key = "combat", icon = "⚔", order = 2},
@@ -514,7 +666,7 @@ end
 
 for idx, def in ipairs(tabDefs) do
     local Page = Instance.new("ScrollingFrame")
-    Page.Name = "Page_" .. def.name; Page.Size = UDim2.new(0, CW, 0, CH); Page.Position = UDim2.new(0, CX, 0, CY); Page.BackgroundTransparency = 1; Page.BorderSizePixel = 0; Page.ScrollBarThickness = 3; Page.ScrollBarImageColor3 = C.accent; Page.Visible = false; Page.Parent = Hub; table.insert(themedAccent, Page)
+    Page.Name = "Page_" .. def.name; Page.Size = UDim2.new(0, CW, 0, CH); Page.Position = UDim2.new(0, CX, 0, CY); Page.BackgroundTransparency = 1; Page.BorderSizePixel = 0; Page.ScrollBarThickness = 3; Page.ScrollBarImageColor3 = C.accent; Page.Visible = false; Page.Parent = Hub
     local PL = Instance.new("UIListLayout"); PL.Parent = Page; PL.SortOrder = Enum.SortOrder.LayoutOrder; PL.Padding = UDim.new(0, 5)
     local PP = Instance.new("UIPadding"); PP.PaddingTop = UDim.new(0, 6); PP.PaddingBottom = UDim.new(0, 10); PP.PaddingLeft = UDim.new(0, 8); PP.PaddingRight = UDim.new(0, 8); PP.Parent = Page
     tabPages[def.name] = {frame = Page, oc = 0}
@@ -525,30 +677,71 @@ for idx, def in ipairs(tabDefs) do
     if def.name == "Nexus" then Tb.TextColor3 = C.gold end
     tabBtns[def.name] = {btn = Tb, index = idx, icon = def.icon, label = def.name}
     
+    -- Tab hover effect
+    Tb.MouseEnter:Connect(function()
+        if currentTab ~= def.name then
+            TweenService:Create(Tb, TweenInfo.new(0.15), {TextColor3 = C.textSec}):Play()
+        end
+    end)
+    Tb.MouseLeave:Connect(function()
+        if currentTab ~= def.name then
+            TweenService:Create(Tb, TweenInfo.new(0.15), {TextColor3 = (def.name == "Nexus") and C.gold or C.textDim}):Play()
+        end
+    end)
+    
     Tb.MouseButton1Click:Connect(function()
         if currentTab == def.name then return end
         local origSize = UDim2.new(1, 0, 0, 28)
         TweenService:Create(Tb, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0.92, 0, 0, 26)}):Play()
         task.delay(0.08, function() TweenService:Create(Tb, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = origSize}):Play() end)
         
-        if currentTab and tabPages[currentTab] then tabPages[currentTab].frame.Visible = false; tabBtns[currentTab].btn.TextColor3 = (currentTab == "Nexus") and C.gold or C.textDim end
-        currentTab = def.name; Page.Visible = true; PT.Text = def.icon .. "  " .. (L[currentLang][def.key] or def.name); updateableLabels[PT] = def.key
+        -- Page transition: fade out old, fade in new
+        if currentTab and tabPages[currentTab] then
+            local oldPage = tabPages[currentTab].frame
+            TweenService:Create(oldPage, TweenInfo.new(0.12), {Position = UDim2.new(0, CX + 15, 0, CY), GroupTransparency = 1}):Play()
+            task.delay(0.12, function() oldPage.Visible = false; oldPage.GroupTransparency = 0; oldPage.Position = UDim2.new(0, CX, 0, CY) end)
+            tabBtns[currentTab].btn.TextColor3 = (currentTab == "Nexus") and C.gold or C.textDim
+        end
+        
+        currentTab = def.name
+        Page.Visible = true
+        Page.GroupTransparency = 1
+        Page.Position = UDim2.new(0, CX - 15, 0, CY)
+        PT.Text = def.icon .. "  " .. (L[currentLang][def.key] or def.name); updateableLabels[PT] = def.key
         Tb.TextColor3 = C.accentLight
         
+        TweenService:Create(Page, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, CX, 0, CY), GroupTransparency = 0}):Play()
+        
         local targetY = 6 + (idx - 1) * 32
-        TweenService:Create(TabGlider, TweenInfo.new(0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, targetY)}):Play()
+        TweenService:Create(TabGlider, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, targetY)}):Play()
     end)
 end
 
+---------------------------------------------------------
+-- HUB TOGGLE (with blur + shadow + stagger)
+---------------------------------------------------------
 local hubOpen = false
 local function ToggleHub()
     hubOpen = not hubOpen
     if hubOpen then 
-        Hub.Visible = true; Hub.Size = UDim2.new(0, HUB_W, 0, 0)
-        TweenService:Create(Hub, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, HUB_W, 0, HUB_H)}):Play()
+        Hub.Visible = true; Shadow.Visible = true
+        Hub.Size = UDim2.new(0, HUB_W, 0, 0)
+        Hub.GroupTransparency = 1
+        
+        TweenService:Create(Hub, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, HUB_W, 0, HUB_H)}):Play()
+        TweenService:Create(Hub, TweenInfo.new(0.25), {GroupTransparency = 0}):Play()
+        TweenService:Create(HubBlur, TweenInfo.new(0.3), {Size = 12}):Play()
+        
+        -- Shadow fade in
+        Shadow.ImageTransparency = 1
+        TweenService:Create(Shadow, TweenInfo.new(0.4), {ImageTransparency = 0.4}):Play()
     else 
         local tw = TweenService:Create(Hub, TweenInfo.new(0.22, Enum.EasingStyle.Quad), {Size = UDim2.new(0, HUB_W, 0, 0)}) 
-        tw:Play(); tw.Completed:Connect(function() Hub.Visible = false; Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H) end) 
+        tw:Play()
+        TweenService:Create(Hub, TweenInfo.new(0.15), {GroupTransparency = 1}):Play()
+        TweenService:Create(HubBlur, TweenInfo.new(0.2), {Size = 0}):Play()
+        TweenService:Create(Shadow, TweenInfo.new(0.2), {ImageTransparency = 1}):Play()
+        tw.Completed:Connect(function() Hub.Visible = false; Shadow.Visible = false; Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H); Hub.GroupTransparency = 0 end) 
     end
 end
 ToggleBtn.MouseButton1Click:Connect(ToggleHub)
@@ -556,7 +749,7 @@ ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
 task.defer(function() tabBtns["Home"].btn.MouseButton1Click:Fire() end)
 
 ---------------------------------------------------------
--- UI ELEMENT FACTORY
+-- UI ELEMENT FACTORY (with hover effects)
 ---------------------------------------------------------
 local function GP(t) return tabPages[t] end
 local function NO(t) local p = GP(t); p.oc = p.oc + 1; return p.oc end
@@ -564,6 +757,8 @@ local function NO(t) local p = GP(t); p.oc = p.oc + 1; return p.oc end
 local function MkSep(tab, key, customParent)
     local o = NO(tab); local F = Instance.new("Frame"); F.Size = UDim2.new(1, 0, 0, 20); F.BackgroundTransparency = 1; F.LayoutOrder = o; F.Parent = customParent or GP(tab).frame
     local Lb = Instance.new("TextLabel"); Lb.Size = UDim2.new(1, 0, 1, 0); Lb.BackgroundTransparency = 1; Lb.Text = ""; Lb.TextColor3 = C.accentLight; Lb.TextSize = 10; Lb.Font = Enum.Font.GothamBold; Lb.TextXAlignment = Enum.TextXAlignment.Left; Lb.Parent = F; updateableLabels[Lb] = key; table.insert(themedAccent, Lb); table.insert(globalTextObjects, Lb)
+    -- Underline accent
+    local ul = Instance.new("Frame"); ul.Size = UDim2.new(0, 12, 0, 1); ul.Position = UDim2.new(0, 0, 1, -3); ul.BackgroundColor3 = C.accent; ul.BorderSizePixel = 0; ul.Parent = F; table.insert(themedAccent, ul)
 end
 
 local function MkToggle(tab, key, def, cb, customParent)
@@ -574,12 +769,19 @@ local function MkToggle(tab, key, def, cb, customParent)
     local TBg = Instance.new("Frame"); TBg.Size = UDim2.new(0, 28, 0, 14); TBg.Position = UDim2.new(1, -38, 0.5, -7); TBg.BackgroundColor3 = active and C.green or C.textMuted; TBg.BorderSizePixel = 0; TBg.Parent = B; Instance.new("UICorner", TBg).CornerRadius = UDim.new(1, 0)
     local TC = Instance.new("Frame"); TC.Size = UDim2.new(0, 12, 0, 12); TC.Position = active and UDim2.new(1, -13, 0.5, -6) or UDim2.new(0, 1, 0.5, -6); TC.BackgroundColor3 = C.white; TC.BorderSizePixel = 0; TC.Parent = TBg; Instance.new("UICorner", TC).CornerRadius = UDim.new(1, 0)
     
+    -- Hover glow
+    local hoverGlow = Instance.new("UIStroke"); hoverGlow.Color = C.accent; hoverGlow.Thickness = 0; hoverGlow.Transparency = 1; hoverGlow.Parent = B
+    
     local function U()
         TweenService:Create(B, TweenInfo.new(0.18), {BackgroundColor3 = active and C.greenDark or C.elevated}):Play()
         BS.Color = active and C.green or Color3.fromRGB(45, 38, 70)
         TweenService:Create(TBg, TweenInfo.new(0.18), {BackgroundColor3 = active and C.green or C.textMuted}):Play()
         TweenService:Create(TC, TweenInfo.new(0.18, Enum.EasingStyle.Back), {Position = active and UDim2.new(1, -13, 0.5, -6) or UDim2.new(0, 1, 0.5, -6)}):Play()
     end
+    
+    B.MouseEnter:Connect(function() TweenService:Create(hoverGlow, TweenInfo.new(0.2), {Thickness = 1.5, Transparency = 0.5}):Play() end)
+    B.MouseLeave:Connect(function() TweenService:Create(hoverGlow, TweenInfo.new(0.2), {Thickness = 0, Transparency = 1}):Play() end)
+    
     B.MouseButton1Click:Connect(function() active = not active; U(); cb(active) end)
     return function() return active end
 end
@@ -589,16 +791,32 @@ local function MkButton(tab, key, color, cb, customParent)
     local B = Instance.new("TextButton"); B.Size = UDim2.new(1, 0, 0, 28); B.BackgroundColor3 = bc; B.Text = ""; B.AutoButtonColor = false; B.LayoutOrder = o; B.Parent = customParent or GP(tab).frame; Instance.new("UICorner", B).CornerRadius = UDim.new(0, 6)
     local BS = Instance.new("UIStroke"); BS.Color = Color3.fromRGB(45, 38, 70); BS.Thickness = 0.8; BS.Parent = B
     local Lbl = Instance.new("TextLabel"); Lbl.Size = UDim2.new(1, -10, 1, 0); Lbl.Position = UDim2.new(0, 5, 0, 0); Lbl.BackgroundTransparency = 1; Lbl.Text = ""; Lbl.TextColor3 = C.text; Lbl.TextSize = 11; Lbl.Font = currentFont; Lbl.TextXAlignment = Enum.TextXAlignment.Center; Lbl.Parent = B; updateableLabels[Lbl] = key; table.insert(globalTextObjects, Lbl)
+    
+    -- Hover effect
+    B.MouseEnter:Connect(function()
+        TweenService:Create(B, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(math.min(bc.R*255+20,255), math.min(bc.G*255+20,255), math.min(bc.B*255+20,255))}):Play()
+        TweenService:Create(BS, TweenInfo.new(0.15), {Color = C.accent, Transparency = 0.3}):Play()
+    end)
+    B.MouseLeave:Connect(function()
+        TweenService:Create(B, TweenInfo.new(0.15), {BackgroundColor3 = bc}):Play()
+        TweenService:Create(BS, TweenInfo.new(0.15), {Color = Color3.fromRGB(45, 38, 70), Transparency = 0}):Play()
+    end)
+    
     B.MouseButton1Click:Connect(function() 
-        TweenService:Create(B, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Scale = Vector3.new(0.96, 0.96, 1)}):Play()
-        task.delay(0.08, function() TweenService:Create(B, TweenInfo.new(0.1, Enum.EasingStyle.Back), {Scale = Vector3.new(1, 1, 1)}):Play() end)
+        TweenService:Create(B, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0.96, 0, 0, 26)}):Play()
+        task.delay(0.08, function() TweenService:Create(B, TweenInfo.new(0.1, Enum.EasingStyle.Back), {Size = UDim2.new(1, 0, 0, 28)}):Play() end)
         cb(B, Lbl) 
     end)
     return B, Lbl
 end
 
 local function MkInput(tab, ph, def, customParent)
-    local o = NO(tab); local Bx = Instance.new("TextBox"); Bx.Size = UDim2.new(1, 0, 0, 28); Bx.BackgroundColor3 = C.elevated; Bx.PlaceholderText = ph; Bx.PlaceholderColor3 = C.textMuted; Bx.Text = def or ""; Bx.TextColor3 = C.text; Bx.TextSize = 11; Bx.Font = currentFont; Bx.ClearTextOnFocus = false; Bx.LayoutOrder = o; Bx.Parent = customParent or GP(tab).frame; Instance.new("UICorner", Bx).CornerRadius = UDim.new(0, 6); table.insert(globalTextObjects, Bx); return Bx
+    local o = NO(tab); local Bx = Instance.new("TextBox"); Bx.Size = UDim2.new(1, 0, 0, 28); Bx.BackgroundColor3 = C.elevated; Bx.PlaceholderText = ph; Bx.PlaceholderColor3 = C.textMuted; Bx.Text = def or ""; Bx.TextColor3 = C.text; Bx.TextSize = 11; Bx.Font = currentFont; Bx.ClearTextOnFocus = false; Bx.LayoutOrder = o; Bx.Parent = customParent or GP(tab).frame; Instance.new("UICorner", Bx).CornerRadius = UDim.new(0, 6)
+    local BxStk = Instance.new("UIStroke"); BxStk.Color = Color3.fromRGB(45, 38, 70); BxStk.Thickness = 0.8; BxStk.Parent = Bx
+    -- Focus glow
+    Bx.Focused:Connect(function() TweenService:Create(BxStk, TweenInfo.new(0.2), {Color = C.accent, Thickness = 1.5}):Play() end)
+    Bx.FocusLost:Connect(function() TweenService:Create(BxStk, TweenInfo.new(0.2), {Color = Color3.fromRGB(45, 38, 70), Thickness = 0.8}):Play() end)
+    table.insert(globalTextObjects, Bx); return Bx
 end
 
 local function MkSlider(tab, key, mn, mx, def, cb, customParent)
@@ -609,20 +827,26 @@ local function MkSlider(tab, key, mn, mx, def, cb, customParent)
     local SBG = Instance.new("Frame"); SBG.Size = UDim2.new(1, -20, 0, 5); SBG.Position = UDim2.new(0, 10, 0, 24); SBG.BackgroundColor3 = C.bg; SBG.BorderSizePixel = 0; SBG.Parent = Ct; Instance.new("UICorner", SBG).CornerRadius = UDim.new(1, 0)
     local fp = (val - mn) / (mx - mn)
     local SF = Instance.new("Frame"); SF.Size = UDim2.new(fp, 0, 1, 0); SF.BackgroundColor3 = C.accent; SF.BorderSizePixel = 0; SF.Parent = SBG; Instance.new("UICorner", SF).CornerRadius = UDim.new(1, 0); table.insert(themedAccent, SF)
-    local Kn = Instance.new("Frame"); Kn.Size = UDim2.new(0, 12, 0, 12); Kn.Position = UDim2.new(fp, -6, 0.5, -6); Kn.BackgroundColor3 = C.white; Kn.BorderSizePixel = 0; Kn.Parent = SBG; Instance.new("UICorner", Kn).CornerRadius = UDim.new(1, 0)
+    -- Gradient fill on slider
+    local SFGrad = Instance.new("UIGradient"); SFGrad.Rotation = 0; SFGrad.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, C.accent), ColorSequenceKeypoint.new(1, C.accentLight)}); SFGrad.Parent = SF; table.insert(themedGradients, SFGrad)
+    local Kn = Instance.new("Frame"); Kn.Size = UDim2.new(0, 14, 0, 14); Kn.Position = UDim2.new(fp, -7, 0.5, -7); Kn.BackgroundColor3 = C.white; Kn.BorderSizePixel = 0; Kn.Parent = SBG; Instance.new("UICorner", Kn).CornerRadius = UDim.new(1, 0)
+    -- Knob glow
+    local KnGlow = Instance.new("UIStroke"); KnGlow.Color = C.accent; KnGlow.Thickness = 0; KnGlow.Transparency = 1; KnGlow.Parent = Kn; table.insert(themedAccent, KnGlow)
     local sl = false
-    local function US(ix) local ap = SBG.AbsolutePosition.X; local as = SBG.AbsoluteSize.X; local r = math.clamp((ix - ap) / as, 0, 1); val = math.floor(mn + (mx - mn) * r); VL.Text = tostring(val); SF.Size = UDim2.new(r, 0, 1, 0); Kn.Position = UDim2.new(r, -6, 0.5, -6); cb(val) end
-    SBG.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then sl = true; US(i.Position.X) end end)
-    Kn.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then sl = true end end)
-    UserInputService.InputChanged:Connect(function(i) if sl and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then US(ix or i.Position.X) end end)
-    UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then sl = false end end)
+    local function US(ix) local ap = SBG.AbsolutePosition.X; local as = SBG.AbsoluteSize.X; local r = math.clamp((ix - ap) / as, 0, 1); val = math.floor(mn + (mx - mn) * r); VL.Text = tostring(val); SF.Size = UDim2.new(r, 0, 1, 0); Kn.Position = UDim2.new(r, -7, 0.5, -7); cb(val) end
+    SBG.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then sl = true; US(i.Position.X); TweenService:Create(KnGlow, TweenInfo.new(0.15), {Thickness = 2, Transparency = 0.3}):Play() end end)
+    Kn.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then sl = true; TweenService:Create(KnGlow, TweenInfo.new(0.15), {Thickness = 2, Transparency = 0.3}):Play() end end)
+    UserInputService.InputChanged:Connect(function(i) if sl and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then US(i.Position.X) end end)
+    UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then sl = false; TweenService:Create(KnGlow, TweenInfo.new(0.15), {Thickness = 0, Transparency = 1}):Play() end end)
     return function() return val end
 end
 
 local function MkInfoBox(tab, text, customParent)
     local o = NO(tab); local F = Instance.new("Frame"); F.Size = UDim2.new(1, 0, 0, 0); F.AutomaticSize = Enum.AutomaticSize.Y; F.BackgroundColor3 = C.surface; F.LayoutOrder = o; F.Parent = customParent or GP(tab).frame; Instance.new("UICorner", F).CornerRadius = UDim.new(0, 6)
-    local stk = Instance.new("UIStroke"); stk.Color = Color3.fromRGB(45, 38, 70); stk.Thickness = 0.8; stk.Parent = F
-    local T = Instance.new("TextLabel"); T.Size = UDim2.new(1, -16, 0, 0); T.Position = UDim2.new(0, 8, 0, 6); T.AutomaticSize = Enum.AutomaticSize.Y; T.BackgroundTransparency = 1; T.Text = text; T.TextColor3 = C.textSec; T.TextSize = 10; T.Font = currentFont; T.TextXAlignment = Enum.TextXAlignment.Left; T.TextWrapped = true; T.Parent = F; table.insert(globalTextObjects, T); return T
+    local stk = Instance.new("UIStroke"); stk.Color = C.accent; stk.Thickness = 0.6; stk.Transparency = 0.5; stk.Parent = F; table.insert(themedAccent, stk)
+    -- Left accent bar on info box
+    local ib = Instance.new("Frame"); ib.Size = UDim2.new(0, 2, 1, -8); ib.Position = UDim2.new(0, 4, 0, 4); ib.BackgroundColor3 = C.accent; ib.BorderSizePixel = 0; ib.Parent = F; table.insert(themedAccent, ib)
+    local T = Instance.new("TextLabel"); T.Size = UDim2.new(1, -20, 0, 0); T.Position = UDim2.new(0, 14, 0, 6); T.AutomaticSize = Enum.AutomaticSize.Y; T.BackgroundTransparency = 1; T.Text = text; T.TextColor3 = C.textSec; T.TextSize = 10; T.Font = currentFont; T.TextXAlignment = Enum.TextXAlignment.Left; T.TextWrapped = true; T.Parent = F; table.insert(globalTextObjects, T); return T
 end
 
 ---------------------------------------------------------
@@ -702,7 +926,8 @@ MkToggle("Combat", "hitbox", false, function(a)
     end
 end)
 
-local ShotBtn = Instance.new("TextButton"); ShotBtn.Size = UDim2.new(0, 75, 0, 36); ShotBtn.Position = UDim2.new(1, -85, 0.4, 0); ShotBtn.BackgroundColor3 = C.red; ShotBtn.Text = "SHOOT"; ShotBtn.TextColor3 = C.white; ShotBtn.TextSize = 11; ShotBtn.Font = Enum.Font.GothamBold; ShotBtn.Visible = false; ShotBtn.ZIndex = 50; ShotBtn.Parent = ScreenGui; Instance.new("UICorner", ShotBtn).CornerRadius = UDim.new(0, 8)
+local ShotBtn = Instance.new("TextButton"); ShotBtn.Size = UDim2.new(0, 80, 0, 40); ShotBtn.Position = UDim2.new(1, -90, 0.4, 0); ShotBtn.BackgroundColor3 = C.red; ShotBtn.Text = "SHOOT"; ShotBtn.TextColor3 = C.white; ShotBtn.TextSize = 11; ShotBtn.Font = Enum.Font.GothamBold; ShotBtn.Visible = false; ShotBtn.ZIndex = 50; ShotBtn.Parent = ScreenGui; Instance.new("UICorner", ShotBtn).CornerRadius = UDim.new(0, 8)
+local ShotGlow = Instance.new("UIStroke"); ShotGlow.Color = C.red; ShotGlow.Thickness = 2; ShotGlow.Transparency = 0.4; ShotGlow.Parent = ShotBtn
 ShotBtn.MouseButton1Click:Connect(function() local g = FindGunInHand(); if not g then local t = GetTool("Gun"); if t then GetHum():EquipTool(t); task.wait(0.2); g = FindGunInHand() end end; if not g then Notify("linbergz", "No Gun!", C.red, 1.5); return end; local h = GetMurdererHead(); if h then FireGunAtTarget(g, h) else Notify("linbergz", "Murderer not found", C.red, 1) end end)
 MkToggle("Combat", "shootbtn", false, function(a) ShotBtn.Visible = a end)
 
@@ -724,7 +949,6 @@ MkToggle("Combat", "autograb", false, function(a)
 end)
 
 MkSep("Combat", "killall")
--- REBUILT KILL ALL: Uses TP + Stab (100% Reliable in MM2 compared to throwing)
 MkButton("Combat", "killall", C.redDark, function() 
     local knife = FindKnifeInHand()
     if not knife then 
@@ -741,21 +965,16 @@ MkButton("Combat", "killall", C.redDark, function()
         if p ~= player and p.Character then
             local tr = p.Character:FindFirstChild("HumanoidRootPart")
             if tr then
-                -- Teleport behind player
                 r.CFrame = tr.CFrame * CFrame.new(0, 0, 1.5)
                 task.wait(0.05)
-                
-                -- Fire Stab and Slash Remotes
                 local slash = knife:FindFirstChild("Slash")
                 if slash then pcall(function() slash:FireServer(1) end) end
-                
                 local stab = knife:FindFirstChild("Stab")
                 if stab then pcall(function() stab:FireServer(1) end) end
                 task.wait(0.1)
             end
         end
     end
-    -- Return to original position
     r.CFrame = ogPos
 end)
 
@@ -811,7 +1030,7 @@ MkToggle("ESP", "coin_esp", false, function(a)
                 for _, coin in ipairs(normal.CoinContainer:GetChildren()) do
                     if coin:IsA("BasePart") and not coin:FindFirstChild("CoinESP") and coin.Transparency == 0 then
                         local b = Instance.new("BillboardGui"); b.Name="CoinESP"; b.Adornee=coin; b.Size=UDim2.new(0,40,0,20); b.AlwaysOnTop=true; b.Parent=coin; 
-                        local t = Instance.new("TextLabel"); t.Size=UDim2.new(1,0,1,0); t.BackgroundTransparency=1; t.Text="🪙"; t.TextColor3=C.gold; t.TextSize=12; t.Parent=b; table.insert(gunGuis, b)
+                        local t = Instance.new("TextLabel"); t.Size=UDim2.new(1,0,1,0); t.BackgroundTransparency=1; t.Text="◈"; t.TextColor3=C.gold; t.TextSize=12; t.Parent=b; table.insert(gunGuis, b)
                     end
                 end
             end
@@ -904,6 +1123,8 @@ local function MkSoonButton(tab, key)
     local BS = Instance.new("UIStroke"); BS.Color = C.gold; BS.Thickness = 0.8; BS.Parent = B
     local Lbl = Instance.new("TextLabel"); Lbl.Size = UDim2.new(0.7, 0, 1, 0); Lbl.Position = UDim2.new(0, 8, 0, 0); Lbl.BackgroundTransparency = 1; Lbl.Text = ""; Lbl.TextColor3 = C.gold; Lbl.TextSize = 11; Lbl.Font = Enum.Font.GothamSemibold; Lbl.TextXAlignment = Enum.TextXAlignment.Left; Lbl.Parent = B; updateableLabels[Lbl] = key; table.insert(globalTextObjects, Lbl)
     local Soon = Instance.new("TextLabel"); Soon.Size = UDim2.new(0.25, 0, 1, 0); Soon.Position = UDim2.new(0.75, 0, 0, 0); Soon.BackgroundTransparency = 1; Soon.Text = "SOON"; Soon.TextColor3 = C.textDim; Soon.TextSize = 10; Soon.Font = Enum.Font.GothamBold; Soon.TextXAlignment = Enum.TextXAlignment.Right; Soon.Parent = B; updateableLabels[Soon] = "soon"; table.insert(globalTextObjects, Soon)
+    B.MouseEnter:Connect(function() TweenService:Create(BS, TweenInfo.new(0.2), {Thickness = 1.5, Transparency = 0.2}):Play() end)
+    B.MouseLeave:Connect(function() TweenService:Create(BS, TweenInfo.new(0.2), {Thickness = 0.8, Transparency = 0}):Play() end)
     B.MouseButton1Click:Connect(function() Notify("Nexus Engine", "This feature is currently in development!", C.gold, 3) end)
 end
 MkSoonButton("Nexus", "nexus_1"); MkSoonButton("Nexus", "nexus_2"); MkSoonButton("Nexus", "nexus_3")
@@ -927,11 +1148,19 @@ local Showcase_List = Instance.new("UIListLayout"); Showcase_List.Parent = Secti
 local navBtns = {}
 local function CreateNavBtn(key, sectionFrame)
     local btn = Instance.new("TextButton"); btn.Size = UDim2.new(0.31, 0, 1, 0); btn.BackgroundColor3 = C.elevated; btn.Text = L[currentLang][key] or key; btn.TextColor3 = C.textDim; btn.TextSize = 9; btn.Font = Enum.Font.GothamBold; btn.Parent = SettingsNav; Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5); updateableLabels[btn] = key; table.insert(globalTextObjects, btn)
-    btn.MouseButton1Click:Connect(function() Section_UI.Visible = false; Section_Theme.Visible = false; Section_Showcase.Visible = false; for _, b in ipairs(navBtns) do b.BackgroundColor3 = C.elevated; b.TextColor3 = C.textDim end; sectionFrame.Visible = true; btn.BackgroundColor3 = C.accent; btn.TextColor3 = C.white end)
+    -- Hover
+    btn.MouseEnter:Connect(function() if not (btn.BackgroundColor3 == C.accent) then TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(30, 24, 45)}):Play() end end)
+    btn.MouseLeave:Connect(function() if not (btn.BackgroundColor3 == C.accent) then TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = C.elevated}):Play() end end)
+    btn.MouseButton1Click:Connect(function()
+        Section_UI.Visible = false; Section_Theme.Visible = false; Section_Showcase.Visible = false
+        for _, b in ipairs(navBtns) do TweenService:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = C.elevated, TextColor3 = C.textDim}):Play() end
+        sectionFrame.Visible = true
+        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = C.accent, TextColor3 = C.white}):Play()
+    end)
     table.insert(navBtns, btn)
 end
 CreateNavBtn("tab_ui", Section_UI); CreateNavBtn("tab_theme", Section_Theme); CreateNavBtn("tab_showcase", Section_Showcase)
-navBtns[1].BackgroundColor3 = C.accent; navBtns[1].TextColor3 = C.white
+TweenService:Create(navBtns[1], TweenInfo.new(0.15), {BackgroundColor3 = C.accent, TextColor3 = C.white}):Play()
 
 MkSep("Settings", "menu_size", Section_UI)
 MkSlider("Settings", "menu_size", 300, 700, 500, function(v) ResizeMenu(v, HUB_H) end, Section_UI)
@@ -942,22 +1171,32 @@ MkSlider("Settings", "menu_transparency", 0, 90, 0, function(v) menuTransparency
 MkSep("Settings", "change_font", Section_UI)
 local fontIndex = 1; local availableFonts = {Enum.Font.GothamSemibold, Enum.Font.Code, Enum.Font.Arial, Enum.Font.SourceSans}; local fontNames = {"Gotham", "Monospace Code", "Classic Arial", "Source Sans"}
 local FontToggleBtn = Instance.new("TextButton"); FontToggleBtn.Size = UDim2.new(1, 0, 0, 28); FontToggleBtn.BackgroundColor3 = C.elevated; FontToggleBtn.Text = "Font: Gotham"; FontToggleBtn.TextColor3 = C.white; FontToggleBtn.TextSize = 11; FontToggleBtn.Font = Enum.Font.GothamBold; FontToggleBtn.Parent = Section_UI; Instance.new("UICorner", FontToggleBtn).CornerRadius = UDim.new(0, 6)
+local FontStk = Instance.new("UIStroke"); FontStk.Color = Color3.fromRGB(45, 38, 70); FontStk.Thickness = 0.8; FontStk.Parent = FontToggleBtn
+FontToggleBtn.MouseEnter:Connect(function() TweenService:Create(FontStk, TweenInfo.new(0.15), {Color = C.accent, Transparency = 0.3}):Play() end)
+FontToggleBtn.MouseLeave:Connect(function() TweenService:Create(FontStk, TweenInfo.new(0.15), {Color = Color3.fromRGB(45, 38, 70), Transparency = 0}):Play() end)
 FontToggleBtn.MouseButton1Click:Connect(function() fontIndex = fontIndex + 1; if fontIndex > #availableFonts then fontIndex = 1 end; currentFont = availableFonts[fontIndex]; FontToggleBtn.Text = "Font: " .. fontNames[fontIndex]; for _, textObj in ipairs(globalTextObjects) do if textObj.Parent then textObj.Font = currentFont end end; Notify("UI Engine", "Font changed to " .. fontNames[fontIndex], C.accent, 2) end)
 
 MkSep("Settings", "system", Section_UI)
 local LangToggleBtn = Instance.new("TextButton"); LangToggleBtn.Size = UDim2.new(1,0,0,28); LangToggleBtn.BackgroundColor3 = C.elevated; LangToggleBtn.Text = "Русский / Russian"; LangToggleBtn.TextColor3 = C.white; LangToggleBtn.TextSize = 11; LangToggleBtn.Font = Enum.Font.GothamBold; LangToggleBtn.Parent = Section_UI; Instance.new("UICorner", LangToggleBtn).CornerRadius = UDim.new(0,6)
+local LangStk = Instance.new("UIStroke"); LangStk.Color = Color3.fromRGB(45, 38, 70); LangStk.Thickness = 0.8; LangStk.Parent = LangToggleBtn
+LangToggleBtn.MouseEnter:Connect(function() TweenService:Create(LangStk, TweenInfo.new(0.15), {Color = C.accent, Transparency = 0.3}):Play() end)
+LangToggleBtn.MouseLeave:Connect(function() TweenService:Create(LangStk, TweenInfo.new(0.15), {Color = Color3.fromRGB(45, 38, 70), Transparency = 0}):Play() end)
 LangToggleBtn.MouseButton1Click:Connect(function() if currentLang == "RU" then UpdateLanguage("EN"); LangToggleBtn.Text = "English" else UpdateLanguage("RU"); LangToggleBtn.Text = "Русский / Russian" end end)
 
 MkButton("Settings", "reset", C.elevated, function() local h = GetHum(); if h then h.Health = 0 end end, Section_UI)
 MkButton("Settings", "copy", C.elevated, function() pcall(function() setclipboard("Roblox.GameLauncher.joinGameInstance(" .. game.PlaceId .. ", '" .. game.JobId .. "')") end) end, Section_UI)
-MkButton("Settings", "destroy", C.redDark, function() ClearESP(); ClearItemESP(); StopS(); for _, c in pairs(connections) do if typeof(c) == "RBXScriptConnection" then c:Disconnect() end end; ScreenGui:Destroy() end, Section_UI)
+MkButton("Settings", "destroy", C.redDark, function() ClearESP(); ClearItemESP(); StopS(); HubBlur:Destroy(); for _, c in pairs(connections) do if typeof(c) == "RBXScriptConnection" then c:Disconnect() end end; ScreenGui:Destroy() end, Section_UI)
 
 MkSep("Settings", "theme", Section_Theme)
-local ThemeList = Instance.new("Frame"); ThemeList.Size = UDim2.new(1,0,0,36); ThemeList.BackgroundTransparency = 1; ThemeList.Parent = Section_Theme
+local ThemeList = Instance.new("Frame"); ThemeList.Size = UDim2.new(1,0,0,42); ThemeList.BackgroundTransparency = 1; ThemeList.Parent = Section_Theme
 local TLList = Instance.new("UIListLayout"); TLList.Parent = ThemeList; TLList.FillDirection = Enum.FillDirection.Horizontal; TLList.Padding = UDim.new(0,5); TLList.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 for _, tName in ipairs({"Purple", "Red", "Blue", "Green", "Dark"}) do 
-    local tc = Themes[tName].accent; local tBtn = Instance.new("TextButton"); tBtn.Size = UDim2.new(0.18,0,1,0); tBtn.BackgroundColor3 = tc; tBtn.Text = tName:sub(1,1); tBtn.TextColor3 = C.white; tBtn.Font = Enum.Font.GothamBold; tBtn.TextSize = 12; tBtn.Parent = ThemeList; Instance.new("UICorner", tBtn).CornerRadius = UDim.new(0,6)
+    local tc = Themes[tName].accent; local tBtn = Instance.new("TextButton"); tBtn.Size = UDim2.new(0.18,0,1,0); tBtn.BackgroundColor3 = tc; tBtn.Text = tName:sub(1,1); tBtn.TextColor3 = C.white; tBtn.Font = Enum.Font.GothamBold; tBtn.TextSize = 12; tBtn.Parent = ThemeList; Instance.new("UICorner", tBtn).CornerRadius = UDim.new(0,8)
+    local tStk = Instance.new("UIStroke"); tStk.Color = tc; tStk.Thickness = 0; tStk.Transparency = 1; tStk.Parent = tBtn
+    -- Theme button hover
+    tBtn.MouseEnter:Connect(function() TweenService:Create(tBtn, TweenInfo.new(0.15), {Size = UDim2.new(0.18, 0, 1.1, 0)}):Play(); TweenService:Create(tStk, TweenInfo.new(0.15), {Thickness = 2, Transparency = 0.3}):Play() end)
+    tBtn.MouseLeave:Connect(function() TweenService:Create(tBtn, TweenInfo.new(0.15), {Size = UDim2.new(0.18, 0, 1, 0)}):Play(); TweenService:Create(tStk, TweenInfo.new(0.15), {Thickness = 0, Transparency = 1}):Play() end)
     tBtn.MouseButton1Click:Connect(function() ApplyTheme(tName); Notify("linbergz", "Accent color set to "..tName, C.accent, 2) end) 
 end
 
@@ -970,13 +1209,65 @@ MkInfoBox("Settings", "Here you will be able to preview and save customized temp
 MkSep("Info", "about")
 local InfoChange = MkInfoBox("Info", "Loading updates...")
 local function RefreshLog()
-    if currentLang == "RU" then InfoChange.Text = "Обновление v8.0 Nexus Mobile:\n\n- [NEW] Auto-Stab KillAll: Мгновенное убийство телепортом.\n- [NEW] Hitbox Expander: Увеличивает модель убийцы.\n- [NEW] Coin ESP: Показ всех монеток.\n- [NEW] Smooth Auto-Farm: Оптимизированный фарм."
-    else InfoChange.Text = "Update v8.0 Nexus Mobile:\n\n- [NEW] Auto-Stab KillAll: Teleport-stab instantly kills.\n- [NEW] Hitbox Expander: Make murderer giant for Sheriff.\n- [NEW] Coin ESP: See all coins around map.\n- [NEW] Smooth Auto-Farm: Safer & accurate." end
+    if currentLang == "RU" then InfoChange.Text = "Обновление v8.01 Nexus Mobile:\n\n- [VISUAL] Полная переработка интерфейса ENI\n- [NEW] Размытие фона при открытии меню\n- [NEW] Тени, свечение, hover-эффекты\n- [NEW] Плавные переходы между вкладками\n- [NEW] Анимации цветов при смене темы"
+    else InfoChange.Text = "Update v8.01 Nexus Mobile:\n\n- [VISUAL] Full UI overhaul by ENI\n- [NEW] Background blur on hub open\n- [NEW] Drop shadows, glow effects, hover states\n- [NEW] Smooth page transitions\n- [NEW] Animated theme color transitions" end
 end
 RefreshLog(); LangToggleBtn.MouseButton1Click:Connect(RefreshLog)
 
 ---------------------------------------------------------
--- INITIALIZATION PIPELINE
+-- BOTTOM STATUS BAR
+---------------------------------------------------------
+local StatusBar = Instance.new("Frame")
+StatusBar.Size = UDim2.new(1, -SIDEBAR_W, 0, 18)
+StatusBar.Position = UDim2.new(0, SIDEBAR_W, 1, -18)
+StatusBar.BackgroundColor3 = C.surface
+StatusBar.BackgroundTransparency = 0.3
+StatusBar.BorderSizePixel = 0
+StatusBar.ZIndex = 12
+StatusBar.Parent = Hub
+table.insert(themedSurface, StatusBar)
+
+local StatusLine = Instance.new("Frame")
+StatusLine.Size = UDim2.new(1, 0, 0, 1)
+StatusLine.Position = UDim2.new(0, 0, 0, 0)
+StatusLine.BackgroundColor3 = C.accent
+StatusLine.BackgroundTransparency = 0.5
+StatusLine.BorderSizePixel = 0
+StatusLine.Parent = StatusBar
+table.insert(themedAccent, StatusLine)
+
+local StatusText = Instance.new("TextLabel")
+StatusText.Size = UDim2.new(1, -20, 1, 0)
+StatusText.Position = UDim2.new(0, 10, 0, 0)
+StatusText.BackgroundTransparency = 1
+StatusText.Text = "linbergz v8.01 • ENI Visual Polish"
+StatusText.TextColor3 = C.textDim
+StatusText.TextSize = 9
+StatusText.Font = Enum.Font.Gotham
+StatusText.TextXAlignment = Enum.TextXAlignment.Left
+StatusText.Parent = StatusBar
+table.insert(globalTextObjects, StatusText)
+
+local StatusDot = Instance.new("Frame")
+StatusDot.Size = UDim2.new(0, 6, 0, 6)
+StatusDot.Position = UDim2.new(1, -14, 0.5, -3)
+StatusDot.BackgroundColor3 = C.green
+StatusDot.BorderSizePixel = 0
+StatusDot.Parent = StatusBar
+Instance.new("UICorner", StatusDot).CornerRadius = UDim.new(1, 0)
+
+-- Pulsing status dot
+task.spawn(function()
+    local p = 0
+    while StatusBar.Parent do
+        p = p + 0.04
+        StatusDot.BackgroundTransparency = math.abs(math.sin(p)) * 0.4
+        task.wait(0.03)
+    end
+end)
+
+---------------------------------------------------------
+-- INITIALIZATION
 ---------------------------------------------------------
 UpdateLanguage("RU")
-task.delay(1.5, function() Notify("linbergz Team", "Nexus Engine v8.0 Active!", C.gold, 3.5) end)
+task.delay(1.5, function() Notify("linbergz Team", "Nexus Engine v8.01 — ENI Polish Active!", C.gold, 3.5) end)
