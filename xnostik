@@ -2,111 +2,235 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 local Stats = game:GetService("Stats")
-local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Main GUI
+-- Anim helper
+local function tween(obj, props, dur)
+	TweenService:Create(obj, TweenInfo.new(dur or 0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props):Play()
+end
+
+-- GUI
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "RatOptimizer"
+screenGui.Name = "RatOptimizerV2"
 screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = playerGui
 
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 220, 0, 130)
-frame.Position = UDim2.new(0, 20, 0, 20)
-frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-frame.BackgroundTransparency = 0.05
-frame.BorderSizePixel = 0
-frame.Active = true
-frame.Draggable = true
-frame.Parent = screenGui
+-- Shadow frame
+local shadow = Instance.new("Frame")
+shadow.Size = UDim2.new(0, 260, 0, 170)
+shadow.Position = UDim2.new(0, 25, 0, 25)
+shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+shadow.BackgroundTransparency = 0.6
+shadow.BorderSizePixel = 0
+shadow.Active = true
+shadow.Draggable = true
+shadow.Parent = screenGui
 
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", shadow).CornerRadius = UDim.new(0, 16)
 
-local header = Instance.new("TextLabel")
-header.Size = UDim2.new(1, 0, 0, 28)
-header.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-header.Text = "  ⚡ OPTIMIZER"
-header.TextColor3 = Color3.fromRGB(255, 255, 255)
-header.Font = Enum.Font.GothamBold
-header.TextSize = 13
-header.TextXAlignment = Enum.TextXAlignment.Left
-header.BorderSizePixel = 0
-header.Parent = frame
+-- Main
+local main = Instance.new("Frame")
+main.Size = UDim2.new(1, -4, 1, -4)
+main.Position = UDim2.new(0, 2, 0, 2)
+main.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+main.BackgroundTransparency = 0.15
+main.BorderSizePixel = 0
+main.Parent = shadow
 
-Instance.new("UICorner", header).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 14)
 
-local fpsLabel = Instance.new("TextLabel")
-fpsLabel.Size = UDim2.new(1, -16, 0, 22)
-fpsLabel.Position = UDim2.new(0, 8, 0, 34)
-fpsLabel.BackgroundTransparency = 1
-fpsLabel.Text = "FPS: calculating..."
-fpsLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-fpsLabel.Font = Enum.Font.Gotham
-fpsLabel.TextSize = 13
-fpsLabel.TextXAlignment = Enum.TextXAlignment.Left
-fpsLabel.Parent = frame
+-- Stroke
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(255, 60, 60)
+stroke.Thickness = 1.2
+stroke.Transparency = 0.4
+stroke.Parent = main
 
-local pingLabel = Instance.new("TextLabel")
-pingLabel.Size = UDim2.new(1, -16, 0, 22)
-pingLabel.Position = UDim2.new(0, 8, 0, 56)
-pingLabel.BackgroundTransparency = 1
-pingLabel.Text = "Ping: calculating..."
-pingLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-pingLabel.Font = Enum.Font.Gotham
-pingLabel.TextSize = 13
-pingLabel.TextXAlignment = Enum.TextXAlignment.Left
-pingLabel.Parent = frame
+-- Header
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 36)
+header.BackgroundTransparency = 1
+header.Parent = main
 
-local btn = Instance.new("TextButton")
-btn.Size = UDim2.new(1, -16, 0, 32)
-btn.Position = UDim2.new(0, 8, 0, 88)
-btn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-btn.Text = "OPTIMIZE"
-btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-btn.Font = Enum.Font.GothamBold
-btn.TextSize = 13
-btn.BorderSizePixel = 0
-btn.Parent = frame
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -20, 1, 0)
+title.Position = UDim2.new(0, 14, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "OPTIMIZER"
+title.TextColor3 = Color3.fromRGB(255, 70, 70)
+title.Font = Enum.Font.GothamBlack
+title.TextSize = 15
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = header
 
-Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+local sub = Instance.new("TextLabel")
+sub.Size = UDim2.new(1, -20, 0, 14)
+sub.Position = UDim2.new(0, 14, 0, 24)
+sub.BackgroundTransparency = 1
+sub.Text = "PERFORMANCE HUD"
+sub.TextColor3 = Color3.fromRGB(120, 120, 130)
+sub.Font = Enum.Font.Gotham
+sub.TextSize = 10
+sub.TextXAlignment = Enum.TextXAlignment.Left
+sub.Parent = header
 
--- FPS Loop
+-- Divider
+local line = Instance.new("Frame")
+line.Size = UDim2.new(1, -28, 0, 1)
+line.Position = UDim2.new(0, 14, 0, 50)
+line.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+line.BackgroundTransparency = 0.5
+line.BorderSizePixel = 0
+line.Parent = main
+
+-- Stats container
+local stats = Instance.new("Frame")
+stats.Size = UDim2.new(1, -28, 0, 56)
+stats.Position = UDim2.new(0, 14, 0, 58)
+stats.BackgroundTransparency = 1
+stats.Parent = main
+
+-- FPS block
+local fpsBlock = Instance.new("Frame")
+fpsBlock.Size = UDim2.new(0.48, 0, 1, 0)
+fpsBlock.BackgroundColor3 = Color3.fromRGB(30, 30, 36)
+fpsBlock.BorderSizePixel = 0
+fpsBlock.Parent = stats
+
+Instance.new("UICorner", fpsBlock).CornerRadius = UDim.new(0, 10)
+
+local fpsNum = Instance.new("TextLabel")
+fpsNum.Size = UDim2.new(1, 0, 0.55, 0)
+fpsNum.BackgroundTransparency = 1
+fpsNum.Text = "--"
+fpsNum.TextColor3 = Color3.fromRGB(255, 255, 255)
+fpsNum.Font = Enum.Font.GothamBlack
+fpsNum.TextSize = 22
+fpsNum.Parent = fpsBlock
+
+local fpsSub = Instance.new("TextLabel")
+fpsSub.Size = UDim2.new(1, 0, 0.35, 0)
+fpsSub.Position = UDim2.new(0, 0, 0.6, 0)
+fpsSub.BackgroundTransparency = 1
+fpsSub.Text = "FPS"
+fpsSub.TextColor3 = Color3.fromRGB(150, 150, 160)
+fpsSub.Font = Enum.Font.GothamBold
+fpsSub.TextSize = 10
+fpsSub.Parent = fpsBlock
+
+-- Ping block
+local pingBlock = Instance.new("Frame")
+pingBlock.Size = UDim2.new(0.48, 0, 1, 0)
+pingBlock.Position = UDim2.new(0.52, 0, 0, 0)
+pingBlock.BackgroundColor3 = Color3.fromRGB(30, 30, 36)
+pingBlock.BorderSizePixel = 0
+pingBlock.Parent = stats
+
+Instance.new("UICorner", pingBlock).CornerRadius = UDim.new(0, 10)
+
+local pingNum = Instance.new("TextLabel")
+pingNum.Size = UDim2.new(1, 0, 0.55, 0)
+pingNum.BackgroundTransparency = 1
+pingNum.Text = "--"
+pingNum.TextColor3 = Color3.fromRGB(255, 255, 255)
+pingNum.Font = Enum.Font.GothamBlack
+pingNum.TextSize = 22
+pingNum.Parent = pingBlock
+
+local pingSub = Instance.new("TextLabel")
+pingSub.Size = UDim2.new(1, 0, 0.35, 0)
+pingSub.Position = UDim2.new(0, 0, 0.6, 0)
+pingSub.BackgroundTransparency = 1
+pingSub.Text = "PING"
+pingSub.TextColor3 = Color3.fromRGB(150, 150, 160)
+pingSub.Font = Enum.Font.GothamBold
+pingSub.TextSize = 10
+pingSub.Parent = pingBlock
+
+-- Toggle container
+local toggleFrame = Instance.new("Frame")
+toggleFrame.Size = UDim2.new(1, -28, 0, 32)
+toggleFrame.Position = UDim2.new(0, 14, 0, 122)
+toggleFrame.BackgroundTransparency = 1
+toggleFrame.Parent = main
+
+local toggleLabel = Instance.new("TextLabel")
+toggleLabel.Size = UDim2.new(0.6, 0, 1, 0)
+toggleLabel.BackgroundTransparency = 1
+toggleLabel.Text = "Boost Mode"
+toggleLabel.TextColor3 = Color3.fromRGB(200, 200, 210)
+toggleLabel.Font = Enum.Font.GothamBold
+toggleLabel.TextSize = 13
+toggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+toggleLabel.Parent = toggleFrame
+
+-- Toggle switch
+local switchBg = Instance.new("Frame")
+switchBg.Size = UDim2.new(0, 44, 0, 24)
+switchBg.Position = UDim2.new(1, -44, 0.5, -12)
+switchBg.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+switchBg.BorderSizePixel = 0
+switchBg.Parent = toggleFrame
+
+Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1, 0)
+
+local knob = Instance.new("Frame")
+knob.Size = UDim2.new(0, 18, 0, 18)
+knob.Position = UDim2.new(0, 3, 0.5, -9)
+knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+knob.BorderSizePixel = 0
+knob.Parent = switchBg
+
+Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+
+-- FPS engine
 local frameCount = 0
 local lastTick = tick()
 RunService.RenderStepped:Connect(function()
 	frameCount += 1
 	local now = tick()
 	if now - lastTick >= 1 then
-		fpsLabel.Text = "FPS: " .. frameCount
+		fpsNum.Text = tostring(frameCount)
 		frameCount = 0
 		lastTick = now
 	end
 end)
 
--- Ping Loop
-spawn(function()
+-- Ping engine
+task.spawn(function()
 	while true do
 		local net = Stats:FindFirstChild("Network")
 		if net then
-			local ping = net:FindFirstChild("Ping")
-			if ping then
-				pingLabel.Text = "Ping: " .. math.floor(ping.Value) .. " ms"
+			local p = net:FindFirstChild("Ping")
+			if p then
+				local v = math.floor(p.Value)
+				pingNum.Text = tostring(v) .. "ms"
+				if v < 50 then
+					pingNum.TextColor3 = Color3.fromRGB(80, 255, 120)
+				elseif v < 120 then
+					pingNum.TextColor3 = Color3.fromRGB(255, 200, 60)
+				else
+					pingNum.TextColor3 = Color3.fromRGB(255, 70, 70)
+				end
 			end
 		end
 		task.wait(1)
 	end
 end)
 
--- Optimize Toggle
+-- Toggle logic
 local active = false
-btn.MouseButton1Click:Connect(function()
-	active = not active
-	if active then
-		btn.Text = "RESTORE"
-		btn.BackgroundColor3 = Color3.fromRGB(60, 255, 100)
+local function setToggle(state)
+	active = state
+	if state then
+		tween(switchBg, {BackgroundColor3 = Color3.fromRGB(255, 60, 60)}, 0.2)
+		tween(knob, {Position = UDim2.new(0, 23, 0.5, -9)}, 0.2)
+		tween(stroke, {Color = Color3.fromRGB(80, 255, 120), Transparency = 0.2}, 0.3)
+		title.TextColor3 = Color3.fromRGB(80, 255, 120)
 		
 		Lighting.GlobalShadows = false
 		Lighting.FogEnd = 9e9
@@ -124,8 +248,16 @@ btn.MouseButton1Click:Connect(function()
 			end
 		end
 	else
-		btn.Text = "OPTIMIZE"
-		btn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+		tween(switchBg, {BackgroundColor3 = Color3.fromRGB(60, 60, 70)}, 0.2)
+		tween(knob, {Position = UDim2.new(0, 3, 0.5, -9)}, 0.2)
+		tween(stroke, {Color = Color3.fromRGB(255, 60, 60), Transparency = 0.4}, 0.3)
+		title.TextColor3 = Color3.fromRGB(255, 70, 70)
 		settings().Rendering.QualityLevel = Enum.QualityLevel.Level07
+	end
+end
+
+switchBg.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		setToggle(not active)
 	end
 end)
