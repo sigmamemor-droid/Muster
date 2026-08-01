@@ -4211,7 +4211,7 @@ TutorialCopyBtn.Activated:Connect(function()
 end)
 
 -- ═══ MAIN LOAD FUNCTION — FIXED ═══
-P2LoadBtn.MouseButton1Click:Connect(function()
+P2LoadBtn.Activated:Connect(function()
     CurrentLang = selectedLang
     
     Phase2Frame.Visible = false
@@ -4816,7 +4816,8 @@ P2LoadBtn.MouseButton1Click:Connect(function()
             return BG, BP
         end
 
-        -- Touch-launched ICBM: players spawn their own missile normally, then arm and touch it.
+        -- ICBM workflow: touch/pick a spawned missile, release it, then press Launch.
+        -- The selection step is deliberately separate from launch so it matches touch controls.
         local Mouse = LocalPlayer:GetMouse()
         local function getAimDirection(origin)
             local camera = Workspace.CurrentCamera
@@ -4825,97 +4826,114 @@ P2LoadBtn.MouseButton1Click:Connect(function()
                 local delta = Mouse.Hit.Position - origin
                 if delta.Magnitude > 0.01 then return delta.Unit end
             end
+            -- Mobile has no mouse: steer through the exact centre of the camera/crosshair.
             local viewport = camera.ViewportSize
             return camera:ViewportPointToRay(viewport.X * 0.5, viewport.Y * 0.5).Direction.Unit
         end
 
-        local function getAimPoint(fallback)
-            local camera = Workspace.CurrentCamera
-            if not camera then return fallback end
-            local direction = getAimDirection(camera.CFrame.Position)
-            local params = RaycastParams.new()
-            params.FilterType = Enum.RaycastFilterType.Exclude
-            params.FilterDescendantsInstances = {LocalPlayer.Character}
-            local hit = Workspace:Raycast(camera.CFrame.Position, direction * 250, params)
-            return hit and hit.Position or (camera.CFrame.Position + direction * 40)
-        end
+        local ICBM = { Rockets = {}, Guidance = true, Speed = 115, AscentHeight = 350, SelectedIndex = nil, FollowIndex = nil, OriginalCameraSubject = nil }
 
-        local ICBM = { Rockets = {}, Guidance = true, Speed = 115, AscentHeight = 350, FollowIndex = nil, OriginalCameraSubject = nil }
+        local function restoreRocket(rocket)
+            if rocket.SelectionConnection then pcall(function() rocket.SelectionConnection:Disconnect() end) end
+            if rocket.FlightConnection then pcall(function() rocket.FlightConnection:Disconnect() end) end
+            if rocket.Gyro then pcall(function() rocket.Gyro:Destroy() end) end
+            if rocket.Position then pcall(function() rocket.Position:Destroy() end) end
+            for part, state in pairs(rocket.PartStates or {}) do
+                if part and part.Parent then
+                    part.CanCollide, part.CanTouch, part.Anchored = state.CanCollide, state.CanTouch, state.Anchored
+                end
+            end
+            if rocket.Model and rocket.Model.Parent then rocket.Model:SetAttribute("TRH_ICBMArmed", nil) end
+        end
 
         local function resetICBM()
             local camera = Workspace.CurrentCamera
-            for _, rocket in ipairs(ICBM.Rockets) do
-                if rocket.ActivationConnection then pcall(function() rocket.ActivationConnection:Disconnect() end) end
-                if rocket.FlightConnection then pcall(function() rocket.FlightConnection:Disconnect() end) end
-                if rocket.Gyro then pcall(function() rocket.Gyro:Destroy() end) end
-                if rocket.Position then pcall(function() rocket.Position:Destroy() end) end
-                for part, state in pairs(rocket.PartStates or {}) do
-                    if part and part.Parent then
-                        part.CanCollide = state.CanCollide
-                        part.CanTouch = state.CanTouch
-                        part.Anchored = state.Anchored
-                    end
-                end
-                if rocket.Model and rocket.Model.Parent then rocket.Model:SetAttribute("TRH_ICBMArmed", nil) end
-            end
-            ICBM.Rockets, ICBM.FollowIndex = {}, nil
+            for _, rocket in ipairs(ICBM.Rockets) do restoreRocket(rocket) end
+            ICBM.Rockets, ICBM.SelectedIndex, ICBM.FollowIndex = {}, nil, nil
             if camera and ICBM.OriginalCameraSubject then camera.CameraSubject = ICBM.OriginalCameraSubject end
             ICBM.OriginalCameraSubject = nil
-            OrionLib:MakeNotification({Name = "ICBM", Content = "Rockets reset; camera returned to your character.", Time = 3})
+            OrionLib:MakeNotification({Name = "ICBM", Content = "ICBM reset.", Time = 3})
         end
 
         local function followRocket(index)
             local rocket, camera = ICBM.Rockets[index], Workspace.CurrentCamera
             if not rocket or not rocket.Active or not rocket.Part or not rocket.Part.Parent or not camera then
-                OrionLib:MakeNotification({Name = "ICBM", Content = "Rocket " .. tostring(index) .. " is not flying.", Time = 3})
+                OrionLib:MakeNotification({Name = "ICBM", Content = "Launch a rocket first.", Time = 3})
                 return
             end
             if not ICBM.OriginalCameraSubject then ICBM.OriginalCameraSubject = camera.CameraSubject end
             ICBM.FollowIndex = index; camera.CameraSubject = rocket.Part; camera.CameraType = Enum.CameraType.Custom
-            OrionLib:MakeNotification({Name = "ICBM camera", Content = "Following rocket " .. tostring(index) .. ".", Time = 2})
         end
 
-        local function armICBM()
+        local function selectICBM(rocket, index)
+            if rocket.Active then return end
+            ICBM.SelectedIndex = index
+            for i, other in ipairs(ICBM.Rockets) do other.Selected = (i == index) end
+            OrionLib:MakeNotification({Name = "ICBM ready", Content = "Missile selected. Release it, then press LAUNCH ICBM.", Time = 4})
+        end
+
+        local function prepareICBM()
             local missiles = findSpecificObjects("FireworkMissile")
             if #missiles == 0 then missiles = findSpecificObjects("BombMissile") end
             if #missiles == 0 then
-                OrionLib:MakeNotification({Name = "ICBM", Content = "Spawn a Firework or Bomb Missile, then arm it.", Time = 4})
+                OrionLib:MakeNotification({Name = "ICBM", Content = "Spawn a Firework Missile or Bomb Missile first.", Time = 4})
                 return
             end
-            local character, armed = LocalPlayer.Character, 0
+            local prepared = 0
             for _, model in ipairs(missiles) do
-                if armed >= 5 then break end
+                if #ICBM.Rockets >= 5 then break end
                 local part = getPrimaryPart(model)
                 if part and not model:GetAttribute("TRH_ICBMArmed") then
-                    armed = armed + 1; model:SetAttribute("TRH_ICBMArmed", true)
-                    local rocket = {Model = model, Part = part, Active = false, PartStates = {}}
+                    prepared = prepared + 1; model:SetAttribute("TRH_ICBMArmed", true)
+                    local rocket = {Model = model, Part = part, Active = false, Selected = false, PartStates = {}}
                     table.insert(ICBM.Rockets, rocket)
-                    rocket.ActivationConnection = part.Touched:Connect(function(hit)
+                    local index = #ICBM.Rockets
+                    rocket.SelectionConnection = part.Touched:Connect(function(hit)
+                        local character = LocalPlayer.Character
                         if rocket.Active or not character or not hit:IsDescendantOf(character) then return end
-                        rocket.Active = true
-                        if rocket.ActivationConnection then rocket.ActivationConnection:Disconnect(); rocket.ActivationConnection = nil end
-                        rocket.StartPosition = part.Position
-                        for _, descendant in ipairs(model:GetDescendants()) do
-                            if descendant:IsA("BasePart") then
-                                rocket.PartStates[descendant] = {CanCollide = descendant.CanCollide, CanTouch = descendant.CanTouch, Anchored = descendant.Anchored}
-                                descendant.Anchored = false; descendant.CanCollide = false
-                                pcall(function() descendant:SetNetworkOwner(LocalPlayer) end)
-                            end
-                        end
-                        rocket.Gyro, rocket.Position = attachPhysics(part)
-                        if not rocket.Gyro or not rocket.Position then return end
-                        rocket.FlightConnection = RunService.Heartbeat:Connect(function(dt)
-                            if not part.Parent then if rocket.FlightConnection then rocket.FlightConnection:Disconnect() end return end
-                            local ascending = part.Position.Y - rocket.StartPosition.Y < ICBM.AscentHeight
-                            local direction = ascending and Vector3.yAxis or getAimDirection(part.Position)
-                            if not ICBM.Guidance and not ascending then direction = part.CFrame.LookVector end
-                            rocket.Position.Position = part.Position + direction * ICBM.Speed * dt
-                            rocket.Gyro.CFrame = CFrame.lookAt(part.Position, part.Position + direction)
-                        end)
+                        selectICBM(rocket, index)
                     end)
                 end
             end
-            OrionLib:MakeNotification({Name = "ICBM armed", Content = tostring(armed) .. " missile(s) armed. Touch one to launch.", Time = 4})
+            OrionLib:MakeNotification({Name = "ICBM ready", Content = prepared > 0 and "Pick up a prepared missile, put it down, then press LAUNCH ICBM." or "Prepared missiles are already waiting.", Time = 5})
+        end
+
+        local function launchICBM()
+            local index = ICBM.SelectedIndex
+            local rocket = index and ICBM.Rockets[index]
+            if not rocket or rocket.Active or not rocket.Part or not rocket.Part.Parent then
+                OrionLib:MakeNotification({Name = "ICBM", Content = "Pick up and release a prepared missile first.", Time = 4})
+                return
+            end
+            local part, model = rocket.Part, rocket.Model
+            rocket.Active, rocket.Selected, rocket.StartPosition = true, false, part.Position
+            if rocket.SelectionConnection then rocket.SelectionConnection:Disconnect(); rocket.SelectionConnection = nil end
+            for _, descendant in ipairs(model:GetDescendants()) do
+                if descendant:IsA("BasePart") then
+                    rocket.PartStates[descendant] = {CanCollide = descendant.CanCollide, CanTouch = descendant.CanTouch, Anchored = descendant.Anchored}
+                    descendant.Anchored = false; descendant.CanCollide = false
+                    pcall(function() descendant:SetNetworkOwner(LocalPlayer) end)
+                end
+            end
+            rocket.Gyro, rocket.Position = attachPhysics(part)
+            if not rocket.Gyro or not rocket.Position then
+                rocket.Active = false
+                OrionLib:MakeNotification({Name = "ICBM", Content = "Could not control this missile.", Time = 3})
+                return
+            end
+            ICBM.SelectedIndex = nil
+            rocket.FlightConnection = RunService.Heartbeat:Connect(function(dt)
+                if not part.Parent then
+                    if rocket.FlightConnection then rocket.FlightConnection:Disconnect() end
+                    return
+                end
+                local climbed = part.Position.Y - rocket.StartPosition.Y >= ICBM.AscentHeight
+                local direction = climbed and getAimDirection(part.Position) or Vector3.yAxis
+                if climbed and not ICBM.Guidance then direction = part.CFrame.LookVector end
+                rocket.Position.Position = part.Position + direction * ICBM.Speed * dt
+                rocket.Gyro.CFrame = CFrame.lookAt(part.Position, part.Position + direction)
+            end)
+            OrionLib:MakeNotification({Name = "ICBM launched", Content = "Vertical climb started. Guidance activates at the selected height.", Time = 4})
         end
 
         -- Hand System
@@ -5258,13 +5276,14 @@ P2LoadBtn.MouseButton1Click:Connect(function()
         simpleHandTab:AddSlider({Name = T("simpleHandFingerLen"), Min = 3, Max = 15, Default = 6, Color = Theme.SliderColor, Increment = 0.5, ValueName = T("notifStuds"), Callback = function(v) HandSystem.Config.Radius = v end})
         simpleHandTab:AddToggle({Name = T("ctrlFollowPlayer"), Default = true, Callback = function(v) HandSystem.Config.FollowPlayer = v end})
 
-        -- ICBM Tab — touch activation then a vertical climb, followed by sight guidance.
+        -- ICBM Tab — pick/release first, then launch. Buttons use the UI's touch-safe activation.
         local icbmTab = window:MakeTab({Name = "ICBM", Icon = "rbxassetid://4483362458"})
-        icbmTab:AddParagraph("Touch-launched ICBM", "Spawn a missile normally, press Arm, then touch it. It rises vertically before following mouse aim or the touch crosshair.")
+        icbmTab:AddParagraph("ICBM: pick, release, launch", "1. Spawn a missile. 2. Press PREPARE. 3. Pick it up and put it down. 4. Press LAUNCH. It climbs vertically, then follows mouse aim on PC or the centre sight on mobile.")
         icbmTab:AddToggle({Name = "Sight guidance (PC + mobile)", Default = true, Callback = function(v) ICBM.Guidance = v end})
         icbmTab:AddSlider({Name = "Rocket speed", Min = 45, Max = 220, Default = 115, Increment = 5, Callback = function(v) ICBM.Speed = v end})
         icbmTab:AddSlider({Name = "Ascent altitude", Min = 100, Max = 1000, Default = 350, Increment = 25, Callback = function(v) ICBM.AscentHeight = v end})
-        icbmTab:AddButton({Name = "🚀 Arm spawned missiles (max 5)", Callback = armICBM})
+        icbmTab:AddButton({Name = "① PREPARE spawned missiles (max 5)", Callback = prepareICBM})
+        icbmTab:AddButton({Name = "② 🚀 LAUNCH selected ICBM", Callback = launchICBM})
         icbmTab:AddSection({Name = "Camera follow"})
         icbmTab:AddLabel("Choose a launched rocket to watch. Camera returns on reset.")
         for rocketNumber = 1, 5 do
