@@ -1,5 +1,5 @@
 -- linbergz Team MM2 PREMIUM MOBILE HUB v8.01
--- Clean Interface Only - No tabs, no functions
+-- Compact Menu - No Scroll, All Visible
 -- Animated Star Loading
 
 ---------------------------------------------------------
@@ -37,13 +37,18 @@ ScreenGui.IgnoreGuiInset = true
 local C = {
     bg = Color3.fromRGB(13, 11, 20),
     surface = Color3.fromRGB(18, 15, 28),
+    elevated = Color3.fromRGB(25, 21, 38),
     accent = Color3.fromRGB(140, 65, 245),
     accentLight = Color3.fromRGB(180, 115, 255),
+    green = Color3.fromRGB(45, 200, 95),
+    greenDark = Color3.fromRGB(15, 45, 25),
+    red = Color3.fromRGB(220, 50, 60),
+    redDark = Color3.fromRGB(45, 16, 20),
+    gold = Color3.fromRGB(255, 195, 45),
     white = Color3.fromRGB(255, 255, 255),
     text = Color3.fromRGB(240, 238, 248),
     textSec = Color3.fromRGB(160, 148, 185),
-    redDark = Color3.fromRGB(45, 16, 20),
-    red = Color3.fromRGB(220, 50, 60),
+    textDim = Color3.fromRGB(100, 90, 120),
 }
 
 ---------------------------------------------------------
@@ -55,7 +60,6 @@ LoadingScreen.BackgroundColor3 = Color3.fromRGB(9, 10, 15)
 LoadingScreen.ZIndex = 100
 LoadingScreen.Parent = ScreenGui
 
--- Create stars
 for i = 1, 100 do
     local size = math.random(1, 3)
     local Star = Instance.new("Frame")
@@ -79,7 +83,6 @@ for i = 1, 100 do
     end)
 end
 
--- Title
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Size = UDim2.new(1, 0, 0, 60)
 TitleLabel.Position = UDim2.new(0, 0, 0.5, -80)
@@ -92,7 +95,6 @@ TitleLabel.ZIndex = 102
 TitleLabel.TextTransparency = 1
 TitleLabel.Parent = LoadingScreen
 
--- Subtitle
 local SubtitleLabel = Instance.new("TextLabel")
 SubtitleLabel.Size = UDim2.new(1, 0, 0, 20)
 SubtitleLabel.Position = UDim2.new(0, 0, 0.5, -20)
@@ -105,7 +107,6 @@ SubtitleLabel.ZIndex = 102
 SubtitleLabel.TextTransparency = 1
 SubtitleLabel.Parent = LoadingScreen
 
--- Progress bar
 local ProgressBg = Instance.new("Frame")
 ProgressBg.Size = UDim2.new(0, 200, 0, 3)
 ProgressBg.Position = UDim2.new(0.5, -100, 0.55, 0)
@@ -122,7 +123,6 @@ ProgressFill.BorderSizePixel = 0
 ProgressFill.ZIndex = 103
 ProgressFill.Parent = ProgressBg
 
--- Launch animation
 local function LaunchUI()
     TweenService:Create(TitleLabel, TweenInfo.new(1.2), {
         TextTransparency = 0,
@@ -148,18 +148,10 @@ local function LaunchUI()
     
     task.wait(0.3)
     
-    TweenService:Create(LoadingScreen, TweenInfo.new(0.5), {
-        BackgroundTransparency = 1
-    }):Play()
-    TweenService:Create(TitleLabel, TweenInfo.new(0.3), {
-        TextTransparency = 1
-    }):Play()
-    TweenService:Create(SubtitleLabel, TweenInfo.new(0.3), {
-        TextTransparency = 1
-    }):Play()
-    TweenService:Create(ProgressBg, TweenInfo.new(0.3), {
-        BackgroundTransparency = 1
-    }):Play()
+    TweenService:Create(LoadingScreen, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(TitleLabel, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+    TweenService:Create(SubtitleLabel, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+    TweenService:Create(ProgressBg, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
     
     task.wait(0.5)
     LoadingScreen:Destroy()
@@ -187,7 +179,6 @@ TBSk.Thickness = 1.5
 TBSk.Transparency = 0.5
 TBSk.Parent = ToggleBtn
 
--- Draggable button
 do
     local dragging, dragStart, startPos
     ToggleBtn.InputBegan:Connect(function(i)
@@ -211,9 +202,9 @@ do
 end
 
 ---------------------------------------------------------
--- MAIN HUB FRAME
+-- COMPACT HUB - NO SCROLL, ALL VISIBLE
 ---------------------------------------------------------
-local HUB_W, HUB_H = 300, 400
+local HUB_W, HUB_H = 280, 340
 
 local Hub = Instance.new("Frame")
 Hub.Name = "Hub"
@@ -222,54 +213,60 @@ Hub.Position = UDim2.new(0.5, -HUB_W/2, 0.5, -HUB_H/2)
 Hub.BackgroundColor3 = C.bg
 Hub.BorderSizePixel = 0
 Hub.Visible = false
-Hub.ClipsDescendants = true
 Hub.ZIndex = 10
 Hub.Parent = ScreenGui
-Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 8)
 
 local HSk = Instance.new("UIStroke")
 HSk.Color = C.accent
-HSk.Thickness = 1
+HSk.Thickness = 1.5
 HSk.Parent = Hub
 
----------------------------------------------------------
--- TOP BAR
----------------------------------------------------------
-local TopBar = Instance.new("Frame")
-TopBar.Size = UDim2.new(1, 0, 0, 32)
-TopBar.BackgroundColor3 = C.surface
-TopBar.BorderSizePixel = 0
-TopBar.ZIndex = 12
-TopBar.Parent = Hub
+-- Title Bar
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 28)
+TitleBar.BackgroundColor3 = C.accent
+TitleBar.BorderSizePixel = 0
+TitleBar.ZIndex = 12
+TitleBar.Parent = Hub
+Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 8)
+
+local TitleCorner = Instance.new("Frame")
+TitleCorner.Size = UDim2.new(1, 0, 0, 8)
+TitleCorner.Position = UDim2.new(0, 0, 0, 20)
+TitleCorner.BackgroundColor3 = C.accent
+TitleCorner.BorderSizePixel = 0
+TitleCorner.ZIndex = 12
+TitleCorner.Parent = TitleBar
 
 local TitleText = Instance.new("TextLabel")
-TitleText.Size = UDim2.new(1, -60, 1, 0)
-TitleText.Position = UDim2.new(0, 10, 0, 0)
+TitleText.Size = UDim2.new(1, -50, 1, 0)
+TitleText.Position = UDim2.new(0, 12, 0, 0)
 TitleText.BackgroundTransparency = 1
 TitleText.Text = "linbergz Hub"
-TitleText.TextColor3 = C.text
+TitleText.TextColor3 = C.white
 TitleText.TextSize = 12
-TitleText.Font = Enum.Font.GothamBold
+TitleText.Font = Enum.Font.GothamBlack
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 TitleText.ZIndex = 13
-TitleText.Parent = TopBar
+TitleText.Parent = TitleBar
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 20, 0, 20)
-CloseBtn.Position = UDim2.new(1, -26, 0.5, -10)
-CloseBtn.BackgroundColor3 = C.redDark
+CloseBtn.Position = UDim2.new(1, -24, 0, 4)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.BackgroundTransparency = 0.8
 CloseBtn.Text = "x"
-CloseBtn.TextColor3 = C.red
-CloseBtn.TextSize = 11
+CloseBtn.TextColor3 = C.white
+CloseBtn.TextSize = 12
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.ZIndex = 13
-CloseBtn.Parent = TopBar
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
+CloseBtn.Parent = TitleBar
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(1, 0)
 
--- Draggable top bar
 do
     local drag, dStart, sPos
-    TopBar.InputBegan:Connect(function(i)
+    TitleBar.InputBegan:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
             drag = true
             dStart = i.Position
@@ -282,245 +279,154 @@ do
             Hub.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y)
         end
     end)
-    TopBar.InputEnded:Connect(function(i)
+    TitleBar.InputEnded:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
             drag = false
         end
     end)
 end
 
----------------------------------------------------------
--- CONTENT AREA
----------------------------------------------------------
-local ContentFrame = Instance.new("ScrollingFrame")
-ContentFrame.Size = UDim2.new(1, 0, 1, -32)
-ContentFrame.Position = UDim2.new(0, 0, 0, 32)
-ContentFrame.BackgroundTransparency = 1
-ContentFrame.BorderSizePixel = 0
-ContentFrame.ScrollBarThickness = 3
-ContentFrame.ScrollBarImageColor3 = C.accent
-ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-ContentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-ContentFrame.ZIndex = 11
-ContentFrame.Parent = Hub
+-- Content Area - Compact Layout
+local contentY = 32
+local btnH = 24
+local gap = 3
 
-local ContentList = Instance.new("UIListLayout")
-ContentList.Parent = ContentFrame
-ContentList.Padding = UDim.new(0, 5)
-ContentList.SortOrder = Enum.SortOrder.LayoutOrder
-
-local ContentPadding = Instance.new("UIPadding")
-ContentPadding.PaddingTop = UDim.new(0, 8)
-ContentPadding.PaddingBottom = UDim.new(0, 8)
-ContentPadding.PaddingLeft = UDim.new(0, 8)
-ContentPadding.PaddingRight = UDim.new(0, 8)
-ContentPadding.Parent = ContentFrame
-
----------------------------------------------------------
--- UI ELEMENT FACTORY
----------------------------------------------------------
-local elementOrder = 0
-local function GetOrder()
-    elementOrder = elementOrder + 1
-    return elementOrder
+local function MakeLabel(text, y, color)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -16, 0, 14)
+    lbl.Position = UDim2.new(0, 8, 0, y)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = color or C.accentLight
+    lbl.TextSize = 8
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.ZIndex = 11
+    lbl.Parent = Hub
+    return lbl
 end
 
--- Separator
-local function AddSeparator(text)
-    local Frame = Instance.new("Frame")
-    Frame.Size = UDim2.new(1, 0, 0, 20)
-    Frame.BackgroundTransparency = 1
-    Frame.LayoutOrder = GetOrder()
-    Frame.Parent = ContentFrame
+local function MakeToggle(text, y)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -16, 0, btnH)
+    btn.Position = UDim2.new(0, 8, 0, y)
+    btn.BackgroundColor3 = C.elevated
+    btn.Text = ""
+    btn.AutoButtonColor = false
+    btn.ZIndex = 11
+    btn.Parent = Hub
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
     
-    local Label = Instance.new("TextLabel")
-    Label.Size = UDim2.new(1, 0, 1, 0)
-    Label.BackgroundTransparency = 1
-    Label.Text = text
-    Label.TextColor3 = C.accentLight
-    Label.TextSize = 9
-    Label.Font = Enum.Font.GothamBold
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Parent = Frame
-end
-
--- Toggle
-local function AddToggle(text)
-    local Button = Instance.new("TextButton")
-    Button.Size = UDim2.new(1, 0, 0, 26)
-    Button.BackgroundColor3 = Color3.fromRGB(25, 21, 38)
-    Button.Text = ""
-    Button.AutoButtonColor = false
-    Button.LayoutOrder = GetOrder()
-    Button.Parent = ContentFrame
-    Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 5)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -36, 1, 0)
+    lbl.Position = UDim2.new(0, 8, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = C.text
+    lbl.TextSize = 9
+    lbl.Font = Enum.Font.GothamSemibold
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = btn
     
-    local Label = Instance.new("TextLabel")
-    Label.Size = UDim2.new(1, -40, 1, 0)
-    Label.Position = UDim2.new(0, 8, 0, 0)
-    Label.BackgroundTransparency = 1
-    Label.Text = text
-    Label.TextColor3 = C.text
-    Label.TextSize = 10
-    Label.Font = Enum.Font.GothamSemibold
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Parent = Button
+    local tg = Instance.new("Frame")
+    tg.Size = UDim2.new(0, 22, 0, 11)
+    tg.Position = UDim2.new(1, -28, 0.5, -5)
+    tg.BackgroundColor3 = C.textDim
+    tg.BorderSizePixel = 0
+    tg.Parent = btn
+    Instance.new("UICorner", tg).CornerRadius = UDim.new(1, 0)
     
-    local ToggleBg = Instance.new("Frame")
-    ToggleBg.Size = UDim2.new(0, 24, 0, 12)
-    ToggleBg.Position = UDim2.new(1, -30, 0.5, -6)
-    ToggleBg.BackgroundColor3 = Color3.fromRGB(100, 90, 120)
-    ToggleBg.BorderSizePixel = 0
-    ToggleBg.Parent = Button
-    Instance.new("UICorner", ToggleBg).CornerRadius = UDim.new(1, 0)
+    local tc = Instance.new("Frame")
+    tc.Size = UDim2.new(0, 9, 0, 9)
+    tc.Position = UDim2.new(0, 1, 0.5, -4)
+    tc.BackgroundColor3 = C.white
+    tc.BorderSizePixel = 0
+    tc.Parent = tg
+    Instance.new("UICorner", tc).CornerRadius = UDim.new(1, 0)
     
-    local ToggleCircle = Instance.new("Frame")
-    ToggleCircle.Size = UDim2.new(0, 10, 0, 10)
-    ToggleCircle.Position = UDim2.new(0, 1, 0.5, -5)
-    ToggleCircle.BackgroundColor3 = C.white
-    ToggleCircle.BorderSizePixel = 0
-    ToggleCircle.Parent = ToggleBg
-    Instance.new("UICorner", ToggleCircle).CornerRadius = UDim.new(1, 0)
-    
-    Button.MouseEnter:Connect(function()
-        TweenService:Create(Button, TweenInfo.new(0.1), {
-            BackgroundColor3 = Color3.fromRGB(35, 30, 55)
-        }):Play()
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(35, 30, 55)}):Play()
     end)
-    Button.MouseLeave:Connect(function()
-        TweenService:Create(Button, TweenInfo.new(0.1), {
-            BackgroundColor3 = Color3.fromRGB(25, 21, 38)
-        }):Play()
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = C.elevated}):Play()
     end)
 end
 
--- Button
-local function AddButton(text, color)
-    local Button = Instance.new("TextButton")
-    Button.Size = UDim2.new(1, 0, 0, 24)
-    Button.BackgroundColor3 = color or Color3.fromRGB(25, 21, 38)
-    Button.Text = text
-    Button.TextColor3 = C.text
-    Button.TextSize = 10
-    Button.Font = Enum.Font.GothamSemibold
-    Button.AutoButtonColor = false
-    Button.LayoutOrder = GetOrder()
-    Button.Parent = ContentFrame
-    Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 5)
+local function MakeButton(text, y, color)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -16, 0, btnH)
+    btn.Position = UDim2.new(0, 8, 0, y)
+    btn.BackgroundColor3 = color or C.elevated
+    btn.Text = text
+    btn.TextColor3 = C.text
+    btn.TextSize = 9
+    btn.Font = Enum.Font.GothamBold
+    btn.AutoButtonColor = false
+    btn.ZIndex = 11
+    btn.Parent = Hub
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
     
-    Button.MouseEnter:Connect(function()
-        TweenService:Create(Button, TweenInfo.new(0.1), {
-            BackgroundColor3 = C.accent
-        }):Play()
-        Button.TextColor3 = C.white
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = C.accent}):Play()
+        btn.TextColor3 = C.white
     end)
-    Button.MouseLeave:Connect(function()
-        TweenService:Create(Button, TweenInfo.new(0.1), {
-            BackgroundColor3 = color or Color3.fromRGB(25, 21, 38)
-        }):Play()
-        Button.TextColor3 = C.text
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = color or C.elevated}):Play()
+        btn.TextColor3 = C.text
     end)
 end
 
--- Slider
-local function AddSlider(text)
-    local Container = Instance.new("Frame")
-    Container.Size = UDim2.new(1, 0, 0, 40)
-    Container.BackgroundColor3 = Color3.fromRGB(25, 21, 38)
-    Container.BorderSizePixel = 0
-    Container.LayoutOrder = GetOrder()
-    Container.Parent = ContentFrame
-    Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 5)
-    
-    local Label = Instance.new("TextLabel")
-    Label.Size = UDim2.new(0.6, 0, 0, 16)
-    Label.Position = UDim2.new(0, 8, 0, 2)
-    Label.BackgroundTransparency = 1
-    Label.Text = text
-    Label.TextColor3 = C.text
-    Label.TextSize = 9
-    Label.Font = Enum.Font.GothamSemibold
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Parent = Container
-    
-    local ValueLabel = Instance.new("TextLabel")
-    ValueLabel.Size = UDim2.new(0.35, 0, 0, 16)
-    ValueLabel.Position = UDim2.new(0.65, -8, 0, 2)
-    ValueLabel.BackgroundTransparency = 1
-    ValueLabel.Text = "16"
-    ValueLabel.TextColor3 = C.accentLight
-    ValueLabel.TextSize = 9
-    ValueLabel.Font = Enum.Font.GothamBold
-    ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
-    ValueLabel.Parent = Container
-    
-    local SliderBg = Instance.new("Frame")
-    SliderBg.Size = UDim2.new(1, -16, 0, 4)
-    SliderBg.Position = UDim2.new(0, 8, 0, 24)
-    SliderBg.BackgroundColor3 = C.bg
-    SliderBg.BorderSizePixel = 0
-    SliderBg.Parent = Container
-    Instance.new("UICorner", SliderBg).CornerRadius = UDim.new(1, 0)
-    
-    local SliderFill = Instance.new("Frame")
-    SliderFill.Size = UDim2.new(0.3, 0, 1, 0)
-    SliderFill.BackgroundColor3 = C.accent
-    SliderFill.BorderSizePixel = 0
-    SliderFill.Parent = SliderBg
-    Instance.new("UICorner", SliderFill).CornerRadius = UDim.new(1, 0)
-    
-    local Knob = Instance.new("Frame")
-    Knob.Size = UDim2.new(0, 10, 0, 10)
-    Knob.Position = UDim2.new(0.3, -5, 0.5, -5)
-    Knob.BackgroundColor3 = C.white
-    Knob.BorderSizePixel = 0
-    Knob.Parent = SliderBg
-    Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
-end
+---------------------------------------------------------
+-- ALL ELEMENTS ON ONE SCREEN
+---------------------------------------------------------
+local y = contentY
+
+MakeLabel("MOVEMENT", y)
+y = y + 16
+MakeToggle("Speed Hack", y)
+y = y + btnH + gap
+MakeToggle("Jump Hack", y)
+y = y + btnH + gap
+MakeToggle("Infinite Jump", y)
+y = y + btnH + gap + 4
+
+MakeLabel("PROTECTION", y)
+y = y + 16
+MakeToggle("Anti-Fling", y)
+y = y + btnH + gap
+MakeToggle("Noclip", y)
+y = y + btnH + gap
+MakeToggle("Fly", y)
+y = y + btnH + gap
+MakeToggle("Fullbright", y)
+y = y + btnH + gap + 4
+
+MakeLabel("MM2 AUTOMATION", y)
+y = y + 16
+MakeToggle("Auto Farm Coins", y)
+y = y + btnH + gap
+MakeButton("TP to Lobby", y)
+y = y + btnH + gap
+MakeButton("TP to Map", y)
+y = y + btnH + gap + 4
+
+MakeLabel("TELEPORTS", y)
+y = y + 16
+MakeButton("TP to Murderer", y)
+y = y + btnH + gap
+MakeButton("TP to Sheriff", y)
+y = y + btnH + gap + 4
+
+MakeLabel("SYSTEM", y)
+y = y + 16
+MakeButton("Reset", y, C.redDark)
+y = y + btnH + gap
+MakeButton("Copy Server Link", y)
+y = y + btnH + gap
+MakeButton("Destroy Hub", y, C.redDark)
 
 ---------------------------------------------------------
--- INTERFACE CONTENT (Visual Only)
----------------------------------------------------------
-
--- Movement Section
-AddSeparator("MOVEMENT")
-AddSlider("Walk Speed")
-AddToggle("Speed Hack")
-AddSlider("Jump Power")
-AddToggle("Jump Hack")
-AddToggle("Infinite Jump")
-
--- Protection Section
-AddSeparator("PROTECTION")
-AddToggle("Anti-Fling")
-AddToggle("Noclip")
-AddToggle("Fly")
-AddToggle("Fullbright")
-
--- MM2 Section
-AddSeparator("MM2 AUTOMATION")
-AddToggle("Auto Farm Coins")
-AddButton("TP to Lobby")
-AddButton("TP to Map")
-
--- Teleports Section
-AddSeparator("TELEPORTS")
-AddButton("TP to Murderer")
-AddButton("TP to Sheriff")
-
--- ESP Section
-AddSeparator("ESP")
-AddToggle("Player ESP")
-AddToggle("Role ESP")
-
--- System Section
-AddSeparator("SYSTEM")
-AddButton("Reset Character", C.redDark)
-AddButton("Copy Server Link")
-AddButton("Destroy Hub", C.redDark)
-
----------------------------------------------------------
--- HUB TOGGLE LOGIC
+-- HUB TOGGLE
 ---------------------------------------------------------
 local hubOpen = false
 local function ToggleHub()
@@ -528,11 +434,11 @@ local function ToggleHub()
     if hubOpen then
         Hub.Visible = true
         Hub.Size = UDim2.new(0, HUB_W, 0, 0)
-        TweenService:Create(Hub, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        TweenService:Create(Hub, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
             Size = UDim2.new(0, HUB_W, 0, HUB_H)
         }):Play()
     else
-        local tw = TweenService:Create(Hub, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+        local tw = TweenService:Create(Hub, TweenInfo.new(0.15), {
             Size = UDim2.new(0, HUB_W, 0, 0)
         }):Play()
         tw.Completed:Connect(function()
