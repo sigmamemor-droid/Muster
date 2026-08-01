@@ -1,9 +1,10 @@
 --[[
-    Улучшенный статичный интерфейс Roblox
-    Вкладки справа, аккуратные бейджи "SOON"
-    Без функций — только визуал
+    Roblox UI — вкладки слева (скроллятся), компактное меню
+    Вкладка "Настройки": смена цвета всего интерфейса + цвет снега (эффект)
 --]]
 
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
@@ -13,18 +14,24 @@ screenGui.Name = "BeautifulUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- ===== ГЛАВНОЕ ОКНО =====
+-- ===== ГЛАВНОЕ ОКНО (компактное) =====
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 640, 0, 440)
-mainFrame.Position = UDim2.new(0.5, -320, 0.5, -220)
+mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+mainFrame.Size = UDim2.new(0, 460, 0, 340)
+mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 27)
 mainFrame.BorderSizePixel = 0
 mainFrame.ClipsDescendants = true
 mainFrame.Parent = screenGui
 
+-- UIScale — используется для изменения размера всего меню (см. настройки)
+local mainScale = Instance.new("UIScale")
+mainScale.Scale = 1
+mainScale.Parent = mainFrame
+
 local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 20)
+mainCorner.CornerRadius = UDim.new(0, 18)
 mainCorner.Parent = mainFrame
 
 local mainGradient = Instance.new("UIGradient")
@@ -38,10 +45,8 @@ mainGradient.Parent = mainFrame
 local mainStroke = Instance.new("UIStroke")
 mainStroke.Color = Color3.fromRGB(255, 255, 255)
 mainStroke.Transparency = 0.9
-mainStroke.Thickness = 1
 mainStroke.Parent = mainFrame
 
--- Тень
 local shadow = Instance.new("ImageLabel")
 shadow.BackgroundTransparency = 1
 shadow.Image = "rbxassetid://6014261993"
@@ -57,178 +62,471 @@ shadow.Parent = mainFrame
 
 -- ===== ШАПКА =====
 local header = Instance.new("Frame")
-header.Size = UDim2.new(1, 0, 0, 64)
+header.Size = UDim2.new(1, 0, 0, 46)
 header.BackgroundTransparency = 1
 header.Parent = mainFrame
 
 local logoDot = Instance.new("Frame")
-logoDot.Size = UDim2.new(0, 10, 0, 10)
-logoDot.Position = UDim2.new(0, 24, 0.5, -5)
+logoDot.Size = UDim2.new(0, 9, 0, 9)
+logoDot.Position = UDim2.new(0, 18, 0.5, -4)
 logoDot.BackgroundColor3 = Color3.fromRGB(130, 105, 255)
 logoDot.Parent = header
-
-local logoDotCorner = Instance.new("UICorner")
-logoDotCorner.CornerRadius = UDim.new(1, 0)
-logoDotCorner.Parent = logoDot
+Instance.new("UICorner", logoDot).CornerRadius = UDim.new(1, 0)
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -80, 1, 0)
-title.Position = UDim2.new(0, 42, 0, 0)
+title.Size = UDim2.new(1, -70, 1, 0)
+title.Position = UDim2.new(0, 34, 0, 0)
 title.BackgroundTransparency = 1
 title.Text = "Мой проект"
 title.Font = Enum.Font.GothamBold
-title.TextSize = 21
+title.TextSize = 17
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = header
 
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 28, 0, 28)
+closeButton.Position = UDim2.new(1, -40, 0.5, -14)
+closeButton.BackgroundColor3 = Color3.fromRGB(255, 90, 90)
+closeButton.Text = "✕"
+closeButton.Font = Enum.Font.GothamBold
+closeButton.TextSize = 13
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.AutoButtonColor = false
+closeButton.Parent = header
+Instance.new("UICorner", closeButton).CornerRadius = UDim.new(1, 0)
+
 local divider = Instance.new("Frame")
-divider.Size = UDim2.new(1, -48, 0, 1)
-divider.Position = UDim2.new(0, 24, 0, 64)
+divider.Size = UDim2.new(1, -36, 0, 1)
+divider.Position = UDim2.new(0, 18, 0, 46)
 divider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 divider.BackgroundTransparency = 0.93
 divider.BorderSizePixel = 0
 divider.Parent = mainFrame
 
--- ===== ВКЛАДКИ СПРАВА (фиксированная колонка) =====
-local tabsFrame = Instance.new("Frame")
+-- ===== ВКЛАДКИ СЛЕВА (со скроллом) =====
+local tabsFrame = Instance.new("ScrollingFrame")
 tabsFrame.Name = "Tabs"
-tabsFrame.Size = UDim2.new(0, 168, 1, -88)
-tabsFrame.Position = UDim2.new(1, -188, 0, 76)
+tabsFrame.Size = UDim2.new(0, 118, 1, -60)
+tabsFrame.Position = UDim2.new(0, 12, 0, 54)
 tabsFrame.BackgroundTransparency = 1
+tabsFrame.BorderSizePixel = 0
+tabsFrame.ScrollBarThickness = 3
+tabsFrame.ScrollBarImageColor3 = Color3.fromRGB(130, 105, 255)
+tabsFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+tabsFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 tabsFrame.Parent = mainFrame
 
 local tabsLayout = Instance.new("UIListLayout")
-tabsLayout.Padding = UDim.new(0, 8)
+tabsLayout.Padding = UDim.new(0, 6)
 tabsLayout.SortOrder = Enum.SortOrder.LayoutOrder
 tabsLayout.Parent = tabsFrame
 
-local tabData = {
-    {name = "Главная", soon = false},
-    {name = "Игрок", soon = true},
-    {name = "Мир", soon = true},
-    {name = "Визуал", soon = true},
-    {name = "Аудио", soon = true},
-    {name = "Настройки", soon = true},
-    {name = "О проекте", soon = true},
-}
-
-local accentColor = Color3.fromRGB(130, 105, 255)
-
-for i, data in ipairs(tabData) do
-    local tab = Instance.new("Frame")
-    tab.Name = "Tab" .. i
-    tab.Size = UDim2.new(1, 0, 0, 40)
-    tab.BackgroundColor3 = data.soon and Color3.fromRGB(30, 30, 40) or accentColor
-    tab.BackgroundTransparency = data.soon and 0 or 0.1
-    tab.LayoutOrder = i
-    tab.Parent = tabsFrame
-
-    local tabCorner = Instance.new("UICorner")
-    tabCorner.CornerRadius = UDim.new(0, 10)
-    tabCorner.Parent = tab
-
-    local tabStroke = Instance.new("UIStroke")
-    tabStroke.Color = data.soon and Color3.fromRGB(255, 255, 255) or accentColor
-    tabStroke.Transparency = data.soon and 0.92 or 0.5
-    tabStroke.Thickness = 1
-    tabStroke.Parent = tab
-
-    local tabLabel = Instance.new("TextLabel")
-    tabLabel.Size = UDim2.new(1, -60, 1, 0)
-    tabLabel.Position = UDim2.new(0, 14, 0, 0)
-    tabLabel.BackgroundTransparency = 1
-    tabLabel.Text = data.name
-    tabLabel.Font = Enum.Font.GothamSemibold
-    tabLabel.TextSize = 13
-    tabLabel.TextColor3 = data.soon and Color3.fromRGB(150, 150, 162) or Color3.fromRGB(255, 255, 255)
-    tabLabel.TextXAlignment = Enum.TextXAlignment.Left
-    tabLabel.TextTruncate = Enum.TextTruncate.AtEnd
-    tabLabel.Parent = tab
-
-    if data.soon then
-        local badge = Instance.new("Frame")
-        badge.Size = UDim2.new(0, 42, 0, 18)
-        badge.Position = UDim2.new(1, -52, 0.5, -9)
-        badge.BackgroundColor3 = Color3.fromRGB(255, 175, 70)
-        badge.BackgroundTransparency = 0.85
-        badge.Parent = tab
-
-        local badgeCorner = Instance.new("UICorner")
-        badgeCorner.CornerRadius = UDim.new(1, 0)
-        badgeCorner.Parent = badge
-
-        local badgeStroke = Instance.new("UIStroke")
-        badgeStroke.Color = Color3.fromRGB(255, 175, 70)
-        badgeStroke.Transparency = 0.4
-        badgeStroke.Thickness = 1
-        badgeStroke.Parent = badge
-
-        local badgeLabel = Instance.new("TextLabel")
-        badgeLabel.Size = UDim2.new(1, 0, 1, 0)
-        badgeLabel.BackgroundTransparency = 1
-        badgeLabel.Text = "SOON"
-        badgeLabel.Font = Enum.Font.GothamBold
-        badgeLabel.TextSize = 10
-        badgeLabel.TextColor3 = Color3.fromRGB(255, 195, 110)
-        badgeLabel.Parent = badge
-    else
-        local dot = Instance.new("Frame")
-        dot.Size = UDim2.new(0, 6, 0, 6)
-        dot.Position = UDim2.new(1, -20, 0.5, -3)
-        dot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        dot.Parent = tab
-
-        local dotCorner = Instance.new("UICorner")
-        dotCorner.CornerRadius = UDim.new(1, 0)
-        dotCorner.Parent = dot
-    end
-end
-
--- ===== ОБЛАСТЬ КОНТЕНТА (слева, подстраивается под вкладки) =====
+-- ===== ОБЛАСТЬ КОНТЕНТА (справа) =====
 local content = Instance.new("Frame")
 content.Name = "Content"
-content.Size = UDim2.new(1, -216, 1, -88)
-content.Position = UDim2.new(0, 24, 0, 76)
+content.Size = UDim2.new(1, -150, 1, -60)
+content.Position = UDim2.new(0, 138, 0, 54)
 content.BackgroundColor3 = Color3.fromRGB(26, 26, 35)
 content.BorderSizePixel = 0
 content.Parent = mainFrame
-
-local contentCorner = Instance.new("UICorner")
-contentCorner.CornerRadius = UDim.new(0, 16)
-contentCorner.Parent = content
+Instance.new("UICorner", content).CornerRadius = UDim.new(0, 14)
 
 local contentStroke = Instance.new("UIStroke")
 contentStroke.Color = Color3.fromRGB(255, 255, 255)
 contentStroke.Transparency = 0.93
 contentStroke.Parent = content
 
-local contentHeader = Instance.new("TextLabel")
-contentHeader.Size = UDim2.new(1, -48, 0, 24)
-contentHeader.Position = UDim2.new(0, 24, 0, 22)
-contentHeader.BackgroundTransparency = 1
-contentHeader.Text = "Главная"
-contentHeader.Font = Enum.Font.GothamBold
-contentHeader.TextSize = 18
-contentHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
-contentHeader.TextXAlignment = Enum.TextXAlignment.Left
-contentHeader.Parent = content
+-- ===== ТЕМА (общее состояние) =====
+local theme = {
+    accent = Color3.fromRGB(130, 105, 255),
+    snow = Color3.fromRGB(255, 255, 255),
+    snowEnabled = false,
+}
 
-local contentSub = Instance.new("TextLabel")
-contentSub.Size = UDim2.new(1, -48, 0, 18)
-contentSub.Position = UDim2.new(0, 24, 0, 50)
-contentSub.BackgroundTransparency = 1
-contentSub.Text = "Добро пожаловать в панель управления"
-contentSub.Font = Enum.Font.Gotham
-contentSub.TextSize = 13
-contentSub.TextColor3 = Color3.fromRGB(140, 140, 155)
-contentSub.TextXAlignment = Enum.TextXAlignment.Left
-contentSub.Parent = content
+-- список объектов, которые красятся акцентным цветом при смене темы
+local accentTargets = {} -- {instance = inst, prop = "BackgroundColor3"}
+local function registerAccent(inst, prop)
+    table.insert(accentTargets, {inst = inst, prop = prop})
+    inst[prop] = theme.accent
+end
 
-local innerDivider = Instance.new("Frame")
-innerDivider.Size = UDim2.new(1, -48, 0, 1)
-innerDivider.Position = UDim2.new(0, 24, 0, 80)
-innerDivider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-innerDivider.BackgroundTransparency = 0.93
-innerDivider.BorderSizePixel = 0
-innerDivider.Parent = content
+local function applyAccent(newColor)
+    theme.accent = newColor
+    for _, t in ipairs(accentTargets) do
+        TweenService:Create(t.inst, TweenInfo.new(0.25), {[t.prop] = newColor}):Play()
+    end
+end
+
+registerAccent(logoDot, "BackgroundColor3")
+
+-- ===== СНЕГ (визуальный эффект) =====
+local snowFolder = Instance.new("Frame")
+snowFolder.Name = "SnowLayer"
+snowFolder.Size = UDim2.new(1, 0, 1, 0)
+snowFolder.BackgroundTransparency = 1
+snowFolder.ClipsDescendants = true
+snowFolder.ZIndex = 50
+snowFolder.Parent = mainFrame
+
+local snowflakes = {}
+local function spawnSnowflakes()
+    for i = 1, 18 do
+        local flake = Instance.new("Frame")
+        flake.Size = UDim2.new(0, 4, 0, 4)
+        flake.Position = UDim2.new(math.random(), 0, math.random(), 0)
+        flake.BackgroundColor3 = theme.snow
+        flake.BackgroundTransparency = 0.2
+        flake.BorderSizePixel = 0
+        flake.ZIndex = 50
+        flake.Visible = false
+        Instance.new("UICorner", flake).CornerRadius = UDim.new(1, 0)
+        flake.Parent = snowFolder
+        table.insert(snowflakes, {inst = flake, speed = math.random(10, 25) / 100})
+    end
+end
+spawnSnowflakes()
+
+RunService.Heartbeat:Connect(function(dt)
+    if not theme.snowEnabled then return end
+    for _, f in ipairs(snowflakes) do
+        f.inst.Visible = true
+        local pos = f.inst.Position
+        local newY = pos.Y.Scale + f.speed * dt
+        if newY > 1 then newY = -0.05 end
+        f.inst.Position = UDim2.new(pos.X.Scale, 0, newY, 0)
+    end
+end)
+
+local function setSnowEnabled(state)
+    theme.snowEnabled = state
+    if not state then
+        for _, f in ipairs(snowflakes) do f.inst.Visible = false end
+    end
+end
+
+local function setSnowColor(color)
+    theme.snow = color
+    for _, f in ipairs(snowflakes) do
+        f.inst.BackgroundColor3 = color
+    end
+end
+
+-- ===== СОЗДАНИЕ ВКЛАДКИ И СТРАНИЦЫ =====
+local pages = {}
+local tabButtons = {}
+
+local function selectTab(name)
+    for pageName, page in pairs(pages) do
+        page.Visible = (pageName == name)
+    end
+    for tabName, btn in pairs(tabButtons) do
+        local active = (tabName == name)
+        TweenService:Create(btn, TweenInfo.new(0.15), {
+            BackgroundTransparency = active and 0.1 or 1
+        }):Play()
+        btn.BackgroundColor3 = theme.accent
+        btn.label.TextColor3 = active and Color3.fromRGB(255,255,255) or Color3.fromRGB(160,160,172)
+    end
+end
+
+local function createTab(name, layoutOrder)
+    local tab = Instance.new("TextButton")
+    tab.Name = "Tab_" .. name
+    tab.Size = UDim2.new(1, 0, 0, 34)
+    tab.BackgroundColor3 = theme.accent
+    tab.BackgroundTransparency = 1
+    tab.AutoButtonColor = false
+    tab.Text = ""
+    tab.LayoutOrder = layoutOrder
+    tab.Parent = tabsFrame
+    Instance.new("UICorner", tab).CornerRadius = UDim.new(0, 9)
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -14, 1, 0)
+    label.Position = UDim2.new(0, 12, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.Font = Enum.Font.GothamSemibold
+    label.TextSize = 12
+    label.TextColor3 = Color3.fromRGB(160, 160, 172)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = tab
+    tab.label = label
+
+    tab.MouseButton1Click:Connect(function()
+        selectTab(name)
+    end)
+
+    tabButtons[name] = tab
+
+    local page = Instance.new("ScrollingFrame")
+    page.Name = "Page_" .. name
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.BackgroundTransparency = 1
+    page.BorderSizePixel = 0
+    page.ScrollBarThickness = 3
+    page.ScrollBarImageColor3 = theme.accent
+    page.CanvasSize = UDim2.new(0, 0, 0, 0)
+    page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    page.Visible = false
+    page.Parent = content
+
+    local pad = Instance.new("UIPadding")
+    pad.PaddingLeft = UDim.new(0, 18)
+    pad.PaddingRight = UDim.new(0, 18)
+    pad.PaddingTop = UDim.new(0, 16)
+    pad.Parent = page
+
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 10)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Parent = page
+
+    pages[name] = page
+    return page
+end
+
+local function addHeading(page, text)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, 0, 0, 22)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 16
+    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = page
+    return lbl
+end
+
+local function addNote(page, text)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, 0, 0, 16)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextSize = 12
+    lbl.TextColor3 = Color3.fromRGB(140, 140, 155)
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.TextWrapped = true
+    lbl.Parent = page
+    return lbl
+end
+
+-- цветовые бейджи-кружки для выбора
+local function addColorRow(page, colors, onPick)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, 0, 0, 30)
+    row.BackgroundTransparency = 1
+    row.Parent = page
+
+    local layout = Instance.new("UIListLayout")
+    layout.FillDirection = Enum.FillDirection.Horizontal
+    layout.Padding = UDim.new(0, 8)
+    layout.Parent = row
+
+    for _, c in ipairs(colors) do
+        local swatch = Instance.new("TextButton")
+        swatch.Size = UDim2.new(0, 28, 0, 28)
+        swatch.BackgroundColor3 = c
+        swatch.Text = ""
+        swatch.AutoButtonColor = false
+        swatch.Parent = row
+        Instance.new("UICorner", swatch).CornerRadius = UDim.new(1, 0)
+
+        local stroke = Instance.new("UIStroke")
+        stroke.Color = Color3.fromRGB(255, 255, 255)
+        stroke.Transparency = 0.7
+        stroke.Thickness = 1
+        stroke.Parent = swatch
+
+        swatch.MouseButton1Click:Connect(function()
+            onPick(c)
+        end)
+    end
+    return row
+end
+
+-- ===== СТРАНИЦА: Главная =====
+do
+    local page = createTab("Главная", 1)
+    addHeading(page, "Добро пожаловать")
+    addNote(page, "Это главная страница интерфейса. Здесь можно разместить любую информацию о проекте.")
+end
+
+-- ===== Заглушки-страницы =====
+createTab("Игрок", 2)
+addHeading(pages["Игрок"], "Игрок")
+addNote(pages["Игрок"], "Раздел в разработке.")
+
+createTab("Мир", 3)
+addHeading(pages["Мир"], "Мир")
+addNote(pages["Мир"], "Раздел в разработке.")
+
+createTab("Визуал", 4)
+addHeading(pages["Визуал"], "Визуал")
+addNote(pages["Визуал"], "Раздел в разработке.")
+
+createTab("Аудио", 5)
+addHeading(pages["Аудио"], "Аудио")
+addNote(pages["Аудио"], "Раздел в разработке.")
+
+-- ===== СТРАНИЦА: Настройки (рабочая) =====
+do
+    local page = createTab("Настройки", 6)
+    addHeading(page, "Настройки")
+    addNote(page, "Цвет интерфейса")
+
+    local themeColors = {
+        Color3.fromRGB(130, 105, 255), -- фиолетовый
+        Color3.fromRGB(255, 100, 140), -- розовый
+        Color3.fromRGB(100, 200, 255), -- голубой
+        Color3.fromRGB(255, 190, 90),  -- оранжевый
+        Color3.fromRGB(100, 220, 140), -- зелёный
+        Color3.fromRGB(255, 90, 90),   -- красный
+    }
+    addColorRow(page, themeColors, function(c)
+        applyAccent(c)
+        for _, btn in pairs(tabButtons) do
+            btn.BackgroundColor3 = c
+        end
+        selectTab("Настройки")
+    end)
+
+    addNote(page, "Цвет снега (эффект)")
+    addColorRow(page, themeColors, function(c)
+        setSnowColor(c)
+    end)
+
+    local toggleRow = Instance.new("Frame")
+    toggleRow.Size = UDim2.new(1, 0, 0, 32)
+    toggleRow.BackgroundTransparency = 1
+    toggleRow.Parent = page
+
+    local toggleLabel = Instance.new("TextLabel")
+    toggleLabel.Size = UDim2.new(1, -60, 1, 0)
+    toggleLabel.BackgroundTransparency = 1
+    toggleLabel.Text = "Включить снег"
+    toggleLabel.Font = Enum.Font.GothamSemibold
+    toggleLabel.TextSize = 13
+    toggleLabel.TextColor3 = Color3.fromRGB(230, 230, 235)
+    toggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    toggleLabel.Parent = toggleRow
+
+    local toggleBg = Instance.new("Frame")
+    toggleBg.Size = UDim2.new(0, 44, 0, 24)
+    toggleBg.Position = UDim2.new(1, -44, 0.5, -12)
+    toggleBg.BackgroundColor3 = Color3.fromRGB(60, 60, 72)
+    toggleBg.Parent = toggleRow
+    Instance.new("UICorner", toggleBg).CornerRadius = UDim.new(1, 0)
+
+    local toggleDot = Instance.new("Frame")
+    toggleDot.Size = UDim2.new(0, 18, 0, 18)
+    toggleDot.Position = UDim2.new(0, 3, 0.5, -9)
+    toggleDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    toggleDot.Parent = toggleBg
+    Instance.new("UICorner", toggleDot).CornerRadius = UDim.new(1, 0)
+
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Size = UDim2.new(1, 0, 1, 0)
+    toggleBtn.BackgroundTransparency = 1
+    toggleBtn.Text = ""
+    toggleBtn.Parent = toggleBg
+
+    toggleBtn.MouseButton1Click:Connect(function()
+        local newState = not theme.snowEnabled
+        setSnowEnabled(newState)
+        if newState then
+            TweenService:Create(toggleDot, TweenInfo.new(0.15), {Position = UDim2.new(1, -21, 0.5, -9)}):Play()
+            TweenService:Create(toggleBg, TweenInfo.new(0.15), {BackgroundColor3 = theme.accent}):Play()
+        else
+            TweenService:Create(toggleDot, TweenInfo.new(0.15), {Position = UDim2.new(0, 3, 0.5, -9)}):Play()
+            TweenService:Create(toggleBg, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(60, 60, 72)}):Play()
+        end
+    end)
+end
+
+-- ===== Размер меню (в Настройках) =====
+do
+    local page = pages["Настройки"]
+    addNote(page, "Размер меню")
+
+    local sizeRow = Instance.new("Frame")
+    sizeRow.Size = UDim2.new(1, 0, 0, 32)
+    sizeRow.BackgroundTransparency = 1
+    sizeRow.Parent = page
+
+    local minusBtn = Instance.new("TextButton")
+    minusBtn.Size = UDim2.new(0, 32, 0, 32)
+    minusBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 50)
+    minusBtn.Text = "−"
+    minusBtn.Font = Enum.Font.GothamBold
+    minusBtn.TextSize = 16
+    minusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    minusBtn.AutoButtonColor = false
+    minusBtn.Parent = sizeRow
+    Instance.new("UICorner", minusBtn).CornerRadius = UDim.new(0, 8)
+
+    local sizeLabel = Instance.new("TextLabel")
+    sizeLabel.Size = UDim2.new(0, 60, 0, 32)
+    sizeLabel.Position = UDim2.new(0, 40, 0, 0)
+    sizeLabel.BackgroundTransparency = 1
+    sizeLabel.Text = "100%"
+    sizeLabel.Font = Enum.Font.GothamSemibold
+    sizeLabel.TextSize = 13
+    sizeLabel.TextColor3 = Color3.fromRGB(220, 220, 228)
+    sizeLabel.TextXAlignment = Enum.TextXAlignment.Center
+    sizeLabel.Parent = sizeRow
+
+    local plusBtn = Instance.new("TextButton")
+    plusBtn.Size = UDim2.new(0, 32, 0, 32)
+    plusBtn.Position = UDim2.new(0, 104, 0, 0)
+    plusBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 50)
+    plusBtn.Text = "+"
+    plusBtn.Font = Enum.Font.GothamBold
+    plusBtn.TextSize = 16
+    plusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    plusBtn.AutoButtonColor = false
+    plusBtn.Parent = sizeRow
+    Instance.new("UICorner", plusBtn).CornerRadius = UDim.new(0, 8)
+
+    local MIN_SCALE, MAX_SCALE, STEP = 0.7, 1.3, 0.1
+
+    local function refreshSizeLabel()
+        sizeLabel.Text = math.floor(mainScale.Scale * 100 + 0.5) .. "%"
+    end
+
+    local function changeScale(delta)
+        local newScale = math.clamp(mainScale.Scale + delta, MIN_SCALE, MAX_SCALE)
+        TweenService:Create(mainScale, TweenInfo.new(0.15), {Scale = newScale}):Play()
+        task.delay(0.16, refreshSizeLabel)
+    end
+
+    minusBtn.MouseButton1Click:Connect(function() changeScale(-STEP) end)
+    plusBtn.MouseButton1Click:Connect(function() changeScale(STEP) end)
+end
+
+createTab("О проекте", 7)
+addHeading(pages["О проекте"], "О проекте")
+addNote(pages["О проекте"], "Интерфейс создан для демонстрации возможностей UI в Roblox.")
+
+-- показать первую вкладку
+selectTab("Главная")
+
+-- ===== ЗАКРЫТИЕ =====
+closeButton.MouseEnter:Connect(function()
+    TweenService:Create(closeButton, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(220, 60, 60)}):Play()
+end)
+closeButton.MouseLeave:Connect(function()
+    TweenService:Create(closeButton, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(255, 90, 90)}):Play()
+end)
+closeButton.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+end)
+
+-- ===== АНИМАЦИЯ ПОЯВЛЕНИЯ =====
+mainScale.Scale = 0
+TweenService:Create(mainScale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+    Scale = 1
+}):Play()
