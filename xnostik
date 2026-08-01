@@ -17,18 +17,12 @@ screenGui.Parent = playerGui
 -- ===== ГЛАВНОЕ ОКНО (компактное) =====
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 mainFrame.Size = UDim2.new(0, 460, 0, 340)
-mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+mainFrame.Position = UDim2.new(0.5, -230, 0.5, -170)
 mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 27)
 mainFrame.BorderSizePixel = 0
 mainFrame.ClipsDescendants = true
 mainFrame.Parent = screenGui
-
--- UIScale — используется для изменения размера всего меню (см. настройки)
-local mainScale = Instance.new("UIScale")
-mainScale.Scale = 1
-mainScale.Parent = mainFrame
 
 local mainCorner = Instance.new("UICorner")
 mainCorner.CornerRadius = UDim.new(0, 18)
@@ -447,66 +441,6 @@ do
     end)
 end
 
--- ===== Размер меню (в Настройках) =====
-do
-    local page = pages["Настройки"]
-    addNote(page, "Размер меню")
-
-    local sizeRow = Instance.new("Frame")
-    sizeRow.Size = UDim2.new(1, 0, 0, 32)
-    sizeRow.BackgroundTransparency = 1
-    sizeRow.Parent = page
-
-    local minusBtn = Instance.new("TextButton")
-    minusBtn.Size = UDim2.new(0, 32, 0, 32)
-    minusBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 50)
-    minusBtn.Text = "−"
-    minusBtn.Font = Enum.Font.GothamBold
-    minusBtn.TextSize = 16
-    minusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    minusBtn.AutoButtonColor = false
-    minusBtn.Parent = sizeRow
-    Instance.new("UICorner", minusBtn).CornerRadius = UDim.new(0, 8)
-
-    local sizeLabel = Instance.new("TextLabel")
-    sizeLabel.Size = UDim2.new(0, 60, 0, 32)
-    sizeLabel.Position = UDim2.new(0, 40, 0, 0)
-    sizeLabel.BackgroundTransparency = 1
-    sizeLabel.Text = "100%"
-    sizeLabel.Font = Enum.Font.GothamSemibold
-    sizeLabel.TextSize = 13
-    sizeLabel.TextColor3 = Color3.fromRGB(220, 220, 228)
-    sizeLabel.TextXAlignment = Enum.TextXAlignment.Center
-    sizeLabel.Parent = sizeRow
-
-    local plusBtn = Instance.new("TextButton")
-    plusBtn.Size = UDim2.new(0, 32, 0, 32)
-    plusBtn.Position = UDim2.new(0, 104, 0, 0)
-    plusBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 50)
-    plusBtn.Text = "+"
-    plusBtn.Font = Enum.Font.GothamBold
-    plusBtn.TextSize = 16
-    plusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    plusBtn.AutoButtonColor = false
-    plusBtn.Parent = sizeRow
-    Instance.new("UICorner", plusBtn).CornerRadius = UDim.new(0, 8)
-
-    local MIN_SCALE, MAX_SCALE, STEP = 0.7, 1.3, 0.1
-
-    local function refreshSizeLabel()
-        sizeLabel.Text = math.floor(mainScale.Scale * 100 + 0.5) .. "%"
-    end
-
-    local function changeScale(delta)
-        local newScale = math.clamp(mainScale.Scale + delta, MIN_SCALE, MAX_SCALE)
-        TweenService:Create(mainScale, TweenInfo.new(0.15), {Scale = newScale}):Play()
-        task.delay(0.16, refreshSizeLabel)
-    end
-
-    minusBtn.MouseButton1Click:Connect(function() changeScale(-STEP) end)
-    plusBtn.MouseButton1Click:Connect(function() changeScale(STEP) end)
-end
-
 createTab("О проекте", 7)
 addHeading(pages["О проекте"], "О проекте")
 addNote(pages["О проекте"], "Интерфейс создан для демонстрации возможностей UI в Roblox.")
@@ -526,7 +460,9 @@ closeButton.MouseButton1Click:Connect(function()
 end)
 
 -- ===== АНИМАЦИЯ ПОЯВЛЕНИЯ =====
-mainScale.Scale = 0
-TweenService:Create(mainScale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-    Scale = 1
+mainFrame.Size = UDim2.new(0, 0, 0, 0)
+mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+TweenService:Create(mainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+    Size = UDim2.new(0, 460, 0, 340),
+    Position = UDim2.new(0.5, -230, 0.5, -170)
 }):Play()
