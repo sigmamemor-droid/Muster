@@ -1,6 +1,6 @@
--- linbergz Team MM2 PREMIUM MOBILE HUB v8.00 (Nexus Update)
+-- linbergz Team MM2 PREMIUM MOBILE HUB v8.01 (Nexus Update)
+-- Neumorphic Tab System + Immediate Home Load
 -- Ironclad Anti-Fling & Advanced Physics Fling Engine + MM2 Auto Features
--- Fully Unabbreviated & Mobile Optimized Code
 
 ---------------------------------------------------------
 -- SERVICES
@@ -57,12 +57,16 @@ local C = {
     text = Color3.fromRGB(240, 238, 248), textSec = Color3.fromRGB(160, 148, 185),
     textDim = Color3.fromRGB(100, 90, 120), textMuted = Color3.fromRGB(60, 54, 82),
     separator = Color3.fromRGB(45, 38, 70),
+    -- Neumorphic colors for pill tabs
+    neumoBg = Color3.fromRGB(22, 19, 34),
+    neumoShadow = Color3.fromRGB(5, 4, 10),
+    neumoHighlight = Color3.fromRGB(40, 34, 58),
+    neumoActive = Color3.fromRGB(30, 25, 45),
 }
 
--- Глобальные настройки шрифта и прозрачности
 local currentFont = Enum.Font.GothamSemibold
 local globalTextObjects = {}
-local menuTransparency = 0 -- 0 = полностью непрозрачный
+local menuTransparency = 0
 
 ---------------------------------------------------------
 -- LOCALIZATION ENGINE (RU/EN)
@@ -86,7 +90,6 @@ local L = {
         nexus_title = "Nexus Engine", nexus_desc = "Ultimate server-side features are in development. Follow linbergz Team updates!",
         nexus_1 = "God Mode [Server-Side]", nexus_2 = "Kill Aura [Infinity Range]", nexus_3 = "Server Crash Protocol",
         soon = "SOON",
-        -- Новое для Настроек
         menu_size = "Menu Size", menu_transparency = "Menu Transparency", change_font = "Change Font",
         tab_ui = "UI Settings", tab_theme = "Themes", tab_showcase = "Theme Showcase (soon)"
     },
@@ -105,7 +108,6 @@ local L = {
         nexus_title = "Nexus Движок", nexus_desc = "Разработка серверных функций в процессе. Следите за обновлениями linbergz Team!",
         nexus_1 = "Режим Бога [Серверно]", nexus_2 = "Аура Смерти [Беск. Радиус]", nexus_3 = "Протокол Краша Сервера",
         soon = "Скоро",
-        -- Новое для Настроек
         menu_size = "Размер Меню", menu_transparency = "Прозрачность Меню", change_font = "Сменить Шрифт",
         tab_ui = "Настройки UI", tab_theme = "Темы", tab_showcase = "Theme Showcase (soon)"
     }
@@ -220,13 +222,13 @@ local LS = Instance.new("Frame")
 LS.Size = UDim2.new(1, 0, 1, 0); LS.BackgroundColor3 = Color3.fromRGB(8, 7, 13); LS.ZIndex = 100; LS.Parent = ScreenGui
 local LogoBox = Instance.new("Frame"); LogoBox.Size = UDim2.new(0, 200, 0, 200); LogoBox.Position = UDim2.new(0.5, -100, 0.5, -100); LogoBox.BackgroundTransparency = 1; LogoBox.ZIndex = 101; LogoBox.Parent = LS
 local MainLogo = Instance.new("TextLabel"); MainLogo.Size = UDim2.new(1, 0, 0, 60); MainLogo.Position = UDim2.new(0, 0, 0, 30); MainLogo.BackgroundTransparency = 1; MainLogo.Text = "linbergz"; MainLogo.TextColor3 = C.white; MainLogo.TextSize = 38; MainLogo.Font = Enum.Font.GothamBlack; MainLogo.ZIndex = 102; MainLogo.Parent = LogoBox
-local SubLogo = Instance.new("TextLabel"); SubLogo.Size = UDim2.new(1, 0, 0, 20); SubLogo.Position = UDim2.new(0, 0, 0, 90); SubLogo.BackgroundTransparency = 1; SubLogo.Text = "NEXUS UPDATE v8.0"; SubLogo.TextColor3 = C.textDim; SubLogo.TextSize = 10; SubLogo.Font = Enum.Font.GothamBold; SubLogo.ZIndex = 102; SubLogo.Parent = LogoBox
+local SubLogo = Instance.new("TextLabel"); SubLogo.Size = UDim2.new(1, 0, 0, 20); SubLogo.Position = UDim2.new(0, 0, 0, 90); SubLogo.BackgroundTransparency = 1; SubLogo.Text = "NEXUS UPDATE v8.01"; SubLogo.TextColor3 = C.textDim; SubLogo.TextSize = 10; SubLogo.Font = Enum.Font.GothamBold; SubLogo.ZIndex = 102; SubLogo.Parent = LogoBox
 local LogLabel = Instance.new("TextLabel"); LogLabel.Size = UDim2.new(1, 0, 0, 20); LogLabel.Position = UDim2.new(0, 0, 0, 140); LogLabel.BackgroundTransparency = 1; LogLabel.Text = "Initializing..."; LogLabel.TextColor3 = C.accentLight; LogLabel.TextSize = 9; LogLabel.Font = Enum.Font.Code; LogLabel.ZIndex = 102; LogLabel.Parent = LogoBox
 local ProgressBg = Instance.new("Frame"); ProgressBg.Size = UDim2.new(0.8, 0, 0, 3); ProgressBg.Position = UDim2.new(0.1, 0, 0, 125); ProgressBg.BackgroundColor3 = Color3.fromRGB(24, 20, 38); ProgressBg.BorderSizePixel = 0; ProgressBg.ZIndex = 102; ProgressBg.Parent = LogoBox
 local ProgressFill = Instance.new("Frame"); ProgressFill.Size = UDim2.new(0, 0, 1, 0); ProgressFill.BackgroundColor3 = C.accent; ProgressFill.BorderSizePixel = 0; ProgressFill.ZIndex = 103; ProgressFill.Parent = ProgressBg
 
 local function LaunchUI()
-    local steps = { {0.15, "LINBERGZ CORE ENGINE ACTIVE..."}, {0.35, "INJECTING NEXUS PROT..."}, {0.55, "OPTIMIZING MOBILE JOYSTICK..."}, {0.75, "ESTABLISHING MM2 DATA FEED..."}, {0.90, "APPLYING PRE-THEMING..."}, {1.00, "READY // SUCCESSFUL START"} }
+    local steps = { {0.15, "LINBERGZ CORE ENGINE ACTIVE..."}, {0.35, "INJECTING NEXUS PROT..."}, {0.55, "OPTIMIZING MOBILE JOYSTICK..."}, {0.75, "ESTABLISHING MM2 DATA FEED..."}, {0.90, "APPLYING NEUMORPHIC TAB SYSTEM..."}, {1.00, "READY // SUCCESSFUL START"} }
     for _, step in ipairs(steps) do TweenService:Create(ProgressFill, TweenInfo.new(0.2), {Size = UDim2.new(step[1], 0, 1, 0)}):Play(); LogLabel.Text = step[2]; task.wait(0.25) end
     TweenService:Create(LS, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play()
     TweenService:Create(LogoBox, TweenInfo.new(0.3), {Size = UDim2.new(0,0,0,0), Position=UDim2.new(0.5,0,0.5,0)}):Play()
@@ -251,7 +253,7 @@ do
 end
 
 ---------------------------------------------------------
--- MAIN HUB FRAME (WITH RESIZABLE CONFIG)
+-- MAIN HUB FRAME
 ---------------------------------------------------------
 local HUB_W, HUB_H, SIDEBAR_W = 460, 290, 120
 local Hub = Instance.new("Frame")
@@ -264,7 +266,7 @@ local Watermark = Instance.new("TextLabel")
 Watermark.Size = UDim2.new(1, -SIDEBAR_W, 1, 0); Watermark.Position = UDim2.new(0, SIDEBAR_W, 0, 0); Watermark.BackgroundTransparency = 1; Watermark.Text = "lz"; Watermark.TextColor3 = C.bg; Watermark.TextSize = 120; Watermark.Font = Enum.Font.GothamBlack; Watermark.ZIndex = 9; Watermark.Parent = Hub
 
 local TopB = Instance.new("Frame"); TopB.Name = "TopBar"; TopB.Size = UDim2.new(1, -SIDEBAR_W, 0, 32); TopB.Position = UDim2.new(0, SIDEBAR_W, 0, 0); TopB.BackgroundColor3 = C.surface; TopB.BorderSizePixel = 0; TopB.ZIndex = 12; TopB.Parent = Hub; table.insert(themedSurface, TopB)
-local PT = Instance.new("TextLabel"); PT.Size = UDim2.new(1, -60, 1, 0); PT.Position = UDim2.new(0, 10, 0, 0); PT.BackgroundTransparency = 1; PT.Text = "Home"; PT.TextColor3 = C.text; PT.TextSize = 12; PT.Font = Enum.Font.GothamBold; PT.TextXAlignment = Enum.TextXAlignment.Left; PT.ZIndex = 13; PT.Parent = TopB; updateableLabels[PT] = "home"; table.insert(globalTextObjects, PT)
+local PT = Instance.new("TextLabel"); PT.Size = UDim2.new(1, -60, 1, 0); PT.Position = UDim2.new(0, 10, 0, 0); PT.BackgroundTransparency = 1; PT.Text = "🏠 Главная"; PT.TextColor3 = C.text; PT.TextSize = 12; PT.Font = Enum.Font.GothamBold; PT.TextXAlignment = Enum.TextXAlignment.Left; PT.ZIndex = 13; PT.Parent = TopB; updateableLabels[PT] = "home"; table.insert(globalTextObjects, PT)
 local ClB = Instance.new("TextButton"); ClB.Size = UDim2.new(0, 20, 0, 20); ClB.Position = UDim2.new(1, -26, 0.5, -10); ClB.BackgroundColor3 = C.redDark; ClB.Text = "x"; ClB.TextColor3 = C.red; ClB.TextSize = 11; ClB.Font = Enum.Font.GothamBold; ClB.ZIndex = 13; ClB.Parent = TopB; Instance.new("UICorner", ClB).CornerRadius = UDim.new(0, 4)
 
 do
@@ -281,16 +283,82 @@ local Sidebar = Instance.new("Frame"); Sidebar.Name = "Sidebar"; Sidebar.Size = 
 local SLogo = Instance.new("Frame"); SLogo.Size = UDim2.new(1, 0, 0, 36); SLogo.BackgroundTransparency = 1; SLogo.Parent = Sidebar
 local STi = Instance.new("TextLabel"); STi.Size = UDim2.new(1, 0, 1, 0); STi.BackgroundTransparency = 1; STi.Text = "linbergz"; STi.TextColor3 = C.white; STi.TextSize = 12; STi.Font = Enum.Font.GothamBlack; STi.Parent = SLogo; table.insert(globalTextObjects, STi)
 
-local TH = Instance.new("Frame"); TH.Size = UDim2.new(1, 0, 1, -36); TH.Position = UDim2.new(0, 0, 0, 36); TH.BackgroundTransparency = 1; TH.ZIndex = 13; TH.Parent = Sidebar
-local THL = Instance.new("UIListLayout"); THL.Parent = TH; THL.Padding = UDim.new(0, 2)
-local THP = Instance.new("UIPadding"); THP.PaddingLeft = UDim.new(0, 6); THP.PaddingRight = UDim.new(0, 6); THP.PaddingTop = UDim.new(0, 4); THP.Parent = TH
+-- ========================================================
+-- NEUMORPHIC TAB CONTAINER (inspired by uiverse.io component)
+-- ========================================================
+local TabContainer = Instance.new("Frame")
+TabContainer.Name = "TabContainer"
+TabContainer.Size = UDim2.new(1, -8, 1, -42)
+TabContainer.Position = UDim2.new(0, 4, 0, 38)
+TabContainer.BackgroundColor3 = C.neumoBg
+TabContainer.BackgroundTransparency = 0.4
+TabContainer.BorderSizePixel = 0
+TabContainer.ZIndex = 12
+TabContainer.Parent = Sidebar
+Instance.new("UICorner", TabContainer).CornerRadius = UDim.new(0, 12)
 
-local TabGlider = Instance.new("Frame"); TabGlider.Size = UDim2.new(1, 0, 0, 26); TabGlider.BackgroundColor3 = C.accent; TabGlider.BackgroundTransparency = 0.88; TabGlider.ZIndex = 12; TabGlider.Visible = true; TabGlider.Parent = TH; Instance.new("UICorner", TabGlider).CornerRadius = UDim.new(0, 5)
-local GliderLine = Instance.new("Frame"); GliderLine.Size = UDim2.new(0, 3, 1, 0); GliderLine.Position = UDim2.new(0, 0, 0, 0); GliderLine.BackgroundColor3 = C.accent; GliderLine.BorderSizePixel = 0; GliderLine.ZIndex = 13; GliderLine.Parent = TabGlider; Instance.new("UICorner", GliderLine).CornerRadius = UDim.new(1, 0)
+-- Neumorphic shadow stroke (outer)
+local TabShadow = Instance.new("UIStroke")
+TabShadow.Color = C.neumoShadow
+TabShadow.Thickness = 2
+TabShadow.Transparency = 0.6
+TabShadow.Parent = TabContainer
+
+-- Neumorphic highlight (inner top-left light)
+local TabHighlight = Instance.new("Frame")
+TabHighlight.Size = UDim2.new(1, 0, 0, 1)
+TabHighlight.Position = UDim2.new(0, 0, 0, 0)
+TabHighlight.BackgroundColor3 = C.neumoHighlight
+TabHighlight.BackgroundTransparency = 0.5
+TabHighlight.BorderSizePixel = 0
+TabHighlight.ZIndex = 13
+TabHighlight.Parent = TabContainer
+Instance.new("UICorner", TabHighlight).CornerRadius = UDim.new(0, 12)
+
+-- Inner padding container for tab buttons
+local TabInner = Instance.new("Frame")
+TabInner.Name = "TabInner"
+TabInner.Size = UDim2.new(1, -6, 1, -6)
+TabInner.Position = UDim2.new(0, 3, 0, 3)
+TabInner.BackgroundTransparency = 1
+TabInner.ZIndex = 14
+TabInner.Parent = TabContainer
+
+local THL = Instance.new("UIListLayout"); THL.Parent = TabInner; THL.Padding = UDim.new(0, 3)
+local THP = Instance.new("UIPadding"); THP.PaddingLeft = UDim.new(0, 3); THP.PaddingRight = UDim.new(0, 3); THP.PaddingTop = UDim.new(0, 3); THP.Parent = TabInner
+
+-- Tab glider (slides behind active tab — neumorphic pressed effect)
+local TabGlider = Instance.new("Frame")
+TabGlider.Name = "TabGlider"
+TabGlider.Size = UDim2.new(1, -6, 0, 28)
+TabGlider.BackgroundColor3 = C.neumoActive
+TabGlider.BackgroundTransparency = 0.15
+TabGlider.BorderSizePixel = 0
+TabGlider.ZIndex = 13
+TabGlider.Visible = true
+TabGlider.Parent = TabInner
+Instance.new("UICorner", TabGlider).CornerRadius = UDim.new(0, 10)
+
+-- Glider accent line (left side indicator)
+local GliderLine = Instance.new("Frame")
+GliderLine.Size = UDim2.new(0, 3, 0, 16)
+GliderLine.Position = UDim2.new(0, 2, 0.5, -8)
+GliderLine.BackgroundColor3 = C.accent
+GliderLine.BorderSizePixel = 0
+GliderLine.ZIndex = 14
+GliderLine.Parent = TabGlider
+Instance.new("UICorner", GliderLine).CornerRadius = UDim.new(1, 0)
 table.insert(themedAccent, TabGlider); table.insert(themedAccent, GliderLine)
 
+-- Glider inner shadow (pressed neumorphic look)
+local GliderShadow = Instance.new("UIStroke")
+GliderShadow.Color = C.neumoShadow
+GliderShadow.Thickness = 1
+GliderShadow.Transparency = 0.7
+GliderShadow.Parent = TabGlider
+
 ---------------------------------------------------------
--- TABS GENERATION
+-- TABS GENERATION (NEUMORPHIC PILLS)
 ---------------------------------------------------------
 local tabPages, tabBtns, currentTab = {}, {}, nil
 local CX, CY, CW, CH = SIDEBAR_W + 1, 32, HUB_W - SIDEBAR_W - 1, HUB_H - 32
@@ -306,7 +374,6 @@ local tabDefs = {
     {name = "Info", key = "info", icon = "📝", order = 8},
 }
 
--- Хендлер изменения размера меню
 local function ResizeMenu(newW, newH)
     HUB_W, HUB_H = newW, newH
     Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
@@ -327,28 +394,104 @@ for idx, def in ipairs(tabDefs) do
     local PP = Instance.new("UIPadding"); PP.PaddingTop = UDim.new(0, 4); PP.PaddingBottom = UDim.new(0, 8); PP.PaddingLeft = UDim.new(0, 6); PP.PaddingRight = UDim.new(0, 6); PP.Parent = Page
     tabPages[def.name] = {frame = Page, oc = 0}
     
+    -- ===== NEUMORPHIC PILL BUTTON =====
     local Tb = Instance.new("TextButton")
-    Tb.Size = UDim2.new(1, 0, 0, 26); Tb.BackgroundTransparency = 1; Tb.Text = def.icon .. " " .. def.name; Tb.TextColor3 = C.textDim; Tb.TextSize = 10; Tb.Font = Enum.Font.GothamBold; Tb.AutoButtonColor = false; Tb.ZIndex = 14; Tb.Parent = TH; Instance.new("UICorner", Tb).CornerRadius = UDim.new(0, 5)
+    Tb.Size = UDim2.new(1, -6, 0, 28)
+    Tb.BackgroundTransparency = 1  -- transparent by default, glider provides visual
+    Tb.Text = def.icon .. "  " .. def.name
+    Tb.TextColor3 = C.textDim
+    Tb.TextSize = 10
+    Tb.Font = Enum.Font.GothamBold
+    Tb.AutoButtonColor = false
+    Tb.ZIndex = 15
+    Tb.Parent = TabInner
+    Instance.new("UICorner", Tb).CornerRadius = UDim.new(0, 10)
     table.insert(globalTextObjects, Tb)
     
-    if def.name == "Nexus" then Tb.TextColor3 = C.gold end
-    tabBtns[def.name] = {btn = Tb, index = idx, icon = def.icon, label = def.name}
+    -- Border stroke (transparent by default — like border-transparent in HTML)
+    local TbStroke = Instance.new("UIStroke")
+    TbStroke.Color = C.accent
+    TbStroke.Thickness = 1.5
+    TbStroke.Transparency = 1  -- invisible by default
+    TbStroke.Parent = Tb
     
+    if def.name == "Nexus" then Tb.TextColor3 = C.gold end
+    tabBtns[def.name] = {btn = Tb, index = idx, icon = def.icon, label = def.name, stroke = TbStroke}
+    
+    -- Hover effect (like hover:border-2 hover:shadow-button-flat-pressed)
+    Tb.MouseEnter:Connect(function()
+        if currentTab == def.name then return end
+        TweenService:Create(Tb, TweenInfo.new(0.12), {BackgroundTransparency = 0.7}):Play()
+        TweenService:Create(TbStroke, TweenInfo.new(0.12), {Transparency = 0.5}):Play()
+        TweenService:Create(Tb, TweenInfo.new(0.12), {TextColor3 = (def.name == "Nexus") and C.gold or C.textSec}):Play()
+    end)
+    
+    Tb.MouseLeave:Connect(function()
+        if currentTab == def.name then return end
+        TweenService:Create(Tb, TweenInfo.new(0.12), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(TbStroke, TweenInfo.new(0.12), {Transparency = 1}):Play()
+        TweenService:Create(Tb, TweenInfo.new(0.12), {TextColor3 = (def.name == "Nexus") and C.gold or C.textDim}):Play()
+    end)
+    
+    -- Click handler with pressed animation (like active:shadow-button-flat-pressed)
     Tb.MouseButton1Click:Connect(function()
         if currentTab == def.name then return end
-        local origSize = UDim2.new(1, 0, 0, 26)
-        TweenService:Create(Tb, TweenInfo.new(0.06, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0.92, 0, 0, 24)}):Play()
-        task.delay(0.06, function() TweenService:Create(Tb, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = origSize}):Play() end)
         
-        if currentTab and tabPages[currentTab] then tabPages[currentTab].frame.Visible = false; tabBtns[currentTab].btn.TextColor3 = (currentTab == "Nexus") and C.gold or C.textDim end
-        currentTab = def.name; Page.Visible = true; PT.Text = def.icon .. " " .. (L[currentLang][def.key] or def.name); updateableLabels[PT] = def.key
+        -- Pressed animation (scale down briefly)
+        local origSize = UDim2.new(1, -6, 0, 28)
+        TweenService:Create(Tb, TweenInfo.new(0.05, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0.94, -6, 0, 26)}):Play()
+        task.delay(0.05, function()
+            TweenService:Create(Tb, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = origSize}):Play()
+        end)
+        
+        -- Deactivate previous tab
+        if currentTab and tabPages[currentTab] then
+            tabPages[currentTab].frame.Visible = false
+            local prevBtn = tabBtns[currentTab].btn
+            local prevStroke = tabBtns[currentTab].stroke
+            TweenService:Create(prevBtn, TweenInfo.new(0.15), {BackgroundTransparency = 1}):Play()
+            TweenService:Create(prevStroke, TweenInfo.new(0.15), {Transparency = 1}):Play()
+            prevBtn.TextColor3 = (currentTab == "Nexus") and C.gold or C.textDim
+        end
+        
+        -- Activate new tab
+        currentTab = def.name
+        Page.Visible = true
+        PT.Text = def.icon .. "  " .. (L[currentLang][def.key] or def.name)
+        updateableLabels[PT] = def.key
+        
+        -- Active pill styling (like focus:bg-button-curved-pressed-dark)
         Tb.TextColor3 = C.accentLight
+        TweenService:Create(Tb, TweenInfo.new(0.15), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(TbStroke, TweenInfo.new(0.15), {Transparency = 0}):Play()
+        TbStroke.Color = C.accent
         
-        local targetY = 4 + (idx - 1) * 28
+        -- Slide glider to this tab position
+        local targetY = 3 + (idx - 1) * 31  -- 28 height + 3 padding
         TweenService:Create(TabGlider, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, targetY)}):Play()
     end)
 end
 
+-- ========================================================
+-- IMMEDIATE HOME TAB ACTIVATION (no invisible/blank state)
+-- ========================================================
+local function ActivateHomeImmediately()
+    local homeDef = tabDefs[1]
+    currentTab = "Home"
+    tabPages["Home"].frame.Visible = true
+    tabBtns["Home"].btn.TextColor3 = C.accentLight
+    tabBtns["Home"].stroke.Transparency = 0
+    tabBtns["Home"].stroke.Color = C.accent
+    -- Position glider on first tab immediately (no tween)
+    TabGlider.Position = UDim2.new(0, 0, 0, 3)
+    PT.Text = "🏠  " .. L[currentLang]["home"]
+    updateableLabels[PT] = "home"
+end
+ActivateHomeImmediately()  -- Fire instantly, no defer
+
+---------------------------------------------------------
+-- HUB TOGGLE
+---------------------------------------------------------
 local hubOpen = false
 local function ToggleHub()
     hubOpen = not hubOpen
@@ -357,7 +500,6 @@ local function ToggleHub()
 end
 ToggleBtn.MouseButton1Click:Connect(ToggleHub)
 ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
-task.defer(function() tabBtns["Home"].btn.MouseButton1Click:Fire() end)
 
 ---------------------------------------------------------
 -- UI ELEMENT FACTORY
@@ -664,9 +806,8 @@ MkSoonButton("Nexus", "nexus_2")
 MkSoonButton("Nexus", "nexus_3")
 
 ---------------------------------------------------------
--- ============ NEW SETTINGS TAB (REWRITTEN) ============
+-- ============ SETTINGS TAB ============
 ---------------------------------------------------------
--- Создаем верхнюю навигацию по вкладкам настроек
 local SettingsContainer = GP("Settings").frame
 SettingsContainer.ScrollBarThickness = 0
 
@@ -682,7 +823,6 @@ SNavList.FillDirection = Enum.FillDirection.Horizontal
 SNavList.HorizontalAlignment = Enum.HorizontalAlignment.Center
 SNavList.Padding = UDim.new(0, 4)
 
--- Фреймы-контейнеры для трех разделов настроек
 local Section_UI = Instance.new("Frame")
 Section_UI.Size = UDim2.new(1, 0, 0, 200)
 Section_UI.AutomaticSize = Enum.AutomaticSize.Y
@@ -716,7 +856,6 @@ Section_Showcase.Parent = SettingsContainer
 local Showcase_List = Instance.new("UIListLayout")
 Showcase_List.Parent = Section_Showcase; Showcase_List.Padding = UDim.new(0, 4); Showcase_List.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Кнопки навигации по настройкам
 local navBtns = {}
 local function CreateNavBtn(key, sectionFrame)
     local btn = Instance.new("TextButton")
@@ -752,19 +891,15 @@ CreateNavBtn("tab_ui", Section_UI)
 CreateNavBtn("tab_theme", Section_Theme)
 CreateNavBtn("tab_showcase", Section_Showcase)
 
--- Активация первой вкладки "UI" по дефолту
 navBtns[1].BackgroundColor3 = C.accent
 navBtns[1].TextColor3 = C.white
 
----------------------------------
--- НАПОЛНЕНИЕ ВКЛАДКИ 1: UI
----------------------------------
+-- UI Section
 MkSep("Settings", "menu_size", Section_UI)
 MkSlider("Settings", "menu_size", 300, 700, 460, function(v)
     ResizeMenu(v, HUB_H)
 end, Section_UI)
 
--- Прозрачность
 MkSep("Settings", "menu_transparency", Section_UI)
 MkSlider("Settings", "menu_transparency", 0, 90, 0, function(v)
     menuTransparency = v / 100
@@ -773,7 +908,6 @@ MkSlider("Settings", "menu_transparency", 0, 90, 0, function(v)
     TopB.BackgroundTransparency = menuTransparency
 end, Section_UI)
 
--- Смена шрифтов
 MkSep("Settings", "change_font", Section_UI)
 local fontIndex = 1
 local availableFonts = {Enum.Font.GothamSemibold, Enum.Font.Code, Enum.Font.Arial, Enum.Font.SourceSans}
@@ -795,7 +929,6 @@ FontToggleBtn.MouseButton1Click:Connect(function()
     currentFont = availableFonts[fontIndex]
     FontToggleBtn.Text = "Font: " .. fontNames[fontIndex]
     
-    -- Обновляем шрифты на всех зарегистрированных объектах
     for _, textObj in ipairs(globalTextObjects) do
         if textObj.Parent then
             textObj.Font = currentFont
@@ -804,7 +937,6 @@ FontToggleBtn.MouseButton1Click:Connect(function()
     Notify("UI Engine", "Font changed to " .. fontNames[fontIndex], C.accent, 2)
 end)
 
--- Системные контроли
 MkSep("Settings", "system", Section_UI)
 
 local LangToggleBtn = Instance.new("TextButton"); LangToggleBtn.Size = UDim2.new(1,0,0,24); LangToggleBtn.BackgroundColor3 = C.elevated; LangToggleBtn.Text = "Русский / Russian"; LangToggleBtn.TextColor3 = C.white; LangToggleBtn.TextSize = 10; LangToggleBtn.Font = Enum.Font.GothamBold; LangToggleBtn.Parent = Section_UI; Instance.new("UICorner", LangToggleBtn).CornerRadius = UDim.new(0,5)
@@ -814,9 +946,7 @@ MkButton("Settings", "reset", C.elevated, function() local h = GetHum(); if h th
 MkButton("Settings", "copy", C.elevated, function() pcall(function() setclipboard("Roblox.GameLauncher.joinGameInstance(" .. game.PlaceId .. ", '" .. game.JobId .. "')") end) end, Section_UI)
 MkButton("Settings", "destroy", C.redDark, function() ClearESP(); ClearGunESP(); StopS(); for _, c in pairs(connections) do if typeof(c) == "RBXScriptConnection" then c:Disconnect() end end; ScreenGui:Destroy() end, Section_UI)
 
----------------------------------
--- НАПОЛНЕНИЕ ВКЛАДКИ 2: THEME
----------------------------------
+-- Theme Section
 MkSep("Settings", "theme", Section_Theme)
 local ThemeList = Instance.new("Frame"); ThemeList.Size = UDim2.new(1,0,0,32); ThemeList.BackgroundTransparency = 1; ThemeList.Parent = Section_Theme
 local TLList = Instance.new("UIListLayout"); TLList.Parent = ThemeList; TLList.FillDirection = Enum.FillDirection.Horizontal; TLList.Padding = UDim.new(0,4); TLList.HorizontalAlignment = Enum.HorizontalAlignment.Center
@@ -839,15 +969,13 @@ for _, tName in ipairs({"Purple", "Red", "Blue", "Green", "Dark"}) do
     end) 
 end
 
----------------------------------
--- НАПОЛНЕНИЕ ВКЛАДКИ 3: SHOWCASE (SOON)
----------------------------------
+-- Showcase Section
 MkSep("Settings", "soon", Section_Showcase)
 MkInfoBox("Settings", "Here you will be able to preview and save customized templates!\nFollow linbergz updates.", Section_Showcase)
 
--- О хабе (Остается внизу вкладки Settings вне секций)
+-- About
 MkSep("Settings", "about")
-MkInfoBox("Settings", "linbergz Hub v8.0 (Nexus)\nPlatform: Mobile Optimized\nCreator: linbergz Team")
+MkInfoBox("Settings", "linbergz Hub v8.01 (Nexus)\nPlatform: Mobile Optimized\nCreator: linbergz Team\nTab System: Neumorphic Pills")
 
 ---------------------------------------------------------
 -- ============ INFO TAB ============
@@ -855,13 +983,13 @@ MkInfoBox("Settings", "linbergz Hub v8.0 (Nexus)\nPlatform: Mobile Optimized\nCr
 MkSep("Info", "about")
 local InfoChange = MkInfoBox("Info", "Loading updates...")
 local function RefreshLog()
-    if currentLang == "RU" then InfoChange.Text = "Обновление v8.0 Nexus Mobile:\n\n- [NEW] Auto-Grab: Моментальный подбор оружия после смерти шерифа.\n- [NEW] Auto-Farm: Автоматический сбор монет на карте.\n- [NEW] Chat Announcer: Палит убийцу и шерифа в чат всем.\n- [NEW] Glitch Invisibility: Делает вас невидимым через баг R15.\n- [NEW] Настройки UI: Размер меню, Настройка прозрачности и Шрифты!\n- [NEW] Добавлены телепорты (Лобби, Карта).\n- [FIX] Флинг адаптирован под лимиты физики."
-    else InfoChange.Text = "Update v8.0 Nexus Mobile:\n\n- [NEW] Auto-Grab: Instantly grab sheriff's gun when dropped.\n- [NEW] Auto-Farm: Automatically collect coins around the map.\n- [NEW] Chat Announcer: Leaks murderer and sheriff in chat.\n- [NEW] Glitch Invisibility: Become invisible using R15 exploit.\n- [NEW] UI Settings: Added menu scaling, transparency control & fonts!\n- [NEW] Added teleports (Lobby, Map).\n- [FIX] Fling adapted to physics limits." end
+    if currentLang == "RU" then InfoChange.Text = "Обновление v8.01 Nexus Mobile:\n\n- [NEW] Neumorphic Tab System: Стильные pill-кнопки с тенями.\n- [FIX] Мгновенная загрузка вкладки Home (без пустого состояния).\n- [NEW] Auto-Grab: Моментальный подбор оружия после смерти шерифа.\n- [NEW] Auto-Farm: Автоматический сбор монет на карте.\n- [NEW] Chat Announcer: Палит убийцу и шерифа в чат всем.\n- [NEW] Glitch Invisibility: Делает вас невидимым через баг R15.\n- [NEW] Настройки UI: Размер меню, Настройка прозрачности и Шрифты!\n- [NEW] Добавлены телепорты (Лобби, Карта).\n- [FIX] Флинг адаптирован под лимиты физики."
+    else InfoChange.Text = "Update v8.01 Nexus Mobile:\n\n- [NEW] Neumorphic Tab System: Stylish pill buttons with shadow effects.\n- [FIX] Instant Home tab load (no blank state on startup).\n- [NEW] Auto-Grab: Instantly grab sheriff's gun when dropped.\n- [NEW] Auto-Farm: Automatically collect coins around the map.\n- [NEW] Chat Announcer: Leaks murderer and sheriff in chat.\n- [NEW] Glitch Invisibility: Become invisible using R15 exploit.\n- [NEW] UI Settings: Added menu scaling, transparency control & fonts!\n- [NEW] Added teleports (Lobby, Map).\n- [FIX] Fling adapted to physics limits." end
 end
 RefreshLog(); LangToggleBtn.MouseButton1Click:Connect(RefreshLog)
 
 ---------------------------------------------------------
--- INITIALIZATION PIPELINE
+-- INITIALIZATION
 ---------------------------------------------------------
 UpdateLanguage("RU")
-task.delay(1.5, function() Notify("linbergz Team", "Nexus Engine v8.0 Active!", C.gold, 3.5) end)
+task.delay(1.5, function() Notify("linbergz Team", "Nexus Engine v8.01 Active!", C.gold, 3.5) end)
