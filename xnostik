@@ -1,6 +1,6 @@
--- linbergz Team MM2 PREMIUM MOBILE HUB v8.01
--- Compact Menu - No Scroll, All Visible
--- Animated Star Loading
+-- Custom UI Template
+-- Left-side tab menu + animated loading screen + open/close toggle
+-- No gameplay functions included — pure interface shell for you to build on
 
 ---------------------------------------------------------
 -- SERVICES
@@ -18,14 +18,14 @@ end
 ---------------------------------------------------------
 -- CLEANUP PREVIOUS INSTANCES
 ---------------------------------------------------------
-local oldGui = player.PlayerGui:FindFirstChild("MM2HubMobile")
+local oldGui = player.PlayerGui:FindFirstChild("CustomUIMenu")
 if oldGui then oldGui:Destroy() end
 
 ---------------------------------------------------------
 -- SCREENGUI SETUP
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "MM2HubMobile"
+ScreenGui.Name = "CustomUIMenu"
 ScreenGui.Parent = player.PlayerGui
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -40,11 +40,6 @@ local C = {
     elevated = Color3.fromRGB(25, 21, 38),
     accent = Color3.fromRGB(140, 65, 245),
     accentLight = Color3.fromRGB(180, 115, 255),
-    green = Color3.fromRGB(45, 200, 95),
-    greenDark = Color3.fromRGB(15, 45, 25),
-    red = Color3.fromRGB(220, 50, 60),
-    redDark = Color3.fromRGB(45, 16, 20),
-    gold = Color3.fromRGB(255, 195, 45),
     white = Color3.fromRGB(255, 255, 255),
     text = Color3.fromRGB(240, 238, 248),
     textSec = Color3.fromRGB(160, 148, 185),
@@ -52,7 +47,7 @@ local C = {
 }
 
 ---------------------------------------------------------
--- ANIMATED STAR LOADING SCREEN
+-- ANIMATED LOADING SCREEN
 ---------------------------------------------------------
 local LoadingScreen = Instance.new("Frame")
 LoadingScreen.Size = UDim2.new(1, 0, 1, 0)
@@ -71,7 +66,7 @@ for i = 1, 100 do
     Star.ZIndex = 101
     Star.Parent = LoadingScreen
     Instance.new("UICorner", Star).CornerRadius = UDim.new(1, 0)
-    
+
     local speed = (0.001 * (50 / size)) / 100
     task.spawn(function()
         while LoadingScreen.Parent do
@@ -87,9 +82,9 @@ local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Size = UDim2.new(1, 0, 0, 60)
 TitleLabel.Position = UDim2.new(0, 0, 0.5, -80)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "linbergz"
+TitleLabel.Text = "Custom UI"
 TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleLabel.TextSize = 50
+TitleLabel.TextSize = 46
 TitleLabel.Font = Enum.Font.GothamBlack
 TitleLabel.ZIndex = 102
 TitleLabel.TextTransparency = 1
@@ -99,8 +94,8 @@ local SubtitleLabel = Instance.new("TextLabel")
 SubtitleLabel.Size = UDim2.new(1, 0, 0, 20)
 SubtitleLabel.Position = UDim2.new(0, 0, 0.5, -20)
 SubtitleLabel.BackgroundTransparency = 1
-SubtitleLabel.Text = "NEXUS UPDATE v8.01"
-SubtitleLabel.TextColor3 = Color3.fromRGB(56, 73, 90)
+SubtitleLabel.Text = "LOADING MENU"
+SubtitleLabel.TextColor3 = C.textSec
 SubtitleLabel.TextSize = 14
 SubtitleLabel.Font = Enum.Font.GothamBold
 SubtitleLabel.ZIndex = 102
@@ -124,48 +119,48 @@ ProgressFill.ZIndex = 103
 ProgressFill.Parent = ProgressBg
 
 local function LaunchUI()
-    TweenService:Create(TitleLabel, TweenInfo.new(1.2), {
+    TweenService:Create(TitleLabel, TweenInfo.new(1.0), {
         TextTransparency = 0,
         Position = UDim2.new(0, 0, 0.5, -100)
     }):Play()
-    
-    TweenService:Create(SubtitleLabel, TweenInfo.new(1.2), {
+
+    TweenService:Create(SubtitleLabel, TweenInfo.new(1.0), {
         TextTransparency = 0.3,
         Position = UDim2.new(0, 0, 0.5, -40)
     }):Play()
-    
-    TweenService:Create(ProgressBg, TweenInfo.new(0.5), {
+
+    TweenService:Create(ProgressBg, TweenInfo.new(0.4), {
         BackgroundTransparency = 0
     }):Play()
-    
-    local steps = {0.15, 0.35, 0.55, 0.75, 0.90, 1.00}
+
+    local steps = {0.2, 0.4, 0.6, 0.8, 1.0}
     for _, step in ipairs(steps) do
-        TweenService:Create(ProgressFill, TweenInfo.new(0.2), {
+        TweenService:Create(ProgressFill, TweenInfo.new(0.18), {
             Size = UDim2.new(step, 0, 1, 0)
         }):Play()
-        task.wait(0.25)
+        task.wait(0.2)
     end
-    
-    task.wait(0.3)
-    
-    TweenService:Create(LoadingScreen, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(TitleLabel, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
-    TweenService:Create(SubtitleLabel, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
-    TweenService:Create(ProgressBg, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
-    
-    task.wait(0.5)
+
+    task.wait(0.25)
+
+    TweenService:Create(LoadingScreen, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(TitleLabel, TweenInfo.new(0.25), {TextTransparency = 1}):Play()
+    TweenService:Create(SubtitleLabel, TweenInfo.new(0.25), {TextTransparency = 1}):Play()
+    TweenService:Create(ProgressBg, TweenInfo.new(0.25), {BackgroundTransparency = 1}):Play()
+
+    task.wait(0.4)
     LoadingScreen:Destroy()
 end
 task.spawn(LaunchUI)
 
 ---------------------------------------------------------
--- TOGGLE BUTTON
+-- FLOATING TOGGLE BUTTON (open/close the menu)
 ---------------------------------------------------------
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 42, 0, 42)
 ToggleBtn.Position = UDim2.new(0, 10, 0.3, 0)
 ToggleBtn.BackgroundColor3 = C.accent
-ToggleBtn.Text = "lz"
+ToggleBtn.Text = "UI"
 ToggleBtn.TextColor3 = C.white
 ToggleBtn.TextSize = 14
 ToggleBtn.Font = Enum.Font.GothamBold
@@ -202,38 +197,39 @@ do
 end
 
 ---------------------------------------------------------
--- COMPACT HUB - NO SCROLL, ALL VISIBLE
+-- MAIN WINDOW
 ---------------------------------------------------------
-local HUB_W, HUB_H = 280, 340
+local WIN_W, WIN_H = 420, 300
+local TAB_W = 110
 
-local Hub = Instance.new("Frame")
-Hub.Name = "Hub"
-Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
-Hub.Position = UDim2.new(0.5, -HUB_W/2, 0.5, -HUB_H/2)
-Hub.BackgroundColor3 = C.bg
-Hub.BorderSizePixel = 0
-Hub.Visible = false
-Hub.ZIndex = 10
-Hub.Parent = ScreenGui
-Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 8)
+local Main = Instance.new("Frame")
+Main.Name = "Main"
+Main.Size = UDim2.new(0, WIN_W, 0, WIN_H)
+Main.Position = UDim2.new(0.5, -WIN_W/2, 0.5, -WIN_H/2)
+Main.BackgroundColor3 = C.bg
+Main.BorderSizePixel = 0
+Main.Visible = false
+Main.ZIndex = 10
+Main.Parent = ScreenGui
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
 
-local HSk = Instance.new("UIStroke")
-HSk.Color = C.accent
-HSk.Thickness = 1.5
-HSk.Parent = Hub
+local MSk = Instance.new("UIStroke")
+MSk.Color = C.accent
+MSk.Thickness = 1.5
+MSk.Parent = Main
 
--- Title Bar
+-- Title Bar (draggable)
 local TitleBar = Instance.new("Frame")
-TitleBar.Size = UDim2.new(1, 0, 0, 28)
+TitleBar.Size = UDim2.new(1, 0, 0, 30)
 TitleBar.BackgroundColor3 = C.accent
 TitleBar.BorderSizePixel = 0
 TitleBar.ZIndex = 12
-TitleBar.Parent = Hub
+TitleBar.Parent = Main
 Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 8)
 
 local TitleCorner = Instance.new("Frame")
 TitleCorner.Size = UDim2.new(1, 0, 0, 8)
-TitleCorner.Position = UDim2.new(0, 0, 0, 20)
+TitleCorner.Position = UDim2.new(0, 0, 0, 22)
 TitleCorner.BackgroundColor3 = C.accent
 TitleCorner.BorderSizePixel = 0
 TitleCorner.ZIndex = 12
@@ -243,7 +239,7 @@ local TitleText = Instance.new("TextLabel")
 TitleText.Size = UDim2.new(1, -50, 1, 0)
 TitleText.Position = UDim2.new(0, 12, 0, 0)
 TitleText.BackgroundTransparency = 1
-TitleText.Text = "linbergz Hub"
+TitleText.Text = "Custom UI"
 TitleText.TextColor3 = C.white
 TitleText.TextSize = 12
 TitleText.Font = Enum.Font.GothamBlack
@@ -253,7 +249,7 @@ TitleText.Parent = TitleBar
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 20, 0, 20)
-CloseBtn.Position = UDim2.new(1, -24, 0, 4)
+CloseBtn.Position = UDim2.new(1, -26, 0, 5)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.BackgroundTransparency = 0.8
 CloseBtn.Text = "x"
@@ -270,13 +266,13 @@ do
         if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
             drag = true
             dStart = i.Position
-            sPos = Hub.Position
+            sPos = Main.Position
         end
     end)
     UserInputService.InputChanged:Connect(function(i)
         if drag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
             local d = i.Position - dStart
-            Hub.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y)
+            Main.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y)
         end
     end)
     TitleBar.InputEnded:Connect(function(i)
@@ -286,169 +282,157 @@ do
     end)
 end
 
--- Content Area - Compact Layout
-local contentY = 32
-local btnH = 24
-local gap = 3
+---------------------------------------------------------
+-- LEFT TAB SIDEBAR
+---------------------------------------------------------
+local TabBar = Instance.new("Frame")
+TabBar.Size = UDim2.new(0, TAB_W, 1, -30)
+TabBar.Position = UDim2.new(0, 0, 0, 30)
+TabBar.BackgroundColor3 = C.surface
+TabBar.BorderSizePixel = 0
+TabBar.ZIndex = 11
+TabBar.Parent = Main
 
-local function MakeLabel(text, y, color)
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -16, 0, 14)
-    lbl.Position = UDim2.new(0, 8, 0, y)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = text
-    lbl.TextColor3 = color or C.accentLight
-    lbl.TextSize = 8
-    lbl.Font = Enum.Font.GothamBold
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.ZIndex = 11
-    lbl.Parent = Hub
-    return lbl
+local TabList = Instance.new("UIListLayout")
+TabList.Padding = UDim.new(0, 2)
+TabList.SortOrder = Enum.SortOrder.LayoutOrder
+TabList.Parent = TabBar
+
+-- Content area (right of tabs)
+local ContentArea = Instance.new("Frame")
+ContentArea.Size = UDim2.new(1, -TAB_W, 1, -30)
+ContentArea.Position = UDim2.new(0, TAB_W, 0, 30)
+ContentArea.BackgroundColor3 = C.bg
+ContentArea.BorderSizePixel = 0
+ContentArea.ZIndex = 11
+ContentArea.Parent = Main
+
+---------------------------------------------------------
+-- TAB SYSTEM
+---------------------------------------------------------
+local tabs = {}       -- name -> { button = ..., page = ... }
+local tabOrder = {}
+local activeTab = nil
+
+local function SelectTab(name)
+    if activeTab == name then return end
+    activeTab = name
+    for tabName, data in pairs(tabs) do
+        local isActive = tabName == name
+        data.page.Visible = isActive
+        TweenService:Create(data.button, TweenInfo.new(0.15), {
+            BackgroundColor3 = isActive and C.accent or C.surface
+        }):Play()
+        data.label.TextColor3 = isActive and C.white or C.textSec
+    end
 end
 
-local function MakeToggle(text, y)
+local function AddTab(name)
+    local order = #tabOrder + 1
+    tabOrder[order] = name
+
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -16, 0, btnH)
-    btn.Position = UDim2.new(0, 8, 0, y)
-    btn.BackgroundColor3 = C.elevated
+    btn.Size = UDim2.new(1, 0, 0, 34)
+    btn.BackgroundColor3 = C.surface
     btn.Text = ""
     btn.AutoButtonColor = false
-    btn.ZIndex = 11
-    btn.Parent = Hub
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-    
+    btn.LayoutOrder = order
+    btn.ZIndex = 12
+    btn.Parent = TabBar
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -12, 1, 0)
+    label.Position = UDim2.new(0, 12, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = C.textSec
+    label.TextSize = 10
+    label.Font = Enum.Font.GothamSemibold
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 13
+    label.Parent = btn
+
+    local page = Instance.new("ScrollingFrame")
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.BackgroundTransparency = 1
+    page.BorderSizePixel = 0
+    page.ScrollBarThickness = 3
+    page.ScrollBarImageColor3 = C.accent
+    page.CanvasSize = UDim2.new(0, 0, 0, 0)
+    page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    page.Visible = false
+    page.ZIndex = 11
+    page.Parent = ContentArea
+
+    local pad = Instance.new("UIPadding")
+    pad.PaddingTop = UDim.new(0, 10)
+    pad.PaddingLeft = UDim.new(0, 12)
+    pad.PaddingRight = UDim.new(0, 12)
+    pad.Parent = page
+
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 6)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Parent = page
+
+    btn.MouseButton1Click:Connect(function()
+        SelectTab(name)
+    end)
+
+    tabs[name] = { button = btn, label = label, page = page }
+    return page -- return the page so you can parent your own controls into it
+end
+
+-- Example tabs — rename/add as many as you like.
+-- Each AddTab(...) call returns a page (ScrollingFrame) you can build content into.
+local page1 = AddTab("Home")
+local page2 = AddTab("Settings")
+local page3 = AddTab("About")
+
+-- Example placeholder content (safe to delete/replace)
+local function MakePlaceholder(parent, text)
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -36, 1, 0)
-    lbl.Position = UDim2.new(0, 8, 0, 0)
+    lbl.Size = UDim2.new(1, 0, 0, 20)
     lbl.BackgroundTransparency = 1
     lbl.Text = text
     lbl.TextColor3 = C.text
-    lbl.TextSize = 9
-    lbl.Font = Enum.Font.GothamSemibold
+    lbl.TextSize = 11
+    lbl.Font = Enum.Font.Gotham
     lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Parent = btn
-    
-    local tg = Instance.new("Frame")
-    tg.Size = UDim2.new(0, 22, 0, 11)
-    tg.Position = UDim2.new(1, -28, 0.5, -5)
-    tg.BackgroundColor3 = C.textDim
-    tg.BorderSizePixel = 0
-    tg.Parent = btn
-    Instance.new("UICorner", tg).CornerRadius = UDim.new(1, 0)
-    
-    local tc = Instance.new("Frame")
-    tc.Size = UDim2.new(0, 9, 0, 9)
-    tc.Position = UDim2.new(0, 1, 0.5, -4)
-    tc.BackgroundColor3 = C.white
-    tc.BorderSizePixel = 0
-    tc.Parent = tg
-    Instance.new("UICorner", tc).CornerRadius = UDim.new(1, 0)
-    
-    btn.MouseEnter:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(35, 30, 55)}):Play()
-    end)
-    btn.MouseLeave:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = C.elevated}):Play()
-    end)
+    lbl.Parent = parent
 end
 
-local function MakeButton(text, y, color)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -16, 0, btnH)
-    btn.Position = UDim2.new(0, 8, 0, y)
-    btn.BackgroundColor3 = color or C.elevated
-    btn.Text = text
-    btn.TextColor3 = C.text
-    btn.TextSize = 9
-    btn.Font = Enum.Font.GothamBold
-    btn.AutoButtonColor = false
-    btn.ZIndex = 11
-    btn.Parent = Hub
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-    
-    btn.MouseEnter:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = C.accent}):Play()
-        btn.TextColor3 = C.white
-    end)
-    btn.MouseLeave:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = color or C.elevated}):Play()
-        btn.TextColor3 = C.text
-    end)
-end
+MakePlaceholder(page1, "Welcome — this is the Home tab.")
+MakePlaceholder(page2, "Settings content goes here.")
+MakePlaceholder(page3, "Made with the Custom UI template.")
+
+SelectTab("Home")
 
 ---------------------------------------------------------
--- ALL ELEMENTS ON ONE SCREEN
+-- OPEN / CLOSE MENU
 ---------------------------------------------------------
-local y = contentY
-
-MakeLabel("MOVEMENT", y)
-y = y + 16
-MakeToggle("Speed Hack", y)
-y = y + btnH + gap
-MakeToggle("Jump Hack", y)
-y = y + btnH + gap
-MakeToggle("Infinite Jump", y)
-y = y + btnH + gap + 4
-
-MakeLabel("PROTECTION", y)
-y = y + 16
-MakeToggle("Anti-Fling", y)
-y = y + btnH + gap
-MakeToggle("Noclip", y)
-y = y + btnH + gap
-MakeToggle("Fly", y)
-y = y + btnH + gap
-MakeToggle("Fullbright", y)
-y = y + btnH + gap + 4
-
-MakeLabel("MM2 AUTOMATION", y)
-y = y + 16
-MakeToggle("Auto Farm Coins", y)
-y = y + btnH + gap
-MakeButton("TP to Lobby", y)
-y = y + btnH + gap
-MakeButton("TP to Map", y)
-y = y + btnH + gap + 4
-
-MakeLabel("TELEPORTS", y)
-y = y + 16
-MakeButton("TP to Murderer", y)
-y = y + btnH + gap
-MakeButton("TP to Sheriff", y)
-y = y + btnH + gap + 4
-
-MakeLabel("SYSTEM", y)
-y = y + 16
-MakeButton("Reset", y, C.redDark)
-y = y + btnH + gap
-MakeButton("Copy Server Link", y)
-y = y + btnH + gap
-MakeButton("Destroy Hub", y, C.redDark)
-
----------------------------------------------------------
--- HUB TOGGLE
----------------------------------------------------------
-local hubOpen = false
-local function ToggleHub()
-    hubOpen = not hubOpen
-    if hubOpen then
-        Hub.Visible = true
-        Hub.Size = UDim2.new(0, HUB_W, 0, 0)
-        TweenService:Create(Hub, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0, HUB_W, 0, HUB_H)
+local menuOpen = false
+local function ToggleMenu()
+    menuOpen = not menuOpen
+    if menuOpen then
+        Main.Visible = true
+        Main.Size = UDim2.new(0, WIN_W, 0, 0)
+        TweenService:Create(Main, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, WIN_W, 0, WIN_H)
         }):Play()
     else
-        local tw = TweenService:Create(Hub, TweenInfo.new(0.15), {
-            Size = UDim2.new(0, HUB_W, 0, 0)
-        }):Play()
+        local tw = TweenService:Create(Main, TweenInfo.new(0.15), {
+            Size = UDim2.new(0, WIN_W, 0, 0)
+        })
+        tw:Play()
         tw.Completed:Connect(function()
-            Hub.Visible = false
-            Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
+            Main.Visible = false
+            Main.Size = UDim2.new(0, WIN_W, 0, WIN_H)
         end)
     end
 end
 
-ToggleBtn.MouseButton1Click:Connect(ToggleHub)
+ToggleBtn.MouseButton1Click:Connect(ToggleMenu)
 CloseBtn.MouseButton1Click:Connect(function()
-    if hubOpen then ToggleHub() end
+    if menuOpen then ToggleMenu() end
 end)
