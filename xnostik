@@ -23,7 +23,10 @@ local LP = LocalPlayer
 -- DEVICE DETECTION
 -- ════════════════════════════════════════════════════════════════
 local autoIsMobile = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
-local selectedDevice = autoIsMobile and "Mobile" or "PC"
+local detectedDevice = autoIsMobile and "Mobile" or "PC"
+-- No choice is preselected: the detected device is applied only when the player continues.
+local selectedDevice = nil
+local isMobile = autoIsMobile -- becomes the player-selected layout mode in the loader
 
 -- ════════════════════════════════════════════════════════════════
 -- LANGUAGE SYSTEM
@@ -3595,7 +3598,7 @@ LoaderGui.Parent = game:GetService("CoreGui")
 -- Main container
 local MainContainer = Instance.new("Frame")
 MainContainer.Name = "MainContainer"
-MainContainer.Size = UDim2.new(0, 500, 0, 420)
+MainContainer.Size = isMobile and UDim2.new(0.92, 0, 0, 350) or UDim2.new(0, 500, 0, 420)
 MainContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
 MainContainer.AnchorPoint = Vector2.new(0.5, 0.5)
 MainContainer.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
@@ -3624,25 +3627,25 @@ TopCorner.CornerRadius = UDim.new(0, 12)
 TopCorner.Parent = TopBar
 
 local TopTitle = Instance.new("TextLabel")
-TopTitle.Size = UDim2.new(0.6, 0, 1, 0)
-TopTitle.Position = UDim2.new(0.04, 0, 0, 0)
+TopTitle.Size = UDim2.new(1, -128, 0, 25)
+TopTitle.Position = UDim2.new(0, 16, 0, 3)
 TopTitle.BackgroundTransparency = 1
-TopTitle.Text = "Toy Rotation Hub v4"
+TopTitle.Text = T("loaderTitle")
 TopTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-TopTitle.Font = Enum.Font.GothamBold
-TopTitle.TextSize = 17
+TopTitle.Font = Enum.Font.GothamBlack
+TopTitle.TextSize = 18
 TopTitle.TextXAlignment = Enum.TextXAlignment.Left
 TopTitle.Parent = TopBar
 
 local TopVersion = Instance.new("TextLabel")
-TopVersion.Size = UDim2.new(0.3, 0, 1, 0)
-TopVersion.Position = UDim2.new(0.65, 0, 0, 0)
+TopVersion.Size = UDim2.new(1, -128, 0, 13)
+TopVersion.Position = UDim2.new(0, 16, 0, 27)
 TopVersion.BackgroundTransparency = 1
-TopVersion.Text = "Ultimate Edition"
-TopVersion.TextColor3 = Color3.fromRGB(120, 120, 170)
-TopVersion.Font = Enum.Font.Gotham
-TopVersion.TextSize = 12
-TopVersion.TextXAlignment = Enum.TextXAlignment.Right
+TopVersion.Text = T("loaderSubtitle")
+TopVersion.TextColor3 = Color3.fromRGB(145, 172, 255)
+TopVersion.Font = Enum.Font.GothamMedium
+TopVersion.TextSize = 10
+TopVersion.TextXAlignment = Enum.TextXAlignment.Left
 TopVersion.Parent = TopBar
 
 local CloseBtn = Instance.new("TextButton")
@@ -3709,9 +3712,9 @@ P1Desc.Parent = Phase1Frame
 
 local P1AutoLabel = Instance.new("TextLabel")
 P1AutoLabel.Size = UDim2.new(0.9, 0, 0, 18)
-P1AutoLabel.Position = UDim2.new(0.05, 0, 0, 75)
+P1AutoLabel.Position = UDim2.new(0.05, 0, 0, 72)
 P1AutoLabel.BackgroundTransparency = 1
-P1AutoLabel.Text = "Auto-Detected: " .. selectedDevice
+P1AutoLabel.Text = "Auto-detected: " .. detectedDevice .. " — used if you do not choose"
 P1AutoLabel.TextColor3 = Color3.fromRGB(100, 200, 100)
 P1AutoLabel.Font = Enum.Font.GothamMedium
 P1AutoLabel.TextSize = 12
@@ -3725,8 +3728,8 @@ local deviceOptions = {
 
 for i, opt in ipairs(deviceOptions) do
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.85, 0, 0, 70)
-    btn.Position = UDim2.new(0.075, 0, 0, 105 + (i-1) * 85)
+    btn.Size = UDim2.new(0.85, 0, 0, isMobile and 52 or 70)
+    btn.Position = UDim2.new(0.075, 0, 0, isMobile and (88 + (i-1) * 58) or (105 + (i-1) * 85))
     btn.BackgroundColor3 = opt.color
     btn.BorderSizePixel = 0
     btn.Text = ""
@@ -3745,16 +3748,16 @@ for i, opt in ipairs(deviceOptions) do
     btnLabel.Size = UDim2.new(1, -20, 0, 30)
     btnLabel.Position = UDim2.new(0, 10, 0, 10)
     btnLabel.BackgroundTransparency = 1
-    btnLabel.Text = opt.label
+    btnLabel.Text = opt.label .. ((opt.name == selectedDevice) and "  ✓" or "")
     btnLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     btnLabel.Font = Enum.Font.GothamBold
-    btnLabel.TextSize = 18
+    btnLabel.TextSize = isMobile and 15 or 18
     btnLabel.TextXAlignment = Enum.TextXAlignment.Left
     btnLabel.Parent = btn
     
     local btnDesc = Instance.new("TextLabel")
     btnDesc.Size = UDim2.new(1, -20, 0, 20)
-    btnDesc.Position = UDim2.new(0, 10, 0, 40)
+    btnDesc.Position = UDim2.new(0, 10, 0, isMobile and 30 or 40)
     btnDesc.BackgroundTransparency = 1
     btnDesc.Text = opt.desc
     btnDesc.TextColor3 = Color3.fromRGB(220, 220, 240)
@@ -3763,31 +3766,35 @@ for i, opt in ipairs(deviceOptions) do
     btnDesc.TextXAlignment = Enum.TextXAlignment.Left
     btnDesc.Parent = btn
     
-    btn.MouseButton1Click:Connect(function()
+    btn.Activated:Connect(function()
         selectedDevice = opt.name
+        isMobile = (selectedDevice == "Mobile")
         for _, b in ipairs(deviceButtons) do
             b.Stroke.Thickness = 0
+            b.Label.Text = b.BaseLabel
         end
         stroke.Thickness = 3
+        btnLabel.Text = opt.label .. "  ✓"
+        P1AutoLabel.Text = "Selected: " .. opt.name .. "  ✓"
     end)
     
     btn.MouseEnter:Connect(function()
         TweenService:Create(btn, TweenInfo.new(0.15), {
-            Size = UDim2.new(0.88, 0, 0, 72)
+            Size = UDim2.new(0.88, 0, 0, isMobile and 54 or 72)
         }):Play()
     end)
     btn.MouseLeave:Connect(function()
         TweenService:Create(btn, TweenInfo.new(0.15), {
-            Size = UDim2.new(0.85, 0, 0, 70)
+            Size = UDim2.new(0.85, 0, 0, isMobile and 52 or 70)
         }):Play()
     end)
     
-    deviceButtons[#deviceButtons + 1] = {Button = btn, Stroke = stroke}
+    deviceButtons[#deviceButtons + 1] = {Button = btn, Stroke = stroke, Label = btnLabel, BaseLabel = opt.label}
 end
 
 local P1NextBtn = Instance.new("TextButton")
 P1NextBtn.Size = UDim2.new(0.85, 0, 0, 45)
-P1NextBtn.Position = UDim2.new(0.075, 0, 0, 290)
+P1NextBtn.Position = UDim2.new(0.075, 0, 0, isMobile and 210 or 290)
 P1NextBtn.BackgroundColor3 = Color3.fromRGB(60, 140, 220)
 P1NextBtn.BorderSizePixel = 0
 P1NextBtn.Text = "Next →"
@@ -3838,8 +3845,8 @@ local selectedLang = "EN"
 
 for i, opt in ipairs(langOptions) do
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.85, 0, 0, 55)
-    btn.Position = UDim2.new(0.075, 0, 0, 80 + (i-1) * 65)
+    btn.Size = UDim2.new(0.85, 0, 0, isMobile and 42 or 55)
+    btn.Position = UDim2.new(0.075, 0, 0, isMobile and (65 + (i-1) * 48) or (80 + (i-1) * 65))
     btn.BackgroundColor3 = opt.color
     btn.BorderSizePixel = 0
     btn.Text = ""
@@ -3856,51 +3863,54 @@ for i, opt in ipairs(langOptions) do
     
     local btnLabel = Instance.new("TextLabel")
     btnLabel.Size = UDim2.new(1, -20, 0, 28)
-    btnLabel.Position = UDim2.new(0, 10, 0, 5)
+    btnLabel.Position = UDim2.new(0, 10, 0, isMobile and 1 or 5)
     btnLabel.BackgroundTransparency = 1
-    btnLabel.Text = opt.label
+    btnLabel.Text = opt.label .. ((opt.code == selectedLang) and "  ✓" or "")
     btnLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     btnLabel.Font = Enum.Font.GothamBold
-    btnLabel.TextSize = 17
+    btnLabel.TextSize = isMobile and 14 or 17
     btnLabel.TextXAlignment = Enum.TextXAlignment.Left
     btnLabel.Parent = btn
     
     local btnDesc = Instance.new("TextLabel")
     btnDesc.Size = UDim2.new(1, -20, 0, 18)
-    btnDesc.Position = UDim2.new(0, 10, 0, 33)
+    btnDesc.Position = UDim2.new(0, 10, 0, isMobile and 23 or 33)
     btnDesc.BackgroundTransparency = 1
     btnDesc.Text = opt.desc
     btnDesc.TextColor3 = Color3.fromRGB(220, 220, 240)
     btnDesc.Font = Enum.Font.Gotham
     btnDesc.TextSize = 11
     btnDesc.TextXAlignment = Enum.TextXAlignment.Left
+    btnDesc.Visible = not isMobile
     btnDesc.Parent = btn
     
-    btn.MouseButton1Click:Connect(function()
+    btn.Activated:Connect(function()
         selectedLang = opt.code
         for _, b in ipairs(langButtons) do
             b.Stroke.Thickness = 0
+            b.Label.Text = b.BaseLabel
         end
         stroke.Thickness = 3
+        btnLabel.Text = opt.label .. "  ✓"
     end)
     
     btn.MouseEnter:Connect(function()
         TweenService:Create(btn, TweenInfo.new(0.15), {
-            Size = UDim2.new(0.88, 0, 0, 57)
+            Size = UDim2.new(0.88, 0, 0, isMobile and 44 or 57)
         }):Play()
     end)
     btn.MouseLeave:Connect(function()
         TweenService:Create(btn, TweenInfo.new(0.15), {
-            Size = UDim2.new(0.85, 0, 0, 55)
+            Size = UDim2.new(0.85, 0, 0, isMobile and 42 or 55)
         }):Play()
     end)
     
-    langButtons[#langButtons + 1] = {Button = btn, Stroke = stroke}
+    langButtons[#langButtons + 1] = {Button = btn, Stroke = stroke, Label = btnLabel, BaseLabel = opt.label}
 end
 
 local P2BackBtn = Instance.new("TextButton")
 P2BackBtn.Size = UDim2.new(0.4, 0, 0, 40)
-P2BackBtn.Position = UDim2.new(0.075, 0, 0, 290)
+P2BackBtn.Position = UDim2.new(0.075, 0, 0, isMobile and 210 or 290)
 P2BackBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
 P2BackBtn.BorderSizePixel = 0
 P2BackBtn.Text = "← Back"
@@ -3915,7 +3925,7 @@ P2BackCorner.Parent = P2BackBtn
 
 local P2TutorialBtn = Instance.new("TextButton")
 P2TutorialBtn.Size = UDim2.new(0.4, 0, 0, 40)
-P2TutorialBtn.Position = UDim2.new(0.525, 0, 0, 290)
+P2TutorialBtn.Position = UDim2.new(0.525, 0, 0, isMobile and 210 or 290)
 P2TutorialBtn.BackgroundColor3 = Color3.fromRGB(100, 80, 140)
 P2TutorialBtn.BorderSizePixel = 0
 P2TutorialBtn.Text = "📖 Show Tutorial"
@@ -3930,7 +3940,7 @@ P2TutorialCorner.Parent = P2TutorialBtn
 
 local P2LoadBtn = Instance.new("TextButton")
 P2LoadBtn.Size = UDim2.new(0.85, 0, 0, 45)
-P2LoadBtn.Position = UDim2.new(0.075, 0, 0, 340)
+P2LoadBtn.Position = UDim2.new(0.075, 0, 0, isMobile and 256 or 340)
 P2LoadBtn.BackgroundColor3 = Color3.fromRGB(50, 160, 80)
 P2LoadBtn.BorderSizePixel = 0
 P2LoadBtn.Text = "LOAD SCRIPT"
@@ -4108,14 +4118,14 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 -- ═══ BUTTON HANDLERS ═══
-CloseBtn.MouseButton1Click:Connect(function()
+CloseBtn.Activated:Connect(function()
     LoaderGui:Destroy()
 end)
 
 local isMinimized = false
 local originalSize = MainContainer.Size
 
-HideBtn.MouseButton1Click:Connect(function()
+HideBtn.Activated:Connect(function()
     if not isMinimized then
         isMinimized = true
         ContentArea.Visible = false
@@ -4133,7 +4143,12 @@ HideBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-P1NextBtn.MouseButton1Click:Connect(function()
+P1NextBtn.Activated:Connect(function()
+    if not selectedDevice then
+        selectedDevice = detectedDevice
+        isMobile = (selectedDevice == "Mobile")
+        P1AutoLabel.Text = "Auto-selected: " .. selectedDevice .. "  ✓"
+    end
     TweenService:Create(Phase1Frame, TweenInfo.new(0.2), {
         Position = UDim2.new(-1, 0, 0, 0)
     }):Play()
@@ -4146,7 +4161,7 @@ P1NextBtn.MouseButton1Click:Connect(function()
     Phase1Frame.Visible = false
 end)
 
-P2BackBtn.MouseButton1Click:Connect(function()
+P2BackBtn.Activated:Connect(function()
     TweenService:Create(Phase2Frame, TweenInfo.new(0.2), {
         Position = UDim2.new(1, 0, 0, 0)
     }):Play()
@@ -4160,7 +4175,7 @@ P2BackBtn.MouseButton1Click:Connect(function()
 end)
 
 local tutorialVisible = false
-P2TutorialBtn.MouseButton1Click:Connect(function()
+P2TutorialBtn.Activated:Connect(function()
     if not tutorialVisible then
         tutorialVisible = true
         CurrentLang = selectedLang
@@ -4179,14 +4194,14 @@ P2TutorialBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-TutorialCloseBtn.MouseButton1Click:Connect(function()
+TutorialCloseBtn.Activated:Connect(function()
     tutorialVisible = false
     TutorialFrame.Visible = false
     Phase2Frame.Visible = true
     P2TutorialBtn.Text = "📖 Show Tutorial"
 end)
 
-TutorialCopyBtn.MouseButton1Click:Connect(function()
+TutorialCopyBtn.Activated:Connect(function()
     if setclipboard then
         setclipboard(TutorialLabel.Text)
         TutorialCopyBtn.Text = "✅ Copied!"
@@ -4215,8 +4230,141 @@ P2LoadBtn.MouseButton1Click:Connect(function()
         -- ✅ FIX: Wait one frame for GUI cleanup
         task.wait()
         
-        -- ✅ NOW load OrionLib
-        local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/jadpy/suki/refs/heads/main/orion"))()
+        -- Standalone menu: no external UI library is loaded.
+        local OrionLib = {}
+        do
+            local MenuGui = Instance.new("ScreenGui")
+            MenuGui.Name = "ToyRotationHubMenu"
+            MenuGui.ResetOnSpawn = false
+            MenuGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+            MenuGui.Parent = game:GetService("CoreGui")
+
+            local mobile = selectedDevice == "Mobile"
+            local function round(object, radius)
+                local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, radius or 8); c.Parent = object
+            end
+            local function newLabel(parent, text, size, color, font)
+                local label = Instance.new("TextLabel")
+                label.BackgroundTransparency = 1; label.Size = size; label.Text = text or ""
+                label.TextColor3 = color or Color3.fromRGB(235, 238, 250)
+                label.Font = font or Enum.Font.Gotham; label.TextSize = mobile and 12 or 13
+                label.TextXAlignment = Enum.TextXAlignment.Left; label.TextWrapped = true; label.Parent = parent
+                return label
+            end
+            local function styleButton(button, color)
+                button.BackgroundColor3 = color or Color3.fromRGB(47, 53, 78)
+                button.BorderSizePixel = 0; button.AutoButtonColor = true
+                button.TextColor3 = Color3.fromRGB(245, 247, 255); button.Font = Enum.Font.GothamMedium
+                button.TextSize = mobile and 12 or 13; round(button, 7)
+            end
+            local function addDrag(handle, frame)
+                local dragging, dragInput, start, original = false, nil, nil, nil
+                handle.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        dragging = true; start = input.Position; original = frame.Position
+                        input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
+                    end
+                end)
+                handle.InputChanged:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+                end)
+                UserInputService.InputChanged:Connect(function(input)
+                    if dragging and input == dragInput then
+                        local delta = input.Position - start
+                        frame.Position = UDim2.new(original.X.Scale, original.X.Offset + delta.X, original.Y.Scale, original.Y.Offset + delta.Y)
+                    end
+                end)
+            end
+            function OrionLib:MakeNotification(data)
+                local note = Instance.new("TextLabel")
+                note.AnchorPoint = Vector2.new(0.5, 0); note.Position = UDim2.new(0.5, 0, 0, 18)
+                note.Size = UDim2.new(0, mobile and 300 or 360, 0, 52)
+                note.BackgroundColor3 = Color3.fromRGB(30, 35, 55); note.BorderSizePixel = 0
+                note.Text = (data.Name or "Notice") .. (data.Content and ("\n" .. data.Content) or "")
+                note.TextColor3 = Color3.fromRGB(245, 247, 255); note.Font = Enum.Font.GothamMedium; note.TextSize = 13; note.TextWrapped = true
+                note.ZIndex = 20; note.Parent = MenuGui; round(note, 9)
+                local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(100, 150, 255); s.Transparency = .35; s.Parent = note
+                task.delay(data.Time or 3, function() if note.Parent then note:Destroy() end end)
+            end
+            function OrionLib:MakeWindow(data)
+                local frame = Instance.new("Frame")
+                frame.Name = "Window"; frame.AnchorPoint = Vector2.new(.5, .5); frame.Position = UDim2.new(.5, 0, .5, 0)
+                frame.Size = mobile and UDim2.new(.94, 0, .86, 0) or UDim2.new(0, 760, 0, 500)
+                frame.BackgroundColor3 = Color3.fromRGB(17, 20, 32); frame.BorderSizePixel = 0; frame.Parent = MenuGui; round(frame, 12)
+                local fs = Instance.new("UIStroke"); fs.Color = Color3.fromRGB(86, 105, 160); fs.Transparency = .35; fs.Thickness = 1.5; fs.Parent = frame
+                local glow = Instance.new("ImageLabel"); glow.BackgroundTransparency = 1; glow.Image = "rbxassetid://5028857084"; glow.ImageColor3 = Color3.fromRGB(66, 106, 220); glow.ImageTransparency = .72; glow.ScaleType = Enum.ScaleType.Slice; glow.SliceCenter = Rect.new(24,24,276,276); glow.Size = UDim2.new(1, 32, 1, 32); glow.Position = UDim2.new(0,-16,0,-16); glow.ZIndex = 0; glow.Parent = frame
+                local gradient = Instance.new("UIGradient"); gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(19,24,43)), ColorSequenceKeypoint.new(.5, Color3.fromRGB(14,17,29)), ColorSequenceKeypoint.new(1, Color3.fromRGB(30,23,53))}); gradient.Rotation = 35; gradient.Parent = frame
+                local top = Instance.new("Frame"); top.Size = UDim2.new(1, 0, 0, 44); top.BackgroundColor3 = Color3.fromRGB(25, 29, 45); top.BorderSizePixel = 0; top.Parent = frame; round(top, 12)
+                local title = newLabel(top, data.Name or "Toy Rotation Hub", UDim2.new(1, -100, 0, 27), Color3.fromRGB(255,255,255), Enum.Font.GothamBold); title.Position = UDim2.new(0, 14, 0, 4); title.TextSize = mobile and 14 or 16
+                local subtitle = newLabel(top, "MOBILE CONTROL PANEL  •  AIM WITH YOUR SIGHT", UDim2.new(1, -105, 0, 13), Color3.fromRGB(146, 170, 235), Enum.Font.GothamMedium); subtitle.Position = UDim2.new(0, 14, 0, 27); subtitle.TextSize = mobile and 7 or 8
+                -- A compact Rayfield-style minimize control. The small badge remains available on both PC and touch screens.
+                local close = Instance.new("TextButton"); close.Size = UDim2.new(0, 28, 0, 28); close.Position = UDim2.new(1, -35, .5, -14); close.Text = "×"; styleButton(close, Color3.fromRGB(155, 55, 65)); close.TextSize = 20; close.Parent = top; close.Activated:Connect(function() MenuGui:Destroy() end)
+                local minimize = Instance.new("TextButton"); minimize.Size = UDim2.new(0, 28, 0, 28); minimize.Position = UDim2.new(1, -68, .5, -14); minimize.Text = "—"; styleButton(minimize, Color3.fromRGB(59, 88, 160)); minimize.TextSize = 18; minimize.Parent = top
+                local restore = Instance.new("TextButton"); restore.Name = "RestoreMenu"; restore.Size = UDim2.new(0, mobile and 52 or 58, 0, mobile and 52 or 58); restore.Position = UDim2.new(0, 16, .5, -26); restore.Text = "TRH\nOPEN"; restore.TextWrapped = true; restore.TextSize = mobile and 11 or 12; restore.Visible = false; restore.ZIndex = 30; styleButton(restore, Color3.fromRGB(63, 91, 178)); restore.Parent = MenuGui
+                local restoreStroke = Instance.new("UIStroke"); restoreStroke.Color = Color3.fromRGB(156, 195, 255); restoreStroke.Thickness = 1.5; restoreStroke.Transparency = .12; restoreStroke.Parent = restore
+                local minimized = false
+                local function setMinimized(state)
+                    minimized = state
+                    frame.Visible = not state
+                    restore.Visible = state
+                    if not state then frame.Position = UDim2.new(.5, 0, .5, 0) end
+                end
+                minimize.Activated:Connect(function() setMinimized(true) end)
+                restore.Activated:Connect(function() setMinimized(false) end)
+                addDrag(top, frame)
+                local side = Instance.new("ScrollingFrame"); side.Size = UDim2.new(0, mobile and 108 or 150, 1, -52); side.Position = UDim2.new(0, 7, 0, 46); side.BackgroundColor3 = Color3.fromRGB(22, 26, 41); side.BorderSizePixel = 0; side.ScrollBarThickness = 3; side.CanvasSize = UDim2.new(); side.AutomaticCanvasSize = Enum.AutomaticSize.Y; side.Parent = frame; round(side, 8)
+                local sideLayout = Instance.new("UIListLayout"); sideLayout.Padding = UDim.new(0, 4); sideLayout.Parent = side
+                local sidePadding = Instance.new("UIPadding"); sidePadding.PaddingTop = UDim.new(0, 5); sidePadding.PaddingLeft = UDim.new(0, 5); sidePadding.PaddingRight = UDim.new(0, 5); sidePadding.Parent = side
+                local pages = Instance.new("Frame"); pages.Size = UDim2.new(1, -(mobile and 127 or 169), 1, -52); pages.Position = UDim2.new(0, mobile and 120 or 162, 0, 46); pages.BackgroundTransparency = 1; pages.Parent = frame
+                local tabs, active = {}, nil
+                local window = {}
+                function window:MakeTab(tabData)
+                    local tabButton = Instance.new("TextButton"); tabButton.Size = UDim2.new(1, 0, 0, mobile and 34 or 38); tabButton.Text = tabData.Name or "Tab"; tabButton.TextWrapped = true; styleButton(tabButton, Color3.fromRGB(40, 46, 70)); tabButton.Parent = side
+                    local page = Instance.new("ScrollingFrame"); page.Size = UDim2.new(1, 0, 1, 0); page.BackgroundTransparency = 1; page.BorderSizePixel = 0; page.ScrollBarThickness = 4; page.ScrollBarImageColor3 = Color3.fromRGB(105, 135, 220); page.AutomaticCanvasSize = Enum.AutomaticSize.Y; page.CanvasSize = UDim2.new(); page.Visible = false; page.Parent = pages
+                    local layout = Instance.new("UIListLayout"); layout.Padding = UDim.new(0, 6); layout.Parent = page
+                    local pad = Instance.new("UIPadding"); pad.PaddingLeft = UDim.new(0, 3); pad.PaddingRight = UDim.new(0, 8); pad.PaddingTop = UDim.new(0, 3); pad.PaddingBottom = UDim.new(0, 8); pad.Parent = page
+                    local function show()
+                        if active then active.Page.Visible = false; active.Button.BackgroundColor3 = Color3.fromRGB(40, 46, 70) end
+                        page.Visible = true; tabButton.BackgroundColor3 = Color3.fromRGB(66, 90, 155); active = {Page = page, Button = tabButton}
+                    end
+                    tabButton.Activated:Connect(show); if #tabs == 0 then show() end; table.insert(tabs, {Page = page, Button = tabButton})
+                    local tab = {}
+                    function tab:AddSection(info)
+                        local l = newLabel(page, "  " .. (info.Name or "SECTION"), UDim2.new(1, 0, 0, 25), Color3.fromRGB(135, 174, 255), Enum.Font.GothamBold); l.BackgroundColor3 = Color3.fromRGB(30, 36, 58); l.BackgroundTransparency = 0; round(l, 6); return l
+                    end
+                    function tab:AddLabel(text)
+                        local l = newLabel(page, text, UDim2.new(1, 0, 0, 28), Color3.fromRGB(205, 210, 230)); return l
+                    end
+                    function tab:AddParagraph(head, body)
+                        local box = Instance.new("Frame"); box.Size = UDim2.new(1, 0, 0, 70); box.BackgroundColor3 = Color3.fromRGB(29, 34, 53); box.BorderSizePixel = 0; box.Parent = page; round(box, 7)
+                        local h = newLabel(box, head or "", UDim2.new(1, -14, 0, 24), Color3.fromRGB(255,255,255), Enum.Font.GothamBold); h.Position = UDim2.new(0,7,0,3)
+                        local b = newLabel(box, body or "", UDim2.new(1, -14, 1, -28), Color3.fromRGB(205,210,230)); b.Position = UDim2.new(0,7,0,26); b.TextYAlignment = Enum.TextYAlignment.Top; return box
+                    end
+                    function tab:AddButton(info)
+                        local b = Instance.new("TextButton"); b.Size = UDim2.new(1, 0, 0, 36); b.Text = info.Name or "Button"; styleButton(b, Color3.fromRGB(50, 75, 132)); b.Parent = page; b.Activated:Connect(function() task.spawn(info.Callback or function() end) end); return b
+                    end
+                    function tab:AddToggle(info)
+                        local row = Instance.new("Frame"); row.Size = UDim2.new(1,0,0,38); row.BackgroundColor3 = Color3.fromRGB(29,34,53); row.BorderSizePixel = 0; row.Parent = page; round(row, 7)
+                        local l = newLabel(row, info.Name or "Toggle", UDim2.new(1,-82,1,0)); l.Position = UDim2.new(0,10,0,0)
+                        local state = info.Default == true; local b = Instance.new("TextButton"); b.Size = UDim2.new(0,66,0,27); b.Position = UDim2.new(1,-72,.5,-13); styleButton(b, state and Color3.fromRGB(50,150,90) or Color3.fromRGB(85,85,105)); b.Parent = row
+                        local function update() b.Text = state and "ON" or "OFF"; b.BackgroundColor3 = state and Color3.fromRGB(50,150,90) or Color3.fromRGB(85,85,105) end; update()
+                        b.Activated:Connect(function() state = not state; update(); task.spawn(info.Callback or function() end, state) end); return b
+                    end
+                    function tab:AddSlider(info)
+                        local row = Instance.new("Frame"); row.Size = UDim2.new(1,0,0,42); row.BackgroundColor3 = Color3.fromRGB(29,34,53); row.BorderSizePixel = 0; row.Parent = page; round(row, 7)
+                        local l = newLabel(row, info.Name or "Slider", UDim2.new(1,-145,1,0)); l.Position = UDim2.new(0,10,0,0)
+                        local value = info.Default or info.Min or 0; local step = info.Increment or 1
+                        local minus = Instance.new("TextButton"); minus.Size = UDim2.new(0,29,0,28); minus.Position = UDim2.new(1,-132,.5,-14); minus.Text="−"; styleButton(minus, Color3.fromRGB(60,66,90)); minus.Parent=row
+                        local valueBox = Instance.new("TextButton"); valueBox.Size = UDim2.new(0,66,0,28); valueBox.Position = UDim2.new(1,-99,.5,-14); styleButton(valueBox, Color3.fromRGB(51,77,132)); valueBox.Parent=row
+                        local plus = Instance.new("TextButton"); plus.Size = UDim2.new(0,29,0,28); plus.Position = UDim2.new(1,-29,.5,-14); plus.Text="+"; styleButton(plus, Color3.fromRGB(60,66,90)); plus.Parent=row
+                        local function apply(v) value = math.clamp(v, info.Min or v, info.Max or v); value = math.floor(value / step + .5) * step; valueBox.Text = tostring(value); task.spawn(info.Callback or function() end, value) end
+                        valueBox.Text = tostring(value); minus.Activated:Connect(function() apply(value-step) end); plus.Activated:Connect(function() apply(value+step) end); return row
+                    end
+                    return tab
+                end
+                return window
+            end
+        end
 
         local Theme = {
             BackgroundColor = Color3.fromRGB(255, 255, 255),
@@ -4668,6 +4816,108 @@ P2LoadBtn.MouseButton1Click:Connect(function()
             return BG, BP
         end
 
+        -- Touch-launched ICBM: players spawn their own missile normally, then arm and touch it.
+        local Mouse = LocalPlayer:GetMouse()
+        local function getAimDirection(origin)
+            local camera = Workspace.CurrentCamera
+            if not camera then return Vector3.yAxis end
+            if selectedDevice == "PC" and Mouse and Mouse.Hit then
+                local delta = Mouse.Hit.Position - origin
+                if delta.Magnitude > 0.01 then return delta.Unit end
+            end
+            local viewport = camera.ViewportSize
+            return camera:ViewportPointToRay(viewport.X * 0.5, viewport.Y * 0.5).Direction.Unit
+        end
+
+        local function getAimPoint(fallback)
+            local camera = Workspace.CurrentCamera
+            if not camera then return fallback end
+            local direction = getAimDirection(camera.CFrame.Position)
+            local params = RaycastParams.new()
+            params.FilterType = Enum.RaycastFilterType.Exclude
+            params.FilterDescendantsInstances = {LocalPlayer.Character}
+            local hit = Workspace:Raycast(camera.CFrame.Position, direction * 250, params)
+            return hit and hit.Position or (camera.CFrame.Position + direction * 40)
+        end
+
+        local ICBM = { Rockets = {}, Guidance = true, Speed = 115, AscentHeight = 350, FollowIndex = nil, OriginalCameraSubject = nil }
+
+        local function resetICBM()
+            local camera = Workspace.CurrentCamera
+            for _, rocket in ipairs(ICBM.Rockets) do
+                if rocket.ActivationConnection then pcall(function() rocket.ActivationConnection:Disconnect() end) end
+                if rocket.FlightConnection then pcall(function() rocket.FlightConnection:Disconnect() end) end
+                if rocket.Gyro then pcall(function() rocket.Gyro:Destroy() end) end
+                if rocket.Position then pcall(function() rocket.Position:Destroy() end) end
+                for part, state in pairs(rocket.PartStates or {}) do
+                    if part and part.Parent then
+                        part.CanCollide = state.CanCollide
+                        part.CanTouch = state.CanTouch
+                        part.Anchored = state.Anchored
+                    end
+                end
+                if rocket.Model and rocket.Model.Parent then rocket.Model:SetAttribute("TRH_ICBMArmed", nil) end
+            end
+            ICBM.Rockets, ICBM.FollowIndex = {}, nil
+            if camera and ICBM.OriginalCameraSubject then camera.CameraSubject = ICBM.OriginalCameraSubject end
+            ICBM.OriginalCameraSubject = nil
+            OrionLib:MakeNotification({Name = "ICBM", Content = "Rockets reset; camera returned to your character.", Time = 3})
+        end
+
+        local function followRocket(index)
+            local rocket, camera = ICBM.Rockets[index], Workspace.CurrentCamera
+            if not rocket or not rocket.Active or not rocket.Part or not rocket.Part.Parent or not camera then
+                OrionLib:MakeNotification({Name = "ICBM", Content = "Rocket " .. tostring(index) .. " is not flying.", Time = 3})
+                return
+            end
+            if not ICBM.OriginalCameraSubject then ICBM.OriginalCameraSubject = camera.CameraSubject end
+            ICBM.FollowIndex = index; camera.CameraSubject = rocket.Part; camera.CameraType = Enum.CameraType.Custom
+            OrionLib:MakeNotification({Name = "ICBM camera", Content = "Following rocket " .. tostring(index) .. ".", Time = 2})
+        end
+
+        local function armICBM()
+            local missiles = findSpecificObjects("FireworkMissile")
+            if #missiles == 0 then missiles = findSpecificObjects("BombMissile") end
+            if #missiles == 0 then
+                OrionLib:MakeNotification({Name = "ICBM", Content = "Spawn a Firework or Bomb Missile, then arm it.", Time = 4})
+                return
+            end
+            local character, armed = LocalPlayer.Character, 0
+            for _, model in ipairs(missiles) do
+                if armed >= 5 then break end
+                local part = getPrimaryPart(model)
+                if part and not model:GetAttribute("TRH_ICBMArmed") then
+                    armed = armed + 1; model:SetAttribute("TRH_ICBMArmed", true)
+                    local rocket = {Model = model, Part = part, Active = false, PartStates = {}}
+                    table.insert(ICBM.Rockets, rocket)
+                    rocket.ActivationConnection = part.Touched:Connect(function(hit)
+                        if rocket.Active or not character or not hit:IsDescendantOf(character) then return end
+                        rocket.Active = true
+                        if rocket.ActivationConnection then rocket.ActivationConnection:Disconnect(); rocket.ActivationConnection = nil end
+                        rocket.StartPosition = part.Position
+                        for _, descendant in ipairs(model:GetDescendants()) do
+                            if descendant:IsA("BasePart") then
+                                rocket.PartStates[descendant] = {CanCollide = descendant.CanCollide, CanTouch = descendant.CanTouch, Anchored = descendant.Anchored}
+                                descendant.Anchored = false; descendant.CanCollide = false
+                                pcall(function() descendant:SetNetworkOwner(LocalPlayer) end)
+                            end
+                        end
+                        rocket.Gyro, rocket.Position = attachPhysics(part)
+                        if not rocket.Gyro or not rocket.Position then return end
+                        rocket.FlightConnection = RunService.Heartbeat:Connect(function(dt)
+                            if not part.Parent then if rocket.FlightConnection then rocket.FlightConnection:Disconnect() end return end
+                            local ascending = part.Position.Y - rocket.StartPosition.Y < ICBM.AscentHeight
+                            local direction = ascending and Vector3.yAxis or getAimDirection(part.Position)
+                            if not ICBM.Guidance and not ascending then direction = part.CFrame.LookVector end
+                            rocket.Position.Position = part.Position + direction * ICBM.Speed * dt
+                            rocket.Gyro.CFrame = CFrame.lookAt(part.Position, part.Position + direction)
+                        end)
+                    end)
+                end
+            end
+            OrionLib:MakeNotification({Name = "ICBM armed", Content = tostring(armed) .. " missile(s) armed. Touch one to launch.", Time = 4})
+        end
+
         -- Hand System
         local HandSystem = { Enabled = false, Assigned = {}, LoopConn = nil, Time = 0, Config = { Height = 4, Radius = 6, Speed = 0.8, FollowPlayer = true } }
 
@@ -4775,7 +5025,7 @@ P2LoadBtn.MouseButton1Click:Connect(function()
                 Name = T(nameKey), CurrentObjectID = "FireworkSparkler",
                 Config = {
                     Enabled = false, Mode = "shapeCircle", ObjectCount = 100, Radius = 10,
-                    Height = 4, Speed = 1.8, Pulse = 0.6, FollowPlayer = true, FaceCenter = true,
+                    Height = 4, Speed = 1.8, Pulse = 0.6, FollowPlayer = true, AimAtSight = false, FaceCenter = true,
                     LadderH1 = 5.5, LadderH2 = 2.0, LadderH3 = 3.4, LadderH4 = 1.6,
                     HandCount = 5, FingerCount = 5, FingerSpread = 1.1,
                     DualMode = "dualCircleSpoke", DualDistance = 8,
@@ -4831,6 +5081,14 @@ P2LoadBtn.MouseButton1Click:Connect(function()
                     if not torso then return end
                     self.Time = self.Time + dt
                     local center = torso.Position
+                    if self.Config.AimAtSight then
+                        center = getAimPoint(center)
+                    elseif not self.Config.FollowPlayer then
+                        self.AnchorPosition = self.AnchorPosition or center
+                        center = self.AnchorPosition
+                    else
+                        self.AnchorPosition = nil
+                    end
                     local shapeFunc = Shapes[self.Config.Mode]
                     if not shapeFunc then return end
                     local count = #self.Assigned
@@ -4927,7 +5185,8 @@ P2LoadBtn.MouseButton1Click:Connect(function()
 
                 local mainTab = window:MakeTab({Name = self.Name .. " " .. T("tabControl"), Icon = "rbxassetid://4483362458"})
                 mainTab:AddToggle({Name = T("ctrlRotateOn"), Default = false, Callback = function(state) self.toggle(state) end})
-                mainTab:AddToggle({Name = T("ctrlFollowPlayer"), Default = true, Callback = function(v) self.Config.FollowPlayer = v end})
+                mainTab:AddToggle({Name = T("ctrlFollowPlayer"), Default = true, Callback = function(v) self.Config.FollowPlayer = v; if v then self.AnchorPosition = nil end end})
+                mainTab:AddToggle({Name = "Aim formation with mouse / crosshair", Default = false, Callback = function(v) self.Config.AimAtSight = v end})
                 mainTab:AddToggle({Name = T("ctrlFaceCenter"), Default = true, Callback = function(v) self.Config.FaceCenter = v end})
                 mainTab:AddSection({Name = T("sectionParams")})
                 mainTab:AddSlider({Name = T("ctrlMaxObjects"), Min = 4, Max = 100, Default = 100, Color = Theme.SliderColor, Increment = 1, ValueName = T("notifPieces"), Callback = function(v) self.Config.ObjectCount = v; if self.Config.Enabled then applyToys() end end})
@@ -4943,6 +5202,9 @@ P2LoadBtn.MouseButton1Click:Connect(function()
                 mainTab:AddButton({Name = T("ctrlRescan"), Callback = function() self.forceRescan() end})
 
                 local shapeTab = window:MakeTab({Name = self.Name .. " " .. T("tabShape"), Icon = "rbxassetid://4483362458"})
+                shapeTab:AddButton({Name = "✨ Sparkler Heart (PC + touch)", Callback = function()
+                    self.changeObject("FireworkSparkler"); self.changeMode("shapeHeart"); if not self.Config.Enabled then self.toggle(true) end
+                end})
                 for _, modeName in ipairs(modeList) do
                     shapeTab:AddButton({Name = T(modeName), Callback = function() self.changeMode(modeName) end})
                 end
@@ -4996,6 +5258,21 @@ P2LoadBtn.MouseButton1Click:Connect(function()
         simpleHandTab:AddSlider({Name = T("simpleHandFingerLen"), Min = 3, Max = 15, Default = 6, Color = Theme.SliderColor, Increment = 0.5, ValueName = T("notifStuds"), Callback = function(v) HandSystem.Config.Radius = v end})
         simpleHandTab:AddToggle({Name = T("ctrlFollowPlayer"), Default = true, Callback = function(v) HandSystem.Config.FollowPlayer = v end})
 
+        -- ICBM Tab — touch activation then a vertical climb, followed by sight guidance.
+        local icbmTab = window:MakeTab({Name = "ICBM", Icon = "rbxassetid://4483362458"})
+        icbmTab:AddParagraph("Touch-launched ICBM", "Spawn a missile normally, press Arm, then touch it. It rises vertically before following mouse aim or the touch crosshair.")
+        icbmTab:AddToggle({Name = "Sight guidance (PC + mobile)", Default = true, Callback = function(v) ICBM.Guidance = v end})
+        icbmTab:AddSlider({Name = "Rocket speed", Min = 45, Max = 220, Default = 115, Increment = 5, Callback = function(v) ICBM.Speed = v end})
+        icbmTab:AddSlider({Name = "Ascent altitude", Min = 100, Max = 1000, Default = 350, Increment = 25, Callback = function(v) ICBM.AscentHeight = v end})
+        icbmTab:AddButton({Name = "🚀 Arm spawned missiles (max 5)", Callback = armICBM})
+        icbmTab:AddSection({Name = "Camera follow"})
+        icbmTab:AddLabel("Choose a launched rocket to watch. Camera returns on reset.")
+        for rocketNumber = 1, 5 do
+            local n = rocketNumber
+            icbmTab:AddButton({Name = "👁 Watch rocket " .. n, Callback = function() followRocket(n) end})
+        end
+        icbmTab:AddButton({Name = "↺ Reset rockets + camera", Callback = resetICBM})
+
         -- Barrier Break Tab
         local barrierTab = window:MakeTab({Name = T("tabBarrier"), Icon = "rbxassetid://4483362458"})
         barrierTab:AddButton({Name = T("barrierBreak"), Callback = function()
@@ -5015,7 +5292,7 @@ P2LoadBtn.MouseButton1Click:Connect(function()
             
             local newOcarina = ocarina:Clone()
             newOcarina.Parent = Workspace
-            newOcarina:SetPrimaryPartCFrame(hrp.CFrame * CFrame.new(0, -5, 0))
+            newOcarina:PivotTo(hrp.CFrame * CFrame.new(0, -5, 0))
             task.wait(0.5)
             local ocarinaPart = getPrimaryPart(newOcarina)
             if not ocarinaPart then OrionLib:MakeNotification({Name = T("barrierErrOcarinaMissing"), Time = 3}) return end
@@ -5034,7 +5311,7 @@ P2LoadBtn.MouseButton1Click:Connect(function()
             
             local newCampfire = campfire:Clone()
             newCampfire.Parent = Workspace
-            newCampfire:SetPrimaryPartCFrame(hrp.CFrame * CFrame.new(0, -2, 0))
+            newCampfire:PivotTo(hrp.CFrame * CFrame.new(0, -2, 0))
             task.wait(0.5)
             local campPart = getPrimaryPart(newCampfire)
             if campPart then
@@ -5043,7 +5320,7 @@ P2LoadBtn.MouseButton1Click:Connect(function()
                 task.wait(1.5)
             end
             newCampfire:Destroy()
-            OrionLib:MakeNotification({Name = T("barrierSuccess"), Time = 4})
+            OrionLib:MakeNotification({Name = T("tabBarrier"), Content = "Attempt finished. Verify the barrier in-game.", Time = 4})
         end})
 
         -- Sky Color Tab
