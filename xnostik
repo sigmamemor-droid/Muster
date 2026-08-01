@@ -1,494 +1,174 @@
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Lighting = game:GetService("Lighting")
-local Stats = game:GetService("Stats")
-local TweenService = game:GetService("TweenService")
+--[[
+    Красивый статичный интерфейс Roblox
+    Вкладки расположены с правой стороны, подписаны "Soon"
+    Без функций — только визуал
+--]]
 
-local player = Players.LocalPlayer
+local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Tween helper
-local function tween(obj, props, dur)
-	TweenService:Create(obj, TweenInfo.new(dur or 0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props):Play()
-end
-
--- GUI
+-- ===== ScreenGui =====
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "RatOptimizerV3"
+screenGui.Name = "BeautifulUI"
 screenGui.ResetOnSpawn = false
-screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = playerGui
 
-local shadow = Instance.new("Frame")
-shadow.Size = UDim2.new(0, 260, 0, 170)
-shadow.Position = UDim2.new(0, 25, 0, 25)
-shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-shadow.BackgroundTransparency = 0.6
-shadow.BorderSizePixel = 0
-shadow.Active = true
-shadow.Draggable = true
-shadow.Parent = screenGui
+-- ===== ГЛАВНОЕ ОКНО =====
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 560, 0, 420)
+mainFrame.Position = UDim2.new(0.5, -280, 0.5, -210)
+mainFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
 
-Instance.new("UICorner", shadow).CornerRadius = UDim.new(0, 16)
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 18)
+mainCorner.Parent = mainFrame
 
-local main = Instance.new("Frame")
-main.Size = UDim2.new(1, -4, 1, -4)
-main.Position = UDim2.new(0, 2, 0, 2)
-main.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
-main.BackgroundTransparency = 0.15
-main.BorderSizePixel = 0
-main.Parent = shadow
+local mainGradient = Instance.new("UIGradient")
+mainGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 28, 44)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(18, 18, 26)),
+})
+mainGradient.Rotation = 65
+mainGradient.Parent = mainFrame
 
-Instance.new("UICorner", main).CornerRadius = UDim.new(0, 14)
+-- Тень
+local shadow = Instance.new("ImageLabel")
+shadow.BackgroundTransparency = 1
+shadow.Image = "rbxassetid://6014261993"
+shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+shadow.ImageTransparency = 0.4
+shadow.ScaleType = Enum.ScaleType.Slice
+shadow.SliceCenter = Rect.new(49, 49, 450, 450)
+shadow.Size = UDim2.new(1, 60, 1, 60)
+shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+shadow.ZIndex = -1
+shadow.Parent = mainFrame
 
-local stroke = Instance.new("UIStroke")
-stroke.Color = Color3.fromRGB(255, 60, 60)
-stroke.Thickness = 1.2
-stroke.Transparency = 0.4
-stroke.Parent = main
+-- ===== ШАПКА =====
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 60)
+header.BackgroundTransparency = 1
+header.Parent = mainFrame
 
--- Header
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -20, 0, 36)
-title.Position = UDim2.new(0, 14, 0, 0)
+title.Size = UDim2.new(1, -40, 1, 0)
+title.Position = UDim2.new(0, 22, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "OPTIMIZER"
-title.TextColor3 = Color3.fromRGB(255, 70, 70)
-title.Font = Enum.Font.GothamBlack
-title.TextSize = 15
+title.Text = "Мой проект"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 22
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextXAlignment = Enum.TextXAlignment.Left
-title.Parent = main
+title.Parent = header
 
-local sub = Instance.new("TextLabel")
-sub.Size = UDim2.new(1, -20, 0, 14)
-sub.Position = UDim2.new(0, 14, 0, 24)
-sub.BackgroundTransparency = 1
-sub.Text = "PERFORMANCE HUD"
-sub.TextColor3 = Color3.fromRGB(120, 120, 130)
-sub.Font = Enum.Font.Gotham
-sub.TextSize = 10
-sub.TextXAlignment = Enum.TextXAlignment.Left
-sub.Parent = main
+local divider = Instance.new("Frame")
+divider.Size = UDim2.new(1, -44, 0, 1)
+divider.Position = UDim2.new(0, 22, 0, 58)
+divider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+divider.BackgroundTransparency = 0.92
+divider.BorderSizePixel = 0
+divider.Parent = mainFrame
 
-local line = Instance.new("Frame")
-line.Size = UDim2.new(1, -28, 0, 1)
-line.Position = UDim2.new(0, 14, 0, 50)
-line.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-line.BackgroundTransparency = 0.5
-line.BorderSizePixel = 0
-line.Parent = main
+-- ===== ОБЛАСТЬ КОНТЕНТА (слева) =====
+local content = Instance.new("Frame")
+content.Name = "Content"
+content.Size = UDim2.new(1, -160, 1, -80)
+content.Position = UDim2.new(0, 20, 0, 70)
+content.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
+content.BorderSizePixel = 0
+content.Parent = mainFrame
 
--- Stats
-local stats = Instance.new("Frame")
-stats.Size = UDim2.new(1, -28, 0, 56)
-stats.Position = UDim2.new(0, 14, 0, 58)
-stats.BackgroundTransparency = 1
-stats.Parent = main
+local contentCorner = Instance.new("UICorner")
+contentCorner.CornerRadius = UDim.new(0, 14)
+contentCorner.Parent = content
 
-local fpsBlock = Instance.new("Frame")
-fpsBlock.Size = UDim2.new(0.48, 0, 1, 0)
-fpsBlock.BackgroundColor3 = Color3.fromRGB(30, 30, 36)
-fpsBlock.BorderSizePixel = 0
-fpsBlock.Parent = stats
-Instance.new("UICorner", fpsBlock).CornerRadius = UDim.new(0, 10)
+local contentStroke = Instance.new("UIStroke")
+contentStroke.Color = Color3.fromRGB(255, 255, 255)
+contentStroke.Transparency = 0.93
+contentStroke.Parent = content
 
-local fpsNum = Instance.new("TextLabel")
-fpsNum.Size = UDim2.new(1, 0, 0.55, 0)
-fpsNum.BackgroundTransparency = 1
-fpsNum.Text = "--"
-fpsNum.TextColor3 = Color3.fromRGB(255, 255, 255)
-fpsNum.Font = Enum.Font.GothamBlack
-fpsNum.TextSize = 22
-fpsNum.Parent = fpsBlock
+local contentLabel = Instance.new("TextLabel")
+contentLabel.Size = UDim2.new(1, -40, 1, -40)
+contentLabel.Position = UDim2.new(0, 20, 0, 20)
+contentLabel.BackgroundTransparency = 1
+contentLabel.Text = "Главная"
+contentLabel.Font = Enum.Font.GothamSemibold
+contentLabel.TextSize = 16
+contentLabel.TextColor3 = Color3.fromRGB(150, 150, 165)
+contentLabel.TextXAlignment = Enum.TextXAlignment.Left
+contentLabel.TextYAlignment = Enum.TextYAlignment.Top
+contentLabel.Parent = content
 
-local fpsSub = Instance.new("TextLabel")
-fpsSub.Size = UDim2.new(1, 0, 0.35, 0)
-fpsSub.Position = UDim2.new(0, 0, 0.6, 0)
-fpsSub.BackgroundTransparency = 1
-fpsSub.Text = "FPS"
-fpsSub.TextColor3 = Color3.fromRGB(150, 150, 160)
-fpsSub.Font = Enum.Font.GothamBold
-fpsSub.TextSize = 10
-fpsSub.Parent = fpsBlock
+-- ===== ВКЛАДКИ СПРАВА =====
+local tabsFrame = Instance.new("Frame")
+tabsFrame.Name = "Tabs"
+tabsFrame.Size = UDim2.new(0, 120, 1, -80)
+tabsFrame.Position = UDim2.new(1, -140, 0, 70)
+tabsFrame.BackgroundTransparency = 1
+tabsFrame.Parent = mainFrame
 
-local pingBlock = Instance.new("Frame")
-pingBlock.Size = UDim2.new(0.48, 0, 1, 0)
-pingBlock.Position = UDim2.new(0.52, 0, 0, 0)
-pingBlock.BackgroundColor3 = Color3.fromRGB(30, 30, 36)
-pingBlock.BorderSizePixel = 0
-pingBlock.Parent = stats
-Instance.new("UICorner", pingBlock).CornerRadius = UDim.new(0, 10)
+local tabsLayout = Instance.new("UIListLayout")
+tabsLayout.Padding = UDim.new(0, 10)
+tabsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+tabsLayout.Parent = tabsFrame
 
-local pingNum = Instance.new("TextLabel")
-pingNum.Size = UDim2.new(1, 0, 0.55, 0)
-pingNum.BackgroundTransparency = 1
-pingNum.Text = "--"
-pingNum.TextColor3 = Color3.fromRGB(255, 255, 255)
-pingNum.Font = Enum.Font.GothamBlack
-pingNum.TextSize = 22
-pingNum.Parent = pingBlock
-
-local pingSub = Instance.new("TextLabel")
-pingSub.Size = UDim2.new(1, 0, 0.35, 0)
-pingSub.Position = UDim2.new(0, 0, 0.6, 0)
-pingSub.BackgroundTransparency = 1
-pingSub.Text = "PING"
-pingSub.TextColor3 = Color3.fromRGB(150, 150, 160)
-pingSub.Font = Enum.Font.GothamBold
-pingSub.TextSize = 10
-pingSub.Parent = pingBlock
-
--- Toggle
-local toggleFrame = Instance.new("Frame")
-toggleFrame.Size = UDim2.new(1, -28, 0, 32)
-toggleFrame.Position = UDim2.new(0, 14, 0, 122)
-toggleFrame.BackgroundTransparency = 1
-toggleFrame.Parent = main
-
-local toggleLabel = Instance.new("TextLabel")
-toggleLabel.Size = UDim2.new(0.6, 0, 1, 0)
-toggleLabel.BackgroundTransparency = 1
-toggleLabel.Text = "Deep Clean"
-toggleLabel.TextColor3 = Color3.fromRGB(200, 200, 210)
-toggleLabel.Font = Enum.Font.GothamBold
-toggleLabel.TextSize = 13
-toggleLabel.TextXAlignment = Enum.TextXAlignment.Left
-toggleLabel.Parent = toggleFrame
-
-local switchBg = Instance.new("Frame")
-switchBg.Size = UDim2.new(0, 44, 0, 24)
-switchBg.Position = UDim2.new(1, -44, 0.5, -12)
-switchBg.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-switchBg.BorderSizePixel = 0
-switchBg.Parent = toggleFrame
-Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1, 0)
-
-local knob = Instance.new("Frame")
-knob.Size = UDim2.new(0, 18, 0, 18)
-knob.Position = UDim2.new(0, 3, 0.5, -9)
-knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-knob.BorderSizePixel = 0
-knob.Parent = switchBg
-Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
-
--- DECORATIVE NAME FILTER
-local trashNames = {
-	"tree","bush","grass","flower","rock","deco","decor","detail",
-	"leaf","branch","stump","log","mushroom","fern","boulder",
-	"pebble","statue","lamp post","lantern","fence","bench",
-	"chair","table","vase","pot","crate","barrel","trash",
-	"garbage","junk","wire","cable","rope","chain","banner",
-	"flag","sign","poster","picture","painting","bush","shrub",
-	"plant","ivy","vine","moss","twig","stone","pillar","ruin",
-	"debris","scrap","litter","can","bottle","box","cart","wagon",
-	"wheel","barrel","bucket","mop","broom","dust","web","cobweb",
-	"nest","bird","nest","hay","straw","tire","pipe","drain",
-	"grate","vent","fan","propeller","blade","turbine","mill",
-	"wind","chime","bell","horn","antenna","satellite","dish",
-	"board","plank","beam","joist","truss","scaffold","ladder",
-	"railing","handrail","guardrail","curb","edge","trim","molding",
-	"frame","sill","ledge","shelf","rack","hook","peg","nail",
-	"screw","bolt","rivet","washer","gear","pulley","lever","handle",
-	"knob","switch","button","dial","gauge","meter","counter",
-	"display","screen","monitor","panel","plate","cover","lid",
-	"cap","top","roof","shingle","tile","slate","thatch","tent",
-	"awning","canopy","shade","blind","curtain","drape","cloth",
-	"fabric","tarp","tarpaulin","canvas","plastic","sheet","film",
-	"foil","wrap","paper","cardboard","carton","package","bag",
-	"sack","sackcloth","sacking","burlap","hessian","silk","ribbon",
-	"bow","knot","tassel","fringe","lace","trimming","braid",
-	"cord","string","twine","thread","yarn","wool","cotton",
-	"linen","flax","hemp","jute","sisal","coir","raffia","rush",
-	"reed","bamboo","cane","rattan","wicker","willow","osier",
-	"hazel","alder","birch","beech","oak","pine","fir","spruce",
-	"cedar","cypress","palm","fern","moss","lichen","algae","kelp",
-	"seaweed","coral","shell","pearl","gem","jewel","crystal",
-	"glass","mirror","prism","lens","optical","scope","goggles",
-	"mask","helmet","hat","cap","bonnet","hood","veil","wreath",
-	"garland","lei","necklace","chain","pendant","locket","brooch",
-	"pin","badge","medal","ribbon","rosette","corsage","boutonniere",
-	"flower","bloom","blossom","bud","petal","pollen","nectar",
-	"thorn","spine","prickle","burr","seed","pod","cone","nut",
-	"acorn","chestnut","walnut","hazelnut","almond","pistachio",
-	"pecan","cashew","brazil","macadamia","pine nut","coconut",
-	"date","fig","olive","grape","berry","cherry","plum","peach",
-	"apple","pear","quince","medlar","pomegranate","citron","lemon",
-	"lime","orange","tangerine","clementine","satsuma","kumquat",
-	"grapefruit","pomelo","ugli","tangelo","mandarin","citrus",
-	"melon","watermelon","cantaloupe","honeydew","muskmelon","cucumber",
-	"gourd","pumpkin","squash","marrow","zucchini","aubergine",
-	"eggplant","tomato","pepper","chili","capsicum","paprika",
-	"potato","yam","taro","cassava","sweet potato","jerusalem artichoke",
-	"artichoke","asparagus","celery","fennel","rhubarb","sorrel",
-	"spinach","lettuce","cabbage","kale","collard","broccoli",
-	"cauliflower","brussels sprout","cabbage","sauerkraut","kohlrabi",
-	"turnip","rutabaga","swede","radish","horseradish","wasabi",
-	"mustard","cress","watercress","nasturtium","purslane","dandelion",
-	"chicory","endive","escarole","radicchio","arugula","rocket",
-	"mâche","corn salad","sorrel","dock","sorrel","good king henry",
-	"fat hen","lamb's quarters","orache","amaranth","quinoa",
-	"buckwheat","millet","sorghum","teff","fonio","job's tears",
-	"wild rice","indian rice","water bamboo","lotus","water lily",
-	"duckweed","azolla","salvinia","giant salvinia","water fern",
-	"water hyacinth","water lettuce","pistia","frogbit","water chestnut",
-	"trapa","water caltrop","singhara","water shield","brasenia",
-	"water lily","nuphar","nymphea","victoria","giant water lily",
-	"amazon water lily","sacred lotus","nelumbo","indian lotus",
-	"bean","pea","lentil","chickpea","garbanzo","black-eyed pea",
-	"cowpea","pigeon pea","toor dal","mung bean","urd bean",
-	"moth bean","horse gram","tepary bean","lima bean","butter bean",
-	"sieva bean","southern pea","crowder pea","field pea","winter pea",
-	"maple pea","grey pea","split pea","marrowfat pea","yellow pea",
-	"green pea","garden pea","snow pea","sugar snap pea","mangetout",
-	"pea shoot","pea tendril","pea sprout","bean sprout","alfalfa",
-	"clover","vetch","lupin","lupine","soybean","soya bean",
-	"edamame","tempeh","tofu","soy milk","soy sauce","miso",
-	"natto","okara","yuba","soy flour","soy protein","textured vegetable protein",
-	"seitan","wheat gluten","vital wheat gluten","gluten flour",
-	"bread flour","all-purpose flour","cake flour","pastry flour",
-	"self-rising flour","whole wheat flour","graham flour","durum flour",
-	"semolina","farina","cream of wheat","malt","malt extract",
-	"malt vinegar","malt whisky","malt beer","ale","lager","stout",
-	"porter","pilsner","bock","doppelbock","eisbock","weissbier",
-	"hefeweizen","witbier","saison","lambic","gueuze","kriek",
-	"farl","oud bruin","flanders red","bière de garde","altbier",
-	"kölsch","dortmunder export","märzen","oktoberfest","vienna lager",
-	"schwarzbier","rauchbier","zwickelbier","kellerbier","zoigl",
-	"grätzer","grodziskie","lichtenhainer","gose","berliner weisse",
-	" Leipziger gose","tropfen","malzbier","kvass","sima","tej",
-	"chicha","masato","cauim","tiquira","pulque","tesgüino",
-	"chibuku","busaa","urwagwa","tchouk","pito","burukutu",
-	"otika","palm wine","toddy","arrack","arak","raki","ouzo",
-	"sambuca","pastis","pernod","ricard","anisette","absinthe",
-	"wormwood","vermouth","gin","genever","jenever","old tom gin",
-	"london dry gin","plymouth gin","navy strength gin","sloe gin",
-	"fruit cup","pimm's","aperol","campari","cynar","fernet",
-	"amaro","amaretto","disaronno","frangelico","galliano","sambuca",
-	"anisette","ouzo","raki","tsipouro","tsikoudia","rakia",
-	"palinka","slivovitz","plum brandy","pear brandy","apple brandy",
-	"calvados","cider brandy","cherry brandy","kirsch","kirschwasser",
-	"maraschino","luxardo","grappa","marc","pomace brandy","bagaceira",
-	"orujo","törkölypálinka","zivania","tentura","mastiha","metaxa",
-	"brandy","cognac","armagnac","calvados","eau de vie","schnapps",
-	"akvavit","aquavit","snaps","bitter","bitters","angostura",
-	"peychaud's","orange bitters","celery bitters","chocolate bitters",
-	"mole bitters","peach bitters","grapefruit bitters","rhubarb bitters",
-	"cherry bitters","plum bitters","apple bitters","pear bitters",
-	"walnut bitters","pecan bitters","hazelnut bitters","almond bitters",
-	"vanilla bitters","coffee bitters","tea bitters","lavender bitters",
-	"rose bitters","elderflower bitters","hibiscus bitters","cardamom bitters",
-	"clove bitters","cinnamon bitters","ginger bitters","allspice bitters",
-	"nutmeg bitters","black pepper bitters","chili bitters","smoke bitters",
-	"wood bitters","oak bitters","maple bitters","honey bitters",
-	"molasses bitters","brown sugar bitters","caramel bitters","butterscotch bitters",
-	"toffee bitters","cream bitters","milk bitters","coconut bitters",
-	"banana bitters","pineapple bitters","mango bitters","passion fruit bitters",
-	"guava bitters","lychee bitters","dragon fruit bitters","star fruit bitters",
-	"kiwi bitters","papaya bitters","pomegranate bitters","fig bitters",
-	"date bitters","prune bitters","raisin bitters","currant bitters",
-	"gooseberry bitters","elderberry bitters","juniper bitters","sage bitters",
-	"thyme bitters","rosemary bitters","basil bitters","mint bitters",
-	"spearmint bitters","peppermint bitters","wintergreen bitters",
-	"eucalyptus bitters","pine bitters","spruce bitters","cedar bitters",
-	"cypress bitters","fir bitters","juniper bitters","coriander bitters",
-	"cumin bitters","fennel bitters","dill bitters","caraway bitters",
-	"anise bitters","star anise bitters","licorice bitters","tarragon bitters",
-	"chervil bitters","parsley bitters","cilantro bitters","culantro bitters",
-	"shiso bitters","perilla bitters","sesame bitters","poppy bitters",
-	"sunflower bitters","pumpkin seed bitters","squash seed bitters",
-	"watermelon seed bitters","cucumber seed bitters","melon seed bitters",
-	"grape seed bitters","olive bitters","avocado bitters","cocoa bitters",
-	"cacao bitters","coffee bitters","espresso bitters","mocha bitters",
-	"latte bitters","cappuccino bitters","macchiato bitters","affogato bitters",
-	"chai bitters","matcha bitters","mate bitters","rooibos bitters",
-	"yerba mate bitters","guayusa bitters","holly bitters","yaupon bitters",
-	"tea bitters","black tea bitters","green tea bitters","oolong tea bitters",
-	"white tea bitters","pu-erh tea bitters","yellow tea bitters","fermented tea bitters",
-	"kombucha bitters","kefir bitters","yogurt bitters","buttermilk bitters",
-	"sour cream bitters","cream cheese bitters","mascarpone bitters","ricotta bitters",
-	"cottage cheese bitters","paneer bitters","halloumi bitters","feta bitters",
-	"goat cheese bitters","sheep cheese bitters","cow cheese bitters","buffalo cheese bitters",
-	"camembert bitters","brie bitters","roquefort bitters","gorgonzola bitters",
-	"stilton bitters","cheddar bitters","gouda bitters","edam bitters",
-	"jarlsberg bitters","emmental bitters","gruyère bitters","comté bitters",
-	"beaufort bitters","parmesan bitters","pecorino bitters","romano bitters",
-	"asiago bitters","provolone bitters","mozzarella bitters","burrata bitters",
-	"stracciatella bitters","taleggio bitters","fontina bitters","toma bitters",
-	"reblochon bitters","munster bitters","limburger bitters","port salut bitters",
-	"raclette bitters","appenzeller bitters","sbrinz bitters","brazil nut",
-	"cashew nut","chestnut","hazelnut","macadamia nut","pecan nut",
-	"pine nut","pistachio nut","walnut","almond","apricot kernel",
-	"cherry pit","peach pit","plum pit","avocado pit","olive pit",
-	"date pit","fig seed","pomegranate seed","grape seed","pumpkin seed",
-	"sunflower seed","sesame seed","poppy seed","chia seed","flax seed",
-	"hemp seed","quinoa seed","amaranth seed","buckwheat seed","millet seed",
-	"sorghum seed","teff seed","fonio seed","job's tears seed","wild rice seed",
-	"indian rice seed","water bamboo seed","lotus seed","water lily seed",
-	"duckweed seed","azolla seed","salvinia seed","giant salvinia seed",
-	"water fern seed","water hyacinth seed","water lettuce seed","pistia seed",
-	"frogbit seed","water chestnut seed","trapa seed","water caltrop seed",
-	"singhara seed","water shield seed","brasenia seed","water lily seed",
-	"nuphar seed","nymphea seed","victoria seed","giant water lily seed",
-	"amazon water lily seed","sacred lotus seed","nelumbo seed","indian lotus seed"
+local tabNames = {
+    "Главная",
+    "Игрок",
+    "Мир",
+    "Визуал",
+    "Аудио",
+    "Настройки",
+    "О проекте",
 }
 
-local function isTrash(name)
-	local lower = name:lower()
-	for _, word in ipairs(trashNames) do
-		if lower:find(word) then
-			return true
-		end
-	end
-	return false
+local accentColor = Color3.fromRGB(120, 100, 255)
+
+for i, name in ipairs(tabNames) do
+    local tab = Instance.new("Frame")
+    tab.Name = "Tab" .. i
+    tab.Size = UDim2.new(1, 0, 0, 42)
+    tab.BackgroundColor3 = i == 1 and accentColor or Color3.fromRGB(32, 32, 44)
+    tab.BackgroundTransparency = i == 1 and 0.15 or 0
+    tab.LayoutOrder = i
+    tab.Parent = tabsFrame
+
+    local tabCorner = Instance.new("UICorner")
+    tabCorner.CornerRadius = UDim.new(0, 12)
+    tabCorner.Parent = tab
+
+    if i ~= 1 then
+        local tabStroke = Instance.new("UIStroke")
+        tabStroke.Color = Color3.fromRGB(255, 255, 255)
+        tabStroke.Transparency = 0.93
+        tabStroke.Parent = tab
+    end
+
+    local tabLabel = Instance.new("TextLabel")
+    tabLabel.Size = UDim2.new(1, -16, 0, 18)
+    tabLabel.Position = UDim2.new(0, 12, 0, 6)
+    tabLabel.BackgroundTransparency = 1
+    tabLabel.Text = name
+    tabLabel.Font = Enum.Font.GothamSemibold
+    tabLabel.TextSize = 13
+    tabLabel.TextColor3 = i == 1 and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(190, 190, 200)
+    tabLabel.TextXAlignment = Enum.TextXAlignment.Left
+    tabLabel.Parent = tab
+
+    if i ~= 1 then
+        local soonLabel = Instance.new("TextLabel")
+        soonLabel.Size = UDim2.new(1, -16, 0, 14)
+        soonLabel.Position = UDim2.new(0, 12, 0, 22)
+        soonLabel.BackgroundTransparency = 1
+        soonLabel.Text = "soon"
+        soonLabel.Font = Enum.Font.Gotham
+        soonLabel.TextSize = 11
+        soonLabel.TextColor3 = Color3.fromRGB(255, 190, 90)
+        soonLabel.TextXAlignment = Enum.TextXAlignment.Left
+        soonLabel.Parent = tab
+    end
 end
-
--- CLEAN FUNCTION
-local function deepClean()
-	-- Workspace
-	for _, obj in ipairs(workspace:GetDescendants()) do
-		if obj:IsA("Decal") or obj:IsA("Texture") then
-			obj:Destroy()
-		elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
-			obj:Destroy()
-		elseif obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
-			obj.Enabled = false
-		elseif obj:IsA("SurfaceGui") or obj:IsA("BillboardGui") or obj:IsA("Adornment") then
-			obj:Destroy()
-		elseif obj:IsA("Sound") then
-			if not obj:IsDescendantOf(player.Character) then
-				obj:Destroy()
-			end
-		elseif obj:IsA("BasePart") then
-			if isTrash(obj.Name) then
-				obj:Destroy()
-			else
-				obj.Material = Enum.Material.SmoothPlastic
-				if obj:IsA("MeshPart") or obj:IsA("UnionOperation") then
-					obj.RenderFidelity = Enum.RenderFidelity.Performance
-				end
-			end
-		end
-	end
-
-	-- Characters
-	for _, plr in ipairs(Players:GetPlayers()) do
-		if plr.Character then
-			for _, obj in ipairs(plr.Character:GetDescendants()) do
-				if obj:IsA("Decal") or obj:IsA("Texture") or obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Accessory") then
-					obj:Destroy()
-				elseif obj:IsA("BasePart") then
-					obj.Material = Enum.Material.SmoothPlastic
-				end
-			end
-		end
-	end
-
-	-- Lighting
-	Lighting.GlobalShadows = false
-	Lighting.FogEnd = 9e9
-	Lighting.Brightness = 2
-	for _, effect in ipairs(Lighting:GetChildren()) do
-		if effect:IsA("PostEffect") or effect:IsA("Atmosphere") or effect:IsA("Sky") or effect:IsA("Clouds") then
-			effect:Destroy()
-		end
-	end
-
-	settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-end
-
--- CONTINUOUS CLEAN
-local cleanConnection = nil
-
-local function startContinuousClean()
-	cleanConnection = workspace.DescendantAdded:Connect(function(obj)
-		task.wait()
-		if obj:IsA("Decal") or obj:IsA("Texture") then
-			obj:Destroy()
-		elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
-			obj:Destroy()
-		elseif obj:IsA("SurfaceGui") or obj:IsA("BillboardGui") or obj:IsA("Adornment") then
-			obj:Destroy()
-		elseif obj:IsA("BasePart") and isTrash(obj.Name) then
-			obj:Destroy()
-		elseif obj:IsA("BasePart") then
-			obj.Material = Enum.Material.SmoothPlastic
-		end
-	end)
-end
-
-local function stopContinuousClean()
-	if cleanConnection then
-		cleanConnection:Disconnect()
-		cleanConnection = nil
-	end
-end
-
--- FPS
-local frameCount = 0
-local lastTick = tick()
-RunService.RenderStepped:Connect(function()
-	frameCount += 1
-	local now = tick()
-	if now - lastTick >= 1 then
-		fpsNum.Text = tostring(frameCount)
-		frameCount = 0
-		lastTick = now
-	end
-end)
-
--- PING — robust read
-task.spawn(function()
-	while true do
-		local ok, net = pcall(function()
-			return Stats:WaitForChild("Network", 3)
-		end)
-		if ok and net then
-			local pingObj = net:FindFirstChild("Ping")
-			if pingObj and pingObj:IsA("NumberValue") then
-				local v = math.floor(pingObj.Value)
-				pingNum.Text = tostring(v) .. "ms"
-				if v < 50 then
-					pingNum.TextColor3 = Color3.fromRGB(80, 255, 120)
-				elseif v < 120 then
-					pingNum.TextColor3 = Color3.fromRGB(255, 200, 60)
-				else
-					pingNum.TextColor3 = Color3.fromRGB(255, 70, 70)
-				end
-			else
-				pingNum.Text = "N/A"
-				pingNum.TextColor3 = Color3.fromRGB(150, 150, 150)
-			end
-		else
-			pingNum.Text = "..."
-			pingNum.TextColor3 = Color3.fromRGB(150, 150, 150)
-		end
-		task.wait(1)
-	end
-end)
-
--- TOGGLE
-local active = false
-local function setToggle(state)
-	active = state
-	if state then
-		tween(switchBg, {BackgroundColor3 = Color3.fromRGB(255, 60, 60)}, 0.2)
-		tween(knob, {Position = UDim2.new(0, 23, 0.5, -9)}, 0.2)
-		tween(stroke, {Color = Color3.fromRGB(80, 255, 120), Transparency = 0.2}, 0.3)
-		title.TextColor3 = Color3.fromRGB(80, 255, 120)
-		deepClean()
-		startContinuousClean()
-	else
-		tween(switchBg, {BackgroundColor3 = Color3.fromRGB(60, 60, 70)}, 0.2)
-		tween(knob, {Position = UDim2.new(0, 3, 0.5, -9)}, 0.2)
-		tween(stroke, {Color = Color3.fromRGB(255, 60, 60), Transparency = 0.4}, 0.3)
-		title.TextColor3 = Color3.fromRGB(255, 70, 70)
-		stopContinuousClean()
-		settings().Rendering.QualityLevel = Enum.QualityLevel.Level07
-	end
-end
-
-switchBg.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		setToggle(not active)
-	end
-end)
