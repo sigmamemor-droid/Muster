@@ -1,6 +1,6 @@
 --[[
     ╔══════════════════════════════════════════════════════════════╗
-    ║         TOY ROTATION HUB — COMPLETE EDITION v4               ║
+    ║         TOY ROTATION HUB — CINEMATIC EDITION v5               ║
     ║         Ultimate Multilingual Loader (200KB+)                ║
     ║         PC / Mobile Auto-Detect + Manual Select               ║
     ║         Built by ratman4080 — FIXED VERSION                  ║
@@ -40,7 +40,7 @@ local Lang = {}
 -- ────────────────────────────────────────────────────────────────
 Lang["EN"] = {
     loaderTitle = "Toy Rotation Hub",
-    loaderSubtitle = "Complete Edition v4 — Ultimate",
+    loaderSubtitle = "Cinematic Edition v5 — Motion UI",
     loaderPhase1Title = "Select Your Device",
     loaderPhase1Desc = "Choose how you're playing. Auto-detected, but you can change.",
     loaderPhase1Auto = "Auto-Detected",
@@ -72,7 +72,7 @@ Lang["EN"] = {
     loaderProgress = "Progress",
     loaderReady = "Ready to Load",
     loaderWelcome = "Welcome to Toy Rotation Hub",
-    loaderVersion = "Version 4.0 — Ultimate Edition",
+    loaderVersion = "Version 5.0 — Cinematic Edition",
     loaderCredits = "Built by ratman4080",
     loaderPCMode = "PC Mode Active",
     loaderMobileMode = "Mobile Mode Active",
@@ -3595,19 +3595,63 @@ LoaderGui.ResetOnSpawn = false
 LoaderGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 LoaderGui.Parent = game:GetService("CoreGui")
 
+-- CINEMATIC VISUAL LAYER — local-only animated backdrop, no external assets.
+local Backdrop = Instance.new("Frame")
+Backdrop.Name = "CinematicBackdrop"
+Backdrop.Size = UDim2.fromScale(1, 1)
+Backdrop.BackgroundColor3 = Color3.fromRGB(5, 8, 18)
+Backdrop.BackgroundTransparency = 0.18
+Backdrop.BorderSizePixel = 0
+Backdrop.ZIndex = 0
+Backdrop.Parent = LoaderGui
+local BackdropGradient = Instance.new("UIGradient")
+BackdropGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(8, 13, 34)),
+    ColorSequenceKeypoint.new(.48, Color3.fromRGB(20, 10, 42)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(6, 27, 42))
+})
+BackdropGradient.Rotation = 25
+BackdropGradient.Parent = Backdrop
+local function makeAmbientGlow(name, color, position, size)
+    local glow = Instance.new("Frame")
+    glow.Name = name; glow.AnchorPoint = Vector2.new(.5, .5); glow.Position = position; glow.Size = size
+    glow.BackgroundColor3 = color; glow.BackgroundTransparency = .72; glow.BorderSizePixel = 0; glow.ZIndex = 1; glow.Parent = Backdrop
+    local corner = Instance.new("UICorner"); corner.CornerRadius = UDim.new(1, 0); corner.Parent = glow
+    return glow
+end
+local GlowA = makeAmbientGlow("GlowA", Color3.fromRGB(55, 130, 255), UDim2.fromScale(.15, .2), UDim2.fromOffset(260, 260))
+local GlowB = makeAmbientGlow("GlowB", Color3.fromRGB(195, 65, 255), UDim2.fromScale(.84, .72), UDim2.fromOffset(340, 340))
+local GlowC = makeAmbientGlow("GlowC", Color3.fromRGB(45, 245, 205), UDim2.fromScale(.52, 1.1), UDim2.fromOffset(180, 180))
+task.spawn(function()
+    while LoaderGui.Parent do
+        TweenService:Create(GlowA, TweenInfo.new(4.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Position = UDim2.fromScale(.23,.28), BackgroundTransparency = .81}):Play()
+        TweenService:Create(GlowB, TweenInfo.new(5.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Position = UDim2.fromScale(.76,.64), BackgroundTransparency = .78}):Play()
+        task.wait(4.5)
+        TweenService:Create(GlowA, TweenInfo.new(4.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Position = UDim2.fromScale(.1,.16), BackgroundTransparency = .7}):Play()
+        TweenService:Create(GlowB, TweenInfo.new(5.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Position = UDim2.fromScale(.9,.79), BackgroundTransparency = .68}):Play()
+        task.wait(4.5)
+    end
+end)
+
 -- Main container
 local MainContainer = Instance.new("Frame")
 MainContainer.Name = "MainContainer"
-MainContainer.Size = isMobile and UDim2.new(0.92, 0, 0, 350) or UDim2.new(0, 500, 0, 420)
+MainContainer.Size = isMobile and UDim2.new(0.94, 0, 0.84, 0) or UDim2.new(0, 560, 0, 460)
 MainContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
 MainContainer.AnchorPoint = Vector2.new(0.5, 0.5)
 MainContainer.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
 MainContainer.BorderSizePixel = 0
+MainContainer.ZIndex = 5
 MainContainer.Parent = LoaderGui
 
 local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 12)
 MainCorner.Parent = MainContainer
+
+local MainGradient = Instance.new("UIGradient")
+MainGradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(19, 25, 49)), ColorSequenceKeypoint.new(.55, Color3.fromRGB(13, 15, 29)), ColorSequenceKeypoint.new(1, Color3.fromRGB(36, 18, 57))})
+MainGradient.Rotation = 35
+MainGradient.Parent = MainContainer
 
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Color = Color3.fromRGB(80, 80, 130)
@@ -4084,6 +4128,15 @@ FillGradient.Color = ColorSequence.new({
 })
 FillGradient.Parent = LoadingBarFill
 
+-- Animated launch core makes the short loading moment feel deliberate rather than static.
+local LoadingCore = Instance.new("Frame")
+LoadingCore.Size = UDim2.fromOffset(54, 54); LoadingCore.AnchorPoint = Vector2.new(.5,.5); LoadingCore.Position = UDim2.new(.5,0,.27,0)
+LoadingCore.BackgroundColor3 = Color3.fromRGB(63, 172, 255); LoadingCore.BorderSizePixel = 0; LoadingCore.Parent = LoadingFrame
+local CoreCorner = Instance.new("UICorner"); CoreCorner.CornerRadius = UDim.new(1,0); CoreCorner.Parent = LoadingCore
+local CoreStroke = Instance.new("UIStroke"); CoreStroke.Color = Color3.fromRGB(202, 135, 255); CoreStroke.Thickness = 3; CoreStroke.Parent = LoadingCore
+local CoreText = Instance.new("TextLabel"); CoreText.Size = UDim2.fromScale(1,1); CoreText.BackgroundTransparency = 1; CoreText.Text = "✦"; CoreText.TextColor3 = Color3.new(1,1,1); CoreText.Font = Enum.Font.GothamBlack; CoreText.TextSize = 27; CoreText.Parent = LoadingCore
+task.spawn(function() while LoaderGui.Parent do TweenService:Create(LoadingCore, TweenInfo.new(.85, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Size=UDim2.fromOffset(64,64), BackgroundColor3=Color3.fromRGB(150,79,255)}):Play(); TweenService:Create(CoreStroke, TweenInfo.new(.85), {Transparency=.65}):Play(); task.wait(.85); TweenService:Create(LoadingCore, TweenInfo.new(.85, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Size=UDim2.fromOffset(54,54), BackgroundColor3=Color3.fromRGB(63,172,255)}):Play(); TweenService:Create(CoreStroke, TweenInfo.new(.85), {Transparency=.05}):Play(); task.wait(.85) end end)
+
 -- ═══ DRAG FUNCTIONALITY ═══
 local dragging = false
 local dragInput, mousePos, framePos
@@ -4251,11 +4304,23 @@ P2LoadBtn.Activated:Connect(function()
                 label.TextXAlignment = Enum.TextXAlignment.Left; label.TextWrapped = true; label.Parent = parent
                 return label
             end
+            -- Motion language shared by every menu control: soft neon edge, press depth, and touch-safe feedback.
             local function styleButton(button, color)
-                button.BackgroundColor3 = color or Color3.fromRGB(47, 53, 78)
-                button.BorderSizePixel = 0; button.AutoButtonColor = true
+                local baseColor = color or Color3.fromRGB(47, 53, 78)
+                button.BackgroundColor3 = baseColor; button.BorderSizePixel = 0; button.AutoButtonColor = false
                 button.TextColor3 = Color3.fromRGB(245, 247, 255); button.Font = Enum.Font.GothamMedium
-                button.TextSize = mobile and 12 or 13; round(button, 7)
+                button.TextSize = mobile and 12 or 13; button.ClipsDescendants = true; round(button, 7)
+                local stroke = Instance.new("UIStroke"); stroke.Name = "MotionStroke"; stroke.Color = Color3.fromRGB(116, 153, 255); stroke.Transparency = .72; stroke.Thickness = 1; stroke.Parent = button
+                local sheen = Instance.new("UIGradient"); sheen.Name = "MotionSheen"; sheen.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, baseColor:Lerp(Color3.new(1,1,1), .12)), ColorSequenceKeypoint.new(.55, baseColor), ColorSequenceKeypoint.new(1, baseColor:Lerp(Color3.fromRGB(35,20,70), .2))}); sheen.Rotation = 90; sheen.Parent = button
+                local originalSize = button.Size
+                local function pulse(pressed)
+                    if not button.Parent then return end
+                    TweenService:Create(button, TweenInfo.new(.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = pressed and baseColor:Lerp(Color3.new(1,1,1), .16) or baseColor, Size = pressed and UDim2.new(originalSize.X.Scale, originalSize.X.Offset - 2, originalSize.Y.Scale, originalSize.Y.Offset - 2) or originalSize}):Play()
+                    TweenService:Create(stroke, TweenInfo.new(.16), {Transparency = pressed and .12 or .72, Thickness = pressed and 1.5 or 1}):Play()
+                end
+                button.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then pulse(true) end end)
+                button.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then pulse(false) end end)
+                button.MouseEnter:Connect(function() pulse(true) end); button.MouseLeave:Connect(function() pulse(false) end)
             end
             local function addDrag(handle, frame)
                 local dragging, dragInput, start, original = false, nil, nil, nil
@@ -4296,7 +4361,10 @@ P2LoadBtn.Activated:Connect(function()
                 local gradient = Instance.new("UIGradient"); gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(19,24,43)), ColorSequenceKeypoint.new(.5, Color3.fromRGB(14,17,29)), ColorSequenceKeypoint.new(1, Color3.fromRGB(30,23,53))}); gradient.Rotation = 35; gradient.Parent = frame
                 local top = Instance.new("Frame"); top.Size = UDim2.new(1, 0, 0, 44); top.BackgroundColor3 = Color3.fromRGB(25, 29, 45); top.BorderSizePixel = 0; top.Parent = frame; round(top, 12)
                 local title = newLabel(top, data.Name or "Toy Rotation Hub", UDim2.new(1, -100, 0, 27), Color3.fromRGB(255,255,255), Enum.Font.GothamBold); title.Position = UDim2.new(0, 14, 0, 4); title.TextSize = mobile and 14 or 16
-                local subtitle = newLabel(top, "MOBILE CONTROL PANEL  •  AIM WITH YOUR SIGHT", UDim2.new(1, -105, 0, 13), Color3.fromRGB(146, 170, 235), Enum.Font.GothamMedium); subtitle.Position = UDim2.new(0, 14, 0, 27); subtitle.TextSize = mobile and 7 or 8
+                local subtitle = newLabel(top, "CINEMATIC CONTROL PANEL  •  TOUCH READY", UDim2.new(1, -105, 0, 13), Color3.fromRGB(146, 170, 235), Enum.Font.GothamMedium); subtitle.Position = UDim2.new(0, 14, 0, 27); subtitle.TextSize = mobile and 7 or 8
+                local accent = Instance.new("Frame"); accent.Size = UDim2.new(.34,0,0,2); accent.Position = UDim2.new(0,14,1,-3); accent.BackgroundColor3 = Color3.fromRGB(79, 202, 255); accent.BorderSizePixel = 0; accent.Parent = top
+                local accentCorner = Instance.new("UICorner"); accentCorner.CornerRadius = UDim.new(1,0); accentCorner.Parent = accent
+                task.spawn(function() while accent.Parent do TweenService:Create(accent, TweenInfo.new(1.4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Size = UDim2.new(.68,0,0,2), BackgroundColor3 = Color3.fromRGB(194,105,255)}):Play(); task.wait(1.4); TweenService:Create(accent, TweenInfo.new(1.4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Size = UDim2.new(.34,0,0,2), BackgroundColor3 = Color3.fromRGB(79,202,255)}):Play(); task.wait(1.4) end end)
                 -- A compact Rayfield-style minimize control. The small badge remains available on both PC and touch screens.
                 local close = Instance.new("TextButton"); close.Size = UDim2.new(0, 28, 0, 28); close.Position = UDim2.new(1, -35, .5, -14); close.Text = "×"; styleButton(close, Color3.fromRGB(155, 55, 65)); close.TextSize = 20; close.Parent = top; close.Activated:Connect(function() MenuGui:Destroy() end)
                 local minimize = Instance.new("TextButton"); minimize.Size = UDim2.new(0, 28, 0, 28); minimize.Position = UDim2.new(1, -68, .5, -14); minimize.Text = "—"; styleButton(minimize, Color3.fromRGB(59, 88, 160)); minimize.TextSize = 18; minimize.Parent = top
@@ -4816,8 +4884,8 @@ P2LoadBtn.Activated:Connect(function()
             return BG, BP
         end
 
-        -- ICBM workflow: touch/pick a spawned missile, release it, then press Launch.
-        -- The selection step is deliberately separate from launch so it matches touch controls.
+        -- ICBM CINEMATIC WORKFLOW
+        -- A missile is remembered as soon as the player takes hold of it; no separate prepare step is needed.
         local Mouse = LocalPlayer:GetMouse()
         local function getAimDirection(origin)
             local camera = Workspace.CurrentCamera
@@ -4826,83 +4894,124 @@ P2LoadBtn.Activated:Connect(function()
                 local delta = Mouse.Hit.Position - origin
                 if delta.Magnitude > 0.01 then return delta.Unit end
             end
-            -- Mobile has no mouse: steer through the exact centre of the camera/crosshair.
             local viewport = camera.ViewportSize
-            return camera:ViewportPointToRay(viewport.X * 0.5, viewport.Y * 0.5).Direction.Unit
+            return camera:ViewportPointToRay(viewport.X * .5, viewport.Y * .5).Direction.Unit
         end
 
-        local ICBM = { Rockets = {}, Guidance = true, Speed = 115, AscentHeight = 350, SelectedIndex = nil, FollowIndex = nil, OriginalCameraSubject = nil }
+        local ICBM = {
+            Rockets = {}, SelectedIndex = nil, FollowIndex = nil, OriginalCameraSubject = nil,
+            OriginalCameraType = nil, Guidance = true, Speed = 40, AscentHeight = 180,
+            ThirdPerson = true, MemoryConnection = nil
+        }
+        local CAMERA_BIND = "TRH_ICBM_ThirdPersonCamera"
+        local selectICBM
+
+        local function stopRocketCamera(restore)
+            RunService:UnbindFromRenderStep(CAMERA_BIND)
+            local camera = Workspace.CurrentCamera
+            if restore and camera and ICBM.OriginalCameraSubject then
+                camera.CameraType = ICBM.OriginalCameraType or Enum.CameraType.Custom
+                camera.CameraSubject = ICBM.OriginalCameraSubject
+            end
+            ICBM.FollowIndex = nil
+        end
 
         local function restoreRocket(rocket)
             if rocket.SelectionConnection then pcall(function() rocket.SelectionConnection:Disconnect() end) end
             if rocket.FlightConnection then pcall(function() rocket.FlightConnection:Disconnect() end) end
             if rocket.Gyro then pcall(function() rocket.Gyro:Destroy() end) end
             if rocket.Position then pcall(function() rocket.Position:Destroy() end) end
+            if rocket.Velocity then pcall(function() rocket.Velocity:Destroy() end) end
             for part, state in pairs(rocket.PartStates or {}) do
                 if part and part.Parent then
                     part.CanCollide, part.CanTouch, part.Anchored = state.CanCollide, state.CanTouch, state.Anchored
+                    part.CFrame = state.CFrame
+                    part.AssemblyLinearVelocity, part.AssemblyAngularVelocity = state.LinearVelocity, state.AngularVelocity
                 end
             end
-            if rocket.Model and rocket.Model.Parent then rocket.Model:SetAttribute("TRH_ICBMArmed", nil) end
         end
 
         local function resetICBM()
-            local camera = Workspace.CurrentCamera
-            for _, rocket in ipairs(ICBM.Rockets) do restoreRocket(rocket) end
-            ICBM.Rockets, ICBM.SelectedIndex, ICBM.FollowIndex = {}, nil, nil
-            if camera and ICBM.OriginalCameraSubject then camera.CameraSubject = ICBM.OriginalCameraSubject end
-            ICBM.OriginalCameraSubject = nil
-            OrionLib:MakeNotification({Name = "ICBM", Content = "ICBM reset.", Time = 3})
+            stopRocketCamera(true)
+            for index, rocket in ipairs(ICBM.Rockets) do
+                restoreRocket(rocket)
+                rocket.Active, rocket.Selected, rocket.FlightConnection, rocket.Gyro, rocket.Position, rocket.Velocity = false, false, nil, nil, nil, nil
+                if rocket.Part and rocket.Part.Parent then
+                    rocket.SelectionConnection = rocket.Part.Touched:Connect(function(hit)
+                        local character = LocalPlayer.Character
+                        if not rocket.Active and character and hit:IsDescendantOf(character) then selectICBM(rocket, index) end
+                    end)
+                end
+            end
+            ICBM.SelectedIndex = nil
+            ICBM.OriginalCameraSubject, ICBM.OriginalCameraType = nil, nil
+            OrionLib:MakeNotification({Name = "ICBM reset", Content = "Rockets and camera restored. Pick up a remembered rocket and launch again.", Time = 4})
         end
 
         local function followRocket(index)
             local rocket, camera = ICBM.Rockets[index], Workspace.CurrentCamera
             if not rocket or not rocket.Active or not rocket.Part or not rocket.Part.Parent or not camera then
-                OrionLib:MakeNotification({Name = "ICBM", Content = "Launch a rocket first.", Time = 3})
+                OrionLib:MakeNotification({Name = "ICBM camera", Content = "Launch this remembered rocket first.", Time = 3})
                 return
             end
-            if not ICBM.OriginalCameraSubject then ICBM.OriginalCameraSubject = camera.CameraSubject end
-            ICBM.FollowIndex = index; camera.CameraSubject = rocket.Part; camera.CameraType = Enum.CameraType.Custom
+            if not ICBM.OriginalCameraSubject then
+                ICBM.OriginalCameraSubject, ICBM.OriginalCameraType = camera.CameraSubject, camera.CameraType
+            end
+            ICBM.FollowIndex = index
+            if not ICBM.ThirdPerson then
+                RunService:UnbindFromRenderStep(CAMERA_BIND)
+                camera.CameraSubject, camera.CameraType = rocket.Part, Enum.CameraType.Custom
+                return
+            end
+            camera.CameraType = Enum.CameraType.Scriptable
+            RunService:BindToRenderStep(CAMERA_BIND, Enum.RenderPriority.Camera.Value + 1, function()
+                if not rocket.Part or not rocket.Part.Parent then stopRocketCamera(true); return end
+                local part = rocket.Part
+                local velocityDirection = part.AssemblyLinearVelocity.Magnitude > 1 and part.AssemblyLinearVelocity.Unit or part.CFrame.LookVector
+                local lookDirection = velocityDirection.Magnitude > .01 and velocityDirection or part.CFrame.LookVector
+                local cameraPosition = part.Position - lookDirection * 18 + Vector3.new(0, 7, 0)
+                camera.CFrame = CFrame.lookAt(cameraPosition, part.Position + lookDirection * 12)
+                camera.Focus = CFrame.new(part.Position)
+            end)
+            OrionLib:MakeNotification({Name = "ICBM camera", Content = "Third-person tracking enabled for rocket " .. index .. ".", Time = 3})
         end
 
-        local function selectICBM(rocket, index)
+        selectICBM = function(rocket, index)
             if rocket.Active then return end
             ICBM.SelectedIndex = index
             for i, other in ipairs(ICBM.Rockets) do other.Selected = (i == index) end
-            OrionLib:MakeNotification({Name = "ICBM ready", Content = "Missile selected. Release it, then press LAUNCH ICBM.", Time = 4})
+            OrionLib:MakeNotification({Name = "ICBM remembered", Content = "Rocket " .. index .. " is saved. Put it down, then press LAUNCH.", Time = 4})
         end
 
-        local function prepareICBM()
-            local missiles = findSpecificObjects("FireworkMissile")
-            if #missiles == 0 then missiles = findSpecificObjects("BombMissile") end
-            if #missiles == 0 then
-                OrionLib:MakeNotification({Name = "ICBM", Content = "Spawn a Firework Missile or Bomb Missile first.", Time = 4})
-                return
-            end
-            local prepared = 0
-            for _, model in ipairs(missiles) do
-                if #ICBM.Rockets >= 5 then break end
-                local part = getPrimaryPart(model)
-                if part and not model:GetAttribute("TRH_ICBMArmed") then
-                    prepared = prepared + 1; model:SetAttribute("TRH_ICBMArmed", true)
-                    local rocket = {Model = model, Part = part, Active = false, Selected = false, PartStates = {}}
-                    table.insert(ICBM.Rockets, rocket)
-                    local index = #ICBM.Rockets
-                    rocket.SelectionConnection = part.Touched:Connect(function(hit)
-                        local character = LocalPlayer.Character
-                        if rocket.Active or not character or not hit:IsDescendantOf(character) then return end
-                        selectICBM(rocket, index)
-                    end)
-                end
-            end
-            OrionLib:MakeNotification({Name = "ICBM ready", Content = prepared > 0 and "Pick up a prepared missile, put it down, then press LAUNCH ICBM." or "Prepared missiles are already waiting.", Time = 5})
+        local function rememberRocket(model)
+            if not model or not model.Parent or (model.Name ~= "FireworkMissile" and model.Name ~= "BombMissile") then return end
+            for _, rocket in ipairs(ICBM.Rockets) do if rocket.Model == model then return end end
+            if #ICBM.Rockets >= 5 then return end
+            local part = getPrimaryPart(model)
+            if not part then return end
+            local rocket = {Model = model, Part = part, Active = false, Selected = false, PartStates = {}}
+            table.insert(ICBM.Rockets, rocket)
+            local index = #ICBM.Rockets
+            rocket.SelectionConnection = part.Touched:Connect(function(hit)
+                local character = LocalPlayer.Character
+                if rocket.Active or not character or not hit:IsDescendantOf(character) then return end
+                selectICBM(rocket, index)
+            end)
         end
+        local function syncRocketMemory()
+            for _, model in ipairs(findSpecificObjects("FireworkMissile")) do rememberRocket(model) end
+            for _, model in ipairs(findSpecificObjects("BombMissile")) do rememberRocket(model) end
+        end
+        -- New missiles are armed for memory automatically, including ones spawned after the panel opens.
+        ICBM.MemoryConnection = Workspace.DescendantAdded:Connect(function(item)
+            if item:IsA("Model") and (item.Name == "FireworkMissile" or item.Name == "BombMissile") then task.defer(rememberRocket, item) end
+        end)
+        syncRocketMemory()
 
         local function launchICBM()
-            local index = ICBM.SelectedIndex
-            local rocket = index and ICBM.Rockets[index]
+            local index, rocket = ICBM.SelectedIndex, ICBM.SelectedIndex and ICBM.Rockets[ICBM.SelectedIndex]
             if not rocket or rocket.Active or not rocket.Part or not rocket.Part.Parent then
-                OrionLib:MakeNotification({Name = "ICBM", Content = "Pick up and release a prepared missile first.", Time = 4})
+                OrionLib:MakeNotification({Name = "ICBM", Content = "Pick up a rocket first — it will be remembered automatically.", Time = 4})
                 return
             end
             local part, model = rocket.Part, rocket.Model
@@ -4910,7 +5019,7 @@ P2LoadBtn.Activated:Connect(function()
             if rocket.SelectionConnection then rocket.SelectionConnection:Disconnect(); rocket.SelectionConnection = nil end
             for _, descendant in ipairs(model:GetDescendants()) do
                 if descendant:IsA("BasePart") then
-                    rocket.PartStates[descendant] = {CanCollide = descendant.CanCollide, CanTouch = descendant.CanTouch, Anchored = descendant.Anchored}
+                    rocket.PartStates[descendant] = {CanCollide = descendant.CanCollide, CanTouch = descendant.CanTouch, Anchored = descendant.Anchored, CFrame = descendant.CFrame, LinearVelocity = descendant.AssemblyLinearVelocity, AngularVelocity = descendant.AssemblyAngularVelocity}
                     descendant.Anchored = false; descendant.CanCollide = false
                     pcall(function() descendant:SetNetworkOwner(LocalPlayer) end)
                 end
@@ -4918,22 +5027,26 @@ P2LoadBtn.Activated:Connect(function()
             rocket.Gyro, rocket.Position = attachPhysics(part)
             if not rocket.Gyro or not rocket.Position then
                 rocket.Active = false
-                OrionLib:MakeNotification({Name = "ICBM", Content = "Could not control this missile.", Time = 3})
+                OrionLib:MakeNotification({Name = "ICBM", Content = "Could not control this rocket.", Time = 3})
                 return
             end
+            -- A velocity controller, rather than a moving position target, keeps flight at exactly 40 studs/second.
+            rocket.Position:Destroy(); rocket.Position = nil
+            rocket.Velocity = Instance.new("BodyVelocity")
+            rocket.Velocity.MaxForce = Vector3.new(1e10, 1e10, 1e10)
+            rocket.Velocity.P = 25000
+            rocket.Velocity.Parent = part
             ICBM.SelectedIndex = nil
             rocket.FlightConnection = RunService.Heartbeat:Connect(function(dt)
-                if not part.Parent then
-                    if rocket.FlightConnection then rocket.FlightConnection:Disconnect() end
-                    return
-                end
+                if not part.Parent then if rocket.FlightConnection then rocket.FlightConnection:Disconnect() end; return end
                 local climbed = part.Position.Y - rocket.StartPosition.Y >= ICBM.AscentHeight
                 local direction = climbed and getAimDirection(part.Position) or Vector3.yAxis
                 if climbed and not ICBM.Guidance then direction = part.CFrame.LookVector end
-                rocket.Position.Position = part.Position + direction * ICBM.Speed * dt
+                -- Design rule: this mode always flies at one predictable speed — 40.
+                rocket.Velocity.Velocity = direction * 40
                 rocket.Gyro.CFrame = CFrame.lookAt(part.Position, part.Position + direction)
             end)
-            OrionLib:MakeNotification({Name = "ICBM launched", Content = "Vertical climb started. Guidance activates at the selected height.", Time = 4})
+            OrionLib:MakeNotification({Name = "ICBM launched", Content = "Rocket " .. index .. " launched at fixed speed 40. Select it in Camera to watch.", Time = 4})
         end
 
         -- Hand System
@@ -5276,21 +5389,20 @@ P2LoadBtn.Activated:Connect(function()
         simpleHandTab:AddSlider({Name = T("simpleHandFingerLen"), Min = 3, Max = 15, Default = 6, Color = Theme.SliderColor, Increment = 0.5, ValueName = T("notifStuds"), Callback = function(v) HandSystem.Config.Radius = v end})
         simpleHandTab:AddToggle({Name = T("ctrlFollowPlayer"), Default = true, Callback = function(v) HandSystem.Config.FollowPlayer = v end})
 
-        -- ICBM Tab — pick/release first, then launch. Buttons use the UI's touch-safe activation.
-        local icbmTab = window:MakeTab({Name = "ICBM", Icon = "rbxassetid://4483362458"})
-        icbmTab:AddParagraph("ICBM: pick, release, launch", "1. Spawn a missile. 2. Press PREPARE. 3. Pick it up and put it down. 4. Press LAUNCH. It climbs vertically, then follows mouse aim on PC or the centre sight on mobile.")
-        icbmTab:AddToggle({Name = "Sight guidance (PC + mobile)", Default = true, Callback = function(v) ICBM.Guidance = v end})
-        icbmTab:AddSlider({Name = "Rocket speed", Min = 45, Max = 220, Default = 115, Increment = 5, Callback = function(v) ICBM.Speed = v end})
-        icbmTab:AddSlider({Name = "Ascent altitude", Min = 100, Max = 1000, Default = 350, Increment = 25, Callback = function(v) ICBM.AscentHeight = v end})
-        icbmTab:AddButton({Name = "① PREPARE spawned missiles (max 5)", Callback = prepareICBM})
-        icbmTab:AddButton({Name = "② 🚀 LAUNCH selected ICBM", Callback = launchICBM})
-        icbmTab:AddSection({Name = "Camera follow"})
-        icbmTab:AddLabel("Choose a launched rocket to watch. Camera returns on reset.")
-        for rocketNumber = 1, 5 do
-            local n = rocketNumber
+        -- ICBM tab: one-speed flight, remembered pickup, launch/reset and spectator selection.
+        local icbmTab = window:MakeTab({Name = "🚀 ICBM", Icon = "rbxassetid://4483362458"})
+        icbmTab:AddParagraph("Rocket memory + cinematic launch", "Pick up any Firework Missile or Bomb Missile. The panel remembers it automatically. Release it, press LAUNCH, then choose which launched rocket to watch.")
+        icbmTab:AddSection({Name = "FLIGHT SYSTEM"})
+        icbmTab:AddLabel("Fixed rocket speed: 40  •  Touch/crosshair guidance after ascent")
+        icbmTab:AddButton({Name = "🚀 LAUNCH remembered rocket", Callback = launchICBM})
+        icbmTab:AddButton({Name = "↺ RESET rockets + camera", Callback = resetICBM})
+        icbmTab:AddSection({Name = "CAMERA — THIRD PERSON"})
+        icbmTab:AddToggle({Name = "👤 Third-person rocket view", Default = true, Callback = function(v) ICBM.ThirdPerson = v; if ICBM.FollowIndex then followRocket(ICBM.FollowIndex) end end})
+        icbmTab:AddLabel("Launch a rocket, then tap its watch button.")
+        for i = 1, 5 do
+            local n = i
             icbmTab:AddButton({Name = "👁 Watch rocket " .. n, Callback = function() followRocket(n) end})
         end
-        icbmTab:AddButton({Name = "↺ Reset rockets + camera", Callback = resetICBM})
 
         -- Barrier Break Tab
         local barrierTab = window:MakeTab({Name = T("tabBarrier"), Icon = "rbxassetid://4483362458"})
