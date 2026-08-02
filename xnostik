@@ -48,7 +48,9 @@ local C = {
 local currentFont = Enum.Font.GothamSemibold
 
 ---------------------------------------------------------
--- LOADING SCREEN
+-- LOADING SCREEN — WAVING LOGOTYPE
+-- Нативная Roblox-версия примера: девять срезов текста заменены
+-- отдельными буквами, которые формируют движущуюся световую волну.
 ---------------------------------------------------------
 local LS = Instance.new("Frame")
 LS.Name = "LoadingScreen"
@@ -59,59 +61,142 @@ LS.ZIndex = 100
 LS.Parent = ScreenGui
 
 local LogoBox = Instance.new("Frame")
-LogoBox.Size = UDim2.new(0, 200, 0, 160)
-LogoBox.Position = UDim2.new(0.5, -100, 0.5, -80)
+LogoBox.Name = "Loader"
+LogoBox.Size = UDim2.new(0, 300, 0, 150)
+LogoBox.AnchorPoint = Vector2.new(0.5, 0.5)
+LogoBox.Position = UDim2.new(0.5, 0, 0.5, 0)
 LogoBox.BackgroundTransparency = 1
 LogoBox.ZIndex = 101
 LogoBox.Parent = LS
 
-local MainLogo = Instance.new("TextLabel")
-MainLogo.Size = UDim2.new(1, 0, 0, 50)
-MainLogo.Position = UDim2.new(0, 0, 0, 10)
-MainLogo.BackgroundTransparency = 1
-MainLogo.Text = "linbergz"
-MainLogo.TextColor3 = C.white
-MainLogo.TextSize = 34
-MainLogo.Font = Enum.Font.GothamBlack
-MainLogo.ZIndex = 102
-MainLogo.Parent = LogoBox
+local LoaderTitle = Instance.new("TextLabel")
+LoaderTitle.Size = UDim2.new(1, 0, 0, 16)
+LoaderTitle.Position = UDim2.new(0, 0, 0, 5)
+LoaderTitle.BackgroundTransparency = 1
+LoaderTitle.Text = "INITIALIZING"
+LoaderTitle.TextColor3 = C.textDim
+LoaderTitle.TextSize = 9
+LoaderTitle.Font = Enum.Font.GothamBold
+LoaderTitle.ZIndex = 102
+LoaderTitle.Parent = LogoBox
 
-local SubLogo = Instance.new("TextLabel")
-SubLogo.Size = UDim2.new(1, 0, 0, 20)
-SubLogo.Position = UDim2.new(0, 0, 0, 60)
-SubLogo.BackgroundTransparency = 1
-SubLogo.Text = "UI PREVIEW BUILD"
-SubLogo.TextColor3 = C.textDim
-SubLogo.TextSize = 10
-SubLogo.Font = Enum.Font.GothamBold
-SubLogo.ZIndex = 102
-SubLogo.Parent = LogoBox
+local Word = Instance.new("Frame")
+Word.Name = "AnimatedWord"
+Word.Size = UDim2.new(1, 0, 0, 50)
+Word.Position = UDim2.new(0, 0, 0, 31)
+Word.BackgroundTransparency = 1
+Word.ZIndex = 102
+Word.Parent = LogoBox
 
-local ProgressBg = Instance.new("Frame")
-ProgressBg.Size = UDim2.new(0.8, 0, 0, 3)
-ProgressBg.Position = UDim2.new(0.1, 0, 0, 100)
-ProgressBg.BackgroundColor3 = Color3.fromRGB(24, 20, 38)
-ProgressBg.BorderSizePixel = 0
-ProgressBg.ZIndex = 102
-ProgressBg.Parent = LogoBox
-Instance.new("UICorner", ProgressBg).CornerRadius = UDim.new(1, 0)
+local WL = Instance.new("UIListLayout")
+WL.FillDirection = Enum.FillDirection.Horizontal
+WL.HorizontalAlignment = Enum.HorizontalAlignment.Center
+WL.VerticalAlignment = Enum.VerticalAlignment.Center
+WL.Padding = UDim.new(0, -1)
+WL.Parent = Word
 
-local ProgressFill = Instance.new("Frame")
-ProgressFill.Size = UDim2.new(0, 0, 1, 0)
-ProgressFill.BackgroundColor3 = C.accent
-ProgressFill.BorderSizePixel = 0
-ProgressFill.ZIndex = 103
-ProgressFill.Parent = ProgressBg
-Instance.new("UICorner", ProgressFill).CornerRadius = UDim.new(1, 0)
+local letters = {}
+for index, char in utf8.graphemes("LINBERGZ") do
+    local letter = Instance.new("TextLabel")
+    letter.Name = "Letter" .. tostring(index)
+    letter.Size = UDim2.new(0, 31, 0, 48)
+    letter.BackgroundTransparency = 1
+    letter.Text = char
+    letter.TextColor3 = C.white
+    letter.TextTransparency = 0.32
+    letter.TextSize = 34
+    letter.Font = Enum.Font.GothamBlack
+    letter.ZIndex = 103
+    letter.Parent = Word
+    table.insert(letters, letter)
+end
+
+local Underline = Instance.new("Frame")
+Underline.Name = "LoadingLine"
+Underline.Size = UDim2.new(0, 142, 0, 3)
+Underline.AnchorPoint = Vector2.new(0.5, 0)
+Underline.Position = UDim2.new(0.5, 0, 0, 91)
+Underline.BackgroundColor3 = C.elevated
+Underline.BorderSizePixel = 0
+Underline.ClipsDescendants = true
+Underline.ZIndex = 102
+Underline.Parent = LogoBox
+Instance.new("UICorner", Underline).CornerRadius = UDim.new(1, 0)
+
+local LineGlow = Instance.new("Frame")
+LineGlow.Size = UDim2.new(0, 36, 1, 0)
+LineGlow.Position = UDim2.new(0, -36, 0, 0)
+LineGlow.BackgroundColor3 = C.white
+LineGlow.BorderSizePixel = 0
+LineGlow.ZIndex = 103
+LineGlow.Parent = Underline
+Instance.new("UICorner", LineGlow).CornerRadius = UDim.new(1, 0)
+
+local Status = Instance.new("TextLabel")
+Status.Size = UDim2.new(1, 0, 0, 16)
+Status.Position = UDim2.new(0, 0, 0, 106)
+Status.BackgroundTransparency = 1
+Status.Text = "LOADING INTERFACE"
+Status.TextColor3 = C.textSec
+Status.TextSize = 9
+Status.Font = Enum.Font.GothamBold
+Status.ZIndex = 102
+Status.Parent = LogoBox
+
+-- Свет проходит по буквам слева направо; крайние буквы немного меньше,
+-- как в CSS-примере с девятью отдельными срезами текста.
+task.spawn(function()
+    while LS.Parent do
+        for i, letter in ipairs(letters) do
+            local centerDistance = math.abs(i - 4.5) / 3.5
+            local baseSize = math.floor(34 - centerDistance * 10)
+            local baseTransparency = 0.08 + centerDistance * 0.48
+            TweenService:Create(letter, TweenInfo.new(0.20, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+                TextColor3 = C.accentLight,
+                TextTransparency = 0,
+                TextSize = baseSize + 4,
+                Position = UDim2.new(0, 0, 0, -4),
+            }):Play()
+            task.delay(0.18, function()
+                if letter.Parent then
+                    TweenService:Create(letter, TweenInfo.new(0.42, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+                        TextColor3 = C.white,
+                        TextTransparency = baseTransparency,
+                        TextSize = baseSize,
+                        Position = UDim2.new(0, 0, 0, 0),
+                    }):Play()
+                end
+            end)
+            task.wait(0.10)
+        end
+        task.wait(0.22)
+    end
+end)
 
 task.spawn(function()
-    TweenService:Create(ProgressFill, TweenInfo.new(0.5), {Size = UDim2.new(1, 0, 1, 0)}):Play()
-    task.wait(0.7)
-    local fadeOut = TweenService:Create(LS, TweenInfo.new(0.35), {BackgroundTransparency = 1})
-    TweenService:Create(LogoBox, TweenInfo.new(0.3), {Position = UDim2.new(0.5, -100, 0.5, -120)}):Play()
-    fadeOut:Play()
-    fadeOut.Completed:Wait()
-    LS:Destroy() -- после загрузки не остаётся ни одного невидимого UI-элемента
+    while LineGlow.Parent do
+        LineGlow.Position = UDim2.new(0, -36, 0, 0)
+        local sweep = TweenService:Create(LineGlow, TweenInfo.new(1.25, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+            Position = UDim2.new(1, 0, 0, 0),
+        })
+        sweep:Play()
+        sweep.Completed:Wait()
+        task.wait(0.12)
+    end
+end)
+
+task.spawn(function()
+    task.wait(1.9)
+    local fadeInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    for _, object in ipairs(LS:GetDescendants()) do
+        if object:IsA("TextLabel") then
+            TweenService:Create(object, fadeInfo, {TextTransparency = 1}):Play()
+        elseif object:IsA("Frame") then
+            TweenService:Create(object, fadeInfo, {BackgroundTransparency = 1}):Play()
+        end
+    end
+    task.wait(0.4)
+    LS:Destroy()
 end)
 
 ---------------------------------------------------------
