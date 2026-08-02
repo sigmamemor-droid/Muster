@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════
---  Compact Sidebar UI | Roblox Lua (v3 — Compact + Loading Screen)
+--  Compact Sidebar UI | Roblox Lua (v3 — Fixed)
 -- ═══════════════════════════════════════════════
 
 local Players = game:GetService("Players")
@@ -30,14 +30,22 @@ local CONFIG = {
 	TabHeight = 36,
 	CornerRadius = 10,
 	AnimDuration = 0.25,
-	WindowSize = Vector2.new(560, 380), -- smaller window
+	WindowSize = Vector2.new(560, 380),
 }
 
--- ─── Helpers ──────────────────────────────────
+-- ─── Safe Element Creator ──────────────────────
 local function create(class, props)
 	local inst = Instance.new(class)
-	for k, v in pairs(props or {}) do
-		inst[k] = v
+	local parent = nil
+	if props then
+		parent = props.Parent
+		props.Parent = nil
+		for k, v in pairs(props) do
+			inst[k] = v
+		end
+	end
+	if parent then
+		inst.Parent = parent
 	end
 	return inst
 end
@@ -79,7 +87,6 @@ local loadingScreen = create("Frame", {
 	Parent = screenGui,
 })
 
--- Subtle center glow
 local glow = create("ImageLabel", {
 	Size = UDim2.new(0, 500, 0, 500),
 	Position = UDim2.new(0.5, 0, 0.5, 0),
@@ -92,7 +99,6 @@ local glow = create("ImageLabel", {
 	Parent = loadingScreen,
 })
 
--- Logo ring (rotating)
 local ring = create("Frame", {
 	Name = "Ring",
 	Size = UDim2.new(0, 64, 0, 64),
@@ -120,17 +126,15 @@ local ringGradient = create("UIGradient", {
 	Parent = ringStroke,
 })
 
--- Spin the ring gradient forever
 task.spawn(function()
-	while ring.Parent do
+	while ring and ring.Parent do
 		local t = tween(ringGradient, { Rotation = 360 }, 1.2, Enum.EasingStyle.Linear)
 		t:Play()
 		t.Completed:Wait()
-		ringGradient.Rotation = 0
+		if ringGradient then ringGradient.Rotation = 0 end
 	end
 end)
 
--- Title text
 local loadTitle = create("TextLabel", {
 	Size = UDim2.new(0, 300, 0, 30),
 	Position = UDim2.new(0.5, 0, 0.5, 20),
@@ -144,7 +148,6 @@ local loadTitle = create("TextLabel", {
 	Parent = loadingScreen,
 })
 
--- Loading label (animated dots)
 local loadLabel = create("TextLabel", {
 	Size = UDim2.new(0, 300, 0, 18),
 	Position = UDim2.new(0.5, 0, 0.5, 48),
@@ -161,14 +164,13 @@ local loadLabel = create("TextLabel", {
 task.spawn(function()
 	local dotStates = { "Loading", "Loading.", "Loading..", "Loading..." }
 	local i = 1
-	while loadLabel.Parent do
+	while loadLabel and loadLabel.Parent do
 		loadLabel.Text = dotStates[i]
 		i = (i % #dotStates) + 1
 		task.wait(0.35)
 	end
 end)
 
--- Progress bar
 local barTrack = create("Frame", {
 	Size = UDim2.new(0, 220, 0, 4),
 	Position = UDim2.new(0.5, 0, 0.5, 78),
@@ -190,7 +192,7 @@ local barFill = create("Frame", {
 corner(2, barFill)
 
 -- ═══════════════════════════════════════════════
---  MAIN UI (hidden until loading finishes)
+--  MAIN UI
 -- ═══════════════════════════════════════════════
 local backdrop = create("TextButton", {
 	Name = "Backdrop",
@@ -198,17 +200,18 @@ local backdrop = create("TextButton", {
 	BackgroundTransparency = 1,
 	AutoButtonColor = false,
 	Text = "",
+	Visible = false,
 	ZIndex = 0,
 	Parent = screenGui,
 })
 
 local main = create("Frame", {
 	Name = "Main",
-	Size = UDim2.new(0, CONFIG.WindowSize.X, 0, CONFIG.WindowSize.Y),
-	Position = UDim2.new(0.5, -CONFIG.WindowSize.X / 2, 0.5, -CONFIG.WindowSize.Y / 2),
+	Size = UDim2.new(0, 0, 0, 0),
+	Position = UDim2.new(0.5, 0, 0.5, 0),
 	BackgroundColor3 = CONFIG.Theme.Background,
 	BorderSizePixel = 0,
-	ClipsDescendants = false,
+	ClipsDescendants = true, -- Фикс: скрывает элементы при анимации
 	ZIndex = 1,
 	Visible = false,
 	Parent = screenGui,
@@ -216,21 +219,7 @@ local main = create("Frame", {
 corner(16, main)
 stroke(CONFIG.Theme.Border, 1, main)
 
-local shadow = create("ImageLabel", {
-	Name = "Shadow",
-	Size = UDim2.new(1, 60, 1, 60),
-	Position = UDim2.new(0, -30, 0, -30),
-	BackgroundTransparency = 1,
-	Image = "rbxassetid://1316045217",
-	ImageColor3 = Color3.new(0, 0, 0),
-	ImageTransparency = 0.6,
-	ScaleType = Enum.ScaleType.Slice,
-	SliceCenter = Rect.new(10, 10, 118, 118),
-	ZIndex = 0,
-	Parent = main,
-})
-
--- Drag handle
+-- Dragging Logic
 do
 	local dragging, dragStart, startPos = false, nil, nil
 	local function updateDrag(input)
@@ -239,7 +228,7 @@ do
 	end
 	main.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			if (input.Position.Y - main.AbsolutePosition.Y) <= 20 then
+			if (input.Position.Y - main.AbsolutePosition.Y) <= 30 then
 				dragging = true
 				dragStart = input.Position
 				startPos = main.Position
@@ -256,7 +245,7 @@ do
 	end)
 end
 
--- Close button
+-- Close Button
 local closeBtn = create("TextButton", {
 	Name = "CloseButton",
 	Size = UDim2.new(0, 24, 0, 24),
@@ -272,6 +261,7 @@ local closeBtn = create("TextButton", {
 	Parent = main,
 })
 corner(7, closeBtn)
+
 closeBtn.MouseEnter:Connect(function()
 	tween(closeBtn, { BackgroundColor3 = CONFIG.Theme.Danger }, 0.15):Play()
 	closeBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -290,13 +280,6 @@ local sidebar = create("Frame", {
 	Parent = main,
 })
 corner(16, sidebar)
-create("Frame", {
-	Size = UDim2.new(0, 16, 1, 0),
-	Position = UDim2.new(1, -16, 0, 0),
-	BackgroundColor3 = CONFIG.Theme.Sidebar,
-	BorderSizePixel = 0,
-	Parent = sidebar,
-})
 
 create("TextLabel", {
 	Name = "Title",
@@ -342,7 +325,7 @@ local tabList = create("Frame", {
 })
 create("UIListLayout", { Padding = UDim.new(0, 3), Parent = tabList })
 
--- Content area
+-- Content Area
 local content = create("Frame", {
 	Name = "Content",
 	Size = UDim2.new(1, -CONFIG.SidebarWidth - 8, 1, -14),
@@ -351,7 +334,6 @@ local content = create("Frame", {
 	Parent = main,
 })
 
--- ─── Small helper for a section header ─────────
 local function sectionHeader(parent, text)
 	return create("TextLabel", {
 		Size = UDim2.new(1, 0, 0, 28),
@@ -365,7 +347,7 @@ local function sectionHeader(parent, text)
 	})
 end
 
--- ─── Tab Data (6 tabs, symbol icons — no emoji) ─
+-- ─── Tabs Data ─────────────────────────────────
 local tabs = {}
 local activeTab = nil
 
@@ -408,40 +390,12 @@ local tabData = {
 		end,
 	},
 	{
-		id = "stats", label = "Stats", icon = "▲",
-		content = function(parent)
-			sectionHeader(parent, "Statistics")
-			local rows = { { "Playtime", "4h 12m" }, { "Wins", "18" }, { "Losses", "6" }, { "Rank", "Gold II" } }
-			local list = create("Frame", { Size = UDim2.new(1, 0, 1, -36), Position = UDim2.new(0, 0, 0, 36), BackgroundTransparency = 1, Parent = parent })
-			create("UIListLayout", { Padding = UDim.new(0, 6), Parent = list })
-			for _, r in ipairs(rows) do
-				local row = create("Frame", { Size = UDim2.new(1, 0, 0, 34), BackgroundColor3 = CONFIG.Theme.Card, BorderSizePixel = 0, Parent = list })
-				corner(8, row)
-				create("TextLabel", { Size = UDim2.new(0.6, 0, 1, 0), Position = UDim2.new(0, 12, 0, 0), BackgroundTransparency = 1, Text = r[1], TextColor3 = CONFIG.Theme.TextSecondary, Font = Enum.Font.Gotham, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, Parent = row })
-				create("TextLabel", { Size = UDim2.new(0.4, -12, 1, 0), Position = UDim2.new(0.6, 0, 0, 0), BackgroundTransparency = 1, Text = r[2], TextColor3 = CONFIG.Theme.TextPrimary, Font = Enum.Font.GothamBold, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Right, Parent = row })
-			end
-		end,
-	},
-	{
-		id = "inventory", label = "Inventory", icon = "■",
-		content = function(parent)
-			sectionHeader(parent, "Inventory")
-			local grid = create("Frame", { Size = UDim2.new(1, 0, 1, -36), Position = UDim2.new(0, 0, 0, 36), BackgroundTransparency = 1, Parent = parent })
-			create("UIGridLayout", { CellSize = UDim2.new(0, 56, 0, 56), CellPadding = UDim2.new(0, 6, 0, 6), Parent = grid })
-			for i = 1, 8 do
-				local slot = create("Frame", { BackgroundColor3 = CONFIG.Theme.Card, BorderSizePixel = 0, Parent = grid })
-				corner(8, slot)
-				stroke(CONFIG.Theme.Border, 1, slot)
-			end
-		end,
-	},
-	{
 		id = "settings", label = "Settings", icon = "◈",
 		content = function(parent)
 			sectionHeader(parent, "Settings")
 			local scroll = create("ScrollingFrame", { Size = UDim2.new(1, 0, 1, -36), Position = UDim2.new(0, 0, 0, 36), BackgroundTransparency = 1, ScrollBarThickness = 3, AutomaticCanvasSize = Enum.AutomaticSize.Y, Parent = parent })
 			create("UIListLayout", { Padding = UDim.new(0, 8), Parent = scroll })
-			local settings = { { "Notifications", true }, { "Auto-save", true }, { "Dark mode", true }, { "Show FPS", false } }
+			local settings = { { "Notifications", true }, { "Auto-save", true }, { "Dark mode", true } }
 			for _, s in ipairs(settings) do
 				local row = create("Frame", { Size = UDim2.new(1, -6, 0, 40), BackgroundColor3 = CONFIG.Theme.Card, BorderSizePixel = 0, Parent = scroll })
 				corner(9, row)
@@ -450,38 +404,12 @@ local tabData = {
 				corner(10, toggle)
 				local knob = create("Frame", { Size = UDim2.new(0, 16, 0, 16), Position = s[2] and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8), BackgroundColor3 = Color3.new(1,1,1), BorderSizePixel = 0, Parent = toggle })
 				corner(8, knob)
-				local enabled = s[2]
-				toggle.InputBegan:Connect(function(input)
-					if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-						enabled = not enabled
-						tween(toggle, { BackgroundColor3 = enabled and CONFIG.Theme.Accent or CONFIG.Theme.Border }, 0.2):Play()
-						tween(knob, { Position = enabled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8) }, 0.2):Play()
-					end
-				end)
 			end
 		end,
-	},
-	{
-		id = "about", label = "About", icon = "○",
-		content = function(parent)
-			sectionHeader(parent, "About")
-			create("TextLabel", {
-				Size = UDim2.new(1, 0, 0, 60),
-				Position = UDim2.new(0, 0, 0, 40),
-				BackgroundTransparency = 1,
-				Text = "Compact Sidebar UI\nVersion 3.0.0",
-				TextColor3 = CONFIG.Theme.TextSecondary,
-				Font = Enum.Font.Gotham,
-				TextSize = 13,
-				TextXAlignment = Enum.TextXAlignment.Left,
-				TextYAlignment = Enum.TextYAlignment.Top,
-				Parent = parent,
-			})
-		end,
-	},
+	}
 }
 
--- ─── Build Tabs ─────────────────────────────────
+-- Build Tabs
 for _, data in ipairs(tabData) do
 	local tabBtn = create("TextButton", {
 		Name = "Tab_" .. data.id,
@@ -527,12 +455,14 @@ for _, data in ipairs(tabData) do
 		Parent = tabBtn,
 	})
 
-	tabBtn.MouseEnter:Connect(function()
-		if activeTab ~= data.id then tween(tabBtn, { BackgroundColor3 = CONFIG.Theme.CardHover }, 0.15):Play() end
-	end)
-	tabBtn.MouseLeave:Connect(function()
-		if activeTab ~= data.id then tween(tabBtn, { BackgroundColor3 = CONFIG.Theme.Sidebar }, 0.15):Play() end
-	end)
+	local container = create("Frame", {
+		Name = "Content_" .. data.id,
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		Visible = false,
+		Parent = content,
+	})
+	data.content(container)
 
 	tabBtn.MouseButton1Click:Connect(function()
 		if activeTab == data.id then return end
@@ -541,84 +471,81 @@ for _, data in ipairs(tabData) do
 				tween(t.btn, { BackgroundColor3 = CONFIG.Theme.Sidebar }, 0.2):Play()
 				tween(t.indicator, { Size = UDim2.new(0, 3, 0, 0) }, 0.2):Play()
 				t.label.TextColor3 = CONFIG.Theme.TextSecondary
-				t.content.Visible = false
+				t.container.Visible = false
 			end
 		end
 		activeTab = data.id
 		tween(tabBtn, { BackgroundColor3 = CONFIG.Theme.Card }, 0.2):Play()
 		tween(indicator, { Size = UDim2.new(0, 3, 0, 18) }, 0.2):Play()
 		label.TextColor3 = CONFIG.Theme.TextPrimary
-		data.container.Visible = true
-		data.container.BackgroundTransparency = 1
-		tween(data.container, { BackgroundTransparency = 0 }, 0.2):Play()
+		container.Visible = true
 	end)
 
-	local container = create("Frame", {
-		Name = "Content_" .. data.id,
-		Size = UDim2.new(1, 0, 1, 0),
-		BackgroundTransparency = 1,
-		Visible = false,
-		Parent = content,
-	})
-	data.container = container
-	data.content(container)
-
-	table.insert(tabs, { id = data.id, btn = tabBtn, indicator = indicator, label = label, content = container })
+	table.insert(tabs, { id = data.id, btn = tabBtn, indicator = indicator, label = label, container = container })
 end
 
 if #tabs > 0 then
 	tabs[1].btn.BackgroundColor3 = CONFIG.Theme.Card
 	tabs[1].indicator.Size = UDim2.new(0, 3, 0, 18)
 	tabs[1].label.TextColor3 = CONFIG.Theme.TextPrimary
-	tabs[1].content.Visible = true
+	tabs[1].container.Visible = true
 	activeTab = tabs[1].id
 end
 
--- ─── Show / Hide ───────────────────────────────
-local uiVisible = true
+-- ─── Show / Hide Logic ────────────────────────
+local uiVisible = false
+local isLoaded = false
+
 local function setVisible(show)
+	if not isLoaded then return end
 	uiVisible = show
 	if show then
 		main.Visible = true
-		backdrop.Active = true
-		tween(main, { Size = UDim2.new(0, CONFIG.WindowSize.X, 0, CONFIG.WindowSize.Y), Position = UDim2.new(0.5, -CONFIG.WindowSize.X/2, 0.5, -CONFIG.WindowSize.Y/2) }, 0.3):Play()
+		backdrop.Visible = true
+		tween(main, { 
+			Size = UDim2.new(0, CONFIG.WindowSize.X, 0, CONFIG.WindowSize.Y), 
+			Position = UDim2.new(0.5, -CONFIG.WindowSize.X/2, 0.5, -CONFIG.WindowSize.Y/2) 
+		}, 0.3):Play()
 	else
-		backdrop.Active = false
-		tween(main, { Size = UDim2.new(0,0,0,0), Position = UDim2.new(0.5,0,0.5,0) }, 0.3):Play()
-		task.delay(0.3, function() if not uiVisible then main.Visible = false end end)
+		backdrop.Visible = false
+		tween(main, { 
+			Size = UDim2.new(0, 0, 0, 0), 
+			Position = UDim2.new(0.5, 0, 0.5, 0) 
+		}, 0.3):Play()
+		task.delay(0.3, function() 
+			if not uiVisible then main.Visible = false end 
+		end)
 	end
 end
+
 closeBtn.MouseButton1Click:Connect(function() setVisible(false) end)
+
+-- Переключение на RightControl, RightShift или Insert
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
-	if input.KeyCode == Enum.KeyCode.RightControl then setVisible(not uiVisible) end
+	if input.KeyCode == Enum.KeyCode.RightControl or input.KeyCode == Enum.KeyCode.RightShift or input.KeyCode == Enum.KeyCode.Insert then 
+		setVisible(not uiVisible) 
+	end
 end)
 
 -- ═══════════════════════════════════════════════
---  LOADING SEQUENCE → reveal main UI
+--  LOADING SEQUENCE
 -- ═══════════════════════════════════════════════
 task.spawn(function()
-	tween(barFill, { Size = UDim2.new(1, 0, 1, 0) }, 1.6, Enum.EasingStyle.Quad):Play()
-	task.wait(1.8)
+	tween(barFill, { Size = UDim2.new(1, 0, 1, 0) }, 1.5, Enum.EasingStyle.Quad):Play()
+	task.wait(1.6)
 
-	-- fade out loading screen
-	tween(loadingScreen, { BackgroundTransparency = 1 }, 0.4):Play()
-	tween(loadTitle, { TextTransparency = 1 }, 0.3):Play()
-	tween(loadLabel, { TextTransparency = 1 }, 0.3):Play()
-	tween(glow, { ImageTransparency = 1 }, 0.4):Play()
-	tween(ringStroke, { Transparency = 1 }, 0.3):Play()
-	tween(barTrack, { BackgroundTransparency = 1 }, 0.3):Play()
-	tween(barFill, { BackgroundTransparency = 1 }, 0.3):Play()
-
-	task.wait(0.4)
-	loadingScreen.Visible = false
+	-- Плавный исчезающий эффект экрана загрузки
+	tween(loadingScreen, { BackgroundTransparency = 1 }, 0.3):Play()
+	tween(loadTitle, { TextTransparency = 1 }, 0.2):Play()
+	tween(loadLabel, { TextTransparency = 1 }, 0.2):Play()
+	
+	task.wait(0.3)
 	loadingScreen:Destroy()
 
-	-- reveal main window
-	main.Size = UDim2.new(0, 0, 0, 0)
-	main.Position = UDim2.new(0.5, 0, 0.5, 0)
-	main.Visible = true
-	tween(main, { Size = UDim2.new(0, CONFIG.WindowSize.X, 0, CONFIG.WindowSize.Y), Position = UDim2.new(0.5, -CONFIG.WindowSize.X/2, 0.5, -CONFIG.WindowSize.Y/2) }, 0.4):Play()
+	-- Показ главного UI
+	isLoaded = true
+	setVisible(true)
 end)
 
-print("✅ Sidebar UI v3 loaded! Press Right Ctrl or × to toggle.")
+print("✅ UI Успешно загружен! Клавиши открытия: Right Control / Right Shift / Insert")
