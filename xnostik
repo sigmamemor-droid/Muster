@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════
---  Compact Sidebar UI | Roblox Lua (v3 — Fixed)
+--  Compact Sidebar UI | Roblox Lua (v3.1 — 6 Tabs + Unicode Icons)
 -- ═══════════════════════════════════════════════
 
 local Players = game:GetService("Players")
@@ -27,10 +27,10 @@ local CONFIG = {
 		Warning = Color3.fromRGB(234, 179, 8),
 	},
 	SidebarWidth = 150,
-	TabHeight = 36,
+	TabHeight = 34,
 	CornerRadius = 10,
 	AnimDuration = 0.25,
-	WindowSize = Vector2.new(560, 380),
+	WindowSize = Vector2.new(580, 420), -- Размер окна для 6 вкладок
 }
 
 -- ─── Safe Element Creator ──────────────────────
@@ -211,7 +211,7 @@ local main = create("Frame", {
 	Position = UDim2.new(0.5, 0, 0.5, 0),
 	BackgroundColor3 = CONFIG.Theme.Background,
 	BorderSizePixel = 0,
-	ClipsDescendants = true, -- Фикс: скрывает элементы при анимации
+	ClipsDescendants = true,
 	ZIndex = 1,
 	Visible = false,
 	Parent = screenGui,
@@ -284,7 +284,7 @@ corner(16, sidebar)
 create("TextLabel", {
 	Name = "Title",
 	Size = UDim2.new(1, -20, 0, 24),
-	Position = UDim2.new(0, 14, 0, 14),
+	Position = UDim2.new(0, 14, 0, 12),
 	BackgroundTransparency = 1,
 	Text = "Dashboard",
 	TextColor3 = CONFIG.Theme.TextPrimary,
@@ -297,9 +297,9 @@ create("TextLabel", {
 create("TextLabel", {
 	Name = "Subtitle",
 	Size = UDim2.new(1, -20, 0, 14),
-	Position = UDim2.new(0, 14, 0, 38),
+	Position = UDim2.new(0, 14, 0, 34),
 	BackgroundTransparency = 1,
-	Text = "v3.0.0",
+	Text = "v3.1.0",
 	TextColor3 = CONFIG.Theme.TextMuted,
 	Font = Enum.Font.Gotham,
 	TextSize = 11,
@@ -310,7 +310,7 @@ create("TextLabel", {
 create("Frame", {
 	Name = "Divider",
 	Size = UDim2.new(1, -28, 0, 1),
-	Position = UDim2.new(0, 14, 0, 62),
+	Position = UDim2.new(0, 14, 0, 54),
 	BackgroundColor3 = CONFIG.Theme.Border,
 	BorderSizePixel = 0,
 	Parent = sidebar,
@@ -318,18 +318,18 @@ create("Frame", {
 
 local tabList = create("Frame", {
 	Name = "TabList",
-	Size = UDim2.new(1, -14, 1, -78),
-	Position = UDim2.new(0, 7, 0, 70),
+	Size = UDim2.new(1, -14, 1, -66),
+	Position = UDim2.new(0, 7, 0, 60),
 	BackgroundTransparency = 1,
 	Parent = sidebar,
 })
-create("UIListLayout", { Padding = UDim.new(0, 3), Parent = tabList })
+create("UIListLayout", { Padding = UDim.new(0, 4), Parent = tabList })
 
 -- Content Area
 local content = create("Frame", {
 	Name = "Content",
-	Size = UDim2.new(1, -CONFIG.SidebarWidth - 8, 1, -14),
-	Position = UDim2.new(0, CONFIG.SidebarWidth + 8, 0, 7),
+	Size = UDim2.new(1, -CONFIG.SidebarWidth - 16, 1, -16),
+	Position = UDim2.new(0, CONFIG.SidebarWidth + 8, 0, 8),
 	BackgroundTransparency = 1,
 	Parent = main,
 })
@@ -347,69 +347,164 @@ local function sectionHeader(parent, text)
 	})
 end
 
--- ─── Tabs Data ─────────────────────────────────
+-- ═══════════════════════════════════════════════
+--  6 TABS DATA (WITH UNICODE SYMBOLS)
+-- ═══════════════════════════════════════════════
 local tabs = {}
 local activeTab = nil
 
 local tabData = {
+	-- 1. HOME
 	{
-		id = "home", label = "Home", icon = "●",
+		id = "home", label = "Home", icon = "⌂",
 		content = function(parent)
-			sectionHeader(parent, "Welcome back!")
-			local stats = create("Frame", { Size = UDim2.new(1, 0, 0, 70), Position = UDim2.new(0, 0, 0, 36), BackgroundTransparency = 1, Parent = parent })
+			sectionHeader(parent, "Welcome back, " .. player.DisplayName)
+			
+			-- Stat Cards
+			local stats = create("Frame", { Size = UDim2.new(1, 0, 0, 65), Position = UDim2.new(0, 0, 0, 34), BackgroundTransparency = 1, Parent = parent })
 			create("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), Parent = stats })
+			
 			local statDefs = {
 				{ "Players", tostring(#Players:GetPlayers()), CONFIG.Theme.Accent },
 				{ "FPS", "60", CONFIG.Theme.Success },
-				{ "Ping", "24ms", CONFIG.Theme.Warning },
+				{ "Ping", "28ms", CONFIG.Theme.Warning },
 			}
 			for _, s in ipairs(statDefs) do
-				local card = create("Frame", { Size = UDim2.new(0, 110, 1, 0), BackgroundColor3 = CONFIG.Theme.Card, BorderSizePixel = 0, Parent = stats })
+				local card = create("Frame", { Size = UDim2.new(0, 120, 1, 0), BackgroundColor3 = CONFIG.Theme.Card, BorderSizePixel = 0, Parent = stats })
 				corner(10, card)
-				create("TextLabel", { Size = UDim2.new(1, -10, 0, 20), Position = UDim2.new(0, 10, 0, 8), BackgroundTransparency = 1, Text = s[2], TextColor3 = s[3], Font = Enum.Font.GothamBold, TextSize = 18, TextXAlignment = Enum.TextXAlignment.Left, Parent = card })
-				create("TextLabel", { Size = UDim2.new(1, -10, 0, 14), Position = UDim2.new(0, 10, 0, 30), BackgroundTransparency = 1, Text = s[1], TextColor3 = CONFIG.Theme.TextSecondary, Font = Enum.Font.Gotham, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left, Parent = card })
+				create("TextLabel", { Size = UDim2.new(1, -10, 0, 20), Position = UDim2.new(0, 10, 0, 10), BackgroundTransparency = 1, Text = s[2], TextColor3 = s[3], Font = Enum.Font.GothamBold, TextSize = 18, TextXAlignment = Enum.TextXAlignment.Left, Parent = card })
+				create("TextLabel", { Size = UDim2.new(1, -10, 0, 14), Position = UDim2.new(0, 10, 0, 32), BackgroundTransparency = 1, Text = s[1], TextColor3 = CONFIG.Theme.TextSecondary, Font = Enum.Font.Gotham, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left, Parent = card })
 			end
+
+			-- Announcement Box
+			local annBox = create("Frame", { Size = UDim2.new(1, 0, 0, 110), Position = UDim2.new(0, 0, 0, 110), BackgroundColor3 = CONFIG.Theme.Card, BorderSizePixel = 0, Parent = parent })
+			corner(10, annBox)
+			stroke(CONFIG.Theme.Border, 1, annBox)
+			create("TextLabel", { Size = UDim2.new(1, -20, 0, 20), Position = UDim2.new(0, 12, 0, 10), BackgroundTransparency = 1, Text = "System Update v3.1", TextColor3 = CONFIG.Theme.TextPrimary, Font = Enum.Font.GothamBold, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Parent = annBox })
+			create("TextLabel", { Size = UDim2.new(1, -24, 0, 60), Position = UDim2.new(0, 12, 0, 34), BackgroundTransparency = 1, Text = "• Added 6 fully custom tabs.\n• Replaced emojis with clean Unicode symbols.\n• Improved responsive layouts and animations.", TextColor3 = CONFIG.Theme.TextSecondary, Font = Enum.Font.Gotham, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, Parent = annBox })
 		end,
 	},
+	-- 2. PLAYERS
 	{
-		id = "players", label = "Players", icon = "◆",
+		id = "players", label = "Players", icon = "♟",
 		content = function(parent)
-			sectionHeader(parent, "Online Players")
-			local scroll = create("ScrollingFrame", { Size = UDim2.new(1, 0, 1, -36), Position = UDim2.new(0, 0, 0, 36), BackgroundTransparency = 1, ScrollBarThickness = 3, AutomaticCanvasSize = Enum.AutomaticSize.Y, CanvasSize = UDim2.new(0,0,0,0), Parent = parent })
+			sectionHeader(parent, "Online Players (" .. tostring(#Players:GetPlayers()) .. ")")
+			local scroll = create("ScrollingFrame", { Size = UDim2.new(1, 0, 1, -34), Position = UDim2.new(0, 0, 0, 34), BackgroundTransparency = 1, ScrollBarThickness = 3, AutomaticCanvasSize = Enum.AutomaticSize.Y, CanvasSize = UDim2.new(0,0,0,0), Parent = parent })
 			create("UIListLayout", { Padding = UDim.new(0, 6), Parent = scroll })
+			
 			for _, plr in ipairs(Players:GetPlayers()) do
 				local row = create("Frame", { Size = UDim2.new(1, -6, 0, 42), BackgroundColor3 = CONFIG.Theme.Card, BorderSizePixel = 0, Parent = scroll })
 				corner(9, row)
 				local avatar = create("Frame", { Size = UDim2.new(0, 28, 0, 28), Position = UDim2.new(0, 8, 0.5, -14), BackgroundColor3 = CONFIG.Theme.Accent, BorderSizePixel = 0, Parent = row })
 				corner(14, avatar)
 				create("TextLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = plr.Name:sub(1,1):upper(), TextColor3 = Color3.new(1,1,1), Font = Enum.Font.GothamBold, TextSize = 13, Parent = avatar })
-				create("TextLabel", { Size = UDim2.new(1, -100, 1, 0), Position = UDim2.new(0, 44, 0, 0), BackgroundTransparency = 1, Text = plr.Name, TextColor3 = CONFIG.Theme.TextPrimary, Font = Enum.Font.Gotham, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, Parent = row })
-				local status = create("Frame", { Size = UDim2.new(0, 7, 0, 7), Position = UDim2.new(1, -18, 0.5, -3), BackgroundColor3 = CONFIG.Theme.Success, BorderSizePixel = 0, Parent = row })
+				create("TextLabel", { Size = UDim2.new(1, -100, 1, 0), Position = UDim2.new(0, 44, 0, 0), BackgroundTransparency = 1, Text = plr.DisplayName .. " (@" .. plr.Name .. ")", TextColor3 = CONFIG.Theme.TextPrimary, Font = Enum.Font.Gotham, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, Parent = row })
+				local status = create("Frame", { Size = UDim2.new(0, 8, 0, 8), Position = UDim2.new(1, -18, 0.5, -4), BackgroundColor3 = CONFIG.Theme.Success, BorderSizePixel = 0, Parent = row })
 				corner(4, status)
 			end
 		end,
 	},
+	-- 3. STATS
 	{
-		id = "settings", label = "Settings", icon = "◈",
+		id = "stats", label = "Stats", icon = "▤",
+		content = function(parent)
+			sectionHeader(parent, "Your Statistics")
+			
+			-- Level Bar Card
+			local lvlCard = create("Frame", { Size = UDim2.new(1, 0, 0, 60), Position = UDim2.new(0, 0, 0, 34), BackgroundColor3 = CONFIG.Theme.Card, BorderSizePixel = 0, Parent = parent })
+			corner(10, lvlCard)
+			create("TextLabel", { Size = UDim2.new(0.5, 0, 0, 20), Position = UDim2.new(0, 12, 0, 8), BackgroundTransparency = 1, Text = "Level 24", TextColor3 = CONFIG.Theme.TextPrimary, Font = Enum.Font.GothamBold, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Parent = lvlCard })
+			create("TextLabel", { Size = UDim2.new(0.5, -12, 0, 20), Position = UDim2.new(0.5, 0, 0, 8), BackgroundTransparency = 1, Text = "7,450 / 10,000 XP", TextColor3 = CONFIG.Theme.TextSecondary, Font = Enum.Font.Gotham, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Right, Parent = lvlCard })
+			
+			local bar = create("Frame", { Size = UDim2.new(1, -24, 0, 6), Position = UDim2.new(0, 12, 0, 36), BackgroundColor3 = CONFIG.Theme.Border, BorderSizePixel = 0, Parent = lvlCard })
+			corner(3, bar)
+			local fill = create("Frame", { Size = UDim2.new(0.745, 0, 1, 0), BackgroundColor3 = CONFIG.Theme.Accent, BorderSizePixel = 0, Parent = bar })
+			corner(3, fill)
+
+			-- Rows
+			local rows = { { "Playtime", "12h 45m" }, { "Wins", "42" }, { "Coins", "15,800" }, { "Account Age", tostring(player.AccountAge) .. " days" } }
+			local list = create("Frame", { Size = UDim2.new(1, 0, 0, 160), Position = UDim2.new(0, 0, 0, 104), BackgroundTransparency = 1, Parent = parent })
+			create("UIListLayout", { Padding = UDim.new(0, 6), Parent = list })
+			for _, r in ipairs(rows) do
+				local row = create("Frame", { Size = UDim2.new(1, 0, 0, 32), BackgroundColor3 = CONFIG.Theme.Card, BorderSizePixel = 0, Parent = list })
+				corner(8, row)
+				create("TextLabel", { Size = UDim2.new(0.6, 0, 1, 0), Position = UDim2.new(0, 12, 0, 0), BackgroundTransparency = 1, Text = r[1], TextColor3 = CONFIG.Theme.TextSecondary, Font = Enum.Font.Gotham, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, Parent = row })
+				create("TextLabel", { Size = UDim2.new(0.4, -12, 1, 0), Position = UDim2.new(0.6, 0, 0, 0), BackgroundTransparency = 1, Text = r[2], TextColor3 = CONFIG.Theme.TextPrimary, Font = Enum.Font.GothamBold, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Right, Parent = row })
+			end
+		end,
+	},
+	-- 4. INVENTORY
+	{
+		id = "inventory", label = "Inventory", icon = "⬡",
+		content = function(parent)
+			sectionHeader(parent, "Items & Assets")
+			local scroll = create("ScrollingFrame", { Size = UDim2.new(1, 0, 1, -34), Position = UDim2.new(0, 0, 0, 34), BackgroundTransparency = 1, ScrollBarThickness = 3, AutomaticCanvasSize = Enum.AutomaticSize.Y, Parent = parent })
+			local grid = create("Frame", { Size = UDim2.new(1, -6, 1, 0), BackgroundTransparency = 1, Parent = scroll })
+			create("UIGridLayout", { CellSize = UDim2.new(0, 68, 0, 68), CellPadding = UDim2.new(0, 8, 0, 8), Parent = grid })
+			
+			for i = 1, 12 do
+				local slot = create("Frame", { BackgroundColor3 = CONFIG.Theme.Card, BorderSizePixel = 0, Parent = grid })
+				corner(10, slot)
+				stroke(CONFIG.Theme.Border, 1, slot)
+				
+				create("TextLabel", { Size = UDim2.new(1, 0, 0.6, 0), Position = UDim2.new(0,0,0,4), BackgroundTransparency = 1, Text = "Item " .. i, TextColor3 = CONFIG.Theme.TextPrimary, Font = Enum.Font.GothamBold, TextSize = 11, Parent = slot })
+				create("TextLabel", { Size = UDim2.new(1, 0, 0.4, 0), Position = UDim2.new(0,0,0.6,-2), BackgroundTransparency = 1, Text = "x" .. (i * 2), TextColor3 = CONFIG.Theme.TextMuted, Font = Enum.Font.Gotham, TextSize = 10, Parent = slot })
+			end
+		end,
+	},
+	-- 5. SETTINGS (С символом ⚙︎)
+	{
+		id = "settings", label = "Settings", icon = "⚙︎",
 		content = function(parent)
 			sectionHeader(parent, "Settings")
-			local scroll = create("ScrollingFrame", { Size = UDim2.new(1, 0, 1, -36), Position = UDim2.new(0, 0, 0, 36), BackgroundTransparency = 1, ScrollBarThickness = 3, AutomaticCanvasSize = Enum.AutomaticSize.Y, Parent = parent })
-			create("UIListLayout", { Padding = UDim.new(0, 8), Parent = scroll })
-			local settings = { { "Notifications", true }, { "Auto-save", true }, { "Dark mode", true } }
+			local scroll = create("ScrollingFrame", { Size = UDim2.new(1, 0, 1, -34), Position = UDim2.new(0, 0, 0, 34), BackgroundTransparency = 1, ScrollBarThickness = 3, AutomaticCanvasSize = Enum.AutomaticSize.Y, Parent = parent })
+			create("UIListLayout", { Padding = UDim.new(0, 6), Parent = scroll })
+			
+			local settings = { 
+				{ "Notifications", true }, 
+				{ "Auto-save Progress", true }, 
+				{ "Dark Theme", true }, 
+				{ "Show FPS Counter", false },
+				{ "UI Sound Effects", true }
+			}
+			
 			for _, s in ipairs(settings) do
 				local row = create("Frame", { Size = UDim2.new(1, -6, 0, 40), BackgroundColor3 = CONFIG.Theme.Card, BorderSizePixel = 0, Parent = scroll })
 				corner(9, row)
 				create("TextLabel", { Size = UDim2.new(1, -70, 1, 0), Position = UDim2.new(0, 12, 0, 0), BackgroundTransparency = 1, Text = s[1], TextColor3 = CONFIG.Theme.TextPrimary, Font = Enum.Font.Gotham, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, Parent = row })
-				local toggle = create("Frame", { Size = UDim2.new(0, 38, 0, 20), Position = UDim2.new(1, -50, 0.5, -10), BackgroundColor3 = s[2] and CONFIG.Theme.Accent or CONFIG.Theme.Border, BorderSizePixel = 0, Parent = row })
+				
+				local toggle = create("TextButton", { Size = UDim2.new(0, 38, 0, 20), Position = UDim2.new(1, -50, 0.5, -10), BackgroundColor3 = s[2] and CONFIG.Theme.Accent or CONFIG.Theme.Border, BorderSizePixel = 0, Text = "", AutoButtonColor = false, Parent = row })
 				corner(10, toggle)
 				local knob = create("Frame", { Size = UDim2.new(0, 16, 0, 16), Position = s[2] and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8), BackgroundColor3 = Color3.new(1,1,1), BorderSizePixel = 0, Parent = toggle })
 				corner(8, knob)
+				
+				local enabled = s[2]
+				toggle.MouseButton1Click:Connect(function()
+					enabled = not enabled
+					tween(toggle, { BackgroundColor3 = enabled and CONFIG.Theme.Accent or CONFIG.Theme.Border }, 0.2):Play()
+					tween(knob, { Position = enabled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8) }, 0.2):Play()
+				end)
 			end
 		end,
-	}
+	},
+	-- 6. ABOUT
+	{
+		id = "about", label = "About", icon = "ⓘ",
+		content = function(parent)
+			sectionHeader(parent, "About UI")
+			
+			local card = create("Frame", { Size = UDim2.new(1, 0, 0, 140), Position = UDim2.new(0, 0, 0, 34), BackgroundColor3 = CONFIG.Theme.Card, BorderSizePixel = 0, Parent = parent })
+			corner(10, card)
+			stroke(CONFIG.Theme.Border, 1, card)
+			
+			create("TextLabel", { Size = UDim2.new(1, -20, 0, 22), Position = UDim2.new(0, 12, 0, 10), BackgroundTransparency = 1, Text = "Compact Sidebar UI Suite", TextColor3 = CONFIG.Theme.TextPrimary, Font = Enum.Font.GothamBold, TextSize = 15, TextXAlignment = Enum.TextXAlignment.Left, Parent = card })
+			create("TextLabel", { Size = UDim2.new(1, -20, 0, 16), Position = UDim2.new(0, 12, 0, 32), BackgroundTransparency = 1, Text = "Version 3.1.0 (Stable)", TextColor3 = CONFIG.Theme.Accent, Font = Enum.Font.Gotham, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, Parent = card })
+			create("TextLabel", { Size = UDim2.new(1, -20, 0, 70), Position = UDim2.new(0, 12, 0, 56), BackgroundTransparency = 1, Text = "Designed for modern Roblox experiences with optimized performance, fluid animations, and high customization support.", TextColor3 = CONFIG.Theme.TextSecondary, Font = Enum.Font.Gotham, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, Parent = card })
+		end,
+	},
 }
 
--- Build Tabs
+-- ─── Build Tabs in Sidebar ─────────────────────
 for _, data in ipairs(tabData) do
 	local tabBtn = create("TextButton", {
 		Name = "Tab_" .. data.id,
@@ -434,7 +529,7 @@ for _, data in ipairs(tabData) do
 
 	create("TextLabel", {
 		Size = UDim2.new(0, 22, 1, 0),
-		Position = UDim2.new(0, 10, 0, 0),
+		Position = UDim2.new(0, 8, 0, 0),
 		BackgroundTransparency = 1,
 		Text = data.icon,
 		TextColor3 = CONFIG.Theme.TextSecondary,
@@ -444,13 +539,13 @@ for _, data in ipairs(tabData) do
 	})
 
 	local label = create("TextLabel", {
-		Size = UDim2.new(1, -42, 1, 0),
-		Position = UDim2.new(0, 34, 0, 0),
+		Size = UDim2.new(1, -38, 1, 0),
+		Position = UDim2.new(0, 32, 0, 0),
 		BackgroundTransparency = 1,
 		Text = data.label,
 		TextColor3 = CONFIG.Theme.TextSecondary,
 		Font = Enum.Font.Gotham,
-		TextSize = 13,
+		TextSize = 12,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = tabBtn,
 	})
@@ -476,7 +571,7 @@ for _, data in ipairs(tabData) do
 		end
 		activeTab = data.id
 		tween(tabBtn, { BackgroundColor3 = CONFIG.Theme.Card }, 0.2):Play()
-		tween(indicator, { Size = UDim2.new(0, 3, 0, 18) }, 0.2):Play()
+		tween(indicator, { Size = UDim2.new(0, 3, 0, 16) }, 0.2):Play()
 		label.TextColor3 = CONFIG.Theme.TextPrimary
 		container.Visible = true
 	end)
@@ -484,9 +579,10 @@ for _, data in ipairs(tabData) do
 	table.insert(tabs, { id = data.id, btn = tabBtn, indicator = indicator, label = label, container = container })
 end
 
+-- Активация первой вкладки
 if #tabs > 0 then
 	tabs[1].btn.BackgroundColor3 = CONFIG.Theme.Card
-	tabs[1].indicator.Size = UDim2.new(0, 3, 0, 18)
+	tabs[1].indicator.Size = UDim2.new(0, 3, 0, 16)
 	tabs[1].label.TextColor3 = CONFIG.Theme.TextPrimary
 	tabs[1].container.Visible = true
 	activeTab = tabs[1].id
@@ -535,7 +631,6 @@ task.spawn(function()
 	tween(barFill, { Size = UDim2.new(1, 0, 1, 0) }, 1.5, Enum.EasingStyle.Quad):Play()
 	task.wait(1.6)
 
-	-- Плавный исчезающий эффект экрана загрузки
 	tween(loadingScreen, { BackgroundTransparency = 1 }, 0.3):Play()
 	tween(loadTitle, { TextTransparency = 1 }, 0.2):Play()
 	tween(loadLabel, { TextTransparency = 1 }, 0.2):Play()
@@ -543,9 +638,8 @@ task.spawn(function()
 	task.wait(0.3)
 	loadingScreen:Destroy()
 
-	-- Показ главного UI
 	isLoaded = true
 	setVisible(true)
 end)
 
-print("✅ UI Успешно загружен! Клавиши открытия: Right Control / Right Shift / Insert")
+print("✅ UI v3.1 успешно загружен! 6 вкладок доступны. Клавиши: Right Ctrl / Right Shift / Insert")
