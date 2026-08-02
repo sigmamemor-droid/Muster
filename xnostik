@@ -1,4 +1,4 @@
--- linbergz Team MOBILE HUB v9.2 (Refined Loading + Compact Tabs)
+-- linbergz Team MOBILE HUB v10.0 (Interface Redesign)
 -- Только интерфейс: вкладки, тема, анимации. Все функции заменены заглушкой.
 
 ---------------------------------------------------------
@@ -25,6 +25,7 @@ ScreenGui.Name = "MM2HubMobile"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
+ScreenGui.DisplayOrder = 100
 ScreenGui.Parent = player.PlayerGui
 
 ---------------------------------------------------------
@@ -44,6 +45,10 @@ local C = {
     red = Color3.fromRGB(220, 50, 60),
     redDark = Color3.fromRGB(45, 16, 20),
     gold = Color3.fromRGB(255, 195, 45),
+    border = Color3.fromRGB(53, 45, 72),
+    hover = Color3.fromRGB(32, 27, 47),
+    selectedSurface = Color3.fromRGB(42, 28, 68),
+    shadow = Color3.fromRGB(0, 0, 0),
 }
 local currentFont = Enum.Font.GothamSemibold
 
@@ -225,9 +230,10 @@ ToggleStroke.Parent = ToggleBtn
 -- Нативная Roblox-версия CSS fill-эффекта.
 local ToggleFill = Instance.new("Frame")
 ToggleFill.Name = "Fill"
-ToggleFill.Size = UDim2.new(0, 8, 0, 8)
-ToggleFill.Position = UDim2.new(0, -4, 0.5, -4)
+ToggleFill.Size = UDim2.new(1, 0, 1, 0)
+ToggleFill.Position = UDim2.new(0, 0, 0, 0)
 ToggleFill.BackgroundColor3 = C.accent
+ToggleFill.BackgroundTransparency = 0.88
 ToggleFill.BorderSizePixel = 0
 ToggleFill.ZIndex = 51
 ToggleFill.Parent = ToggleBtn
@@ -289,14 +295,14 @@ end)
 local function SetToggleVisual(isOpen)
     ToggleText.Text = isOpen and "CLOSE HUB" or "OPEN HUB"
     TweenService:Create(ToggleFill, TweenInfo.new(0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-        Size = isOpen and UDim2.new(1.8, 0, 3, 0) or UDim2.new(0, 8, 0, 8)
+        BackgroundTransparency = isOpen and 0.62 or 0.88
     }):Play()
     TweenService:Create(ToggleText, TweenInfo.new(0.2), {TextColor3 = isOpen and C.white or C.text}):Play()
 end
 
 ToggleBtn.MouseEnter:Connect(function()
     if not hubOpen then
-        TweenService:Create(ToggleFill, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(1.8, 0, 3, 0)}):Play()
+        TweenService:Create(ToggleFill, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundTransparency = 0.72}):Play()
         TweenService:Create(ToggleText, TweenInfo.new(0.2), {TextColor3 = C.white}):Play()
     end
 end)
@@ -325,7 +331,20 @@ end
 ---------------------------------------------------------
 -- MAIN HUB FRAME
 ---------------------------------------------------------
-local HUB_W, HUB_H, SIDEBAR_W, TOPBAR_H = 460, 290, 120, 32
+local HUB_W, HUB_H, SIDEBAR_W, TOPBAR_H = 460, 300, 126, 38
+
+-- Мягкая тень отделяет окно от игрового фона.
+local HubShadow = Instance.new("Frame")
+HubShadow.Name = "HubShadow"
+HubShadow.Size = UDim2.new(0, HUB_W, 0, HUB_H)
+HubShadow.Position = UDim2.new(0.5, -HUB_W / 2, 0.5, -HUB_H / 2 + 5)
+HubShadow.BackgroundColor3 = C.shadow
+HubShadow.BackgroundTransparency = 0.42
+HubShadow.BorderSizePixel = 0
+HubShadow.Visible = false
+HubShadow.ZIndex = 9
+HubShadow.Parent = ScreenGui
+Instance.new("UICorner", HubShadow).CornerRadius = UDim.new(0, 10)
 
 local Hub = Instance.new("Frame")
 Hub.Name = "Hub"
@@ -340,8 +359,9 @@ Hub.Parent = ScreenGui
 Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 10)
 
 local HSk = Instance.new("UIStroke")
-HSk.Color = C.accent
+HSk.Color = C.border
 HSk.Thickness = 1
+HSk.Transparency = 0.15
 HSk.Parent = Hub
 
 ---------------------------------------------------------
@@ -358,27 +378,35 @@ TopB.Parent = Hub
 
 local PageTitle = Instance.new("TextLabel")
 PageTitle.Size = UDim2.new(1, -60, 1, 0)
-PageTitle.Position = UDim2.new(0, 10, 0, 0)
+PageTitle.Position = UDim2.new(0, 16, 0, 0)
 PageTitle.BackgroundTransparency = 1
 PageTitle.Text = "[H]  Главная"
 PageTitle.TextColor3 = C.text
-PageTitle.TextSize = 12
+PageTitle.TextSize = 14
 PageTitle.Font = Enum.Font.GothamBold
 PageTitle.TextXAlignment = Enum.TextXAlignment.Left
 PageTitle.ZIndex = 13
 PageTitle.Parent = TopB
 
+local TopRule = Instance.new("Frame")
+TopRule.Size = UDim2.new(1, 0, 0, 1)
+TopRule.Position = UDim2.new(0, 0, 1, -1)
+TopRule.BackgroundColor3 = C.border
+TopRule.BorderSizePixel = 0
+TopRule.ZIndex = 13
+TopRule.Parent = TopB
+
 local ClB = Instance.new("TextButton")
-ClB.Size = UDim2.new(0, 20, 0, 20)
-ClB.Position = UDim2.new(1, -26, 0.5, -10)
+ClB.Size = UDim2.new(0, 24, 0, 24)
+ClB.Position = UDim2.new(1, -32, 0.5, -12)
 ClB.BackgroundColor3 = C.redDark
-ClB.Text = "x"
+ClB.Text = "×"
 ClB.TextColor3 = C.red
 ClB.TextSize = 11
 ClB.Font = Enum.Font.GothamBold
 ClB.ZIndex = 13
 ClB.Parent = TopB
-Instance.new("UICorner", ClB).CornerRadius = UDim.new(0, 4)
+Instance.new("UICorner", ClB).CornerRadius = UDim.new(0, 6)
 
 do
     local drag, dStart, sPos
@@ -391,6 +419,7 @@ do
         if drag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
             local d = i.Position - dStart
             Hub.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y)
+            HubShadow.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y + 5)
         end
     end)
     UserInputService.InputEnded:Connect(function(i)
@@ -409,19 +438,40 @@ Sidebar.BorderSizePixel = 0
 Sidebar.ZIndex = 12
 Sidebar.Parent = Hub
 
+local SideRule = Instance.new("Frame")
+SideRule.Size = UDim2.new(0, 1, 1, 0)
+SideRule.Position = UDim2.new(1, -1, 0, 0)
+SideRule.BackgroundColor3 = C.border
+SideRule.BorderSizePixel = 0
+SideRule.ZIndex = 13
+SideRule.Parent = Sidebar
+
 local SLogo = Instance.new("Frame")
-SLogo.Size = UDim2.new(1, 0, 0, 36)
+SLogo.Size = UDim2.new(1, 0, 0, 44)
 SLogo.BackgroundTransparency = 1
 SLogo.Parent = Sidebar
 
 local STi = Instance.new("TextLabel")
-STi.Size = UDim2.new(1, 0, 1, 0)
+STi.Size = UDim2.new(1, -20, 0, 22)
+STi.Position = UDim2.new(0, 10, 0, 7)
 STi.BackgroundTransparency = 1
+STi.TextXAlignment = Enum.TextXAlignment.Left
 STi.Text = "linbergz"
 STi.TextColor3 = C.white
 STi.TextSize = 12
 STi.Font = Enum.Font.GothamBlack
 STi.Parent = SLogo
+
+local VersionLabel = Instance.new("TextLabel")
+VersionLabel.Size = UDim2.new(1, -20, 0, 12)
+VersionLabel.Position = UDim2.new(0, 10, 0, 25)
+VersionLabel.BackgroundTransparency = 1
+VersionLabel.Text = "MOBILE HUB  /  V10"
+VersionLabel.TextColor3 = C.textDim
+VersionLabel.TextSize = 7
+VersionLabel.Font = Enum.Font.GothamBold
+VersionLabel.TextXAlignment = Enum.TextXAlignment.Left
+VersionLabel.Parent = SLogo
 
 local LogoRule = Instance.new("Frame")
 LogoRule.Size = UDim2.new(1, -20, 0, 1)
@@ -433,8 +483,8 @@ LogoRule.Parent = SLogo
 
 -- Отдельный список: glider больше не считается вкладкой UIListLayout.
 local TabHolder = Instance.new("Frame")
-TabHolder.Size = UDim2.new(1, 0, 1, -36)
-TabHolder.Position = UDim2.new(0, 0, 0, 36)
+TabHolder.Size = UDim2.new(1, 0, 1, -44)
+TabHolder.Position = UDim2.new(0, 0, 0, 44)
 TabHolder.BackgroundTransparency = 1
 TabHolder.ZIndex = 13
 TabHolder.Parent = Sidebar
@@ -455,9 +505,9 @@ THL.Parent = TabList
 local TabGlider = Instance.new("Frame")
 TabGlider.Name = "TabGlider"
 TabGlider.Size = UDim2.new(1, -12, 0, 28)
-TabGlider.Position = UDim2.new(0, 6, 0, 40)
-TabGlider.BackgroundColor3 = C.accent
-TabGlider.BackgroundTransparency = 0.84
+TabGlider.Position = UDim2.new(0, 6, 0, 48)
+TabGlider.BackgroundColor3 = C.selectedSurface
+TabGlider.BackgroundTransparency = 0.15
 TabGlider.BorderSizePixel = 0
 TabGlider.ZIndex = 12
 TabGlider.Parent = Sidebar
@@ -481,61 +531,71 @@ local function BuildPlaceholder(parent)
     Wrap.BackgroundTransparency = 1
     Wrap.Parent = parent
 
-    local Content = Instance.new("Frame")
-    Content.Size = UDim2.new(0.9, 0, 0, 0)
-    Content.AutomaticSize = Enum.AutomaticSize.Y
-    Content.Position = UDim2.new(0.05, 0, 0.5, 0)
-    Content.AnchorPoint = Vector2.new(0, 0.5)
-    Content.BackgroundTransparency = 1
-    Content.Parent = Wrap
+    local Card = Instance.new("Frame")
+    Card.Size = UDim2.new(0.82, 0, 0, 176)
+    Card.Position = UDim2.new(0.09, 0, 0.5, 0)
+    Card.AnchorPoint = Vector2.new(0, 0.5)
+    Card.BackgroundColor3 = C.surface
+    Card.BorderSizePixel = 0
+    Card.Parent = Wrap
+    Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 10)
+    local CardStroke = Instance.new("UIStroke")
+    CardStroke.Color = C.border
+    CardStroke.Thickness = 1
+    CardStroke.Transparency = 0.2
+    CardStroke.Parent = Card
 
-    local CL = Instance.new("UIListLayout")
-    CL.SortOrder = Enum.SortOrder.LayoutOrder
-    CL.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    CL.Padding = UDim.new(0, 6)
-    CL.Parent = Content
+    local Badge = Instance.new("Frame")
+    Badge.Size = UDim2.new(0, 38, 0, 38)
+    Badge.Position = UDim2.new(0.5, -19, 0, 17)
+    Badge.BackgroundColor3 = C.selectedSurface
+    Badge.BorderSizePixel = 0
+    Badge.Parent = Card
+    Instance.new("UICorner", Badge).CornerRadius = UDim.new(1, 0)
+    local BadgeStroke = Instance.new("UIStroke")
+    BadgeStroke.Color = C.accent
+    BadgeStroke.Transparency = 0.45
+    BadgeStroke.Parent = Badge
 
     local Icon = Instance.new("TextLabel")
-    Icon.Size = UDim2.new(1, 0, 0, 40)
+    Icon.Size = UDim2.new(1, 0, 1, 0)
     Icon.BackgroundTransparency = 1
-    Icon.Text = "..."
-    Icon.TextSize = 24
+    Icon.Text = "+"
+    Icon.TextSize = 22
     Icon.Font = Enum.Font.GothamBold
-    Icon.TextColor3 = C.gold
-    Icon.LayoutOrder = 1
-    Icon.Parent = Content
+    Icon.TextColor3 = C.accentLight
+    Icon.Parent = Badge
 
     local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(1, 0, 0, 20)
+    Title.Size = UDim2.new(1, -30, 0, 20)
+    Title.Position = UDim2.new(0, 15, 0, 65)
     Title.BackgroundTransparency = 1
-    Title.Text = "Скоро обновление"
+    Title.Text = "Раздел в разработке"
     Title.TextSize = 14
     Title.Font = Enum.Font.GothamBold
     Title.TextColor3 = C.text
-    Title.LayoutOrder = 2
-    Title.Parent = Content
+    Title.Parent = Card
 
     local Desc = Instance.new("TextLabel")
-    Desc.Size = UDim2.new(1, 0, 0, 0)
-    Desc.AutomaticSize = Enum.AutomaticSize.Y
+    Desc.Size = UDim2.new(1, -38, 0, 42)
+    Desc.Position = UDim2.new(0, 19, 0, 91)
     Desc.BackgroundTransparency = 1
-    Desc.Text = "Эта вкладка находится в активной разработке.\n\nВ следующем обновлении здесь появятся новые функции, улучшения и дополнительные возможности."
+    Desc.Text = "Мы улучшаем этот раздел. Новые возможности появятся в следующем обновлении."
     Desc.TextWrapped = true
     Desc.TextSize = 10
     Desc.Font = currentFont
     Desc.TextColor3 = C.textSec
-    Desc.LayoutOrder = 3
-    Desc.Parent = Content
+    Desc.Parent = Card
 
-    local Thanks = Instance.new("TextLabel")
-    Thanks.Size = UDim2.new(1, 0, 0, 20)
-    Thanks.BackgroundTransparency = 1
-    Thanks.Text = "Спасибо за ожидание и поддержку."
-    Thanks.TextSize = 10
-    Thanks.Font = Enum.Font.GothamBold
-    Thanks.TextColor3 = C.accentLight
-    Thanks.LayoutOrder = 4
-    Thanks.Parent = Content
+    local Status = Instance.new("TextLabel")
+    Status.Size = UDim2.new(1, -30, 0, 16)
+    Status.Position = UDim2.new(0, 15, 1, -27)
+    Status.BackgroundTransparency = 1
+    Status.Text = "STATUS  /  IN PROGRESS"
+    Status.TextSize = 8
+    Status.Font = Enum.Font.GothamBold
+    Status.TextColor3 = C.accentLight
+    Status.Parent = Card
 end
 
 ---------------------------------------------------------
@@ -562,7 +622,10 @@ local function ShowTab(name, index)
 
     for tabName, page in pairs(tabPages) do page.Visible = (tabName == name) end
     for tabName, btn in pairs(tabButtons) do
-        btn.TextColor3 = (tabName == name) and C.accentLight or C.textDim
+        local selected = (tabName == name)
+        btn.TextColor3 = selected and C.accentLight or C.textDim
+        btn.BackgroundColor3 = C.selectedSurface
+        btn.BackgroundTransparency = selected and 0.30 or 1
     end
 
     currentTab = name
@@ -574,7 +637,7 @@ local function ShowTab(name, index)
     end
 
     TweenService:Create(TabGlider, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0, 6, 0, 40 + (index - 1) * 30) -- 28px + 2px gap
+        Position = UDim2.new(0, 6, 0, 48 + (index - 1) * 30) -- 28px + 2px gap
     }):Play()
 end
 
@@ -600,19 +663,24 @@ for idx, def in ipairs(tabDefs) do
     Btn.TextSize = 10
     Btn.Font = Enum.Font.GothamBold
     Btn.TextXAlignment = Enum.TextXAlignment.Left
+    Btn.TextTruncate = Enum.TextTruncate.AtEnd
     Btn.AutoButtonColor = false
     Btn.ZIndex = 14
     Btn.Parent = TabList
     Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
     tabButtons[def.name] = Btn
 
+    Btn.MouseEnter:Connect(function()
+        if currentTab ~= def.name then
+            TweenService:Create(Btn, TweenInfo.new(0.14), {BackgroundTransparency = 0.35, BackgroundColor3 = C.hover}):Play()
+        end
+    end)
+    Btn.MouseLeave:Connect(function()
+        if currentTab ~= def.name then
+            TweenService:Create(Btn, TweenInfo.new(0.14), {BackgroundTransparency = 1}):Play()
+        end
+    end)
     Btn.MouseButton1Click:Connect(function()
-        TweenService:Create(Btn, TweenInfo.new(0.06, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0.92, 0, 0, 26)}):Play()
-        task.delay(0.06, function()
-            if Btn.Parent then
-                TweenService:Create(Btn, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 28)}):Play()
-            end
-        end)
         ShowTab(def.name, idx)
     end)
 end
@@ -626,15 +694,21 @@ local function ToggleHub()
 
     if hubOpen then
         Hub.Visible = true
+        HubShadow.Visible = true
         Hub.Size = UDim2.new(0, HUB_W, 0, 0)
+        HubShadow.Size = UDim2.new(0, HUB_W, 0, 0)
         TweenService:Create(Hub, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, HUB_W, 0, HUB_H)}):Play()
+        TweenService:Create(HubShadow, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, HUB_W, 0, HUB_H)}):Play()
     else
         local tw = TweenService:Create(Hub, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(0, HUB_W, 0, 0)})
         tw:Play()
+        TweenService:Create(HubShadow, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(0, HUB_W, 0, 0)}):Play()
         tw.Completed:Connect(function()
             if not hubOpen then
                 Hub.Visible = false
+                HubShadow.Visible = false
                 Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
+                HubShadow.Size = UDim2.new(0, HUB_W, 0, HUB_H)
             end
         end)
     end
