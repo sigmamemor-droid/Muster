@@ -344,8 +344,6 @@ HubShadow.BorderSizePixel = 0
 HubShadow.Visible = false
 HubShadow.ZIndex = 9
 HubShadow.Parent = ScreenGui
-Instance.new("UICorner", HubShadow).CornerRadius = UDim.new(0, 10)
-
 local Hub = Instance.new("Frame")
 Hub.Name = "Hub"
 Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
@@ -356,8 +354,6 @@ Hub.Visible = false
 Hub.ClipsDescendants = true
 Hub.ZIndex = 10
 Hub.Parent = ScreenGui
-Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 10)
-
 local HSk = Instance.new("UIStroke")
 HSk.Color = C.border
 HSk.Thickness = 1
@@ -466,7 +462,7 @@ local VersionLabel = Instance.new("TextLabel")
 VersionLabel.Size = UDim2.new(1, -20, 0, 12)
 VersionLabel.Position = UDim2.new(0, 10, 0, 25)
 VersionLabel.BackgroundTransparency = 1
-VersionLabel.Text = "MOBILE HUB  /  V10"
+VersionLabel.Text = "MOBILE HUB  /  V11"
 VersionLabel.TextColor3 = C.textDim
 VersionLabel.TextSize = 7
 VersionLabel.Font = Enum.Font.GothamBold
@@ -598,6 +594,125 @@ local function BuildPlaceholder(parent)
     Status.Parent = Card
 end
 
+
+---------------------------------------------------------
+-- SETTINGS PAGE — LANGUAGE / THEME / AMOLED / SCALE
+---------------------------------------------------------
+local language = "RU"
+local menuScale = 1
+local amoledEnabled = false
+local chosenAccent = "Violet"
+local settingsLabels = {}
+local accentButtons = {}
+local langButtons = {}
+local amoledFill, amoledKnob, scaleValue, scaleFill
+local HubScale = Instance.new("UIScale")
+HubScale.Name = "HubScale"
+HubScale.Scale = 1
+HubScale.Parent = Hub
+local ShadowScale = Instance.new("UIScale")
+ShadowScale.Name = "ShadowScale"
+ShadowScale.Scale = 1
+ShadowScale.Parent = HubShadow
+
+local lang = {
+    RU = {
+        Home="Главная", Combat="Сражение", ESP="ЕСП / ВХ", Fun="Фан и троллинг", Boombox="Музыка", Nexus="Nexus", Settings="Настройки", Info="Информация",
+        settings="НАСТРОЙКИ ИНТЕРФЕЙСА", language="ЯЗЫК", theme="ЦВЕТ АКЦЕНТА", amoled="AMOLED РЕЖИМ", scale="РАЗМЕР МЕНЮ", on="ВКЛ", off="ВЫКЛ"
+    },
+    EN = {
+        Home="Home", Combat="Combat", ESP="ESP / Wallhack", Fun="Fun & Trolling", Boombox="Music", Nexus="Nexus", Settings="Settings", Info="Information",
+        settings="INTERFACE SETTINGS", language="LANGUAGE", theme="ACCENT COLOR", amoled="AMOLED MODE", scale="MENU SIZE", on="ON", off="OFF"
+    }
+}
+local accentPalettes = {
+    Violet = {accent=Color3.fromRGB(140,65,245), accentLight=Color3.fromRGB(180,115,255), selectedSurface=Color3.fromRGB(42,28,68)},
+    Blue   = {accent=Color3.fromRGB(45,135,255), accentLight=Color3.fromRGB(112,182,255), selectedSurface=Color3.fromRGB(22,43,76)},
+    Red    = {accent=Color3.fromRGB(238,73,91), accentLight=Color3.fromRGB(255,132,145), selectedSurface=Color3.fromRGB(77,27,38)},
+    Green  = {accent=Color3.fromRGB(47,202,132), accentLight=Color3.fromRGB(118,239,177), selectedSurface=Color3.fromRGB(20,66,49)},
+}
+
+local function makeLabel(parent, text, position, size, font, textSize, color)
+    local x = Instance.new("TextLabel")
+    x.BackgroundTransparency = 1
+    x.Position, x.Size = position, size
+    x.Text = text
+    x.TextXAlignment = Enum.TextXAlignment.Left
+    x.Font, x.TextSize, x.TextColor3 = font, textSize, color
+    x.ZIndex = 15
+    x.Parent = parent
+    return x
+end
+
+local function makeButton(parent, text, pos, size)
+    local b = Instance.new("TextButton")
+    b.Size, b.Position = size, pos
+    b.BackgroundColor3 = C.elevated
+    b.BorderSizePixel = 0
+    b.Text = text
+    b.TextColor3 = C.textSec
+    b.TextSize = 9
+    b.Font = Enum.Font.GothamBold
+    b.AutoButtonColor = false
+    b.ZIndex = 16
+    b.Parent = parent
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
+    local st = Instance.new("UIStroke")
+    st.Color, st.Transparency = C.border, 0.2
+    st.Parent = b
+    return b
+end
+
+local function BuildSettingsPage(parent)
+    local wrap = Instance.new("Frame")
+    wrap.Name = "SettingsContent"
+    wrap.Size = UDim2.new(1,0,1,0)
+    wrap.BackgroundTransparency = 1
+    wrap.Parent = parent
+
+    local title = makeLabel(wrap, lang.RU.settings, UDim2.new(0,18,0,14), UDim2.new(1,-36,0,18), Enum.Font.GothamBlack, 12, C.text)
+    settingsLabels.title = title
+    local rule = Instance.new("Frame")
+    rule.Size, rule.Position = UDim2.new(1,-36,0,1), UDim2.new(0,18,0,39)
+    rule.BackgroundColor3, rule.BorderSizePixel, rule.ZIndex = C.border, 0, 15
+    rule.Parent=wrap
+
+    local l1=makeLabel(wrap,lang.RU.language,UDim2.new(0,18,0,51),UDim2.new(0,120,0,15),Enum.Font.GothamBold,8,C.textDim); settingsLabels.language=l1
+    local ru=makeButton(wrap,"RU",UDim2.new(0,143,0,47),UDim2.new(0,42,0,23))
+    local en=makeButton(wrap,"EN",UDim2.new(0,189,0,47),UDim2.new(0,42,0,23))
+    langButtons.RU,langButtons.EN=ru,en
+    ru.MouseButton1Click:Connect(function() language="RU"; end)
+    en.MouseButton1Click:Connect(function() language="EN"; end)
+
+    local l2=makeLabel(wrap,lang.RU.theme,UDim2.new(0,18,0,82),UDim2.new(0,120,0,15),Enum.Font.GothamBold,8,C.textDim); settingsLabels.theme=l2
+    local colors={{"Violet",Color3.fromRGB(140,65,245)},{"Blue",Color3.fromRGB(45,135,255)},{"Red",Color3.fromRGB(238,73,91)},{"Green",Color3.fromRGB(47,202,132)}}
+    for i,item in ipairs(colors) do
+        local b=Instance.new("TextButton")
+        b.Name="Accent_"..item[1]; b.Size=UDim2.new(0,20,0,20); b.Position=UDim2.new(0,143+(i-1)*25,0,78)
+        b.BackgroundColor3=item[2];b.Text="";b.AutoButtonColor=false;b.ZIndex=16;b.Parent=wrap
+        Instance.new("UICorner",b).CornerRadius=UDim.new(1,0)
+        local st=Instance.new("UIStroke");st.Name="Selection";st.Color=C.white;st.Thickness=1.5;st.Transparency=(i==1 and 0 or 1);st.Parent=b
+        accentButtons[item[1]]=b
+        b.MouseButton1Click:Connect(function() chosenAccent=item[1] end)
+    end
+
+    local l3=makeLabel(wrap,lang.RU.amoled,UDim2.new(0,18,0,113),UDim2.new(0,120,0,15),Enum.Font.GothamBold,8,C.textDim); settingsLabels.amoled=l3
+    local am=Instance.new("TextButton")
+    am.Size,am.Position=UDim2.new(0,46,0,22),UDim2.new(0,183,0,109);am.BackgroundColor3=C.elevated;am.Text="";am.AutoButtonColor=false;am.ZIndex=16;am.Parent=wrap
+    Instance.new("UICorner",am).CornerRadius=UDim.new(1,0)
+    amoledFill=am
+    amoledKnob=Instance.new("Frame");amoledKnob.Size=UDim2.new(0,16,0,16);amoledKnob.Position=UDim2.new(0,3,0.5,-8);amoledKnob.BackgroundColor3=C.textSec;amoledKnob.BorderSizePixel=0;amoledKnob.ZIndex=17;amoledKnob.Parent=am;Instance.new("UICorner",amoledKnob).CornerRadius=UDim.new(1,0)
+    am.MouseButton1Click:Connect(function() amoledEnabled=not amoledEnabled end)
+
+    local l4=makeLabel(wrap,lang.RU.scale,UDim2.new(0,18,0,144),UDim2.new(0,120,0,15),Enum.Font.GothamBold,8,C.textDim); settingsLabels.scale=l4
+    local minus=makeButton(wrap,"−",UDim2.new(0,143,0,140),UDim2.new(0,25,0,23))
+    scaleValue=makeLabel(wrap,"100%",UDim2.new(0,172,0,140),UDim2.new(0,38,0,23),Enum.Font.GothamBold,9,C.text)
+    scaleValue.TextXAlignment=Enum.TextXAlignment.Center
+    local plus=makeButton(wrap,"+",UDim2.new(0,214,0,140),UDim2.new(0,25,0,23))
+    minus.MouseButton1Click:Connect(function() menuScale=math.max(0.75,menuScale-0.05) end)
+    plus.MouseButton1Click:Connect(function() menuScale=math.min(1.25,menuScale+0.05) end)
+end
+
 ---------------------------------------------------------
 -- TAB GENERATION
 ---------------------------------------------------------
@@ -651,7 +766,11 @@ for idx, def in ipairs(tabDefs) do
     Page.Visible = false
     Page.ZIndex = 11
     Page.Parent = Hub
-    BuildPlaceholder(Page)
+    if def.name == "Settings" then
+        BuildSettingsPage(Page)
+    else
+        BuildPlaceholder(Page)
+    end
     tabPages[def.name] = Page
 
     local Btn = Instance.new("TextButton")
@@ -684,6 +803,62 @@ for idx, def in ipairs(tabDefs) do
         ShowTab(def.name, idx)
     end)
 end
+
+
+---------------------------------------------------------
+-- LIVE SETTINGS UPDATERS
+---------------------------------------------------------
+local function markThemeRoles()
+    local roles={bg=C.bg,sidebar=C.sidebar,surface=C.surface,elevated=C.elevated,accent=C.accent,accentLight=C.accentLight,white=C.white,text=C.text,textSec=C.textSec,textDim=C.textDim,red=C.red,redDark=C.redDark,border=C.border,hover=C.hover,selectedSurface=C.selectedSurface,shadow=C.shadow}
+    for _,o in ipairs(ScreenGui:GetDescendants()) do
+        for role,color in pairs(roles) do
+            if o:IsA("GuiObject") and not string.match(o.Name, "^Accent_") and o.BackgroundColor3==color then o:SetAttribute("ThemeBackground",role) end
+            if o:IsA("TextLabel") or o:IsA("TextButton") then if o.TextColor3==color then o:SetAttribute("ThemeText",role) end end
+            if o:IsA("UIStroke") and o.Color==color then o:SetAttribute("ThemeStroke",role) end
+        end
+    end
+end
+local function applyTheme()
+    local p=accentPalettes[chosenAccent]
+    C.accent,C.accentLight,C.selectedSurface=p.accent,p.accentLight,p.selectedSurface
+    if amoledEnabled then C.bg=Color3.fromRGB(0,0,0);C.sidebar=Color3.fromRGB(0,0,0);C.surface=Color3.fromRGB(5,5,5);C.elevated=Color3.fromRGB(12,12,12);C.border=Color3.fromRGB(43,43,43);C.hover=Color3.fromRGB(22,22,22) else C.bg=Color3.fromRGB(13,11,20);C.sidebar=Color3.fromRGB(8,7,13);C.surface=Color3.fromRGB(18,15,28);C.elevated=Color3.fromRGB(25,21,38);C.border=Color3.fromRGB(53,45,72);C.hover=Color3.fromRGB(32,27,47) end
+    for _,o in ipairs(ScreenGui:GetDescendants()) do
+        local r=o:GetAttribute("ThemeBackground");if r and C[r] and o:IsA("GuiObject") then o.BackgroundColor3=C[r] end
+        r=o:GetAttribute("ThemeText");if r and C[r] and (o:IsA("TextLabel") or o:IsA("TextButton")) then o.TextColor3=C[r] end
+        r=o:GetAttribute("ThemeStroke");if r and C[r] and o:IsA("UIStroke") then o.Color=C[r] end
+    end
+    local dotColors={Violet=Color3.fromRGB(140,65,245),Blue=Color3.fromRGB(45,135,255),Red=Color3.fromRGB(238,73,91),Green=Color3.fromRGB(47,202,132)}
+    for name,b in pairs(accentButtons) do b.BackgroundColor3=dotColors[name]; b:FindFirstChild("Selection").Transparency=(name==chosenAccent and 0 or 1) end
+    amoledFill.BackgroundColor3=amoledEnabled and C.accent or C.elevated
+    amoledKnob.BackgroundColor3=amoledEnabled and C.white or C.textSec
+    TweenService:Create(amoledKnob,TweenInfo.new(0.16),{Position=UDim2.new(0,amoledEnabled and 27 or 3,0.5,-8)}):Play()
+end
+local function applyLanguage()
+    local t=lang[language]
+    for _,def in ipairs(tabDefs) do
+        def.title=t[def.name]
+        local b=tabButtons[def.name]; b.Text=def.icon.."  "..def.title
+    end
+    local d
+    for _,v in ipairs(tabDefs) do if v.name==currentTab then d=v break end end
+    if d then PageTitle.Text=d.icon.." "..d.title end
+    for key,label in pairs(settingsLabels) do label.Text=t[key] end
+    for key,b in pairs(langButtons) do b.TextColor3=(key==language and C.accentLight or C.textSec) end
+end
+local function applyScale()
+    HubScale.Scale=menuScale;ShadowScale.Scale=menuScale
+    scaleValue.Text=tostring(math.floor(menuScale*100+0.5)).."%"
+end
+markThemeRoles()
+-- Settings controls alter state; polling keeps the lightweight controls in sync.
+task.spawn(function()
+    local last=""
+    while ScreenGui.Parent do
+        local state=language..chosenAccent..tostring(amoledEnabled)..tostring(menuScale)
+        if state~=last then applyTheme();applyLanguage();applyScale();last=state end
+        task.wait(0.08)
+    end
+end)
 
 ---------------------------------------------------------
 -- OPEN / CLOSE HUB
