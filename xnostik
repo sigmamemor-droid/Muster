@@ -1,4 +1,4 @@
--- linbergz Team MOBILE HUB v10.0 (Interface Redesign)
+-- linbergz Team MOBILE HUB v12.0 (Resizable Interface Redesign)
 -- Только интерфейс: вкладки, тема, анимации. Все функции заменены заглушкой.
 
 ---------------------------------------------------------
@@ -332,6 +332,11 @@ end
 -- MAIN HUB FRAME
 ---------------------------------------------------------
 local HUB_W, HUB_H, SIDEBAR_W, TOPBAR_H = 460, 300, 126, 38
+local DEFAULT_SIZE = Vector2.new(HUB_W, HUB_H)
+local MIN_SIZE = Vector2.new(400, 285)
+local windowSize = DEFAULT_SIZE
+local windowPos
+local activeWindowTween
 
 -- Мягкая тень отделяет окно от игрового фона.
 local HubShadow = Instance.new("Frame")
@@ -359,6 +364,43 @@ HSk.Color = C.border
 HSk.Thickness = 1
 HSk.Transparency = 0.15
 HSk.Parent = Hub
+
+-- Единый источник истины для позиции и размера окна.
+-- Все изменения (перетаскивание, углы, слайдер) проходят через эту функцию.
+local function getViewport()
+    local size = ScreenGui.AbsoluteSize
+    if size.X < 1 or size.Y < 1 then
+        local camera = workspace.CurrentCamera
+        size = camera and camera.ViewportSize or Vector2.new(1280, 720)
+    end
+    return size
+end
+
+local function applyWindowRect(position, size)
+    local viewport = getViewport()
+    local maxW = math.max(MIN_SIZE.X, viewport.X - 16)
+    local maxH = math.max(MIN_SIZE.Y, viewport.Y - 16)
+    local width = math.clamp(size.X, MIN_SIZE.X, maxW)
+    local height = math.clamp(size.Y, MIN_SIZE.Y, maxH)
+    local maxX = math.max(8, viewport.X - width - 8)
+    local maxY = math.max(8, viewport.Y - 34)
+    windowPos = Vector2.new(math.clamp(position.X, 8, maxX), math.clamp(position.Y, 8, maxY))
+    windowSize = Vector2.new(width, height)
+    Hub.Position = UDim2.fromOffset(windowPos.X, windowPos.Y)
+    Hub.Size = UDim2.fromOffset(width, height)
+    HubShadow.Position = UDim2.fromOffset(windowPos.X, windowPos.Y + 6)
+    HubShadow.Size = UDim2.fromOffset(width, height)
+end
+
+local function ensureWindowRect()
+    if not windowPos then
+        local viewport = getViewport()
+        windowPos = Vector2.new(math.max(8, (viewport.X - windowSize.X) / 2), math.max(8, (viewport.Y - windowSize.Y) / 2))
+    end
+    applyWindowRect(windowPos, windowSize)
+end
+
+task.defer(ensureWindowRect)
 
 ---------------------------------------------------------
 -- TOP BAR
@@ -405,23 +447,82 @@ ClB.Parent = TopB
 Instance.new("UICorner", ClB).CornerRadius = UDim.new(0, 6)
 
 do
-    local drag, dStart, sPos
-    TopB.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-            drag, dStart, sPos = true, i.Position, Hub.Position
+    local dragging, activeInput, dragStart, startPos
+    TopB.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            if input.Target == ClB then return end
+            ensureWindowRect()
+            dragging, activeInput, dragStart, startPos = true, input, input.Position, windowPos
         end
     end)
-    UserInputService.InputChanged:Connect(function(i)
-        if drag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-            local d = i.Position - dStart
-            Hub.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y)
-            HubShadow.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y + 5)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input == activeInput) then
+            applyWindowRect(startPos + (input.Position - dragStart), windowSize)
         end
     end)
-    UserInputService.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then drag = false end
+    UserInputService.InputEnded:Connect(function(input)
+        if input == activeInput or (activeInput and activeInput.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.MouseButton1) then
+            dragging, activeInput = false, nil
+        end
     end)
 end
+
+-- Невидимые, но широкие зоны дают растяжение со всех сторон и углов.
+local function addResizeHandle(name, position, size, left, right, top, bottom)
+    local handle = Instance.new("TextButton")
+    handle.Name = "Resize_" .. name
+    handle.Position, handle.Size = position, size
+    handle.BackgroundTransparency, handle.TextTransparency = 1, 1
+    handle.AutoButtonColor, handle.Active = false, true
+    handle.ZIndex = 30
+    handle.Parent = Hub
+
+    local resizing, activeInput, startPointer, startPosition, startSize
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+        ensureWindowRect()
+        resizing, activeInput = true, input
+        startPointer, startPosition, startSize = input.Position, windowPos, windowSize
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if not resizing or (input.UserInputType ~= Enum.UserInputType.MouseMovement and input ~= activeInput) then return end
+        local delta = input.Position - startPointer
+        local x, y, w, h = startPosition.X, startPosition.Y, startSize.X, startSize.Y
+        if left then x, w = x + delta.X, w - delta.X end
+        if right then w = w + delta.X end
+        if top then y, h = y + delta.Y, h - delta.Y end
+        if bottom then h = h + delta.Y end
+        -- При упоре в минимальный размер сохраняем противоположную грань на месте.
+        if left and w < MIN_SIZE.X then x = startPosition.X + startSize.X - MIN_SIZE.X end
+        if top and h < MIN_SIZE.Y then y = startPosition.Y + startSize.Y - MIN_SIZE.Y end
+        applyWindowRect(Vector2.new(x, y), Vector2.new(w, h))
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input == activeInput or (activeInput and activeInput.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.MouseButton1) then
+            resizing, activeInput = false, nil
+        end
+    end)
+end
+addResizeHandle("N",  UDim2.new(0,16,0,0),       UDim2.new(1,-32,0,10), false,false,true,false)
+addResizeHandle("S",  UDim2.new(0,16,1,-10),     UDim2.new(1,-32,0,10), false,false,false,true)
+addResizeHandle("W",  UDim2.new(0,0,0,16),       UDim2.new(0,10,1,-32), true,false,false,false)
+addResizeHandle("E",  UDim2.new(1,-10,0,16),     UDim2.new(0,10,1,-32), false,true,false,false)
+addResizeHandle("NW", UDim2.new(0,0,0,0),        UDim2.new(0,16,0,16), true,false,true,false)
+addResizeHandle("NE", UDim2.new(1,-16,0,0),      UDim2.new(0,16,0,16), false,true,true,false)
+addResizeHandle("SW", UDim2.new(0,0,1,-16),      UDim2.new(0,16,0,16), true,false,false,true)
+addResizeHandle("SE", UDim2.new(1,-16,1,-16),    UDim2.new(0,16,0,16), false,true,false,true)
+
+local ResizeGrip = Instance.new("TextLabel")
+ResizeGrip.Size = UDim2.new(0,24,0,16)
+ResizeGrip.Position = UDim2.new(1,-27,1,-18)
+ResizeGrip.BackgroundTransparency = 1
+ResizeGrip.Text = "///"
+ResizeGrip.TextColor3 = C.textDim
+ResizeGrip.TextSize = 8
+ResizeGrip.Font = Enum.Font.GothamBold
+ResizeGrip.Rotation = -45
+ResizeGrip.ZIndex = 29
+ResizeGrip.Parent = Hub
 
 ---------------------------------------------------------
 -- SIDEBAR / TABS
@@ -462,7 +563,7 @@ local VersionLabel = Instance.new("TextLabel")
 VersionLabel.Size = UDim2.new(1, -20, 0, 12)
 VersionLabel.Position = UDim2.new(0, 10, 0, 25)
 VersionLabel.BackgroundTransparency = 1
-VersionLabel.Text = "MOBILE HUB  /  V11"
+VersionLabel.Text = "MOBILE HUB  /  V12"
 VersionLabel.TextColor3 = C.textDim
 VersionLabel.TextSize = 7
 VersionLabel.Font = Enum.Font.GothamBold
@@ -607,14 +708,7 @@ local accentButtons = {}
 local langButtons = {}
 local amoledFill, amoledKnob, scaleValue, scaleFill, scaleTrack, scaleKnob
 local refreshSettings
-local HubScale = Instance.new("UIScale")
-HubScale.Name = "HubScale"
-HubScale.Scale = 1
-HubScale.Parent = Hub
-local ShadowScale = Instance.new("UIScale")
-ShadowScale.Name = "ShadowScale"
-ShadowScale.Scale = 1
-ShadowScale.Parent = HubShadow
+local applyScale
 
 local lang = {
     RU = {
@@ -673,7 +767,7 @@ local function BuildSettingsPage(parent)
 
     local title = makeLabel(wrap, lang.RU.settings, UDim2.new(0,16,0,11), UDim2.new(1,-32,0,20), Enum.Font.GothamBlack, 12, C.text)
     title:SetAttribute("ThemeText", "text")
-    settingsLabels.title = title
+    settingsLabels.settings = title
 
     local rule = Instance.new("Frame")
     rule.Size, rule.Position = UDim2.new(1,-32,0,1), UDim2.new(0,16,0,36)
@@ -774,9 +868,8 @@ local function BuildSettingsPage(parent)
     local dragLeft,dragWidth=0,1
     local function setScaleFromX(x)
         local alpha=math.max(0,math.min(1,(x-dragLeft)/dragWidth))
-        menuScale=0.75+(alpha*0.5)
-        HubScale.Scale=menuScale
-        ShadowScale.Scale=menuScale
+        menuScale=0.95+(alpha*0.40)
+        applyScale()
         scaleValue.Text=tostring(math.floor(menuScale*100+0.5)).."%"
         scaleFill.Size=UDim2.new(alpha,0,1,0)
         scaleKnob.Position=UDim2.new(alpha,-7,0.5,-7)
@@ -803,18 +896,16 @@ end
 ---------------------------------------------------------
 -- ASCII-маркеры отображаются одинаково на ПК и мобильных устройствах.
 local tabDefs = {
-    {name = "Home",     title = "Главная",           icon = "[H]"},
-    {name = "Combat",   title = "Сражение",          icon = "[C]"},
-    {name = "ESP",      title = "ЕСП / ВХ",          icon = "[E]"},
-    {name = "Fun",      title = "Фан и троллинг",    icon = "[F]"},
-    {name = "Boombox",  title = "Музыка",            icon = "[M]"},
-    {name = "Nexus",    title = "Nexus",             icon = "[N]"},
-    {name = "Settings", title = "Настройки",         icon = "[S]"},
-    {name = "Info",     title = "Информация",        icon = "[I]"},
+    {name = "Home",     title = "Главная",           icon = ""},
+    {name = "Combat",   title = "Сражение",          icon = ""},
+    {name = "ESP",      title = "ЕСП / ВХ",          icon = ""},
+    {name = "Fun",      title = "Фан и троллинг",    icon = ""},
+    {name = "Boombox",  title = "Музыка",            icon = ""},
+    {name = "Nexus",    title = "Nexus",             icon = ""},
+    {name = "Settings", title = "Настройки",         icon = ""},
+    {name = "Info",     title = "Информация",        icon = ""},
 }
 
-local CX, CY = SIDEBAR_W + 1, TOPBAR_H
-local CW, CH = HUB_W - SIDEBAR_W - 1, HUB_H - TOPBAR_H
 local tabPages, tabButtons, currentTab = {}, {}, nil
 
 local function ShowTab(name, index)
@@ -831,7 +922,7 @@ local function ShowTab(name, index)
     currentTab = name
     for _, def in ipairs(tabDefs) do
         if def.name == name then
-            PageTitle.Text = def.icon .. " " .. def.title
+            PageTitle.Text = def.title
             break
         end
     end
@@ -844,8 +935,8 @@ end
 for idx, def in ipairs(tabDefs) do
     local Page = Instance.new("Frame")
     Page.Name = "Page_" .. def.name
-    Page.Size = UDim2.new(0, CW, 0, CH)
-    Page.Position = UDim2.new(0, CX, 0, CY)
+    Page.Size = UDim2.new(1, -SIDEBAR_W - 1, 1, -TOPBAR_H)
+    Page.Position = UDim2.new(0, SIDEBAR_W + 1, 0, TOPBAR_H)
     Page.BackgroundTransparency = 1
     Page.BorderSizePixel = 0
     Page.Visible = false
@@ -862,7 +953,7 @@ for idx, def in ipairs(tabDefs) do
     Btn.Name = "Tab_" .. def.name
     Btn.Size = UDim2.new(1, 0, 0, 28)
     Btn.BackgroundTransparency = 1
-    Btn.Text = def.icon .. "  " .. def.title
+    Btn.Text = "  " .. def.title
     Btn.TextColor3 = C.textDim
     Btn.TextSize = 10
     Btn.Font = Enum.Font.GothamBold
@@ -922,11 +1013,11 @@ local function applyLanguage()
     local t=lang[language]
     for _,def in ipairs(tabDefs) do
         def.title=t[def.name]
-        local b=tabButtons[def.name]; b.Text=def.icon.."  "..def.title
+        local b=tabButtons[def.name]; b.Text="  "..def.title
     end
     local d
     for _,v in ipairs(tabDefs) do if v.name==currentTab then d=v break end end
-    if d then PageTitle.Text=d.icon.." "..d.title end
+    if d then PageTitle.Text=d.title end
     for key,label in pairs(settingsLabels) do label.Text=t[key] end
     for key,b in pairs(langButtons) do
         local selected = (key == language)
@@ -939,11 +1030,13 @@ local function applyLanguage()
         end
     end
 end
-local function applyScale()
-    menuScale=math.max(0.75,math.min(1.25,menuScale))
-    HubScale.Scale=menuScale;ShadowScale.Scale=menuScale
+applyScale = function()
+    menuScale=math.max(0.95,math.min(1.35,menuScale))
+    ensureWindowRect()
+    -- «Размер меню» меняет реальную рамку, а не масштабирует содержимое внутри неё.
+    applyWindowRect(windowPos, Vector2.new(DEFAULT_SIZE.X * menuScale, DEFAULT_SIZE.Y * menuScale))
     scaleValue.Text=tostring(math.floor(menuScale*100+0.5)).."%"
-    local alpha=(menuScale-0.75)/0.5
+    local alpha=(menuScale-0.95)/0.40
     if scaleFill then scaleFill.Size=UDim2.new(alpha,0,1,0) end
     if scaleKnob then scaleKnob.Position=UDim2.new(alpha,-7,0.5,-7) end
 end
@@ -969,20 +1062,21 @@ local function ToggleHub()
     if hubOpen then
         Hub.Visible = true
         HubShadow.Visible = true
-        Hub.Size = UDim2.new(0, HUB_W, 0, 0)
-        HubShadow.Size = UDim2.new(0, HUB_W, 0, 0)
-        TweenService:Create(Hub, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, HUB_W, 0, HUB_H)}):Play()
-        TweenService:Create(HubShadow, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, HUB_W, 0, HUB_H)}):Play()
+        ensureWindowRect()
+        Hub.Size = UDim2.fromOffset(windowSize.X, 0)
+        HubShadow.Size = UDim2.fromOffset(windowSize.X, 0)
+        TweenService:Create(Hub, TweenInfo.new(0.20, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(windowSize.X, windowSize.Y)}):Play()
+        TweenService:Create(HubShadow, TweenInfo.new(0.20, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(windowSize.X, windowSize.Y)}):Play()
     else
-        local tw = TweenService:Create(Hub, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(0, HUB_W, 0, 0)})
+        local tw = TweenService:Create(Hub, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.fromOffset(windowSize.X, 0)})
         tw:Play()
-        TweenService:Create(HubShadow, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(0, HUB_W, 0, 0)}):Play()
+        TweenService:Create(HubShadow, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.fromOffset(windowSize.X, 0)}):Play()
         tw.Completed:Connect(function()
             if not hubOpen then
                 Hub.Visible = false
                 HubShadow.Visible = false
-                Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
-                HubShadow.Size = UDim2.new(0, HUB_W, 0, HUB_H)
+                Hub.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
+                HubShadow.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
             end
         end)
     end
