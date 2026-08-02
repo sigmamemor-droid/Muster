@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════
---  Compact Sidebar UI | Roblox Lua
+--  Compact Sidebar UI | Roblox Lua (Improved)
 -- ═══════════════════════════════════════════════
 
 local Players = game:GetService("Players")
@@ -15,6 +15,7 @@ local CONFIG = {
 		Background = Color3.fromRGB(18, 18, 22),
 		Sidebar = Color3.fromRGB(13, 13, 16),
 		Card = Color3.fromRGB(28, 28, 34),
+		CardHover = Color3.fromRGB(34, 34, 41),
 		Accent = Color3.fromRGB(99, 102, 241),
 		AccentHover = Color3.fromRGB(129, 132, 255),
 		TextPrimary = Color3.fromRGB(240, 240, 245),
@@ -29,6 +30,7 @@ local CONFIG = {
 	TabHeight = 44,
 	CornerRadius = 10,
 	AnimDuration = 0.25,
+	WindowSize = Vector2.new(700, 450),
 }
 
 -- ─── Helpers ──────────────────────────────────
@@ -60,29 +62,37 @@ end
 local screenGui = create("ScreenGui", {
 	Name = "SidebarUI",
 	ResetOnSpawn = false,
+	IgnoreGuiInset = true,
+	DisplayOrder = 10,
 	Parent = playerGui,
 })
 
--- Backdrop (blur-like dark overlay)
-local backdrop = create("Frame", {
+-- FIX: старая непрозрачная подложка (Backdrop) затемняла ВЕСЬ экран игры.
+-- Теперь это просто невидимый "ловец кликов" для закрытия меню кликом мимо.
+local backdrop = create("TextButton", {
 	Name = "Backdrop",
 	Size = UDim2.new(1, 0, 1, 0),
-	BackgroundColor3 = CONFIG.Theme.Background,
-	BackgroundTransparency = 0.05,
+	BackgroundTransparency = 1,
+	AutoButtonColor = false,
+	Text = "",
+	ZIndex = 0,
 	Parent = screenGui,
 })
 
 -- Main Container
 local main = create("Frame", {
 	Name = "Main",
-	Size = UDim2.new(0, 700, 0, 450),
-	Position = UDim2.new(0.5, -350, 0.5, -225),
+	Size = UDim2.new(0, CONFIG.WindowSize.X, 0, CONFIG.WindowSize.Y),
+	Position = UDim2.new(0.5, -CONFIG.WindowSize.X / 2, 0.5, -CONFIG.WindowSize.Y / 2),
 	BackgroundColor3 = CONFIG.Theme.Background,
 	BackgroundTransparency = 0,
 	BorderSizePixel = 0,
+	ClipsDescendants = false,
+	ZIndex = 1,
 	Parent = screenGui,
 })
 corner(16, main)
+stroke(CONFIG.Theme.Border, 1, main)
 
 -- Shadow
 local shadow = create("ImageLabel", {
@@ -95,9 +105,70 @@ local shadow = create("ImageLabel", {
 	ImageTransparency = 0.6,
 	ScaleType = Enum.ScaleType.Slice,
 	SliceCenter = Rect.new(10, 10, 118, 118),
-	ZIndex = -1,
+	ZIndex = 0,
 	Parent = main,
 })
+
+-- ─── Drag Handle (перетаскивание за верх окна) ─
+do
+	local dragging, dragStart, startPos = false, nil, nil
+
+	local function updateDrag(input)
+		local delta = input.Position - dragStart
+		main.Position = UDim2.new(
+			startPos.X.Scale, startPos.X.Offset + delta.X,
+			startPos.Y.Scale, startPos.Y.Offset + delta.Y
+		)
+	end
+
+	main.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			local relY = input.Position.Y - main.AbsolutePosition.Y
+			if relY <= 20 then
+				dragging = true
+				dragStart = input.Position
+				startPos = main.Position
+				input.Changed:Connect(function()
+					if input.UserInputState == Enum.UserInputState.End then
+						dragging = false
+					end
+				end)
+			end
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			updateDrag(input)
+		end
+	end)
+end
+
+-- ─── Close Button ─────────────────────────────
+local closeBtn = create("TextButton", {
+	Name = "CloseButton",
+	Size = UDim2.new(0, 28, 0, 28),
+	Position = UDim2.new(1, -40, 0, 12),
+	BackgroundColor3 = CONFIG.Theme.Card,
+	BorderSizePixel = 0,
+	Text = "✕",
+	TextColor3 = CONFIG.Theme.TextSecondary,
+	Font = Enum.Font.GothamBold,
+	TextSize = 14,
+	AutoButtonColor = false,
+	ZIndex = 5,
+	Parent = main,
+})
+corner(8, closeBtn)
+
+closeBtn.MouseEnter:Connect(function()
+	tween(closeBtn, { BackgroundColor3 = CONFIG.Theme.Danger }, 0.15):Play()
+	closeBtn.TextColor3 = Color3.new(1, 1, 1)
+end)
+closeBtn.MouseLeave:Connect(function()
+	tween(closeBtn, { BackgroundColor3 = CONFIG.Theme.Card }, 0.15):Play()
+	closeBtn.TextColor3 = CONFIG.Theme.TextSecondary
+end)
 
 -- ─── Sidebar ──────────────────────────────────
 local sidebar = create("Frame", {
@@ -109,15 +180,15 @@ local sidebar = create("Frame", {
 })
 corner(16, sidebar)
 
--- Sidebar top padding
 create("Frame", {
-	Name = "TopPad",
-	Size = UDim2.new(1, 0, 0, 20),
-	BackgroundTransparency = 1,
+	Size = UDim2.new(0, 16, 1, 0),
+	Position = UDim2.new(1, -16, 0, 0),
+	BackgroundColor3 = CONFIG.Theme.Sidebar,
+	BorderSizePixel = 0,
+	ZIndex = sidebar.ZIndex,
 	Parent = sidebar,
 })
 
--- Title
 local title = create("TextLabel", {
 	Name = "Title",
 	Size = UDim2.new(1, -24, 0, 28),
@@ -131,13 +202,12 @@ local title = create("TextLabel", {
 	Parent = sidebar,
 })
 
--- Subtitle
 create("TextLabel", {
 	Name = "Subtitle",
 	Size = UDim2.new(1, -24, 0, 18),
 	Position = UDim2.new(0, 16, 0, 48),
 	BackgroundTransparency = 1,
-	Text = "v2.4.0",
+	Text = "v2.5.0",
 	TextColor3 = CONFIG.Theme.TextMuted,
 	Font = Enum.Font.Gotham,
 	TextSize = 12,
@@ -145,7 +215,6 @@ create("TextLabel", {
 	Parent = sidebar,
 })
 
--- Divider
 create("Frame", {
 	Name = "Divider",
 	Size = UDim2.new(1, -32, 0, 1),
@@ -155,7 +224,6 @@ create("Frame", {
 	Parent = sidebar,
 })
 
--- Tab container
 local tabList = create("Frame", {
 	Name = "TabList",
 	Size = UDim2.new(1, -16, 1, -100),
@@ -188,7 +256,6 @@ local tabData = {
 		label = "Home",
 		icon = "🏠",
 		content = function(parent)
-			-- Header
 			local header = create("TextLabel", {
 				Size = UDim2.new(1, 0, 0, 36),
 				BackgroundTransparency = 1,
@@ -200,7 +267,6 @@ local tabData = {
 				Parent = parent,
 			})
 
-			-- Stats row
 			local stats = create("Frame", {
 				Size = UDim2.new(1, 0, 0, 90),
 				Position = UDim2.new(0, 0, 0, 48),
@@ -254,7 +320,6 @@ local tabData = {
 				})
 			end
 
-			-- Recent activity
 			local activityHeader = create("TextLabel", {
 				Size = UDim2.new(1, 0, 0, 22),
 				Position = UDim2.new(0, 0, 0, 155),
@@ -371,7 +436,6 @@ local tabData = {
 				})
 				corner(10, row)
 
-				-- Avatar placeholder
 				local avatar = create("Frame", {
 					Size = UDim2.new(0, 36, 0, 36),
 					Position = UDim2.new(0, 10, 0.5, -18),
@@ -474,7 +538,6 @@ local tabData = {
 					Parent = row,
 				})
 
-				-- Toggle
 				local toggle = create("Frame", {
 					Size = UDim2.new(0, 44, 0, 24),
 					Position = UDim2.new(1, -60, 0.5, -12),
@@ -552,10 +615,9 @@ for _, data in ipairs(tabData) do
 		Parent = tabBtn,
 	})
 
-	-- Hover
 	tabBtn.MouseEnter:Connect(function()
 		if activeTab ~= data.id then
-			tween(tabBtn, { BackgroundColor3 = CONFIG.Theme.Card }, 0.15):Play()
+			tween(tabBtn, { BackgroundColor3 = CONFIG.Theme.CardHover }, 0.15):Play()
 		end
 	end)
 
@@ -565,11 +627,9 @@ for _, data in ipairs(tabData) do
 		end
 	end)
 
-	-- Click
 	tabBtn.MouseButton1Click:Connect(function()
 		if activeTab == data.id then return end
 
-		-- Deactivate previous
 		for _, t in ipairs(tabs) do
 			if t.id == activeTab then
 				tween(t.btn, { BackgroundColor3 = CONFIG.Theme.Sidebar }, 0.2):Play()
@@ -579,27 +639,16 @@ for _, data in ipairs(tabData) do
 			end
 		end
 
-		-- Activate new
 		activeTab = data.id
 		tween(tabBtn, { BackgroundColor3 = CONFIG.Theme.Card }, 0.2):Play()
 		tween(indicator, { Size = UDim2.new(0, 3, 0, 20) }, 0.2):Play()
 		label.TextColor3 = CONFIG.Theme.TextPrimary
 
-		-- Fade in content
 		data.container.Visible = true
 		data.container.BackgroundTransparency = 1
 		tween(data.container, { BackgroundTransparency = 0 }, 0.2):Play()
 	end)
 
-	table.insert(tabs, {
-		id = data.id,
-		btn = tabBtn,
-		indicator = indicator,
-		label = label,
-		content = data.container,
-	})
-
-	-- Content container
 	local container = create("Frame", {
 		Name = "Content_" .. data.id,
 		Size = UDim2.new(1, 0, 1, 0),
@@ -610,6 +659,14 @@ for _, data in ipairs(tabData) do
 
 	data.container = container
 	data.content(container)
+
+	table.insert(tabs, {
+		id = data.id,
+		btn = tabBtn,
+		indicator = indicator,
+		label = label,
+		content = container,
+	})
 end
 
 -- ─── Activate First Tab ───────────────────────
@@ -621,21 +678,38 @@ if #tabs > 0 then
 	activeTab = tabs[1].id
 end
 
--- ─── Toggle UI (Right Ctrl) ───────────────────
+-- ─── Show / Hide logic ─────────────────────────
 local uiVisible = true
+
+local function setVisible(show)
+	uiVisible = show
+	if show then
+		main.Visible = true
+		backdrop.Active = true
+		tween(main, {
+			Size = UDim2.new(0, CONFIG.WindowSize.X, 0, CONFIG.WindowSize.Y),
+			Position = UDim2.new(0.5, -CONFIG.WindowSize.X / 2, 0.5, -CONFIG.WindowSize.Y / 2),
+		}, 0.3):Play()
+	else
+		backdrop.Active = false
+		tween(main, { Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0) }, 0.3):Play()
+		task.delay(0.3, function()
+			if not uiVisible then
+				main.Visible = false
+			end
+		end)
+	end
+end
+
+closeBtn.MouseButton1Click:Connect(function()
+	setVisible(false)
+end)
+
+-- ─── Toggle UI (Right Ctrl) ───────────────────
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
 	if input.KeyCode == Enum.KeyCode.RightControl then
-		uiVisible = not uiVisible
-		if uiVisible then
-			main.Visible = true
-			tween(main, { Size = UDim2.new(0, 700, 0, 450), Position = UDim2.new(0.5, -350, 0.5, -225) }, 0.3):Play()
-		else
-			tween(main, { Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0) }, 0.3):Play()
-			task.delay(0.3, function()
-				main.Visible = false
-			end)
-		end
+		setVisible(not uiVisible)
 	end
 end)
 
@@ -644,6 +718,9 @@ main.Size = UDim2.new(0, 0, 0, 0)
 main.Position = UDim2.new(0.5, 0, 0.5, 0)
 main.Visible = true
 
-tween(main, { Size = UDim2.new(0, 700, 0, 450), Position = UDim2.new(0.5, -350, 0.5, -225) }, 0.4):Play()
+tween(main, {
+	Size = UDim2.new(0, CONFIG.WindowSize.X, 0, CONFIG.WindowSize.Y),
+	Position = UDim2.new(0.5, -CONFIG.WindowSize.X / 2, 0.5, -CONFIG.WindowSize.Y / 2),
+}, 0.4):Play()
 
-print("✅ Sidebar UI loaded! Press Right Ctrl to toggle.")
+print("✅ Sidebar UI loaded! Press Right Ctrl or the ✕ button to toggle.")
