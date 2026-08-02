@@ -1,4 +1,4 @@
--- linbergz Team MOBILE HUB v9.1 (UI Preview Build)
+-- linbergz Team MOBILE HUB v9.2 (Refined Loading + Compact Tabs)
 -- Только интерфейс: вкладки, тема, анимации. Все функции заменены заглушкой.
 
 ---------------------------------------------------------
@@ -360,7 +360,7 @@ local PageTitle = Instance.new("TextLabel")
 PageTitle.Size = UDim2.new(1, -60, 1, 0)
 PageTitle.Position = UDim2.new(0, 10, 0, 0)
 PageTitle.BackgroundTransparency = 1
-PageTitle.Text = "🏠 Главная"
+PageTitle.Text = "[H]  Главная"
 PageTitle.TextColor3 = C.text
 PageTitle.TextSize = 12
 PageTitle.Font = Enum.Font.GothamBold
@@ -423,6 +423,14 @@ STi.TextSize = 12
 STi.Font = Enum.Font.GothamBlack
 STi.Parent = SLogo
 
+local LogoRule = Instance.new("Frame")
+LogoRule.Size = UDim2.new(1, -20, 0, 1)
+LogoRule.Position = UDim2.new(0, 10, 1, -1)
+LogoRule.BackgroundColor3 = C.elevated
+LogoRule.BorderSizePixel = 0
+LogoRule.ZIndex = 13
+LogoRule.Parent = SLogo
+
 -- Отдельный список: glider больше не считается вкладкой UIListLayout.
 local TabHolder = Instance.new("Frame")
 TabHolder.Size = UDim2.new(1, 0, 1, -36)
@@ -441,7 +449,7 @@ TabList.Parent = TabHolder
 
 local THL = Instance.new("UIListLayout")
 THL.SortOrder = Enum.SortOrder.LayoutOrder
-THL.Padding = UDim.new(0, 5) -- отступы между вкладками
+THL.Padding = UDim.new(0, 2) -- компактный 2px-зазор между вкладками
 THL.Parent = TabList
 
 local TabGlider = Instance.new("Frame")
@@ -490,8 +498,8 @@ local function BuildPlaceholder(parent)
     local Icon = Instance.new("TextLabel")
     Icon.Size = UDim2.new(1, 0, 0, 40)
     Icon.BackgroundTransparency = 1
-    Icon.Text = "🚧"
-    Icon.TextSize = 32
+    Icon.Text = "..."
+    Icon.TextSize = 24
     Icon.Font = Enum.Font.GothamBold
     Icon.TextColor3 = C.gold
     Icon.LayoutOrder = 1
@@ -522,7 +530,7 @@ local function BuildPlaceholder(parent)
     local Thanks = Instance.new("TextLabel")
     Thanks.Size = UDim2.new(1, 0, 0, 20)
     Thanks.BackgroundTransparency = 1
-    Thanks.Text = "Спасибо за ожидание и поддержку! ❤️"
+    Thanks.Text = "Спасибо за ожидание и поддержку."
     Thanks.TextSize = 10
     Thanks.Font = Enum.Font.GothamBold
     Thanks.TextColor3 = C.accentLight
@@ -533,15 +541,16 @@ end
 ---------------------------------------------------------
 -- TAB GENERATION
 ---------------------------------------------------------
+-- ASCII-маркеры отображаются одинаково на ПК и мобильных устройствах.
 local tabDefs = {
-    {name = "Home", title = "Главная", icon = "🏠"},
-    {name = "Combat", title = "Сражение", icon = "⚔️"},
-    {name = "ESP", title = "ЕСП/ВХ", icon = "👁️"},
-    {name = "Fun", title = "Фан и Троллинг", icon = "🎭"},
-    {name = "Boombox", title = "Музыка", icon = "🎵"},
-    {name = "Nexus", title = "Nexus", icon = "💎"},
-    {name = "Settings", title = "Настройки", icon = "⚙️"},
-    {name = "Info", title = "Информация", icon = "📝"},
+    {name = "Home",     title = "Главная",           icon = "[H]"},
+    {name = "Combat",   title = "Сражение",          icon = "[C]"},
+    {name = "ESP",      title = "ЕСП / ВХ",          icon = "[E]"},
+    {name = "Fun",      title = "Фан и троллинг",    icon = "[F]"},
+    {name = "Boombox",  title = "Музыка",            icon = "[M]"},
+    {name = "Nexus",    title = "Nexus",             icon = "[N]"},
+    {name = "Settings", title = "Настройки",         icon = "[S]"},
+    {name = "Info",     title = "Информация",        icon = "[I]"},
 }
 
 local CX, CY = SIDEBAR_W + 1, TOPBAR_H
@@ -565,7 +574,7 @@ local function ShowTab(name, index)
     end
 
     TweenService:Create(TabGlider, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0, 6, 0, 40 + (index - 1) * 33) -- 28px + 5px gap
+        Position = UDim2.new(0, 6, 0, 40 + (index - 1) * 30) -- 28px + 2px gap
     }):Play()
 end
 
