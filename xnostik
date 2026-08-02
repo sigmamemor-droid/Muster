@@ -1,7 +1,6 @@
--- linbergz Team MOBILE HUB v13.0 — Full Premium Mobile Redesign
--- Authoritative v12 feature set preserved: all tabs, placeholders, settings, callbacks and window controls remain intact.
--- v13 fixes: safe viewport clamping below minimum size, correct vertical bounds, unified drag/resize ownership,
--- drag-threshold launcher activation, no InputObject.Target access, and resilient semantic theme refresh.
+-- linbergz Team MOBILE HUB v14.0 — Modern Glass Mobile Redesign
+-- Modern visual refresh: polished glass panels, improved hierarchy, responsive desktop/mobile sizing, and preserved controls.
+-- v14 removes the menu-size setting by request; drag, resize, themes, language, tabs, launcher, and close controls remain intact.
 -- UI-only. Native Roblox Luau; no external libraries.
 
 ---------------------------------------------------------
@@ -207,6 +206,28 @@ task.spawn(function()
     LS:Destroy()
 end)
 
+-- The loader above intentionally keeps the original v13 palette and appearance.
+-- The redesigned interface uses its own independent palette below.
+local AppC = {
+    bg = Color3.fromRGB(13, 16, 28),
+    sidebar = Color3.fromRGB(10, 13, 24),
+    surface = Color3.fromRGB(24, 29, 46),
+    elevated = Color3.fromRGB(34, 41, 63),
+    accent = Color3.fromRGB(112, 128, 255),
+    accentLight = Color3.fromRGB(181, 191, 255),
+    white = Color3.fromRGB(255, 255, 255),
+    text = Color3.fromRGB(242, 245, 255),
+    textSec = Color3.fromRGB(174, 184, 210),
+    textDim = Color3.fromRGB(113, 126, 157),
+    red = Color3.fromRGB(255, 104, 124),
+    redDark = Color3.fromRGB(70, 27, 40),
+    gold = Color3.fromRGB(255, 198, 87),
+    border = Color3.fromRGB(72, 84, 116),
+    hover = Color3.fromRGB(48, 57, 85),
+    selectedSurface = Color3.fromRGB(54, 65, 111),
+    shadow = Color3.fromRGB(0, 0, 0),
+}
+
 ---------------------------------------------------------
 -- MOBILE TOGGLE: BUTTON-CAPSULE + EKG PULSE
 ---------------------------------------------------------
@@ -215,9 +236,9 @@ local toggleDrag = nil
 
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "HubToggle"
-ToggleBtn.Size = UDim2.new(0, 170, 0, 44)
-ToggleBtn.Position = UDim2.new(0, 12, 0.3, 0)
-ToggleBtn.BackgroundColor3 = C.sidebar
+ToggleBtn.Size = UDim2.new(0, 178, 0, 46)
+ToggleBtn.Position = UDim2.new(0, 16, 0.32, 0)
+ToggleBtn.BackgroundColor3 = AppC.sidebar
 ToggleBtn.Text = ""
 ToggleBtn.AutoButtonColor = false
 ToggleBtn.ClipsDescendants = true
@@ -226,9 +247,9 @@ ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 
 local ToggleStroke = Instance.new("UIStroke")
-ToggleStroke.Color = C.accent
-ToggleStroke.Thickness = 1.5
-ToggleStroke.Transparency = 0.15
+ToggleStroke.Color = AppC.accent
+ToggleStroke.Thickness = 1
+ToggleStroke.Transparency = 0.28
 ToggleStroke.Parent = ToggleBtn
 
 -- Нативная Roblox-версия CSS fill-эффекта.
@@ -236,8 +257,8 @@ local ToggleFill = Instance.new("Frame")
 ToggleFill.Name = "Fill"
 ToggleFill.Size = UDim2.new(1, 0, 1, 0)
 ToggleFill.Position = UDim2.new(0, 0, 0, 0)
-ToggleFill.BackgroundColor3 = C.accent
-ToggleFill.BackgroundTransparency = 0.88
+ToggleFill.BackgroundColor3 = AppC.accent
+ToggleFill.BackgroundTransparency = 0.82
 ToggleFill.BorderSizePixel = 0
 ToggleFill.ZIndex = 51
 ToggleFill.Parent = ToggleBtn
@@ -245,10 +266,10 @@ Instance.new("UICorner", ToggleFill).CornerRadius = UDim.new(1, 0)
 
 local ToggleText = Instance.new("TextLabel")
 ToggleText.Size = UDim2.new(1, -54, 1, 0)
-ToggleText.Position = UDim2.new(0, 16, 0, 0)
+ToggleText.Position = UDim2.new(0, 18, 0, 0)
 ToggleText.BackgroundTransparency = 1
 ToggleText.Text = "OPEN HUB"
-ToggleText.TextColor3 = C.text
+ToggleText.TextColor3 = AppC.text
 ToggleText.TextSize = 11
 ToggleText.Font = Enum.Font.GothamBlack
 ToggleText.TextXAlignment = Enum.TextXAlignment.Left
@@ -274,7 +295,7 @@ for i, data in ipairs(pulseSegments) do
     seg.Size = UDim2.new(0, 10, 0, 2)
     seg.Position = UDim2.new(0, data[1], 0, data[2])
     seg.AnchorPoint = Vector2.new(0, 0.5)
-    seg.BackgroundColor3 = C.accentLight
+    seg.BackgroundColor3 = AppC.accentLight
     seg.BorderSizePixel = 0
     seg.Rotation = math.deg(math.atan2(data[4], data[3]))
     seg.ZIndex = 54
@@ -287,9 +308,9 @@ task.spawn(function()
         for i = 1, 5 do
             local seg = PulseLine:FindFirstChild("PulseSegment" .. i)
             if seg then
-                TweenService:Create(seg, TweenInfo.new(0.13, Enum.EasingStyle.Linear), {BackgroundColor3 = C.white}):Play()
+                TweenService:Create(seg, TweenInfo.new(0.13, Enum.EasingStyle.Linear), {BackgroundColor3 = AppC.white}):Play()
                 task.wait(0.07)
-                TweenService:Create(seg, TweenInfo.new(0.28, Enum.EasingStyle.Linear), {BackgroundColor3 = C.accentLight}):Play()
+                TweenService:Create(seg, TweenInfo.new(0.28, Enum.EasingStyle.Linear), {BackgroundColor3 = AppC.accentLight}):Play()
             end
         end
         task.wait(0.65)
@@ -301,13 +322,13 @@ local function SetToggleVisual(isOpen)
     TweenService:Create(ToggleFill, TweenInfo.new(0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
         BackgroundTransparency = isOpen and 0.62 or 0.88
     }):Play()
-    TweenService:Create(ToggleText, TweenInfo.new(0.2), {TextColor3 = isOpen and C.white or C.text}):Play()
+    TweenService:Create(ToggleText, TweenInfo.new(0.2), {TextColor3 = isOpen and AppC.white or AppC.text}):Play()
 end
 
 ToggleBtn.MouseEnter:Connect(function()
     if not hubOpen then
         TweenService:Create(ToggleFill, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundTransparency = 0.72}):Play()
-        TweenService:Create(ToggleText, TweenInfo.new(0.2), {TextColor3 = C.white}):Play()
+        TweenService:Create(ToggleText, TweenInfo.new(0.2), {TextColor3 = AppC.white}):Play()
     end
 end)
 ToggleBtn.MouseLeave:Connect(function()
@@ -335,9 +356,9 @@ end
 ---------------------------------------------------------
 -- MAIN HUB FRAME
 ---------------------------------------------------------
-local HUB_W, HUB_H, SIDEBAR_W, TOPBAR_H = 460, 300, 126, 38
+local HUB_W, HUB_H, SIDEBAR_W, TOPBAR_H = 580, 390, 154, 50
 local DEFAULT_SIZE = Vector2.new(HUB_W, HUB_H)
-local MIN_SIZE = Vector2.new(400, 285)
+local MIN_SIZE = Vector2.new(430, 300)
 local windowSize = DEFAULT_SIZE
 local windowPos
 local activeWindowTween
@@ -347,9 +368,9 @@ local windowInteraction = nil -- one owner at a time: drag and resize cannot fig
 local HubShadow = Instance.new("Frame")
 HubShadow.Name = "HubShadow"
 HubShadow.Size = UDim2.new(0, HUB_W, 0, HUB_H)
-HubShadow.Position = UDim2.new(0.5, -HUB_W / 2, 0.5, -HUB_H / 2 + 5)
-HubShadow.BackgroundColor3 = C.shadow
-HubShadow.BackgroundTransparency = 0.42
+HubShadow.Position = UDim2.new(0.5, -HUB_W / 2, 0.5, -HUB_H / 2 + 8)
+HubShadow.BackgroundColor3 = AppC.shadow
+HubShadow.BackgroundTransparency = 0.58
 HubShadow.BorderSizePixel = 0
 HubShadow.Visible = false
 HubShadow.ZIndex = 9
@@ -358,22 +379,22 @@ local Hub = Instance.new("Frame")
 Hub.Name = "Hub"
 Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
 Hub.Position = UDim2.new(0.5, -HUB_W / 2, 0.5, -HUB_H / 2)
-Hub.BackgroundColor3 = C.bg
+Hub.BackgroundColor3 = AppC.bg
 Hub.BorderSizePixel = 0
 Hub.Visible = false
 Hub.ClipsDescendants = true
 Hub.ZIndex = 10
 Hub.Parent = ScreenGui
-Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 16)
-Instance.new("UICorner", HubShadow).CornerRadius = UDim.new(0, 18)
+Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 18)
+Instance.new("UICorner", HubShadow).CornerRadius = UDim.new(0, 21)
 local HSk = Instance.new("UIStroke")
-HSk.Color = C.border
+HSk.Color = AppC.border
 HSk.Thickness = 1
-HSk.Transparency = 0.15
+HSk.Transparency = 0.35
 HSk.Parent = Hub
 
 -- Единый источник истины для позиции и размера окна.
--- Все изменения (перетаскивание, углы, слайдер) проходят через эту функцию.
+-- Все изменения (перетаскивание и изменение размера) проходят через эту функцию.
 local function getViewport()
     local size = ScreenGui.AbsoluteSize
     if size.X < 1 or size.Y < 1 then
@@ -398,7 +419,7 @@ local function applyWindowRect(position, size)
     windowSize = Vector2.new(width, height)
     Hub.Position = UDim2.fromOffset(windowPos.X, windowPos.Y)
     Hub.Size = UDim2.fromOffset(width, height)
-    HubShadow.Position = UDim2.fromOffset(windowPos.X, windowPos.Y + 6)
+    HubShadow.Position = UDim2.fromOffset(windowPos.X, windowPos.Y + 8)
     HubShadow.Size = UDim2.fromOffset(width, height)
 end
 
@@ -423,18 +444,18 @@ local TopB = Instance.new("Frame")
 TopB.Name = "TopBar"
 TopB.Size = UDim2.new(1, -SIDEBAR_W, 0, TOPBAR_H)
 TopB.Position = UDim2.new(0, SIDEBAR_W, 0, 0)
-TopB.BackgroundColor3 = C.surface
+TopB.BackgroundColor3 = AppC.surface
 TopB.BorderSizePixel = 0
 TopB.ZIndex = 12
 TopB.Parent = Hub
 
 local PageTitle = Instance.new("TextLabel")
-PageTitle.Size = UDim2.new(1, -60, 1, 0)
-PageTitle.Position = UDim2.new(0, 16, 0, 0)
+PageTitle.Size = UDim2.new(1, -74, 1, 0)
+PageTitle.Position = UDim2.new(0, 20, 0, 0)
 PageTitle.BackgroundTransparency = 1
-PageTitle.Text = "[H]  Главная"
-PageTitle.TextColor3 = C.text
-PageTitle.TextSize = 14
+PageTitle.Text = "Главная"
+PageTitle.TextColor3 = AppC.text
+PageTitle.TextSize = 15
 PageTitle.Font = Enum.Font.GothamBold
 PageTitle.TextXAlignment = Enum.TextXAlignment.Left
 PageTitle.ZIndex = 13
@@ -443,22 +464,22 @@ PageTitle.Parent = TopB
 local TopRule = Instance.new("Frame")
 TopRule.Size = UDim2.new(1, 0, 0, 1)
 TopRule.Position = UDim2.new(0, 0, 1, -1)
-TopRule.BackgroundColor3 = C.border
+TopRule.BackgroundColor3 = AppC.border
 TopRule.BorderSizePixel = 0
 TopRule.ZIndex = 13
 TopRule.Parent = TopB
 
 local ClB = Instance.new("TextButton")
-ClB.Size = UDim2.new(0, 24, 0, 24)
-ClB.Position = UDim2.new(1, -32, 0.5, -12)
-ClB.BackgroundColor3 = C.redDark
+ClB.Size = UDim2.new(0, 28, 0, 28)
+ClB.Position = UDim2.new(1, -38, 0.5, -14)
+ClB.BackgroundColor3 = AppC.redDark
 ClB.Text = "×"
-ClB.TextColor3 = C.red
-ClB.TextSize = 11
+ClB.TextColor3 = AppC.red
+ClB.TextSize = 15
 ClB.Font = Enum.Font.GothamBold
 ClB.ZIndex = 13
 ClB.Parent = TopB
-Instance.new("UICorner", ClB).CornerRadius = UDim.new(0, 6)
+Instance.new("UICorner", ClB).CornerRadius = UDim.new(0, 8)
 
 do
     local dragging, activeInput, dragStart, startPos
@@ -542,7 +563,7 @@ ResizeGrip.Size = UDim2.new(0,24,0,16)
 ResizeGrip.Position = UDim2.new(1,-27,1,-18)
 ResizeGrip.BackgroundTransparency = 1
 ResizeGrip.Text = "///"
-ResizeGrip.TextColor3 = C.textDim
+ResizeGrip.TextColor3 = AppC.textDim
 ResizeGrip.TextSize = 8
 ResizeGrip.Font = Enum.Font.GothamBold
 ResizeGrip.Rotation = -45
@@ -555,7 +576,7 @@ ResizeGrip.Parent = Hub
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
 Sidebar.Size = UDim2.new(0, SIDEBAR_W, 1, 0)
-Sidebar.BackgroundColor3 = C.sidebar
+Sidebar.BackgroundColor3 = AppC.sidebar
 Sidebar.BorderSizePixel = 0
 Sidebar.ZIndex = 12
 Sidebar.Parent = Hub
@@ -563,82 +584,82 @@ Sidebar.Parent = Hub
 local SideRule = Instance.new("Frame")
 SideRule.Size = UDim2.new(0, 1, 1, 0)
 SideRule.Position = UDim2.new(1, -1, 0, 0)
-SideRule.BackgroundColor3 = C.border
+SideRule.BackgroundColor3 = AppC.border
 SideRule.BorderSizePixel = 0
 SideRule.ZIndex = 13
 SideRule.Parent = Sidebar
 
 local SLogo = Instance.new("Frame")
-SLogo.Size = UDim2.new(1, 0, 0, 44)
+SLogo.Size = UDim2.new(1, 0, 0, 66)
 SLogo.BackgroundTransparency = 1
 SLogo.Parent = Sidebar
 
 local STi = Instance.new("TextLabel")
-STi.Size = UDim2.new(1, -20, 0, 22)
-STi.Position = UDim2.new(0, 10, 0, 7)
+STi.Size = UDim2.new(1, -28, 0, 24)
+STi.Position = UDim2.new(0, 14, 0, 13)
 STi.BackgroundTransparency = 1
 STi.TextXAlignment = Enum.TextXAlignment.Left
-STi.Text = "linbergz"
-STi.TextColor3 = C.white
-STi.TextSize = 12
+STi.Text = "LINBERGZ"
+STi.TextColor3 = AppC.white
+STi.TextSize = 13
 STi.Font = Enum.Font.GothamBlack
 STi.Parent = SLogo
 
 local VersionLabel = Instance.new("TextLabel")
-VersionLabel.Size = UDim2.new(1, -20, 0, 12)
-VersionLabel.Position = UDim2.new(0, 10, 0, 25)
+VersionLabel.Size = UDim2.new(1, -28, 0, 12)
+VersionLabel.Position = UDim2.new(0, 14, 0, 36)
 VersionLabel.BackgroundTransparency = 1
-VersionLabel.Text = "MOBILE HUB  /  V12"
-VersionLabel.TextColor3 = C.textDim
+VersionLabel.Text = "MOBILE HUB  •  V14"
+VersionLabel.TextColor3 = AppC.textDim
 VersionLabel.TextSize = 7
 VersionLabel.Font = Enum.Font.GothamBold
 VersionLabel.TextXAlignment = Enum.TextXAlignment.Left
 VersionLabel.Parent = SLogo
 
 local LogoRule = Instance.new("Frame")
-LogoRule.Size = UDim2.new(1, -20, 0, 1)
-LogoRule.Position = UDim2.new(0, 10, 1, -1)
-LogoRule.BackgroundColor3 = C.elevated
+LogoRule.Size = UDim2.new(1, -28, 0, 1)
+LogoRule.Position = UDim2.new(0, 14, 1, -1)
+LogoRule.BackgroundColor3 = AppC.elevated
 LogoRule.BorderSizePixel = 0
 LogoRule.ZIndex = 13
 LogoRule.Parent = SLogo
 
 -- Отдельный список: glider больше не считается вкладкой UIListLayout.
 local TabHolder = Instance.new("Frame")
-TabHolder.Size = UDim2.new(1, 0, 1, -44)
-TabHolder.Position = UDim2.new(0, 0, 0, 44)
+TabHolder.Size = UDim2.new(1, 0, 1, -66)
+TabHolder.Position = UDim2.new(0, 0, 0, 66)
 TabHolder.BackgroundTransparency = 1
 TabHolder.ZIndex = 13
 TabHolder.Parent = Sidebar
 
 local TabList = Instance.new("Frame")
 TabList.Name = "TabList"
-TabList.Size = UDim2.new(1, -12, 1, -8)
-TabList.Position = UDim2.new(0, 6, 0, 4)
+TabList.Size = UDim2.new(1, -16, 1, -16)
+TabList.Position = UDim2.new(0, 8, 0, 8)
 TabList.BackgroundTransparency = 1
 TabList.ZIndex = 14
 TabList.Parent = TabHolder
 
 local THL = Instance.new("UIListLayout")
 THL.SortOrder = Enum.SortOrder.LayoutOrder
-THL.Padding = UDim.new(0, 2) -- компактный 2px-зазор между вкладками
+THL.Padding = UDim.new(0, 4) -- компактный 2px-зазор между вкладками
 THL.Parent = TabList
 
 local TabGlider = Instance.new("Frame")
 TabGlider.Name = "TabGlider"
-TabGlider.Size = UDim2.new(1, -12, 0, 28)
-TabGlider.Position = UDim2.new(0, 6, 0, 48)
-TabGlider.BackgroundColor3 = C.selectedSurface
-TabGlider.BackgroundTransparency = 0.15
+TabGlider.Size = UDim2.new(1, -16, 0, 32)
+TabGlider.Position = UDim2.new(0, 8, 0, 74)
+TabGlider.BackgroundColor3 = AppC.selectedSurface
+TabGlider.BackgroundTransparency = 0.28
 TabGlider.BorderSizePixel = 0
 TabGlider.ZIndex = 12
 TabGlider.Parent = Sidebar
 Instance.new("UICorner", TabGlider).CornerRadius = UDim.new(0, 6)
 
 local GliderLine = Instance.new("Frame")
-GliderLine.Size = UDim2.new(0, 3, 1, -8)
-GliderLine.Position = UDim2.new(0, 0, 0, 4)
-GliderLine.BackgroundColor3 = C.accentLight
+GliderLine.Size = UDim2.new(0, 3, 1, -10)
+GliderLine.Position = UDim2.new(0, 0, 0, 5)
+GliderLine.BackgroundColor3 = AppC.accentLight
 GliderLine.BorderSizePixel = 0
 GliderLine.ZIndex = 13
 GliderLine.Parent = TabGlider
@@ -648,105 +669,112 @@ Instance.new("UICorner", GliderLine).CornerRadius = UDim.new(1, 0)
 -- PLACEHOLDER CONTENT
 ---------------------------------------------------------
 local function BuildPlaceholder(parent)
-    local Wrap = Instance.new("Frame")
-    Wrap.Size = UDim2.new(1, 0, 1, 0)
-    Wrap.BackgroundTransparency = 1
-    Wrap.Parent = parent
+    local wrap = Instance.new("Frame")
+    wrap.Name = "PlaceholderContent"
+    wrap.Size = UDim2.new(1, 0, 1, 0)
+    wrap.BackgroundTransparency = 1
+    wrap.Parent = parent
 
-    local Card = Instance.new("Frame")
-    Card.Size = UDim2.new(0.82, 0, 0, 176)
-    Card.Position = UDim2.new(0.09, 0, 0.5, 0)
-    Card.AnchorPoint = Vector2.new(0, 0.5)
-    Card.BackgroundColor3 = C.surface
-    Card.BorderSizePixel = 0
-    Card.Parent = Wrap
-    Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 10)
-    local CardStroke = Instance.new("UIStroke")
-    CardStroke.Color = C.border
-    CardStroke.Thickness = 1
-    CardStroke.Transparency = 0.2
-    CardStroke.Parent = Card
+    local card = Instance.new("Frame")
+    card.Name = "ComingSoonCard"
+    card.Size = UDim2.new(1, -40, 0, 210)
+    card.Position = UDim2.new(0, 20, 0.5, 0)
+    card.AnchorPoint = Vector2.new(0, 0.5)
+    card.BackgroundColor3 = AppC.surface
+    card.BorderSizePixel = 0
+    card.Parent = wrap
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 14)
+    local stroke = Instance.new("UIStroke")
+    stroke.Color, stroke.Transparency, stroke.Thickness = AppC.border, 0.42, 1
+    stroke.Parent = card
 
-    local Badge = Instance.new("Frame")
-    Badge.Size = UDim2.new(0, 38, 0, 38)
-    Badge.Position = UDim2.new(0.5, -19, 0, 17)
-    Badge.BackgroundColor3 = C.selectedSurface
-    Badge.BorderSizePixel = 0
-    Badge.Parent = Card
-    Instance.new("UICorner", Badge).CornerRadius = UDim.new(1, 0)
-    local BadgeStroke = Instance.new("UIStroke")
-    BadgeStroke.Color = C.accent
-    BadgeStroke.Transparency = 0.45
-    BadgeStroke.Parent = Badge
+    local stripe = Instance.new("Frame")
+    stripe.Size = UDim2.new(0, 4, 0, 74)
+    stripe.Position = UDim2.new(0, 0, 0, 22)
+    stripe.BackgroundColor3 = AppC.accent
+    stripe.BorderSizePixel = 0
+    stripe.Parent = card
+    Instance.new("UICorner", stripe).CornerRadius = UDim.new(1, 0)
 
-    local Icon = Instance.new("TextLabel")
-    Icon.Size = UDim2.new(1, 0, 1, 0)
-    Icon.BackgroundTransparency = 1
-    Icon.Text = "+"
-    Icon.TextSize = 22
-    Icon.Font = Enum.Font.GothamBold
-    Icon.TextColor3 = C.accentLight
-    Icon.Parent = Badge
+    local kicker = Instance.new("TextLabel")
+    kicker.Size = UDim2.new(1, -52, 0, 16)
+    kicker.Position = UDim2.new(0, 24, 0, 25)
+    kicker.BackgroundTransparency = 1
+    kicker.Text = "LINBERGZ  /  WORKSPACE"
+    kicker.TextColor3 = AppC.accentLight
+    kicker.TextSize = 9
+    kicker.Font = Enum.Font.GothamBold
+    kicker.TextXAlignment = Enum.TextXAlignment.Left
+    kicker.Parent = card
 
-    local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(1, -30, 0, 20)
-    Title.Position = UDim2.new(0, 15, 0, 65)
-    Title.BackgroundTransparency = 1
-    Title.Text = "Раздел в разработке"
-    Title.TextSize = 14
-    Title.Font = Enum.Font.GothamBold
-    Title.TextColor3 = C.text
-    Title.Parent = Card
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -52, 0, 28)
+    title.Position = UDim2.new(0, 24, 0, 46)
+    title.BackgroundTransparency = 1
+    title.Text = "Раздел готовится"
+    title.TextColor3 = AppC.text
+    title.TextSize = 18
+    title.Font = Enum.Font.GothamBlack
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = card
 
-    local Desc = Instance.new("TextLabel")
-    Desc.Size = UDim2.new(1, -38, 0, 42)
-    Desc.Position = UDim2.new(0, 19, 0, 91)
-    Desc.BackgroundTransparency = 1
-    Desc.Text = "Мы улучшаем этот раздел. Новые возможности появятся в следующем обновлении."
-    Desc.TextWrapped = true
-    Desc.TextSize = 10
-    Desc.Font = currentFont
-    Desc.TextColor3 = C.textSec
-    Desc.Parent = Card
+    local desc = Instance.new("TextLabel")
+    desc.Size = UDim2.new(1, -52, 0, 38)
+    desc.Position = UDim2.new(0, 24, 0, 82)
+    desc.BackgroundTransparency = 1
+    desc.Text = "Мы собираем инструменты этого раздела в едином, удобном рабочем пространстве."
+    desc.TextWrapped = true
+    desc.TextColor3 = AppC.textSec
+    desc.TextSize = 11
+    desc.Font = currentFont
+    desc.TextXAlignment = Enum.TextXAlignment.Left
+    desc.TextYAlignment = Enum.TextYAlignment.Top
+    desc.Parent = card
 
-    local Status = Instance.new("TextLabel")
-    Status.Size = UDim2.new(1, -30, 0, 16)
-    Status.Position = UDim2.new(0, 15, 1, -27)
-    Status.BackgroundTransparency = 1
-    Status.Text = "STATUS  /  IN PROGRESS"
-    Status.TextSize = 8
-    Status.Font = Enum.Font.GothamBold
-    Status.TextColor3 = C.accentLight
-    Status.Parent = Card
+    local divider = Instance.new("Frame")
+    divider.Size = UDim2.new(1, -48, 0, 1)
+    divider.Position = UDim2.new(0, 24, 0, 142)
+    divider.BackgroundColor3 = AppC.border
+    divider.BackgroundTransparency = 0.45
+    divider.BorderSizePixel = 0
+    divider.Parent = card
+
+    local status = Instance.new("TextLabel")
+    status.Size = UDim2.new(1, -48, 0, 18)
+    status.Position = UDim2.new(0, 24, 0, 160)
+    status.BackgroundTransparency = 1
+    status.Text = "●  STATUS: IN DEVELOPMENT"
+    status.TextColor3 = AppC.accentLight
+    status.TextSize = 9
+    status.Font = Enum.Font.GothamBold
+    status.TextXAlignment = Enum.TextXAlignment.Left
+    status.Parent = card
 end
 
-
 ---------------------------------------------------------
--- SETTINGS PAGE — LANGUAGE / THEME / AMOLED / SCALE
+-- SETTINGS PAGE — LANGUAGE / THEME / AMOLED
 ---------------------------------------------------------
 local language = "RU"
-local menuScale = 1
 local amoledEnabled = false
 local chosenAccent = "Violet"
 local settingsLabels = {}
 local accentButtons = {}
 local langButtons = {}
-local amoledFill, amoledKnob, scaleValue, scaleFill, scaleTrack, scaleKnob
+local amoledFill, amoledKnob
 local refreshSettings
-local applyScale
 
 local lang = {
     RU = {
         Home="Главная", Combat="Сражение", ESP="ЕСП / ВХ", Fun="Фан и троллинг", Boombox="Музыка", Nexus="Nexus", Settings="Настройки", Info="Информация",
-        settings="НАСТРОЙКИ ИНТЕРФЕЙСА", language="ЯЗЫК", theme="ЦВЕТ АКЦЕНТА", amoled="AMOLED РЕЖИМ", scale="РАЗМЕР МЕНЮ", on="ВКЛ", off="ВЫКЛ"
+        settings="НАСТРОЙКИ ИНТЕРФЕЙСА", language="ЯЗЫК", theme="ЦВЕТ АКЦЕНТА", amoled="AMOLED РЕЖИМ", on="ВКЛ", off="ВЫКЛ"
     },
     EN = {
         Home="Home", Combat="Combat", ESP="ESP / Wallhack", Fun="Fun & Trolling", Boombox="Music", Nexus="Nexus", Settings="Settings", Info="Information",
-        settings="INTERFACE SETTINGS", language="LANGUAGE", theme="ACCENT COLOR", amoled="AMOLED MODE", scale="MENU SIZE", on="ON", off="OFF"
+        settings="INTERFACE SETTINGS", language="LANGUAGE", theme="ACCENT COLOR", amoled="AMOLED MODE", on="ON", off="OFF"
     }
 }
 local accentPalettes = {
-    Violet = {accent=Color3.fromRGB(151,82,255), accentLight=Color3.fromRGB(204,158,255), selectedSurface=Color3.fromRGB(57,38,91)},
+    Violet = {accent=Color3.fromRGB(112,128,255), accentLight=Color3.fromRGB(181,191,255), selectedSurface=Color3.fromRGB(54,65,111)},
     Blue   = {accent=Color3.fromRGB(53,151,255), accentLight=Color3.fromRGB(137,202,255), selectedSurface=Color3.fromRGB(24,57,94)},
     Red    = {accent=Color3.fromRGB(255,86,128), accentLight=Color3.fromRGB(255,162,185), selectedSurface=Color3.fromRGB(96,34,55)},
     Green  = {accent=Color3.fromRGB(45,211,145), accentLight=Color3.fromRGB(142,245,196), selectedSurface=Color3.fromRGB(24,78,59)},
@@ -767,10 +795,10 @@ end
 local function makeButton(parent, text, pos, size)
     local b = Instance.new("TextButton")
     b.Size, b.Position = size, pos
-    b.BackgroundColor3 = C.elevated
+    b.BackgroundColor3 = AppC.elevated
     b.BorderSizePixel = 0
     b.Text = text
-    b.TextColor3 = C.textSec
+    b.TextColor3 = AppC.textSec
     b.TextSize = 9
     b.Font = Enum.Font.GothamBold
     b.AutoButtonColor = false
@@ -778,7 +806,7 @@ local function makeButton(parent, text, pos, size)
     b.Parent = parent
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
     local st = Instance.new("UIStroke")
-    st.Color, st.Transparency = C.border, 0.2
+    st.Color, st.Transparency = AppC.border, 0.2
     st.Parent = b
     return b
 end
@@ -790,21 +818,21 @@ local function BuildSettingsPage(parent)
     wrap.BackgroundTransparency = 1
     wrap.Parent = parent
 
-    local title = makeLabel(wrap, lang.RU.settings, UDim2.new(0,16,0,11), UDim2.new(1,-32,0,20), Enum.Font.GothamBlack, 12, C.text)
+    local title = makeLabel(wrap, lang.RU.settings, UDim2.new(0,20,0,16), UDim2.new(1,-40,0,20), Enum.Font.GothamBlack, 13, AppC.text)
     title:SetAttribute("ThemeText", "text")
     settingsLabels.settings = title
 
     local rule = Instance.new("Frame")
-    rule.Size, rule.Position = UDim2.new(1,-32,0,1), UDim2.new(0,16,0,36)
-    rule.BackgroundColor3, rule.BorderSizePixel, rule.ZIndex = C.border, 0, 15
+    rule.Size, rule.Position = UDim2.new(1,-40,0,1), UDim2.new(0,20,0,43)
+    rule.BackgroundColor3, rule.BorderSizePixel, rule.ZIndex = AppC.border, 0, 15
     rule:SetAttribute("ThemeBackground", "border")
     rule.Parent = wrap
 
     local function row(y, height)
         local card = Instance.new("Frame")
-        card.Size = UDim2.new(1,-24,0,height or 35)
-        card.Position = UDim2.new(0,12,0,y)
-        card.BackgroundColor3 = C.surface
+        card.Size = UDim2.new(1,-32,0,height or 44)
+        card.Position = UDim2.new(0,16,0,y)
+        card.BackgroundColor3 = AppC.surface
         card.BorderSizePixel = 0
         card.ZIndex = 14
         card:SetAttribute("ThemeBackground", "surface")
@@ -812,14 +840,14 @@ local function BuildSettingsPage(parent)
         Instance.new("UICorner", card).CornerRadius = UDim.new(0,7)
 
         local stroke = Instance.new("UIStroke")
-        stroke.Color, stroke.Transparency = C.border, 0.48
+        stroke.Color, stroke.Transparency = AppC.border, 0.48
         stroke:SetAttribute("ThemeStroke", "border")
         stroke.Parent = card
 
         local accent = Instance.new("Frame")
         accent.Size = UDim2.new(0,2,0,16)
         accent.Position = UDim2.new(0,0,0.5,-8)
-        accent.BackgroundColor3 = C.accent
+        accent.BackgroundColor3 = AppC.accent
         accent.BorderSizePixel = 0
         accent.ZIndex = 15
         accent:SetAttribute("ThemeBackground", "accent")
@@ -828,93 +856,42 @@ local function BuildSettingsPage(parent)
         return card
     end
 
-    local languageCard = row(46,35)
-    local l1=makeLabel(languageCard,lang.RU.language,UDim2.new(0,13,0,10),UDim2.new(1,-125,0,15),Enum.Font.GothamBold,8,C.textDim)
+    local languageCard = row(58,44)
+    local l1=makeLabel(languageCard,lang.RU.language,UDim2.new(0,16,0,14),UDim2.new(1,-145,0,15),Enum.Font.GothamBold,8,AppC.textDim)
     l1:SetAttribute("ThemeText", "textDim"); settingsLabels.language=l1
-    local ru=makeButton(languageCard,"RU",UDim2.new(1,-105,0,6),UDim2.new(0,45,0,23))
-    local en=makeButton(languageCard,"EN",UDim2.new(1,-55,0,6),UDim2.new(0,45,0,23))
+    local ru=makeButton(languageCard,"RU",UDim2.new(1,-118,0,8),UDim2.new(0,51,0,28))
+    local en=makeButton(languageCard,"EN",UDim2.new(1,-59,0,8),UDim2.new(0,51,0,28))
     ru:SetAttribute("ThemeBackground", "elevated"); en:SetAttribute("ThemeBackground", "elevated")
     ru:SetAttribute("ThemeText", "textSec"); en:SetAttribute("ThemeText", "textSec")
     langButtons.RU,langButtons.EN=ru,en
     ru.MouseButton1Click:Connect(function() language="RU"; refreshSettings() end)
     en.MouseButton1Click:Connect(function() language="EN"; refreshSettings() end)
 
-    local themeCard = row(87,35)
-    local l2=makeLabel(themeCard,lang.RU.theme,UDim2.new(0,13,0,10),UDim2.new(1,-130,0,15),Enum.Font.GothamBold,8,C.textDim)
+    local themeCard = row(110,44)
+    local l2=makeLabel(themeCard,lang.RU.theme,UDim2.new(0,16,0,14),UDim2.new(1,-145,0,15),Enum.Font.GothamBold,8,AppC.textDim)
     l2:SetAttribute("ThemeText", "textDim"); settingsLabels.theme=l2
-    local colors={{"Violet",Color3.fromRGB(151,82,255)},{"Blue",Color3.fromRGB(53,151,255)},{"Red",Color3.fromRGB(255,86,128)},{"Green",Color3.fromRGB(45,211,145)}}
+    local colors={{"Violet",Color3.fromRGB(112,128,255)},{"Blue",Color3.fromRGB(53,151,255)},{"Red",Color3.fromRGB(255,86,128)},{"Green",Color3.fromRGB(45,211,145)}}
     for i,item in ipairs(colors) do
         local b=Instance.new("TextButton")
-        b.Name="Accent_"..item[1]; b.Size=UDim2.new(0,21,0,21); b.Position=UDim2.new(1,-112+(i-1)*27,0,7)
+        b.Name="Accent_"..item[1]; b.Size=UDim2.new(0,25,0,25); b.Position=UDim2.new(1,-126+(i-1)*30,0,9)
         b.BackgroundColor3=item[2];b.Text="";b.AutoButtonColor=false;b.ZIndex=16;b.Parent=themeCard
         Instance.new("UICorner",b).CornerRadius=UDim.new(1,0)
-        local st=Instance.new("UIStroke");st.Name="Selection";st.Color=C.white;st.Thickness=2;st.Transparency=(i==1 and 0 or 1);st.Parent=b
+        local st=Instance.new("UIStroke");st.Name="Selection";st.Color=AppC.white;st.Thickness=2;st.Transparency=(i==1 and 0 or 1);st.Parent=b
         accentButtons[item[1]]=b
         b.MouseButton1Click:Connect(function() chosenAccent=item[1]; refreshSettings() end)
     end
 
-    local amoledCard = row(128,35)
-    local l3=makeLabel(amoledCard,lang.RU.amoled,UDim2.new(0,13,0,10),UDim2.new(1,-85,0,15),Enum.Font.GothamBold,8,C.textDim)
+    local amoledCard = row(162,44)
+    local l3=makeLabel(amoledCard,lang.RU.amoled,UDim2.new(0,16,0,14),UDim2.new(1,-100,0,15),Enum.Font.GothamBold,8,AppC.textDim)
     l3:SetAttribute("ThemeText", "textDim"); settingsLabels.amoled=l3
     local am=Instance.new("TextButton")
-    am.Size,am.Position=UDim2.new(0,46,0,22),UDim2.new(1,-56,0,7);am.BackgroundColor3=C.elevated;am.Text="";am.AutoButtonColor=false;am.ZIndex=16;am.Parent=amoledCard
+    am.Size,am.Position=UDim2.new(0,50,0,24),UDim2.new(1,-66,0,10);am.BackgroundColor3=AppC.elevated;am.Text="";am.AutoButtonColor=false;am.ZIndex=16;am.Parent=amoledCard
     am:SetAttribute("ThemeBackground", "elevated")
     Instance.new("UICorner",am).CornerRadius=UDim.new(1,0)
     amoledFill=am
-    amoledKnob=Instance.new("Frame");amoledKnob.Size=UDim2.new(0,16,0,16);amoledKnob.Position=UDim2.new(0,3,0.5,-8);amoledKnob.BackgroundColor3=C.textSec;amoledKnob.BorderSizePixel=0;amoledKnob.ZIndex=17;amoledKnob.Parent=am;Instance.new("UICorner",amoledKnob).CornerRadius=UDim.new(1,0)
+    amoledKnob=Instance.new("Frame");amoledKnob.Size=UDim2.new(0,18,0,18);amoledKnob.Position=UDim2.new(0,3,0.5,-9);amoledKnob.BackgroundColor3=AppC.textSec;amoledKnob.BorderSizePixel=0;amoledKnob.ZIndex=17;amoledKnob.Parent=am;Instance.new("UICorner",amoledKnob).CornerRadius=UDim.new(1,0)
     am.MouseButton1Click:Connect(function() amoledEnabled=not amoledEnabled; refreshSettings() end)
 
-    local scaleCard = row(169,58)
-    local l4=makeLabel(scaleCard,lang.RU.scale,UDim2.new(0,13,0,8),UDim2.new(1,-85,0,15),Enum.Font.GothamBold,8,C.textDim)
-    l4:SetAttribute("ThemeText", "textDim"); settingsLabels.scale=l4
-    scaleValue=makeLabel(scaleCard,"100%",UDim2.new(1,-61,0,7),UDim2.new(0,49,0,16),Enum.Font.GothamBold,9,C.accentLight)
-    scaleValue.TextXAlignment=Enum.TextXAlignment.Right; scaleValue:SetAttribute("ThemeText", "accentLight")
-
-    scaleTrack=Instance.new("Frame")
-    scaleTrack.Name="ScaleTrack";scaleTrack.Size=UDim2.new(1,-26,0,5);scaleTrack.Position=UDim2.new(0,13,0,38)
-    scaleTrack.BackgroundColor3=C.elevated;scaleTrack.BorderSizePixel=0;scaleTrack.ZIndex=16;scaleTrack:SetAttribute("ThemeBackground","elevated");scaleTrack.Parent=scaleCard
-    Instance.new("UICorner",scaleTrack).CornerRadius=UDim.new(1,0)
-
-    scaleFill=Instance.new("Frame")
-    scaleFill.Name="Fill";scaleFill.Size=UDim2.new(0.5,0,1,0);scaleFill.BackgroundColor3=C.accent;scaleFill.BorderSizePixel=0;scaleFill.ZIndex=17;scaleFill:SetAttribute("ThemeBackground","accent");scaleFill.Parent=scaleTrack
-    Instance.new("UICorner",scaleFill).CornerRadius=UDim.new(1,0)
-
-    scaleKnob=Instance.new("Frame")
-    scaleKnob.Name="Knob";scaleKnob.Size=UDim2.new(0,14,0,14);scaleKnob.Position=UDim2.new(0.5,-7,0.5,-7)
-    scaleKnob.BackgroundColor3=C.white;scaleKnob.BorderSizePixel=0;scaleKnob.ZIndex=19;scaleKnob:SetAttribute("ThemeBackground","white");scaleKnob.Parent=scaleTrack
-    Instance.new("UICorner",scaleKnob).CornerRadius=UDim.new(1,0)
-    local knobStroke=Instance.new("UIStroke");knobStroke.Color=C.accent;knobStroke.Thickness=2;knobStroke:SetAttribute("ThemeStroke","accent");knobStroke.Parent=scaleKnob
-
-    local sliderHitbox=Instance.new("TextButton")
-    sliderHitbox.Name="SliderHitbox";sliderHitbox.Size=UDim2.new(1,8,0,26);sliderHitbox.Position=UDim2.new(0,-4,0.5,-13)
-    sliderHitbox.BackgroundTransparency=1;sliderHitbox.Text="";sliderHitbox.AutoButtonColor=false;sliderHitbox.ZIndex=20;sliderHitbox.Parent=scaleTrack
-
-    local dragging=false
-    local dragLeft,dragWidth=0,1
-    local function setScaleFromX(x)
-        local alpha=math.max(0,math.min(1,(x-dragLeft)/dragWidth))
-        menuScale=0.95+(alpha*0.40)
-        applyScale()
-        scaleValue.Text=tostring(math.floor(menuScale*100+0.5)).."%"
-        scaleFill.Size=UDim2.new(alpha,0,1,0)
-        scaleKnob.Position=UDim2.new(alpha,-7,0.5,-7)
-    end
-    sliderHitbox.InputBegan:Connect(function(input)
-        if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
-            dragging=true
-            dragLeft=scaleTrack.AbsolutePosition.X
-            dragWidth=math.max(1,scaleTrack.AbsoluteSize.X)
-            setScaleFromX(input.Position.X)
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) then
-            setScaleFromX(input.Position.X)
-        end
-    end)
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then dragging=false end
-    end)
 end
 ---------------------------------------------------------
 -- TAB GENERATION
@@ -939,8 +916,8 @@ local function ShowTab(name, index)
     for tabName, page in pairs(tabPages) do page.Visible = (tabName == name) end
     for tabName, btn in pairs(tabButtons) do
         local selected = (tabName == name)
-        btn.TextColor3 = selected and C.accentLight or C.textDim
-        btn.BackgroundColor3 = C.selectedSurface
+        btn.TextColor3 = selected and AppC.accentLight or AppC.textDim
+        btn.BackgroundColor3 = AppC.selectedSurface
         btn.BackgroundTransparency = selected and 0.30 or 1
     end
 
@@ -953,7 +930,7 @@ local function ShowTab(name, index)
     end
 
     TweenService:Create(TabGlider, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0, 6, 0, 48 + (index - 1) * 30) -- 28px + 2px gap
+        Position = UDim2.new(0, 8, 0, 74 + (index - 1) * 36) -- 28px + 2px gap
     }):Play()
 end
 
@@ -976,11 +953,11 @@ for idx, def in ipairs(tabDefs) do
 
     local Btn = Instance.new("TextButton")
     Btn.Name = "Tab_" .. def.name
-    Btn.Size = UDim2.new(1, 0, 0, 28)
+    Btn.Size = UDim2.new(1, 0, 0, 32)
     Btn.BackgroundTransparency = 1
-    Btn.Text = "  " .. def.title
-    Btn.TextColor3 = C.textDim
-    Btn.TextSize = 10
+    Btn.Text = "   " .. def.title
+    Btn.TextColor3 = AppC.textDim
+    Btn.TextSize = 11
     Btn.Font = Enum.Font.GothamBold
     Btn.TextXAlignment = Enum.TextXAlignment.Left
     Btn.TextTruncate = Enum.TextTruncate.AtEnd
@@ -992,7 +969,7 @@ for idx, def in ipairs(tabDefs) do
 
     Btn.MouseEnter:Connect(function()
         if currentTab ~= def.name then
-            TweenService:Create(Btn, TweenInfo.new(0.14), {BackgroundTransparency = 0.35, BackgroundColor3 = C.hover}):Play()
+            TweenService:Create(Btn, TweenInfo.new(0.14), {BackgroundTransparency = 0.35, BackgroundColor3 = AppC.hover}):Play()
         end
     end)
     Btn.MouseLeave:Connect(function()
@@ -1010,7 +987,7 @@ end
 -- LIVE SETTINGS UPDATERS
 ---------------------------------------------------------
 local function markThemeRoles()
-    local roles={bg=C.bg,sidebar=C.sidebar,surface=C.surface,elevated=C.elevated,accent=C.accent,accentLight=C.accentLight,white=C.white,text=C.text,textSec=C.textSec,textDim=C.textDim,red=C.red,redDark=C.redDark,border=C.border,hover=C.hover,selectedSurface=C.selectedSurface,shadow=C.shadow}
+    local roles={bg=AppC.bg,sidebar=AppC.sidebar,surface=AppC.surface,elevated=AppC.elevated,accent=AppC.accent,accentLight=AppC.accentLight,white=AppC.white,text=AppC.text,textSec=AppC.textSec,textDim=AppC.textDim,red=AppC.red,redDark=AppC.redDark,border=AppC.border,hover=AppC.hover,selectedSurface=AppC.selectedSurface,shadow=AppC.shadow}
     for _,o in ipairs(ScreenGui:GetDescendants()) do
         for role,color in pairs(roles) do
             if o:IsA("GuiObject") and not string.match(o.Name, "^Accent_") and o.BackgroundColor3==color then o:SetAttribute("ThemeBackground",role) end
@@ -1021,30 +998,30 @@ local function markThemeRoles()
 end
 local function applyTheme()
     local p=accentPalettes[chosenAccent]
-    C.accent,C.accentLight,C.selectedSurface=p.accent,p.accentLight,p.selectedSurface
-    if amoledEnabled then C.bg=Color3.fromRGB(0,0,0);C.sidebar=Color3.fromRGB(0,0,0);C.surface=Color3.fromRGB(5,5,5);C.elevated=Color3.fromRGB(12,12,12);C.border=Color3.fromRGB(43,43,43);C.hover=Color3.fromRGB(22,22,22) else C.bg=Color3.fromRGB(14,12,23);C.sidebar=Color3.fromRGB(9,8,16);C.surface=Color3.fromRGB(22,19,34);C.elevated=Color3.fromRGB(31,27,47);C.border=Color3.fromRGB(72,62,98);C.hover=Color3.fromRGB(42,35,61) end
+    AppC.accent,AppC.accentLight,AppC.selectedSurface=p.accent,p.accentLight,p.selectedSurface
+    if amoledEnabled then AppC.bg=Color3.fromRGB(0,0,0);AppC.sidebar=Color3.fromRGB(0,0,0);AppC.surface=Color3.fromRGB(5,5,5);AppC.elevated=Color3.fromRGB(12,12,12);AppC.border=Color3.fromRGB(43,43,43);AppC.hover=Color3.fromRGB(22,22,22) else AppC.bg=Color3.fromRGB(13,16,28);AppC.sidebar=Color3.fromRGB(10,13,24);AppC.surface=Color3.fromRGB(24,29,46);AppC.elevated=Color3.fromRGB(34,41,63);AppC.border=Color3.fromRGB(72,84,116);AppC.hover=Color3.fromRGB(48,57,85) end
     for _,o in ipairs(ScreenGui:GetDescendants()) do
         local r=o:GetAttribute("ThemeBackground");if r and C[r] and o:IsA("GuiObject") then o.BackgroundColor3=C[r] end
         r=o:GetAttribute("ThemeText");if r and C[r] and (o:IsA("TextLabel") or o:IsA("TextButton")) then o.TextColor3=C[r] end
         r=o:GetAttribute("ThemeStroke");if r and C[r] and o:IsA("UIStroke") then o.Color=C[r] end
     end
-    local dotColors={Violet=Color3.fromRGB(151,82,255),Blue=Color3.fromRGB(53,151,255),Red=Color3.fromRGB(255,86,128),Green=Color3.fromRGB(45,211,145)}
+    local dotColors={Violet=Color3.fromRGB(112,128,255),Blue=Color3.fromRGB(53,151,255),Red=Color3.fromRGB(255,86,128),Green=Color3.fromRGB(45,211,145)}
     for name,b in pairs(accentButtons) do
         b.BackgroundColor3=dotColors[name]
         local selection = b:FindFirstChild("Selection")
         if selection then selection.Transparency=(name==chosenAccent and 0 or 1) end
     end
-    if amoledFill then amoledFill.BackgroundColor3=amoledEnabled and C.accent or C.elevated end
+    if amoledFill then amoledFill.BackgroundColor3=amoledEnabled and AppC.accent or AppC.elevated end
     if amoledKnob then
-        amoledKnob.BackgroundColor3=amoledEnabled and C.white or C.textSec
-        TweenService:Create(amoledKnob,TweenInfo.new(0.16),{Position=UDim2.new(0,amoledEnabled and 27 or 3,0.5,-8)}):Play()
+        amoledKnob.BackgroundColor3=amoledEnabled and AppC.white or AppC.textSec
+        TweenService:Create(amoledKnob,TweenInfo.new(0.16),{Position=UDim2.new(0,amoledEnabled and 29 or 3,0.5,-9)}):Play()
     end
 end
 local function applyLanguage()
     local t=lang[language]
     for _,def in ipairs(tabDefs) do
         def.title=t[def.name]
-        local b=tabButtons[def.name]; b.Text="  "..def.title
+        local b=tabButtons[def.name]; b.Text="   "..def.title
     end
     local d
     for _,v in ipairs(tabDefs) do if v.name==currentTab then d=v break end end
@@ -1052,24 +1029,14 @@ local function applyLanguage()
     for key,label in pairs(settingsLabels) do label.Text=t[key] end
     for key,b in pairs(langButtons) do
         local selected = (key == language)
-        b.TextColor3 = selected and C.accentLight or C.textSec
-        b.BackgroundColor3 = selected and C.selectedSurface or C.elevated
+        b.TextColor3 = selected and AppC.accentLight or AppC.textSec
+        b.BackgroundColor3 = selected and AppC.selectedSurface or AppC.elevated
         local stroke = b:FindFirstChildOfClass("UIStroke")
         if stroke then
-            stroke.Color = selected and C.accentLight or C.border
+            stroke.Color = selected and AppC.accentLight or AppC.border
             stroke.Transparency = selected and 0.15 or 0.55
         end
     end
-end
-applyScale = function()
-    menuScale=math.max(0.95,math.min(1.35,menuScale))
-    ensureWindowRect()
-    -- «Размер меню» меняет реальную рамку, а не масштабирует содержимое внутри неё.
-    applyWindowRect(windowPos, Vector2.new(DEFAULT_SIZE.X * menuScale, DEFAULT_SIZE.Y * menuScale))
-    scaleValue.Text=tostring(math.floor(menuScale*100+0.5)).."%"
-    local alpha=(menuScale-0.95)/0.40
-    if scaleFill then scaleFill.Size=UDim2.new(alpha,0,1,0) end
-    if scaleKnob then scaleKnob.Position=UDim2.new(alpha,-7,0.5,-7) end
 end
 markThemeRoles()
 -- Apply Settings changes immediately, including on mobile taps.
@@ -1078,7 +1045,6 @@ refreshSettings = function()
     local ok, err = pcall(function()
         applyTheme()
         applyLanguage()
-        applyScale()
     end)
     if not ok then warn("[MOBILE HUB / Settings] " .. tostring(err)) end
 end
