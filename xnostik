@@ -1,5 +1,8 @@
--- linbergz Team MOBILE HUB v12.0 (Resizable Interface Redesign)
--- Только интерфейс: вкладки, тема, анимации. Все функции заменены заглушкой.
+-- linbergz Team MOBILE HUB v13.0 — Full Premium Mobile Redesign
+-- Authoritative v12 feature set preserved: all tabs, placeholders, settings, callbacks and window controls remain intact.
+-- v13 fixes: safe viewport clamping below minimum size, correct vertical bounds, unified drag/resize ownership,
+-- drag-threshold launcher activation, no InputObject.Target access, and resilient semantic theme refresh.
+-- UI-only. Native Roblox Luau; no external libraries.
 
 ---------------------------------------------------------
 -- SERVICES
@@ -32,22 +35,22 @@ ScreenGui.Parent = player.PlayerGui
 -- COLOR PALETTE
 ---------------------------------------------------------
 local C = {
-    bg = Color3.fromRGB(13, 11, 20),
-    sidebar = Color3.fromRGB(8, 7, 13),
-    surface = Color3.fromRGB(18, 15, 28),
-    elevated = Color3.fromRGB(25, 21, 38),
-    accent = Color3.fromRGB(140, 65, 245),
-    accentLight = Color3.fromRGB(180, 115, 255),
+    bg = Color3.fromRGB(14, 12, 23),
+    sidebar = Color3.fromRGB(9, 8, 16),
+    surface = Color3.fromRGB(22, 19, 34),
+    elevated = Color3.fromRGB(31, 27, 47),
+    accent = Color3.fromRGB(151, 82, 255),
+    accentLight = Color3.fromRGB(204, 158, 255),
     white = Color3.fromRGB(255, 255, 255),
-    text = Color3.fromRGB(240, 238, 248),
-    textSec = Color3.fromRGB(160, 148, 185),
-    textDim = Color3.fromRGB(100, 90, 120),
-    red = Color3.fromRGB(220, 50, 60),
-    redDark = Color3.fromRGB(45, 16, 20),
-    gold = Color3.fromRGB(255, 195, 45),
-    border = Color3.fromRGB(53, 45, 72),
-    hover = Color3.fromRGB(32, 27, 47),
-    selectedSurface = Color3.fromRGB(42, 28, 68),
+    text = Color3.fromRGB(246, 244, 252),
+    textSec = Color3.fromRGB(174, 165, 198),
+    textDim = Color3.fromRGB(112, 103, 136),
+    red = Color3.fromRGB(255, 93, 111),
+    redDark = Color3.fromRGB(62, 20, 29),
+    gold = Color3.fromRGB(255, 202, 71),
+    border = Color3.fromRGB(72, 62, 98),
+    hover = Color3.fromRGB(42, 35, 61),
+    selectedSurface = Color3.fromRGB(57, 38, 91),
     shadow = Color3.fromRGB(0, 0, 0),
 }
 local currentFont = Enum.Font.GothamSemibold
@@ -208,6 +211,7 @@ end)
 -- MOBILE TOGGLE: BUTTON-CAPSULE + EKG PULSE
 ---------------------------------------------------------
 local hubOpen = false
+local toggleDrag = nil
 
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "HubToggle"
@@ -311,20 +315,20 @@ ToggleBtn.MouseLeave:Connect(function()
 end)
 
 do
-    local dragging, dragStart, startPos
-    ToggleBtn.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-            dragging, dragStart, startPos = true, i.Position, ToggleBtn.Position
+    -- A threshold separates a deliberate launcher drag from a tap, especially on touch screens.
+    ToggleBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            toggleDrag = {input = input, start = input.Position, position = ToggleBtn.Position, moved = false}
         end
     end)
-    UserInputService.InputChanged:Connect(function(i)
-        if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-            local d = i.Position - dragStart
-            ToggleBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
-        end
-    end)
-    UserInputService.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then dragging = false end
+    UserInputService.InputChanged:Connect(function(input)
+        if not toggleDrag or (input.UserInputType ~= Enum.UserInputType.MouseMovement and input ~= toggleDrag.input) then return end
+        local delta = input.Position - toggleDrag.start
+        if delta.Magnitude > 7 then toggleDrag.moved = true end
+        local viewport = ScreenGui.AbsoluteSize
+        local x = math.clamp(toggleDrag.position.X.Offset + delta.X, 8, math.max(8, viewport.X - ToggleBtn.AbsoluteSize.X - 8))
+        local y = math.clamp(toggleDrag.position.Y.Offset + delta.Y, 8, math.max(8, viewport.Y - ToggleBtn.AbsoluteSize.Y - 8))
+        ToggleBtn.Position = UDim2.fromOffset(x, y)
     end)
 end
 
@@ -337,6 +341,7 @@ local MIN_SIZE = Vector2.new(400, 285)
 local windowSize = DEFAULT_SIZE
 local windowPos
 local activeWindowTween
+local windowInteraction = nil -- one owner at a time: drag and resize cannot fight each other
 
 -- Мягкая тень отделяет окно от игрового фона.
 local HubShadow = Instance.new("Frame")
@@ -359,6 +364,8 @@ Hub.Visible = false
 Hub.ClipsDescendants = true
 Hub.ZIndex = 10
 Hub.Parent = ScreenGui
+Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 16)
+Instance.new("UICorner", HubShadow).CornerRadius = UDim.new(0, 18)
 local HSk = Instance.new("UIStroke")
 HSk.Color = C.border
 HSk.Thickness = 1
@@ -378,12 +385,15 @@ end
 
 local function applyWindowRect(position, size)
     local viewport = getViewport()
-    local maxW = math.max(MIN_SIZE.X, viewport.X - 16)
-    local maxH = math.max(MIN_SIZE.Y, viewport.Y - 16)
-    local width = math.clamp(size.X, MIN_SIZE.X, maxW)
-    local height = math.clamp(size.Y, MIN_SIZE.Y, maxH)
+    -- On phones narrower/shorter than MIN_SIZE, fit the available viewport instead of forcing overflow.
+    local minWidth = math.max(1, math.min(MIN_SIZE.X, viewport.X - 16))
+    local minHeight = math.max(1, math.min(MIN_SIZE.Y, viewport.Y - 16))
+    local maxW = math.max(minWidth, viewport.X - 16)
+    local maxH = math.max(minHeight, viewport.Y - 16)
+    local width = math.clamp(size.X, minWidth, maxW)
+    local height = math.clamp(size.Y, minHeight, maxH)
     local maxX = math.max(8, viewport.X - width - 8)
-    local maxY = math.max(8, viewport.Y - 34)
+    local maxY = math.max(8, viewport.Y - height - 8)
     windowPos = Vector2.new(math.clamp(position.X, 8, maxX), math.clamp(position.Y, 8, maxY))
     windowSize = Vector2.new(width, height)
     Hub.Position = UDim2.fromOffset(windowPos.X, windowPos.Y)
@@ -401,6 +411,10 @@ local function ensureWindowRect()
 end
 
 task.defer(ensureWindowRect)
+-- Orientation and viewport changes never leave the hub beyond the visible screen.
+ScreenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+    if windowPos then applyWindowRect(windowPos, windowSize) end
+end)
 
 ---------------------------------------------------------
 -- TOP BAR
@@ -448,10 +462,16 @@ Instance.new("UICorner", ClB).CornerRadius = UDim.new(0, 6)
 
 do
     local dragging, activeInput, dragStart, startPos
+    local function isInside(object, point)
+        local p, s = object.AbsolutePosition, object.AbsoluteSize
+        return point.X >= p.X and point.X <= p.X + s.X and point.Y >= p.Y and point.Y <= p.Y + s.Y
+    end
     TopB.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            if input.Target == ClB then return end
+        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and not windowInteraction then
+            -- InputObject has no Target property; use the close button's bounds instead.
+            if isInside(ClB, input.Position) then return end
             ensureWindowRect()
+            windowInteraction = "drag"
             dragging, activeInput, dragStart, startPos = true, input, input.Position, windowPos
         end
     end)
@@ -461,8 +481,8 @@ do
         end
     end)
     UserInputService.InputEnded:Connect(function(input)
-        if input == activeInput or (activeInput and activeInput.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.MouseButton1) then
-            dragging, activeInput = false, nil
+        if dragging and (input == activeInput or (activeInput and activeInput.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.MouseButton1)) then
+            dragging, activeInput, windowInteraction = false, nil, nil
         end
     end)
 end
@@ -480,7 +500,9 @@ local function addResizeHandle(name, position, size, left, right, top, bottom)
     local resizing, activeInput, startPointer, startPosition, startSize
     handle.InputBegan:Connect(function(input)
         if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+        if windowInteraction then return end
         ensureWindowRect()
+        windowInteraction = "resize"
         resizing, activeInput = true, input
         startPointer, startPosition, startSize = input.Position, windowPos, windowSize
     end)
@@ -493,13 +515,16 @@ local function addResizeHandle(name, position, size, left, right, top, bottom)
         if top then y, h = y + delta.Y, h - delta.Y end
         if bottom then h = h + delta.Y end
         -- При упоре в минимальный размер сохраняем противоположную грань на месте.
-        if left and w < MIN_SIZE.X then x = startPosition.X + startSize.X - MIN_SIZE.X end
-        if top and h < MIN_SIZE.Y then y = startPosition.Y + startSize.Y - MIN_SIZE.Y end
+        local viewport = getViewport()
+        local effectiveMinW = math.max(1, math.min(MIN_SIZE.X, viewport.X - 16))
+        local effectiveMinH = math.max(1, math.min(MIN_SIZE.Y, viewport.Y - 16))
+        if left and w < effectiveMinW then x = startPosition.X + startSize.X - effectiveMinW end
+        if top and h < effectiveMinH then y = startPosition.Y + startSize.Y - effectiveMinH end
         applyWindowRect(Vector2.new(x, y), Vector2.new(w, h))
     end)
     UserInputService.InputEnded:Connect(function(input)
         if input == activeInput or (activeInput and activeInput.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.MouseButton1) then
-            resizing, activeInput = false, nil
+            resizing, activeInput, windowInteraction = false, nil, nil
         end
     end)
 end
@@ -721,10 +746,10 @@ local lang = {
     }
 }
 local accentPalettes = {
-    Violet = {accent=Color3.fromRGB(140,65,245), accentLight=Color3.fromRGB(180,115,255), selectedSurface=Color3.fromRGB(42,28,68)},
-    Blue   = {accent=Color3.fromRGB(45,135,255), accentLight=Color3.fromRGB(112,182,255), selectedSurface=Color3.fromRGB(22,43,76)},
-    Red    = {accent=Color3.fromRGB(238,73,91), accentLight=Color3.fromRGB(255,132,145), selectedSurface=Color3.fromRGB(77,27,38)},
-    Green  = {accent=Color3.fromRGB(47,202,132), accentLight=Color3.fromRGB(118,239,177), selectedSurface=Color3.fromRGB(20,66,49)},
+    Violet = {accent=Color3.fromRGB(151,82,255), accentLight=Color3.fromRGB(204,158,255), selectedSurface=Color3.fromRGB(57,38,91)},
+    Blue   = {accent=Color3.fromRGB(53,151,255), accentLight=Color3.fromRGB(137,202,255), selectedSurface=Color3.fromRGB(24,57,94)},
+    Red    = {accent=Color3.fromRGB(255,86,128), accentLight=Color3.fromRGB(255,162,185), selectedSurface=Color3.fromRGB(96,34,55)},
+    Green  = {accent=Color3.fromRGB(45,211,145), accentLight=Color3.fromRGB(142,245,196), selectedSurface=Color3.fromRGB(24,78,59)},
 }
 
 local function makeLabel(parent, text, position, size, font, textSize, color)
@@ -817,7 +842,7 @@ local function BuildSettingsPage(parent)
     local themeCard = row(87,35)
     local l2=makeLabel(themeCard,lang.RU.theme,UDim2.new(0,13,0,10),UDim2.new(1,-130,0,15),Enum.Font.GothamBold,8,C.textDim)
     l2:SetAttribute("ThemeText", "textDim"); settingsLabels.theme=l2
-    local colors={{"Violet",Color3.fromRGB(140,65,245)},{"Blue",Color3.fromRGB(45,135,255)},{"Red",Color3.fromRGB(238,73,91)},{"Green",Color3.fromRGB(47,202,132)}}
+    local colors={{"Violet",Color3.fromRGB(151,82,255)},{"Blue",Color3.fromRGB(53,151,255)},{"Red",Color3.fromRGB(255,86,128)},{"Green",Color3.fromRGB(45,211,145)}}
     for i,item in ipairs(colors) do
         local b=Instance.new("TextButton")
         b.Name="Accent_"..item[1]; b.Size=UDim2.new(0,21,0,21); b.Position=UDim2.new(1,-112+(i-1)*27,0,7)
@@ -997,17 +1022,23 @@ end
 local function applyTheme()
     local p=accentPalettes[chosenAccent]
     C.accent,C.accentLight,C.selectedSurface=p.accent,p.accentLight,p.selectedSurface
-    if amoledEnabled then C.bg=Color3.fromRGB(0,0,0);C.sidebar=Color3.fromRGB(0,0,0);C.surface=Color3.fromRGB(5,5,5);C.elevated=Color3.fromRGB(12,12,12);C.border=Color3.fromRGB(43,43,43);C.hover=Color3.fromRGB(22,22,22) else C.bg=Color3.fromRGB(13,11,20);C.sidebar=Color3.fromRGB(8,7,13);C.surface=Color3.fromRGB(18,15,28);C.elevated=Color3.fromRGB(25,21,38);C.border=Color3.fromRGB(53,45,72);C.hover=Color3.fromRGB(32,27,47) end
+    if amoledEnabled then C.bg=Color3.fromRGB(0,0,0);C.sidebar=Color3.fromRGB(0,0,0);C.surface=Color3.fromRGB(5,5,5);C.elevated=Color3.fromRGB(12,12,12);C.border=Color3.fromRGB(43,43,43);C.hover=Color3.fromRGB(22,22,22) else C.bg=Color3.fromRGB(14,12,23);C.sidebar=Color3.fromRGB(9,8,16);C.surface=Color3.fromRGB(22,19,34);C.elevated=Color3.fromRGB(31,27,47);C.border=Color3.fromRGB(72,62,98);C.hover=Color3.fromRGB(42,35,61) end
     for _,o in ipairs(ScreenGui:GetDescendants()) do
         local r=o:GetAttribute("ThemeBackground");if r and C[r] and o:IsA("GuiObject") then o.BackgroundColor3=C[r] end
         r=o:GetAttribute("ThemeText");if r and C[r] and (o:IsA("TextLabel") or o:IsA("TextButton")) then o.TextColor3=C[r] end
         r=o:GetAttribute("ThemeStroke");if r and C[r] and o:IsA("UIStroke") then o.Color=C[r] end
     end
-    local dotColors={Violet=Color3.fromRGB(140,65,245),Blue=Color3.fromRGB(45,135,255),Red=Color3.fromRGB(238,73,91),Green=Color3.fromRGB(47,202,132)}
-    for name,b in pairs(accentButtons) do b.BackgroundColor3=dotColors[name]; b:FindFirstChild("Selection").Transparency=(name==chosenAccent and 0 or 1) end
-    amoledFill.BackgroundColor3=amoledEnabled and C.accent or C.elevated
-    amoledKnob.BackgroundColor3=amoledEnabled and C.white or C.textSec
-    TweenService:Create(amoledKnob,TweenInfo.new(0.16),{Position=UDim2.new(0,amoledEnabled and 27 or 3,0.5,-8)}):Play()
+    local dotColors={Violet=Color3.fromRGB(151,82,255),Blue=Color3.fromRGB(53,151,255),Red=Color3.fromRGB(255,86,128),Green=Color3.fromRGB(45,211,145)}
+    for name,b in pairs(accentButtons) do
+        b.BackgroundColor3=dotColors[name]
+        local selection = b:FindFirstChild("Selection")
+        if selection then selection.Transparency=(name==chosenAccent and 0 or 1) end
+    end
+    if amoledFill then amoledFill.BackgroundColor3=amoledEnabled and C.accent or C.elevated end
+    if amoledKnob then
+        amoledKnob.BackgroundColor3=amoledEnabled and C.white or C.textSec
+        TweenService:Create(amoledKnob,TweenInfo.new(0.16),{Position=UDim2.new(0,amoledEnabled and 27 or 3,0.5,-8)}):Play()
+    end
 end
 local function applyLanguage()
     local t=lang[language]
@@ -1082,6 +1113,12 @@ local function ToggleHub()
     end
 end
 
-ToggleBtn.MouseButton1Click:Connect(ToggleHub)
+UserInputService.InputEnded:Connect(function(input)
+    if toggleDrag and (input == toggleDrag.input or input.UserInputType == Enum.UserInputType.MouseButton1) then
+        local moved = toggleDrag.moved
+        toggleDrag = nil
+        if not moved then ToggleHub() end
+    end
+end)
 ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
 ShowTab("Home", 1)
