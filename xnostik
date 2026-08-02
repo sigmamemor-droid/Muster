@@ -1,292 +1,163 @@
--- =====================================================
---  NEXUS UI v5.0 | Best Compact Sidebar UI (2025)
---  Автор улучшения: Grok | Максимальное качество
--- =====================================================
-
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local Stats = game:GetService("Stats")
-
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- ==================== CONFIG ====================
-local CONFIG = {
-	Theme = {
-		Background = Color3.fromRGB(15, 15, 20),
-		Sidebar = Color3.fromRGB(10, 10, 14),
-		Card = Color3.fromRGB(22, 22, 28),
-		CardHover = Color3.fromRGB(35, 35, 45),
-		Accent = Color3.fromRGB(100, 110, 255),
-		Accent2 = Color3.fromRGB(130, 140, 255),
-		Text = Color3.fromRGB(255, 255, 255),
-		TextSecondary = Color3.fromRGB(170, 170, 190),
-		TextMuted = Color3.fromRGB(100, 100, 120),
-		Border = Color3.fromRGB(35, 35, 45),
-		Success = Color3.fromRGB(0, 255, 140),
-	},
+-- ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "LeftSideMenu"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
 
-	WindowSize = Vector2.new(660, 460),
-	SidebarWidth = 170,
-	AnimSpeed = 0.35,
-}
+-- Главное окно (смещено вправо от вкладок)
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 380, 0, 260)
+mainFrame.Position = UDim2.new(0, 100, 0.5, 0)
+mainFrame.AnchorPoint = Vector2.new(0, 0.5)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
 
--- ==================== STATE ====================
-local State = {
-	Visible = false,
-	ActiveTab = "home",
-	Connections = {},
-	PlayerRows = {},
-	SearchConnection = nil,
-}
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 12)
+mainCorner.Parent = mainFrame
 
--- ==================== UTILS ====================
-local function create(class, props)
-	local obj = Instance.new(class)
-	for k, v in pairs(props or {}) do
-		if k ~= "Parent" then obj[k] = v end
-	end
-	if props and props.Parent then obj.Parent = props.Parent end
-	return obj
+-- Заголовок
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 35)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "🎮 Меню"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextSize = 18
+title.Font = Enum.Font.GothamBold
+title.Parent = mainFrame
+
+-- Контент вкладок
+local contentFrame = Instance.new("Frame")
+contentFrame.Name = "ContentFrame"
+contentFrame.Size = UDim2.new(1, -15, 0, 200)
+contentFrame.Position = UDim2.new(0, 15, 0, 45)
+contentFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+contentFrame.BorderSizePixel = 0
+contentFrame.Parent = mainFrame
+
+local contentCorner = Instance.new("UICorner")
+contentCorner.CornerRadius = UDim.new(0, 8)
+contentCorner.Parent = contentFrame
+
+-- Текст для всех вкладок
+local comingSoonText = "🚧 Скоро обновление
+
+Эта вкладка находится в активной разработке.
+
+В следующем обновлении здесь появятся новые функции, улучшения и дополнительные возможности.
+
+Спасибо за ожидание и поддержку! ❤️"
+
+local contentLabel = Instance.new("TextLabel")
+contentLabel.Size = UDim2.new(1, 0, 1, 0)
+contentLabel.Position = UDim2.new(0, 0, 0, 0)
+contentLabel.BackgroundTransparency = 1
+contentLabel.Text = comingSoonText
+contentLabel.TextColor3 = Color3.fromRGB(200, 200, 220)
+contentLabel.TextSize = 13
+contentLabel.Font = Enum.Font.Gotham
+contentLabel.TextWrapped = true
+contentLabel.TextXAlignment = Enum.TextXAlignment.Center
+contentLabel.TextYAlignment = Enum.TextYAlignment.Center
+contentLabel.PaddingBottom = UDim.new(0, 10)
+contentLabel.PaddingTop = UDim.new(0, 10)
+contentLabel.PaddingLeft = UDim.new(0, 10)
+contentLabel.PaddingRight = UDim.new(0, 10)
+contentLabel.Parent = contentFrame
+
+-- Панель вкладок СЛЕВА
+local tabsPanel = Instance.new("Frame")
+tabsPanel.Name = "TabsPanel"
+tabsPanel.Size = UDim2.new(0, 75, 0, 230)
+tabsPanel.Position = UDim2.new(0, -85, 0, 15)
+tabsPanel.BackgroundColor3 = Color3.fromRGB(35, 35, 48)
+tabsPanel.BorderSizePixel = 0
+tabsPanel.Parent = screenGui
+
+local tabsCorner = Instance.new("UICorner")
+tabsCorner.CornerRadius = UDim.new(0, 10)
+tabsCorner.Parent = tabsPanel
+
+-- Список вкладок (6-7 штук)
+local tabNames = {"Главная", "Профиль", "Настройки", "Магазин", "Достижения", "Друзья"}
+local tabButtons = {}
+local tabHeight = 34
+local tabSpacing = 5
+
+-- Функция создания кнопки вкладки
+local function createTabButton(name, index)
+\tlocal btn = Instance.new("TextButton")
+\tbtn.Name = name
+\tbtn.Size = UDim2.new(1, -8, 0, tabHeight)
+\tbtn.Position = UDim2.new(0, 4, 0, 8 + (index * (tabHeight + tabSpacing)))
+\tbtn.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+\tbtn.TextColor3 = Color3.fromRGB(200, 200, 220)
+\tbtn.Text = name
+\tbtn.TextSize = 12
+\tbtn.Font = Enum.Font.GothamBold
+\tbtn.AutoButtonColor = true
+\tbtn.Parent = tabsPanel
+\t
+\tlocal btnCorner = Instance.new("UICorner")
+\tbtnCorner.CornerRadius = UDim.new(0, 6)
+\tbtnCorner.Parent = btn
+\t
+\treturn btn
 end
 
-local function tween(obj, goal, duration, style)
-	return TweenService:Create(obj, TweenInfo.new(duration or CONFIG.AnimSpeed, style or Enum.EasingStyle.Quart, Enum.EasingDirection.Out), goal)
+-- Создаём все кнопки
+for i, name in ipairs(tabNames) do
+\ttabButtons[i] = createTabButton(name, i - 1)
 end
 
-local function addCorner(parent, radius)
-	create("UICorner", {CornerRadius = UDim.new(0, radius or 14), Parent = parent})
+-- Функция переключения вкладок
+local function switchTab(button)
+\tfor _, btn in ipairs(tabButtons) do
+\t\tif btn == button then
+\t\t\tbtn.BackgroundColor3 = Color3.fromRGB(70, 100, 140)
+\t\t\tbtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+\t\telse
+\t\t\tbtn.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+\t\t\tbtn.TextColor3 = Color3.fromRGB(200, 200, 220)
+\t\tend
+\tend
+\tcontentLabel.Text = comingSoonText
 end
 
-local function addStroke(parent, color, thickness)
-	create("UIStroke", {
-		Color = color or CONFIG.Theme.Border,
-		Thickness = thickness or 1.2,
-		Transparency = 0.6,
-		Parent = parent
-	})
+-- Подключаем события
+for _, btn in ipairs(tabButtons) do
+\tbtn.MouseButton1Click:Connect(function()
+\t\tswitchTab(btn)
+\tend)
 end
 
--- ==================== MAIN UI ====================
-local screenGui = create("ScreenGui", {Name = "NexusUI_v5", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 999, Parent = playerGui})
+-- Выделяем первую вкладку
+if #tabButtons > 0 then
+\tswitchTab(tabButtons[1])
+end
 
-local backdrop = create("Frame", {
-	Size = UDim2.new(1,0,1,0),
-	BackgroundColor3 = Color3.new(0,0,0),
-	BackgroundTransparency = 1,
-	Visible = false,
-	Parent = screenGui
-})
-create("UIGradient", {Color = ColorSequence.new{ColorSequenceKeypoint.new(0,Color3.new(0,0,0)), ColorSequenceKeypoint.new(1,Color3.new(0,0,0))}, Transparency = NumberSequence.new{NumberSequenceKeypoint.new(0,0.4), NumberSequenceKeypoint.new(1,0.7)}, Parent = backdrop})
+-- Кнопка закрытия
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 26, 0, 26)
+closeBtn.Position = UDim2.new(1, -32, 0, 5)
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+closeBtn.Text = "✕"
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.TextSize = 15
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.Parent = mainFrame
 
-local main = create("Frame", {
-	Size = UDim2.new(0,0,0,0),
-	Position = UDim2.new(0.5, -CONFIG.WindowSize.X/2, 0.5, -CONFIG.WindowSize.Y/2),
-	BackgroundColor3 = CONFIG.Theme.Background,
-	ClipsDescendants = true,
-	Visible = false,
-	Parent = screenGui
-})
-addCorner(main, 18)
-addStroke(main, Color3.fromRGB(45,45,60), 1.5)
-
--- Dragging
-local dragging, dragInput, dragStart, startPos
-local titleBar = create("Frame", {Size = UDim2.new(1,0,0,40), BackgroundTransparency = 1, Parent = main})
-
-titleBar.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = true
-		dragStart = input.Position
-		startPos = main.Position
-	end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-		local delta = input.Position - dragStart
-		main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-	end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-end)
-
--- Close Button
-local closeBtn = create("TextButton", {
-	Size = UDim2.new(0,32,0,32),
-	Position = UDim2.new(1,-42,0,5),
-	BackgroundColor3 = CONFIG.Theme.Card,
-	Text = "✕",
-	TextColor3 = Color3.fromRGB(200,200,200),
-	Font = Enum.Font.GothamBold,
-	TextSize = 18,
-	Parent = main
-})
-addCorner(closeBtn, 8)
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 5)
+closeCorner.Parent = closeBtn
 
 closeBtn.MouseButton1Click:Connect(function()
-	State.Visible = false
-	tween(main, {Size = UDim2.new(0,0,0,0)}, 0.25, Enum.EasingStyle.Back):Play()
-	task.delay(0.28, function()
-		if not State.Visible then 
-			main.Visible = false 
-			backdrop.Visible = false 
-		end
-	end)
+\tscreenGui:Destroy()
 end)
-
--- ==================== SIDEBAR ====================
-local sidebar = create("Frame", {
-	Size = UDim2.new(0, CONFIG.SidebarWidth, 1, 0),
-	BackgroundColor3 = CONFIG.Theme.Sidebar,
-	Parent = main
-})
-addCorner(sidebar, 18)
-
-create("TextLabel", {
-	Size = UDim2.new(1,0,0,50),
-	Position = UDim2.new(0,0,0,10),
-	BackgroundTransparency = 1,
-	Text = "NEXUS",
-	TextColor3 = CONFIG.Theme.Accent,
-	Font = Enum.Font.GothamBlack,
-	TextSize = 22,
-	TextXAlignment = Enum.TextXAlignment.Center,
-	Parent = sidebar
-})
-
-local tabList = create("Frame", {
-	Size = UDim2.new(1,-16,1,-90),
-	Position = UDim2.new(0,8,0,70),
-	BackgroundTransparency = 1,
-	Parent = sidebar
-})
-create("UIListLayout", {Padding = UDim.new(0,6), Parent = tabList})
-
-local contentArea = create("Frame", {
-	Size = UDim2.new(1, -CONFIG.SidebarWidth-20, 1, -20),
-	Position = UDim2.new(0, CONFIG.SidebarWidth+10, 0, 10),
-	BackgroundTransparency = 1,
-	Parent = main
-})
-
--- ==================== TAB SYSTEM ====================
-local Tabs = {}
-
-local tabDefinitions = {
-	{id = "home", label = "Home", icon = "⌂"},
-	{id = "players", label = "Players", icon = "👥"},
-	{id = "stats", label = "Statistics", icon = "📊"},
-	{id = "inventory", label = "Inventory", icon = "⬡"},
-	{id = "settings", label = "Settings", icon = "⚙"},
-	{id = "about", label = "About", icon = "ℹ"},
-}
-
-for _, data in ipairs(tabDefinitions) do
-	local btn = create("TextButton", {
-		Size = UDim2.new(1,0,0,42),
-		BackgroundColor3 = CONFIG.Theme.Sidebar,
-		Text = "",
-		AutoButtonColor = false,
-		Parent = tabList
-	})
-	addCorner(btn, 10)
-
-	local indicator = create("Frame", {
-		Size = UDim2.new(0,4,0,0),
-		Position = UDim2.new(0,0,0.5,0),
-		AnchorPoint = Vector2.new(0,0.5),
-		BackgroundColor3 = CONFIG.Theme.Accent,
-		Parent = btn
-	})
-	addCorner(indicator, 2)
-
-	create("TextLabel", {Size = UDim2.new(0,24,1,0), Position = UDim2.new(0,14,0,0), Text = data.icon, TextColor3 = CONFIG.Theme.TextSecondary, Font = Enum.Font.GothamBold, TextSize = 18, BackgroundTransparency = 1, Parent = btn})
-	local label = create("TextLabel", {Size = UDim2.new(1,-60,1,0), Position = UDim2.new(0,46,0,0), Text = data.label, TextColor3 = CONFIG.Theme.TextSecondary, Font = Enum.Font.Gotham, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = btn})
-
-	local container = create("Frame", {Size = UDim2.new(1,0,1,0), BackgroundTransparency = 1, Visible = false, GroupTransparency = 1, Parent = contentArea})
-
-	btn.MouseButton1Click:Connect(function()
-		if State.ActiveTab == data.id then return end
-		
-		-- Deactivate old
-		if Tabs[State.ActiveTab] then
-			local old = Tabs[State.ActiveTab]
-			tween(old.btn, {BackgroundColor3 = CONFIG.Theme.Sidebar}, 0.2)
-			tween(old.indicator, {Size = UDim2.new(0,4,0,0)}, 0.2)
-			old.label.TextColor3 = CONFIG.Theme.TextSecondary
-			tween(old.container, {GroupTransparency = 1}, 0.15)
-			task.delay(0.15, function() old.container.Visible = false end)
-		end
-
-		State.ActiveTab = data.id
-		tween(btn, {BackgroundColor3 = CONFIG.Theme.Card}, 0.25)
-		tween(indicator, {Size = UDim2.new(0,4,0,28)}, 0.3)
-		label.TextColor3 = CONFIG.Theme.Text
-
-		container.Visible = true
-		tween(container, {GroupTransparency = 0}, 0.25)
-	end)
-
-	Tabs[data.id] = {btn = btn, indicator = indicator, label = label, container = container, data = data}
-end
-
--- ==================== VISIBILITY ====================
-local function toggleUI()
-	State.Visible = not State.Visible
-	
-	if State.Visible then
-		main.Visible = true
-		backdrop.Visible = true
-		main.Size = UDim2.new(0,0,0,0)
-		tween(main, {Size = UDim2.fromOffset(CONFIG.WindowSize.X, CONFIG.WindowSize.Y)}, 0.4, Enum.EasingStyle.Back):Play()
-		tween(backdrop, {BackgroundTransparency = 0.35}, 0.4):Play()
-		
-		if not State.ActiveTab then
-			Tabs.home.btn:FireEvent("MouseButton1Click")
-		end
-	else
-		tween(main, {Size = UDim2.new(0,0,0,0)}, 0.25, Enum.EasingStyle.Quart):Play()
-		tween(backdrop, {BackgroundTransparency = 1}, 0.25):Play()
-		task.delay(0.28, function()
-			if not State.Visible then
-				main.Visible = false
-				backdrop.Visible = false
-			end
-		end)
-	end
-end
-
--- Hotkeys
-UserInputService.InputBegan:Connect(function(input, gp)
-	if gp then return end
-	if input.KeyCode == Enum.KeyCode.Insert or input.KeyCode == Enum.KeyCode.RightShift or input.KeyCode == Enum.KeyCode.F4 then
-		toggleUI()
-	elseif input.KeyCode == Enum.KeyCode.Escape and State.Visible then
-		toggleUI()
-	end
-end)
-
--- ==================== LOADING ====================
-local loading = create("Frame", {Size = UDim2.new(1,0,1,0), BackgroundColor3 = CONFIG.Theme.Background, ZIndex = 100, Parent = screenGui})
-create("TextLabel", {Size = UDim2.new(0,300,0,40), Position = UDim2.new(0.5,-150,0.5,-60), Text = "NEXUS", TextColor3 = CONFIG.Theme.Accent, Font = Enum.Font.GothamBlack, TextSize = 42, BackgroundTransparency = 1, Parent = loading})
-
-task.delay(0.8, function()
-	loading:Destroy()
-	State.Visible = true
-	main.Visible = true
-	backdrop.Visible = true
-	tween(main, {Size = UDim2.fromOffset(CONFIG.WindowSize.X, CONFIG.WindowSize.Y)}, 0.45, Enum.EasingStyle.Back):Play()
-	Tabs.home.btn:FireEvent("MouseButton1Click")
-	print("NEXUS UI v5.0 успешно загружен | Нажми Insert / RightShift / F4")
-end)
-
--- ==================== ЗАПОЛНЕНИЕ ТАБОВ (можно расширять) ====================
--- Home, Players, Settings и остальные табы можно добавить по запросу.
--- Хочешь, я сейчас добавлю **полностью готовые и красивые** вкладки (особенно Players с поиском и аватарками)?
-
-print("NEXUS UI v5.0 — Самая лучшая версия загружена.")
