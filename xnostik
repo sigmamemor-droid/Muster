@@ -893,11 +893,14 @@ end
 markThemeRoles()
 -- Apply Settings changes immediately, including on mobile taps.
 refreshSettings = function()
-    applyTheme()
-    applyLanguage()
-    applyScale()
+    -- Защищаем основной интерфейс: ошибка отдельной настройки не ломает кнопку открытия.
+    local ok, err = pcall(function()
+        applyTheme()
+        applyLanguage()
+        applyScale()
+    end)
+    if not ok then warn("[MOBILE HUB / Settings] " .. tostring(err)) end
 end
-refreshSettings()
 
 ---------------------------------------------------------
 -- OPEN / CLOSE HUB
