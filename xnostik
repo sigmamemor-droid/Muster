@@ -1,5 +1,5 @@
--- linbergz Team MOBILE HUB v9.0 (UI Preview Build)
--- Только интерфейс: вкладки, тема, анимации. Все функции удалены и заменены заглушкой "в разработке".
+-- linbergz Team MOBILE HUB v9.1 (UI Preview Build)
+-- Только интерфейс: вкладки, тема, анимации. Все функции заменены заглушкой.
 
 ---------------------------------------------------------
 -- SERVICES
@@ -15,20 +15,17 @@ if not player then
 end
 
 ---------------------------------------------------------
--- CLEANUP PREVIOUS INSTANCES
+-- CLEANUP / SCREEN GUI
 ---------------------------------------------------------
 local oldGui = player.PlayerGui:FindFirstChild("MM2HubMobile")
 if oldGui then oldGui:Destroy() end
 
----------------------------------------------------------
--- SCREENGUI SETUP
----------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MM2HubMobile"
-ScreenGui.Parent = player.PlayerGui
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
+ScreenGui.Parent = player.PlayerGui
 
 ---------------------------------------------------------
 -- COLOR PALETTE
@@ -48,7 +45,6 @@ local C = {
     redDark = Color3.fromRGB(45, 16, 20),
     gold = Color3.fromRGB(255, 195, 45),
 }
-
 local currentFont = Enum.Font.GothamSemibold
 
 ---------------------------------------------------------
@@ -58,6 +54,7 @@ local LS = Instance.new("Frame")
 LS.Name = "LoadingScreen"
 LS.Size = UDim2.new(1, 0, 1, 0)
 LS.BackgroundColor3 = C.sidebar
+LS.BorderSizePixel = 0
 LS.ZIndex = 100
 LS.Parent = ScreenGui
 
@@ -114,37 +111,119 @@ task.spawn(function()
     TweenService:Create(LogoBox, TweenInfo.new(0.3), {Position = UDim2.new(0.5, -100, 0.5, -120)}):Play()
     fadeOut:Play()
     fadeOut.Completed:Wait()
-    LS:Destroy() -- полностью удаляем, ничего невидимого не остаётся
+    LS:Destroy() -- после загрузки не остаётся ни одного невидимого UI-элемента
 end)
 
 ---------------------------------------------------------
--- MOBILE TOGGLE BUTTON (открыть/закрыть хаб)
+-- MOBILE TOGGLE: BUTTON-CAPSULE + EKG PULSE
 ---------------------------------------------------------
+local hubOpen = false
+
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 42, 0, 42)
-ToggleBtn.Position = UDim2.new(0, 10, 0.3, 0)
-ToggleBtn.BackgroundColor3 = C.accent
-ToggleBtn.Text = "lz"
-ToggleBtn.TextColor3 = C.white
-ToggleBtn.TextSize = 14
-ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.Name = "HubToggle"
+ToggleBtn.Size = UDim2.new(0, 170, 0, 44)
+ToggleBtn.Position = UDim2.new(0, 12, 0.3, 0)
+ToggleBtn.BackgroundColor3 = C.sidebar
+ToggleBtn.Text = ""
+ToggleBtn.AutoButtonColor = false
+ToggleBtn.ClipsDescendants = true
 ToggleBtn.ZIndex = 50
 ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 
-local TBSk = Instance.new("UIStroke")
-TBSk.Color = C.white
-TBSk.Thickness = 1.5
-TBSk.Transparency = 0.5
-TBSk.Parent = ToggleBtn
+local ToggleStroke = Instance.new("UIStroke")
+ToggleStroke.Color = C.accent
+ToggleStroke.Thickness = 1.5
+ToggleStroke.Transparency = 0.15
+ToggleStroke.Parent = ToggleBtn
+
+-- Нативная Roblox-версия CSS fill-эффекта.
+local ToggleFill = Instance.new("Frame")
+ToggleFill.Name = "Fill"
+ToggleFill.Size = UDim2.new(0, 8, 0, 8)
+ToggleFill.Position = UDim2.new(0, -4, 0.5, -4)
+ToggleFill.BackgroundColor3 = C.accent
+ToggleFill.BorderSizePixel = 0
+ToggleFill.ZIndex = 51
+ToggleFill.Parent = ToggleBtn
+Instance.new("UICorner", ToggleFill).CornerRadius = UDim.new(1, 0)
+
+local ToggleText = Instance.new("TextLabel")
+ToggleText.Size = UDim2.new(1, -54, 1, 0)
+ToggleText.Position = UDim2.new(0, 16, 0, 0)
+ToggleText.BackgroundTransparency = 1
+ToggleText.Text = "OPEN HUB"
+ToggleText.TextColor3 = C.text
+ToggleText.TextSize = 11
+ToggleText.Font = Enum.Font.GothamBlack
+ToggleText.TextXAlignment = Enum.TextXAlignment.Left
+ToggleText.ZIndex = 53
+ToggleText.Parent = ToggleBtn
+
+-- Roblox не поддерживает CSS/SVG polyline, поэтому пульс собран из сегментов.
+local PulseLine = Instance.new("Frame")
+PulseLine.Name = "PulseLine"
+PulseLine.Size = UDim2.new(0, 34, 0, 20)
+PulseLine.Position = UDim2.new(1, -43, 0.5, -10)
+PulseLine.BackgroundTransparency = 1
+PulseLine.ZIndex = 53
+PulseLine.Parent = ToggleBtn
+
+local pulseSegments = {
+    {0, 10, 8, 0}, {7, 10, 7, -7}, {13, 3, 7, 14},
+    {19, 17, 7, -7}, {25, 10, 9, 0},
+}
+for i, data in ipairs(pulseSegments) do
+    local seg = Instance.new("Frame")
+    seg.Name = "PulseSegment" .. i
+    seg.Size = UDim2.new(0, 10, 0, 2)
+    seg.Position = UDim2.new(0, data[1], 0, data[2])
+    seg.AnchorPoint = Vector2.new(0, 0.5)
+    seg.BackgroundColor3 = C.accentLight
+    seg.BorderSizePixel = 0
+    seg.Rotation = math.deg(math.atan2(data[4], data[3]))
+    seg.ZIndex = 54
+    seg.Parent = PulseLine
+    Instance.new("UICorner", seg).CornerRadius = UDim.new(1, 0)
+end
+
+task.spawn(function()
+    while ToggleBtn.Parent do
+        for i = 1, 5 do
+            local seg = PulseLine:FindFirstChild("PulseSegment" .. i)
+            if seg then
+                TweenService:Create(seg, TweenInfo.new(0.13, Enum.EasingStyle.Linear), {BackgroundColor3 = C.white}):Play()
+                task.wait(0.07)
+                TweenService:Create(seg, TweenInfo.new(0.28, Enum.EasingStyle.Linear), {BackgroundColor3 = C.accentLight}):Play()
+            end
+        end
+        task.wait(0.65)
+    end
+end)
+
+local function SetToggleVisual(isOpen)
+    ToggleText.Text = isOpen and "CLOSE HUB" or "OPEN HUB"
+    TweenService:Create(ToggleFill, TweenInfo.new(0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+        Size = isOpen and UDim2.new(1.8, 0, 3, 0) or UDim2.new(0, 8, 0, 8)
+    }):Play()
+    TweenService:Create(ToggleText, TweenInfo.new(0.2), {TextColor3 = isOpen and C.white or C.text}):Play()
+end
+
+ToggleBtn.MouseEnter:Connect(function()
+    if not hubOpen then
+        TweenService:Create(ToggleFill, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(1.8, 0, 3, 0)}):Play()
+        TweenService:Create(ToggleText, TweenInfo.new(0.2), {TextColor3 = C.white}):Play()
+    end
+end)
+ToggleBtn.MouseLeave:Connect(function()
+    if not hubOpen then SetToggleVisual(false) end
+end)
 
 do
     local dragging, dragStart, startPos
     ToggleBtn.InputBegan:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = i.Position
-            startPos = ToggleBtn.Position
+            dragging, dragStart, startPos = true, i.Position, ToggleBtn.Position
         end
     end)
     UserInputService.InputChanged:Connect(function(i)
@@ -154,9 +233,7 @@ do
         end
     end)
     UserInputService.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then dragging = false end
     end)
 end
 
@@ -182,7 +259,9 @@ HSk.Color = C.accent
 HSk.Thickness = 1
 HSk.Parent = Hub
 
--- Верхняя панель (перетаскивание + заголовок + закрыть)
+---------------------------------------------------------
+-- TOP BAR
+---------------------------------------------------------
 local TopB = Instance.new("Frame")
 TopB.Name = "TopBar"
 TopB.Size = UDim2.new(1, -SIDEBAR_W, 0, TOPBAR_H)
@@ -220,9 +299,7 @@ do
     local drag, dStart, sPos
     TopB.InputBegan:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-            drag = true
-            dStart = i.Position
-            sPos = Hub.Position
+            drag, dStart, sPos = true, i.Position, Hub.Position
         end
     end)
     UserInputService.InputChanged:Connect(function(i)
@@ -232,14 +309,12 @@ do
         end
     end)
     UserInputService.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-            drag = false
-        end
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then drag = false end
     end)
 end
 
 ---------------------------------------------------------
--- SIDEBAR
+-- SIDEBAR / TABS
 ---------------------------------------------------------
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
@@ -263,6 +338,7 @@ STi.TextSize = 12
 STi.Font = Enum.Font.GothamBlack
 STi.Parent = SLogo
 
+-- Отдельный список: glider больше не считается вкладкой UIListLayout.
 local TabHolder = Instance.new("Frame")
 TabHolder.Size = UDim2.new(1, 0, 1, -36)
 TabHolder.Position = UDim2.new(0, 0, 0, 36)
@@ -270,35 +346,41 @@ TabHolder.BackgroundTransparency = 1
 TabHolder.ZIndex = 13
 TabHolder.Parent = Sidebar
 
+local TabList = Instance.new("Frame")
+TabList.Name = "TabList"
+TabList.Size = UDim2.new(1, -12, 1, -8)
+TabList.Position = UDim2.new(0, 6, 0, 4)
+TabList.BackgroundTransparency = 1
+TabList.ZIndex = 14
+TabList.Parent = TabHolder
+
 local THL = Instance.new("UIListLayout")
-THL.Parent = TabHolder
-THL.Padding = UDim.new(0, 2)
+THL.SortOrder = Enum.SortOrder.LayoutOrder
+THL.Padding = UDim.new(0, 5) -- отступы между вкладками
+THL.Parent = TabList
 
-local THP = Instance.new("UIPadding")
-THP.PaddingLeft = UDim.new(0, 6)
-THP.PaddingRight = UDim.new(0, 6)
-THP.PaddingTop = UDim.new(0, 4)
-THP.Parent = TabHolder
-
--- Индикатор активной вкладки (скользящая полоска)
 local TabGlider = Instance.new("Frame")
-TabGlider.Size = UDim2.new(1, 0, 0, 26)
+TabGlider.Name = "TabGlider"
+TabGlider.Size = UDim2.new(1, -12, 0, 28)
+TabGlider.Position = UDim2.new(0, 6, 0, 40)
 TabGlider.BackgroundColor3 = C.accent
-TabGlider.BackgroundTransparency = 0.88
+TabGlider.BackgroundTransparency = 0.84
+TabGlider.BorderSizePixel = 0
 TabGlider.ZIndex = 12
-TabGlider.Parent = TabHolder
-Instance.new("UICorner", TabGlider).CornerRadius = UDim.new(0, 5)
+TabGlider.Parent = Sidebar
+Instance.new("UICorner", TabGlider).CornerRadius = UDim.new(0, 6)
 
 local GliderLine = Instance.new("Frame")
-GliderLine.Size = UDim2.new(0, 3, 1, 0)
-GliderLine.BackgroundColor3 = C.accent
+GliderLine.Size = UDim2.new(0, 3, 1, -8)
+GliderLine.Position = UDim2.new(0, 0, 0, 4)
+GliderLine.BackgroundColor3 = C.accentLight
 GliderLine.BorderSizePixel = 0
 GliderLine.ZIndex = 13
 GliderLine.Parent = TabGlider
 Instance.new("UICorner", GliderLine).CornerRadius = UDim.new(1, 0)
 
 ---------------------------------------------------------
--- ЗАГЛУШКА "В РАЗРАБОТКЕ" (одинаковая для всех вкладок)
+-- PLACEHOLDER CONTENT
 ---------------------------------------------------------
 local function BuildPlaceholder(parent)
     local Wrap = Instance.new("Frame")
@@ -315,10 +397,10 @@ local function BuildPlaceholder(parent)
     Content.Parent = Wrap
 
     local CL = Instance.new("UIListLayout")
-    CL.Parent = Content
     CL.SortOrder = Enum.SortOrder.LayoutOrder
     CL.HorizontalAlignment = Enum.HorizontalAlignment.Center
     CL.Padding = UDim.new(0, 6)
+    CL.Parent = Content
 
     local Icon = Instance.new("TextLabel")
     Icon.Size = UDim2.new(1, 0, 0, 40)
@@ -364,55 +446,45 @@ local function BuildPlaceholder(parent)
 end
 
 ---------------------------------------------------------
--- ГЕНЕРАЦИЯ ВКЛАДОК
+-- TAB GENERATION
 ---------------------------------------------------------
 local tabDefs = {
-    {name = "Home",        title = "Главная",          icon = "🏠"},
-    {name = "Combat",      title = "Сражение",         icon = "⚔️"},
-    {name = "ESP",         title = "ЕСП/ВХ",           icon = "👁️"},
-    {name = "Fun",         title = "Фан и Троллинг",   icon = "🎭"},
-    {name = "Boombox",     title = "Музыка",           icon = "🎵"},
-    {name = "Nexus",       title = "Nexus",            icon = "💎"},
-    {name = "Settings",    title = "Настройки",        icon = "⚙️"},
-    {name = "Info",        title = "Информация",       icon = "📝"},
+    {name = "Home", title = "Главная", icon = "🏠"},
+    {name = "Combat", title = "Сражение", icon = "⚔️"},
+    {name = "ESP", title = "ЕСП/ВХ", icon = "👁️"},
+    {name = "Fun", title = "Фан и Троллинг", icon = "🎭"},
+    {name = "Boombox", title = "Музыка", icon = "🎵"},
+    {name = "Nexus", title = "Nexus", icon = "💎"},
+    {name = "Settings", title = "Настройки", icon = "⚙️"},
+    {name = "Info", title = "Информация", icon = "📝"},
 }
 
 local CX, CY = SIDEBAR_W + 1, TOPBAR_H
 local CW, CH = HUB_W - SIDEBAR_W - 1, HUB_H - TOPBAR_H
+local tabPages, tabButtons, currentTab = {}, {}, nil
 
-local tabPages = {}   -- [name] = Frame
-local tabButtons = {} -- [name] = TextButton
-local currentTab = nil
-
--- Центральная функция переключения вкладок.
--- Гарантированно скрывает ВСЕ страницы и показывает только нужную —
--- это устраняет баг, при котором "невидимая" вкладка оставалась поверх других.
 local function ShowTab(name, index)
     if currentTab == name then return end
 
-    for tabName, page in pairs(tabPages) do
-        page.Visible = (tabName == name)
-    end
-
+    for tabName, page in pairs(tabPages) do page.Visible = (tabName == name) end
     for tabName, btn in pairs(tabButtons) do
         btn.TextColor3 = (tabName == name) and C.accentLight or C.textDim
     end
 
     currentTab = name
-    local def
-    for _, d in ipairs(tabDefs) do if d.name == name then def = d break end end
-    if def then
-        PageTitle.Text = def.icon .. " " .. def.title
+    for _, def in ipairs(tabDefs) do
+        if def.name == name then
+            PageTitle.Text = def.icon .. " " .. def.title
+            break
+        end
     end
 
-    local targetY = 4 + (index - 1) * 28
     TweenService:Create(TabGlider, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0, 0, 0, targetY)
+        Position = UDim2.new(0, 6, 0, 40 + (index - 1) * 33) -- 28px + 5px gap
     }):Play()
 end
 
 for idx, def in ipairs(tabDefs) do
-    -- Страница контента
     local Page = Instance.new("Frame")
     Page.Name = "Page_" .. def.name
     Page.Size = UDim2.new(0, CW, 0, CH)
@@ -422,64 +494,58 @@ for idx, def in ipairs(tabDefs) do
     Page.Visible = false
     Page.ZIndex = 11
     Page.Parent = Hub
-
     BuildPlaceholder(Page)
     tabPages[def.name] = Page
 
-    -- Кнопка вкладки в сайдбаре
     local Btn = Instance.new("TextButton")
-    Btn.Size = UDim2.new(1, 0, 0, 26)
+    Btn.Name = "Tab_" .. def.name
+    Btn.Size = UDim2.new(1, 0, 0, 28)
     Btn.BackgroundTransparency = 1
-    Btn.Text = def.icon .. " " .. def.title
+    Btn.Text = def.icon .. "  " .. def.title
     Btn.TextColor3 = C.textDim
     Btn.TextSize = 10
     Btn.Font = Enum.Font.GothamBold
+    Btn.TextXAlignment = Enum.TextXAlignment.Left
     Btn.AutoButtonColor = false
     Btn.ZIndex = 14
-    Btn.Parent = TabHolder
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 5)
+    Btn.Parent = TabList
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
     tabButtons[def.name] = Btn
 
     Btn.MouseButton1Click:Connect(function()
-        -- Небольшая анимация нажатия
-        TweenService:Create(Btn, TweenInfo.new(0.06, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0.92, 0, 0, 24)
-        }):Play()
+        TweenService:Create(Btn, TweenInfo.new(0.06, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0.92, 0, 0, 26)}):Play()
         task.delay(0.06, function()
-            TweenService:Create(Btn, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                Size = UDim2.new(1, 0, 0, 26)
-            }):Play()
+            if Btn.Parent then
+                TweenService:Create(Btn, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 28)}):Play()
+            end
         end)
         ShowTab(def.name, idx)
     end)
 end
 
 ---------------------------------------------------------
--- ОТКРЫТИЕ / ЗАКРЫТИЕ ХАБА
+-- OPEN / CLOSE HUB
 ---------------------------------------------------------
-local hubOpen = false
 local function ToggleHub()
     hubOpen = not hubOpen
+    SetToggleVisual(hubOpen)
+
     if hubOpen then
         Hub.Visible = true
         Hub.Size = UDim2.new(0, HUB_W, 0, 0)
-        TweenService:Create(Hub, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0, HUB_W, 0, HUB_H)
-        }):Play()
+        TweenService:Create(Hub, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, HUB_W, 0, HUB_H)}):Play()
     else
-        local tw = TweenService:Create(Hub, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-            Size = UDim2.new(0, HUB_W, 0, 0)
-        })
+        local tw = TweenService:Create(Hub, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(0, HUB_W, 0, 0)})
         tw:Play()
         tw.Completed:Connect(function()
-            Hub.Visible = false
-            Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
+            if not hubOpen then
+                Hub.Visible = false
+                Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
+            end
         end)
     end
 end
 
 ToggleBtn.MouseButton1Click:Connect(ToggleHub)
 ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
-
--- Открываем вкладку "Главная" по умолчанию (без анимации нажатия)
 ShowTab("Home", 1)
