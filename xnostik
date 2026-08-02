@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════
---  Compact Sidebar UI | Roblox Lua (Improved)
+--  Compact Sidebar UI | Roblox Lua (v3 — Compact + Loading Screen)
 -- ═══════════════════════════════════════════════
 
 local Players = game:GetService("Players")
@@ -26,11 +26,11 @@ local CONFIG = {
 		Danger = Color3.fromRGB(239, 68, 68),
 		Warning = Color3.fromRGB(234, 179, 8),
 	},
-	SidebarWidth = 200,
-	TabHeight = 44,
+	SidebarWidth = 150,
+	TabHeight = 36,
 	CornerRadius = 10,
 	AnimDuration = 0.25,
-	WindowSize = Vector2.new(700, 450),
+	WindowSize = Vector2.new(560, 380), -- smaller window
 }
 
 -- ─── Helpers ──────────────────────────────────
@@ -54,11 +54,11 @@ local function stroke(color, thickness, parent)
 	})
 end
 
-local function tween(obj, props, duration)
-	return TweenService:Create(obj, TweenInfo.new(duration or CONFIG.AnimDuration, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), props)
+local function tween(obj, props, duration, style)
+	return TweenService:Create(obj, TweenInfo.new(duration or CONFIG.AnimDuration, style or Enum.EasingStyle.Quart, Enum.EasingDirection.Out), props)
 end
 
--- ─── Main UI ──────────────────────────────────
+-- ─── Root ScreenGui ────────────────────────────
 local screenGui = create("ScreenGui", {
 	Name = "SidebarUI",
 	ResetOnSpawn = false,
@@ -67,8 +67,131 @@ local screenGui = create("ScreenGui", {
 	Parent = playerGui,
 })
 
--- FIX: старая непрозрачная подложка (Backdrop) затемняла ВЕСЬ экран игры.
--- Теперь это просто невидимый "ловец кликов" для закрытия меню кликом мимо.
+-- ═══════════════════════════════════════════════
+--  LOADING SCREEN
+-- ═══════════════════════════════════════════════
+local loadingScreen = create("Frame", {
+	Name = "LoadingScreen",
+	Size = UDim2.new(1, 0, 1, 0),
+	BackgroundColor3 = CONFIG.Theme.Background,
+	BorderSizePixel = 0,
+	ZIndex = 50,
+	Parent = screenGui,
+})
+
+-- Subtle center glow
+local glow = create("ImageLabel", {
+	Size = UDim2.new(0, 500, 0, 500),
+	Position = UDim2.new(0.5, 0, 0.5, 0),
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	BackgroundTransparency = 1,
+	Image = "rbxassetid://5028857084",
+	ImageColor3 = CONFIG.Theme.Accent,
+	ImageTransparency = 0.88,
+	ZIndex = 50,
+	Parent = loadingScreen,
+})
+
+-- Logo ring (rotating)
+local ring = create("Frame", {
+	Name = "Ring",
+	Size = UDim2.new(0, 64, 0, 64),
+	Position = UDim2.new(0.5, 0, 0.5, -40),
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	BackgroundTransparency = 1,
+	ZIndex = 51,
+	Parent = loadingScreen,
+})
+
+local ringStroke = create("UIStroke", {
+	Color = CONFIG.Theme.Accent,
+	Thickness = 3,
+	Parent = ring,
+})
+corner(32, ring)
+
+local ringGradient = create("UIGradient", {
+	Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, CONFIG.Theme.Accent),
+		ColorSequenceKeypoint.new(0.5, CONFIG.Theme.Background),
+		ColorSequenceKeypoint.new(1, CONFIG.Theme.Accent),
+	}),
+	Rotation = 0,
+	Parent = ringStroke,
+})
+
+-- Spin the ring gradient forever
+task.spawn(function()
+	while ring.Parent do
+		local t = tween(ringGradient, { Rotation = 360 }, 1.2, Enum.EasingStyle.Linear)
+		t:Play()
+		t.Completed:Wait()
+		ringGradient.Rotation = 0
+	end
+end)
+
+-- Title text
+local loadTitle = create("TextLabel", {
+	Size = UDim2.new(0, 300, 0, 30),
+	Position = UDim2.new(0.5, 0, 0.5, 20),
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	BackgroundTransparency = 1,
+	Text = "DASHBOARD",
+	TextColor3 = CONFIG.Theme.TextPrimary,
+	Font = Enum.Font.GothamBold,
+	TextSize = 20,
+	ZIndex = 51,
+	Parent = loadingScreen,
+})
+
+-- Loading label (animated dots)
+local loadLabel = create("TextLabel", {
+	Size = UDim2.new(0, 300, 0, 18),
+	Position = UDim2.new(0.5, 0, 0.5, 48),
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	BackgroundTransparency = 1,
+	Text = "Loading",
+	TextColor3 = CONFIG.Theme.TextMuted,
+	Font = Enum.Font.Gotham,
+	TextSize = 13,
+	ZIndex = 51,
+	Parent = loadingScreen,
+})
+
+task.spawn(function()
+	local dotStates = { "Loading", "Loading.", "Loading..", "Loading..." }
+	local i = 1
+	while loadLabel.Parent do
+		loadLabel.Text = dotStates[i]
+		i = (i % #dotStates) + 1
+		task.wait(0.35)
+	end
+end)
+
+-- Progress bar
+local barTrack = create("Frame", {
+	Size = UDim2.new(0, 220, 0, 4),
+	Position = UDim2.new(0.5, 0, 0.5, 78),
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	BackgroundColor3 = CONFIG.Theme.Border,
+	BorderSizePixel = 0,
+	ZIndex = 51,
+	Parent = loadingScreen,
+})
+corner(2, barTrack)
+
+local barFill = create("Frame", {
+	Size = UDim2.new(0, 0, 1, 0),
+	BackgroundColor3 = CONFIG.Theme.Accent,
+	BorderSizePixel = 0,
+	ZIndex = 52,
+	Parent = barTrack,
+})
+corner(2, barFill)
+
+-- ═══════════════════════════════════════════════
+--  MAIN UI (hidden until loading finishes)
+-- ═══════════════════════════════════════════════
 local backdrop = create("TextButton", {
 	Name = "Backdrop",
 	Size = UDim2.new(1, 0, 1, 0),
@@ -79,22 +202,20 @@ local backdrop = create("TextButton", {
 	Parent = screenGui,
 })
 
--- Main Container
 local main = create("Frame", {
 	Name = "Main",
 	Size = UDim2.new(0, CONFIG.WindowSize.X, 0, CONFIG.WindowSize.Y),
 	Position = UDim2.new(0.5, -CONFIG.WindowSize.X / 2, 0.5, -CONFIG.WindowSize.Y / 2),
 	BackgroundColor3 = CONFIG.Theme.Background,
-	BackgroundTransparency = 0,
 	BorderSizePixel = 0,
 	ClipsDescendants = false,
 	ZIndex = 1,
+	Visible = false,
 	Parent = screenGui,
 })
 corner(16, main)
 stroke(CONFIG.Theme.Border, 1, main)
 
--- Shadow
 local shadow = create("ImageLabel", {
 	Name = "Shadow",
 	Size = UDim2.new(1, 60, 1, 60),
@@ -109,34 +230,25 @@ local shadow = create("ImageLabel", {
 	Parent = main,
 })
 
--- ─── Drag Handle (перетаскивание за верх окна) ─
+-- Drag handle
 do
 	local dragging, dragStart, startPos = false, nil, nil
-
 	local function updateDrag(input)
 		local delta = input.Position - dragStart
-		main.Position = UDim2.new(
-			startPos.X.Scale, startPos.X.Offset + delta.X,
-			startPos.Y.Scale, startPos.Y.Offset + delta.Y
-		)
+		main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 	end
-
 	main.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			local relY = input.Position.Y - main.AbsolutePosition.Y
-			if relY <= 20 then
+			if (input.Position.Y - main.AbsolutePosition.Y) <= 20 then
 				dragging = true
 				dragStart = input.Position
 				startPos = main.Position
 				input.Changed:Connect(function()
-					if input.UserInputState == Enum.UserInputState.End then
-						dragging = false
-					end
+					if input.UserInputState == Enum.UserInputState.End then dragging = false end
 				end)
 			end
 		end
 	end)
-
 	UserInputService.InputChanged:Connect(function(input)
 		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
 			updateDrag(input)
@@ -144,23 +256,22 @@ do
 	end)
 end
 
--- ─── Close Button ─────────────────────────────
+-- Close button
 local closeBtn = create("TextButton", {
 	Name = "CloseButton",
-	Size = UDim2.new(0, 28, 0, 28),
-	Position = UDim2.new(1, -40, 0, 12),
+	Size = UDim2.new(0, 24, 0, 24),
+	Position = UDim2.new(1, -34, 0, 10),
 	BackgroundColor3 = CONFIG.Theme.Card,
 	BorderSizePixel = 0,
-	Text = "✕",
+	Text = "×",
 	TextColor3 = CONFIG.Theme.TextSecondary,
 	Font = Enum.Font.GothamBold,
-	TextSize = 14,
+	TextSize = 16,
 	AutoButtonColor = false,
 	ZIndex = 5,
 	Parent = main,
 })
-corner(8, closeBtn)
-
+corner(7, closeBtn)
 closeBtn.MouseEnter:Connect(function()
 	tween(closeBtn, { BackgroundColor3 = CONFIG.Theme.Danger }, 0.15):Play()
 	closeBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -170,7 +281,7 @@ closeBtn.MouseLeave:Connect(function()
 	closeBtn.TextColor3 = CONFIG.Theme.TextSecondary
 end)
 
--- ─── Sidebar ──────────────────────────────────
+-- Sidebar
 local sidebar = create("Frame", {
 	Name = "Sidebar",
 	Size = UDim2.new(0, CONFIG.SidebarWidth, 1, 0),
@@ -179,46 +290,44 @@ local sidebar = create("Frame", {
 	Parent = main,
 })
 corner(16, sidebar)
-
 create("Frame", {
 	Size = UDim2.new(0, 16, 1, 0),
 	Position = UDim2.new(1, -16, 0, 0),
 	BackgroundColor3 = CONFIG.Theme.Sidebar,
 	BorderSizePixel = 0,
-	ZIndex = sidebar.ZIndex,
 	Parent = sidebar,
 })
 
-local title = create("TextLabel", {
+create("TextLabel", {
 	Name = "Title",
-	Size = UDim2.new(1, -24, 0, 28),
-	Position = UDim2.new(0, 16, 0, 20),
+	Size = UDim2.new(1, -20, 0, 24),
+	Position = UDim2.new(0, 14, 0, 14),
 	BackgroundTransparency = 1,
 	Text = "Dashboard",
 	TextColor3 = CONFIG.Theme.TextPrimary,
 	Font = Enum.Font.GothamBold,
-	TextSize = 20,
+	TextSize = 16,
 	TextXAlignment = Enum.TextXAlignment.Left,
 	Parent = sidebar,
 })
 
 create("TextLabel", {
 	Name = "Subtitle",
-	Size = UDim2.new(1, -24, 0, 18),
-	Position = UDim2.new(0, 16, 0, 48),
+	Size = UDim2.new(1, -20, 0, 14),
+	Position = UDim2.new(0, 14, 0, 38),
 	BackgroundTransparency = 1,
-	Text = "v2.5.0",
+	Text = "v3.0.0",
 	TextColor3 = CONFIG.Theme.TextMuted,
 	Font = Enum.Font.Gotham,
-	TextSize = 12,
+	TextSize = 11,
 	TextXAlignment = Enum.TextXAlignment.Left,
 	Parent = sidebar,
 })
 
 create("Frame", {
 	Name = "Divider",
-	Size = UDim2.new(1, -32, 0, 1),
-	Position = UDim2.new(0, 16, 0, 78),
+	Size = UDim2.new(1, -28, 0, 1),
+	Position = UDim2.new(0, 14, 0, 62),
 	BackgroundColor3 = CONFIG.Theme.Border,
 	BorderSizePixel = 0,
 	Parent = sidebar,
@@ -226,345 +335,148 @@ create("Frame", {
 
 local tabList = create("Frame", {
 	Name = "TabList",
-	Size = UDim2.new(1, -16, 1, -100),
-	Position = UDim2.new(0, 8, 0, 90),
+	Size = UDim2.new(1, -14, 1, -78),
+	Position = UDim2.new(0, 7, 0, 70),
 	BackgroundTransparency = 1,
 	Parent = sidebar,
 })
+create("UIListLayout", { Padding = UDim.new(0, 3), Parent = tabList })
 
-local tabLayout = create("UIListLayout", {
-	Padding = UDim.new(0, 4),
-	Parent = tabList,
-})
-
--- ─── Content Area ─────────────────────────────
+-- Content area
 local content = create("Frame", {
 	Name = "Content",
-	Size = UDim2.new(1, -CONFIG.SidebarWidth - 8, 1, -16),
-	Position = UDim2.new(0, CONFIG.SidebarWidth + 8, 0, 8),
+	Size = UDim2.new(1, -CONFIG.SidebarWidth - 8, 1, -14),
+	Position = UDim2.new(0, CONFIG.SidebarWidth + 8, 0, 7),
 	BackgroundTransparency = 1,
 	Parent = main,
 })
 
--- ─── Tab Data ─────────────────────────────────
+-- ─── Small helper for a section header ─────────
+local function sectionHeader(parent, text)
+	return create("TextLabel", {
+		Size = UDim2.new(1, 0, 0, 28),
+		BackgroundTransparency = 1,
+		Text = text,
+		TextColor3 = CONFIG.Theme.TextPrimary,
+		Font = Enum.Font.GothamBold,
+		TextSize = 18,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Parent = parent,
+	})
+end
+
+-- ─── Tab Data (6 tabs, symbol icons — no emoji) ─
 local tabs = {}
 local activeTab = nil
 
 local tabData = {
 	{
-		id = "home",
-		label = "Home",
-		icon = "🏠",
+		id = "home", label = "Home", icon = "●",
 		content = function(parent)
-			local header = create("TextLabel", {
-				Size = UDim2.new(1, 0, 0, 36),
-				BackgroundTransparency = 1,
-				Text = "Welcome back!",
-				TextColor3 = CONFIG.Theme.TextPrimary,
-				Font = Enum.Font.GothamBold,
-				TextSize = 24,
-				TextXAlignment = Enum.TextXAlignment.Left,
-				Parent = parent,
-			})
-
-			local stats = create("Frame", {
-				Size = UDim2.new(1, 0, 0, 90),
-				Position = UDim2.new(0, 0, 0, 48),
-				BackgroundTransparency = 1,
-				Parent = parent,
-			})
-
-			local statLayout = create("UIListLayout", {
-				FillDirection = Enum.FillDirection.Horizontal,
-				Padding = UDim.new(0, 12),
-				Parent = stats,
-			})
-
+			sectionHeader(parent, "Welcome back!")
+			local stats = create("Frame", { Size = UDim2.new(1, 0, 0, 70), Position = UDim2.new(0, 0, 0, 36), BackgroundTransparency = 1, Parent = parent })
+			create("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), Parent = stats })
 			local statDefs = {
-				{ label = "Players", value = tostring(#Players:GetPlayers()), color = CONFIG.Theme.Accent },
-				{ label = "FPS", value = "60", color = CONFIG.Theme.Success },
-				{ label = "Ping", value = "24ms", color = CONFIG.Theme.Warning },
+				{ "Players", tostring(#Players:GetPlayers()), CONFIG.Theme.Accent },
+				{ "FPS", "60", CONFIG.Theme.Success },
+				{ "Ping", "24ms", CONFIG.Theme.Warning },
 			}
-
 			for _, s in ipairs(statDefs) do
-				local card = create("Frame", {
-					Size = UDim2.new(0, 140, 1, 0),
-					BackgroundColor3 = CONFIG.Theme.Card,
-					BorderSizePixel = 0,
-					Parent = stats,
-				})
-				corner(12, card)
-
-				create("TextLabel", {
-					Size = UDim2.new(1, -16, 0, 22),
-					Position = UDim2.new(0, 12, 0, 10),
-					BackgroundTransparency = 1,
-					Text = s.value,
-					TextColor3 = s.color,
-					Font = Enum.Font.GothamBold,
-					TextSize = 22,
-					TextXAlignment = Enum.TextXAlignment.Left,
-					Parent = card,
-				})
-
-				create("TextLabel", {
-					Size = UDim2.new(1, -16, 0, 16),
-					Position = UDim2.new(0, 12, 0, 36),
-					BackgroundTransparency = 1,
-					Text = s.label,
-					TextColor3 = CONFIG.Theme.TextSecondary,
-					Font = Enum.Font.Gotham,
-					TextSize = 13,
-					TextXAlignment = Enum.TextXAlignment.Left,
-					Parent = card,
-				})
-			end
-
-			local activityHeader = create("TextLabel", {
-				Size = UDim2.new(1, 0, 0, 22),
-				Position = UDim2.new(0, 0, 0, 155),
-				BackgroundTransparency = 1,
-				Text = "Recent activity",
-				TextColor3 = CONFIG.Theme.TextPrimary,
-				Font = Enum.Font.GothamBold,
-				TextSize = 16,
-				TextXAlignment = Enum.TextXAlignment.Left,
-				Parent = parent,
-			})
-
-			local activityList = create("Frame", {
-				Size = UDim2.new(1, 0, 1, -185),
-				Position = UDim2.new(0, 0, 0, 185),
-				BackgroundTransparency = 1,
-				Parent = parent,
-			})
-
-			local listLayout = create("UIListLayout", {
-				Padding = UDim.new(0, 8),
-				Parent = activityList,
-			})
-
-			local activities = {
-				{ "🎮", "Joined server", "2 min ago", CONFIG.Theme.TextSecondary },
-				{ "💬", "New message", "15 min ago", CONFIG.Theme.TextSecondary },
-				{ "⚙️", "Settings updated", "1 hr ago", CONFIG.Theme.TextMuted },
-			}
-
-			for _, a in ipairs(activities) do
-				local row = create("Frame", {
-					Size = UDim2.new(1, 0, 0, 44),
-					BackgroundColor3 = CONFIG.Theme.Card,
-					BorderSizePixel = 0,
-					Parent = activityList,
-				})
-				corner(10, row)
-
-				create("TextLabel", {
-					Size = UDim2.new(0, 32, 1, 0),
-					Position = UDim2.new(0, 12, 0, 0),
-					BackgroundTransparency = 1,
-					Text = a[1],
-					Font = Enum.Font.Gotham,
-					TextSize = 18,
-					Parent = row,
-				})
-
-				create("TextLabel", {
-					Size = UDim2.new(1, -140, 1, 0),
-					Position = UDim2.new(0, 48, 0, 0),
-					BackgroundTransparency = 1,
-					Text = a[2],
-					TextColor3 = CONFIG.Theme.TextPrimary,
-					Font = Enum.Font.Gotham,
-					TextSize = 14,
-					TextXAlignment = Enum.TextXAlignment.Left,
-					Parent = row,
-				})
-
-				create("TextLabel", {
-					Size = UDim2.new(0, 80, 1, 0),
-					Position = UDim2.new(1, -92, 0, 0),
-					BackgroundTransparency = 1,
-					Text = a[3],
-					TextColor3 = a[4],
-					Font = Enum.Font.Gotham,
-					TextSize = 12,
-					TextXAlignment = Enum.TextXAlignment.Right,
-					Parent = row,
-				})
+				local card = create("Frame", { Size = UDim2.new(0, 110, 1, 0), BackgroundColor3 = CONFIG.Theme.Card, BorderSizePixel = 0, Parent = stats })
+				corner(10, card)
+				create("TextLabel", { Size = UDim2.new(1, -10, 0, 20), Position = UDim2.new(0, 10, 0, 8), BackgroundTransparency = 1, Text = s[2], TextColor3 = s[3], Font = Enum.Font.GothamBold, TextSize = 18, TextXAlignment = Enum.TextXAlignment.Left, Parent = card })
+				create("TextLabel", { Size = UDim2.new(1, -10, 0, 14), Position = UDim2.new(0, 10, 0, 30), BackgroundTransparency = 1, Text = s[1], TextColor3 = CONFIG.Theme.TextSecondary, Font = Enum.Font.Gotham, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left, Parent = card })
 			end
 		end,
 	},
 	{
-		id = "players",
-		label = "Players",
-		icon = "👥",
+		id = "players", label = "Players", icon = "◆",
 		content = function(parent)
-			local header = create("TextLabel", {
-				Size = UDim2.new(1, 0, 0, 36),
-				BackgroundTransparency = 1,
-				Text = "Online Players",
-				TextColor3 = CONFIG.Theme.TextPrimary,
-				Font = Enum.Font.GothamBold,
-				TextSize = 24,
-				TextXAlignment = Enum.TextXAlignment.Left,
-				Parent = parent,
-			})
-
-			local scroll = create("ScrollingFrame", {
-				Size = UDim2.new(1, 0, 1, -48),
-				Position = UDim2.new(0, 0, 0, 48),
-				BackgroundTransparency = 1,
-				ScrollBarThickness = 4,
-				ScrollBarImageColor3 = CONFIG.Theme.Border,
-				CanvasSize = UDim2.new(0, 0, 0, 0),
-				AutomaticCanvasSize = Enum.AutomaticSize.Y,
-				Parent = parent,
-			})
-
-			local list = create("UIListLayout", {
-				Padding = UDim.new(0, 8),
-				Parent = scroll,
-			})
-
+			sectionHeader(parent, "Online Players")
+			local scroll = create("ScrollingFrame", { Size = UDim2.new(1, 0, 1, -36), Position = UDim2.new(0, 0, 0, 36), BackgroundTransparency = 1, ScrollBarThickness = 3, AutomaticCanvasSize = Enum.AutomaticSize.Y, CanvasSize = UDim2.new(0,0,0,0), Parent = parent })
+			create("UIListLayout", { Padding = UDim.new(0, 6), Parent = scroll })
 			for _, plr in ipairs(Players:GetPlayers()) do
-				local row = create("Frame", {
-					Size = UDim2.new(1, -8, 0, 52),
-					BackgroundColor3 = CONFIG.Theme.Card,
-					BorderSizePixel = 0,
-					Parent = scroll,
-				})
-				corner(10, row)
-
-				local avatar = create("Frame", {
-					Size = UDim2.new(0, 36, 0, 36),
-					Position = UDim2.new(0, 10, 0.5, -18),
-					BackgroundColor3 = CONFIG.Theme.Accent,
-					BorderSizePixel = 0,
-					Parent = row,
-				})
-				corner(18, avatar)
-
-				create("TextLabel", {
-					Size = UDim2.new(0, 36, 0, 36),
-					BackgroundTransparency = 1,
-					Text = plr.Name:sub(1, 1):upper(),
-					TextColor3 = Color3.new(1, 1, 1),
-					Font = Enum.Font.GothamBold,
-					TextSize = 16,
-					Parent = avatar,
-				})
-
-				create("TextLabel", {
-					Size = UDim2.new(1, -160, 1, 0),
-					Position = UDim2.new(0, 56, 0, 0),
-					BackgroundTransparency = 1,
-					Text = plr.Name,
-					TextColor3 = CONFIG.Theme.TextPrimary,
-					Font = Enum.Font.Gotham,
-					TextSize = 15,
-					TextXAlignment = Enum.TextXAlignment.Left,
-					Parent = row,
-				})
-
-				local status = create("Frame", {
-					Size = UDim2.new(0, 8, 0, 8),
-					Position = UDim2.new(1, -22, 0.5, -4),
-					BackgroundColor3 = CONFIG.Theme.Success,
-					BorderSizePixel = 0,
-					Parent = row,
-				})
+				local row = create("Frame", { Size = UDim2.new(1, -6, 0, 42), BackgroundColor3 = CONFIG.Theme.Card, BorderSizePixel = 0, Parent = scroll })
+				corner(9, row)
+				local avatar = create("Frame", { Size = UDim2.new(0, 28, 0, 28), Position = UDim2.new(0, 8, 0.5, -14), BackgroundColor3 = CONFIG.Theme.Accent, BorderSizePixel = 0, Parent = row })
+				corner(14, avatar)
+				create("TextLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = plr.Name:sub(1,1):upper(), TextColor3 = Color3.new(1,1,1), Font = Enum.Font.GothamBold, TextSize = 13, Parent = avatar })
+				create("TextLabel", { Size = UDim2.new(1, -100, 1, 0), Position = UDim2.new(0, 44, 0, 0), BackgroundTransparency = 1, Text = plr.Name, TextColor3 = CONFIG.Theme.TextPrimary, Font = Enum.Font.Gotham, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, Parent = row })
+				local status = create("Frame", { Size = UDim2.new(0, 7, 0, 7), Position = UDim2.new(1, -18, 0.5, -3), BackgroundColor3 = CONFIG.Theme.Success, BorderSizePixel = 0, Parent = row })
 				corner(4, status)
 			end
 		end,
 	},
 	{
-		id = "settings",
-		label = "Settings",
-		icon = "⚙️",
+		id = "stats", label = "Stats", icon = "▲",
 		content = function(parent)
-			local header = create("TextLabel", {
-				Size = UDim2.new(1, 0, 0, 36),
-				BackgroundTransparency = 1,
-				Text = "Settings",
-				TextColor3 = CONFIG.Theme.TextPrimary,
-				Font = Enum.Font.GothamBold,
-				TextSize = 24,
-				TextXAlignment = Enum.TextXAlignment.Left,
-				Parent = parent,
-			})
-
-			local scroll = create("ScrollingFrame", {
-				Size = UDim2.new(1, 0, 1, -48),
-				Position = UDim2.new(0, 0, 0, 48),
-				BackgroundTransparency = 1,
-				ScrollBarThickness = 4,
-				ScrollBarImageColor3 = CONFIG.Theme.Border,
-				AutomaticCanvasSize = Enum.AutomaticSize.Y,
-				Parent = parent,
-			})
-
-			local list = create("UIListLayout", {
-				Padding = UDim.new(0, 12),
-				Parent = scroll,
-			})
-
-			local settings = {
-				{ "Notifications", true },
-				{ "Auto-save", true },
-				{ "Dark mode", true },
-				{ "Show FPS", false },
-				{ "Compact view", false },
-			}
-
+			sectionHeader(parent, "Statistics")
+			local rows = { { "Playtime", "4h 12m" }, { "Wins", "18" }, { "Losses", "6" }, { "Rank", "Gold II" } }
+			local list = create("Frame", { Size = UDim2.new(1, 0, 1, -36), Position = UDim2.new(0, 0, 0, 36), BackgroundTransparency = 1, Parent = parent })
+			create("UIListLayout", { Padding = UDim.new(0, 6), Parent = list })
+			for _, r in ipairs(rows) do
+				local row = create("Frame", { Size = UDim2.new(1, 0, 0, 34), BackgroundColor3 = CONFIG.Theme.Card, BorderSizePixel = 0, Parent = list })
+				corner(8, row)
+				create("TextLabel", { Size = UDim2.new(0.6, 0, 1, 0), Position = UDim2.new(0, 12, 0, 0), BackgroundTransparency = 1, Text = r[1], TextColor3 = CONFIG.Theme.TextSecondary, Font = Enum.Font.Gotham, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, Parent = row })
+				create("TextLabel", { Size = UDim2.new(0.4, -12, 1, 0), Position = UDim2.new(0.6, 0, 0, 0), BackgroundTransparency = 1, Text = r[2], TextColor3 = CONFIG.Theme.TextPrimary, Font = Enum.Font.GothamBold, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Right, Parent = row })
+			end
+		end,
+	},
+	{
+		id = "inventory", label = "Inventory", icon = "■",
+		content = function(parent)
+			sectionHeader(parent, "Inventory")
+			local grid = create("Frame", { Size = UDim2.new(1, 0, 1, -36), Position = UDim2.new(0, 0, 0, 36), BackgroundTransparency = 1, Parent = parent })
+			create("UIGridLayout", { CellSize = UDim2.new(0, 56, 0, 56), CellPadding = UDim2.new(0, 6, 0, 6), Parent = grid })
+			for i = 1, 8 do
+				local slot = create("Frame", { BackgroundColor3 = CONFIG.Theme.Card, BorderSizePixel = 0, Parent = grid })
+				corner(8, slot)
+				stroke(CONFIG.Theme.Border, 1, slot)
+			end
+		end,
+	},
+	{
+		id = "settings", label = "Settings", icon = "◈",
+		content = function(parent)
+			sectionHeader(parent, "Settings")
+			local scroll = create("ScrollingFrame", { Size = UDim2.new(1, 0, 1, -36), Position = UDim2.new(0, 0, 0, 36), BackgroundTransparency = 1, ScrollBarThickness = 3, AutomaticCanvasSize = Enum.AutomaticSize.Y, Parent = parent })
+			create("UIListLayout", { Padding = UDim.new(0, 8), Parent = scroll })
+			local settings = { { "Notifications", true }, { "Auto-save", true }, { "Dark mode", true }, { "Show FPS", false } }
 			for _, s in ipairs(settings) do
-				local row = create("Frame", {
-					Size = UDim2.new(1, -8, 0, 50),
-					BackgroundColor3 = CONFIG.Theme.Card,
-					BorderSizePixel = 0,
-					Parent = scroll,
-				})
-				corner(10, row)
-
-				create("TextLabel", {
-					Size = UDim2.new(1, -80, 1, 0),
-					Position = UDim2.new(0, 16, 0, 0),
-					BackgroundTransparency = 1,
-					Text = s[1],
-					TextColor3 = CONFIG.Theme.TextPrimary,
-					Font = Enum.Font.Gotham,
-					TextSize = 15,
-					TextXAlignment = Enum.TextXAlignment.Left,
-					Parent = row,
-				})
-
-				local toggle = create("Frame", {
-					Size = UDim2.new(0, 44, 0, 24),
-					Position = UDim2.new(1, -60, 0.5, -12),
-					BackgroundColor3 = s[2] and CONFIG.Theme.Accent or CONFIG.Theme.Border,
-					BorderSizePixel = 0,
-					Parent = row,
-				})
-				corner(12, toggle)
-
-				local knob = create("Frame", {
-					Size = UDim2.new(0, 20, 0, 20),
-					Position = s[2] and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10),
-					BackgroundColor3 = Color3.new(1, 1, 1),
-					BorderSizePixel = 0,
-					Parent = toggle,
-				})
-				corner(10, knob)
-
+				local row = create("Frame", { Size = UDim2.new(1, -6, 0, 40), BackgroundColor3 = CONFIG.Theme.Card, BorderSizePixel = 0, Parent = scroll })
+				corner(9, row)
+				create("TextLabel", { Size = UDim2.new(1, -70, 1, 0), Position = UDim2.new(0, 12, 0, 0), BackgroundTransparency = 1, Text = s[1], TextColor3 = CONFIG.Theme.TextPrimary, Font = Enum.Font.Gotham, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, Parent = row })
+				local toggle = create("Frame", { Size = UDim2.new(0, 38, 0, 20), Position = UDim2.new(1, -50, 0.5, -10), BackgroundColor3 = s[2] and CONFIG.Theme.Accent or CONFIG.Theme.Border, BorderSizePixel = 0, Parent = row })
+				corner(10, toggle)
+				local knob = create("Frame", { Size = UDim2.new(0, 16, 0, 16), Position = s[2] and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8), BackgroundColor3 = Color3.new(1,1,1), BorderSizePixel = 0, Parent = toggle })
+				corner(8, knob)
 				local enabled = s[2]
 				toggle.InputBegan:Connect(function(input)
 					if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 						enabled = not enabled
 						tween(toggle, { BackgroundColor3 = enabled and CONFIG.Theme.Accent or CONFIG.Theme.Border }, 0.2):Play()
-						tween(knob, { Position = enabled and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10) }, 0.2):Play()
+						tween(knob, { Position = enabled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8) }, 0.2):Play()
 					end
 				end)
 			end
+		end,
+	},
+	{
+		id = "about", label = "About", icon = "○",
+		content = function(parent)
+			sectionHeader(parent, "About")
+			create("TextLabel", {
+				Size = UDim2.new(1, 0, 0, 60),
+				Position = UDim2.new(0, 0, 0, 40),
+				BackgroundTransparency = 1,
+				Text = "Compact Sidebar UI\nVersion 3.0.0",
+				TextColor3 = CONFIG.Theme.TextSecondary,
+				Font = Enum.Font.Gotham,
+				TextSize = 13,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextYAlignment = Enum.TextYAlignment.Top,
+				Parent = parent,
+			})
 		end,
 	},
 }
@@ -573,7 +485,7 @@ local tabData = {
 for _, data in ipairs(tabData) do
 	local tabBtn = create("TextButton", {
 		Name = "Tab_" .. data.id,
-		Size = UDim2.new(1, -8, 0, CONFIG.TabHeight),
+		Size = UDim2.new(1, -6, 0, CONFIG.TabHeight),
 		BackgroundColor3 = CONFIG.Theme.Sidebar,
 		BorderSizePixel = 0,
 		Text = "",
@@ -583,7 +495,6 @@ for _, data in ipairs(tabData) do
 	corner(8, tabBtn)
 
 	local indicator = create("Frame", {
-		Name = "Indicator",
 		Size = UDim2.new(0, 3, 0, 0),
 		Position = UDim2.new(0, 0, 0.5, 0),
 		AnchorPoint = Vector2.new(0, 0.5),
@@ -593,43 +504,38 @@ for _, data in ipairs(tabData) do
 	})
 	corner(2, indicator)
 
-	local icon = create("TextLabel", {
-		Size = UDim2.new(0, 28, 0, 28),
-		Position = UDim2.new(0, 12, 0.5, -14),
+	create("TextLabel", {
+		Size = UDim2.new(0, 22, 1, 0),
+		Position = UDim2.new(0, 10, 0, 0),
 		BackgroundTransparency = 1,
 		Text = data.icon,
-		Font = Enum.Font.Gotham,
-		TextSize = 18,
+		TextColor3 = CONFIG.Theme.TextSecondary,
+		Font = Enum.Font.GothamBold,
+		TextSize = 14,
 		Parent = tabBtn,
 	})
 
 	local label = create("TextLabel", {
-		Size = UDim2.new(1, -56, 1, 0),
-		Position = UDim2.new(0, 44, 0, 0),
+		Size = UDim2.new(1, -42, 1, 0),
+		Position = UDim2.new(0, 34, 0, 0),
 		BackgroundTransparency = 1,
 		Text = data.label,
 		TextColor3 = CONFIG.Theme.TextSecondary,
 		Font = Enum.Font.Gotham,
-		TextSize = 14,
+		TextSize = 13,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = tabBtn,
 	})
 
 	tabBtn.MouseEnter:Connect(function()
-		if activeTab ~= data.id then
-			tween(tabBtn, { BackgroundColor3 = CONFIG.Theme.CardHover }, 0.15):Play()
-		end
+		if activeTab ~= data.id then tween(tabBtn, { BackgroundColor3 = CONFIG.Theme.CardHover }, 0.15):Play() end
 	end)
-
 	tabBtn.MouseLeave:Connect(function()
-		if activeTab ~= data.id then
-			tween(tabBtn, { BackgroundColor3 = CONFIG.Theme.Sidebar }, 0.15):Play()
-		end
+		if activeTab ~= data.id then tween(tabBtn, { BackgroundColor3 = CONFIG.Theme.Sidebar }, 0.15):Play() end
 	end)
 
 	tabBtn.MouseButton1Click:Connect(function()
 		if activeTab == data.id then return end
-
 		for _, t in ipairs(tabs) do
 			if t.id == activeTab then
 				tween(t.btn, { BackgroundColor3 = CONFIG.Theme.Sidebar }, 0.2):Play()
@@ -638,12 +544,10 @@ for _, data in ipairs(tabData) do
 				t.content.Visible = false
 			end
 		end
-
 		activeTab = data.id
 		tween(tabBtn, { BackgroundColor3 = CONFIG.Theme.Card }, 0.2):Play()
-		tween(indicator, { Size = UDim2.new(0, 3, 0, 20) }, 0.2):Play()
+		tween(indicator, { Size = UDim2.new(0, 3, 0, 18) }, 0.2):Play()
 		label.TextColor3 = CONFIG.Theme.TextPrimary
-
 		data.container.Visible = true
 		data.container.BackgroundTransparency = 1
 		tween(data.container, { BackgroundTransparency = 0 }, 0.2):Play()
@@ -656,71 +560,65 @@ for _, data in ipairs(tabData) do
 		Visible = false,
 		Parent = content,
 	})
-
 	data.container = container
 	data.content(container)
 
-	table.insert(tabs, {
-		id = data.id,
-		btn = tabBtn,
-		indicator = indicator,
-		label = label,
-		content = container,
-	})
+	table.insert(tabs, { id = data.id, btn = tabBtn, indicator = indicator, label = label, content = container })
 end
 
--- ─── Activate First Tab ───────────────────────
 if #tabs > 0 then
 	tabs[1].btn.BackgroundColor3 = CONFIG.Theme.Card
-	tabs[1].indicator.Size = UDim2.new(0, 3, 0, 20)
+	tabs[1].indicator.Size = UDim2.new(0, 3, 0, 18)
 	tabs[1].label.TextColor3 = CONFIG.Theme.TextPrimary
 	tabs[1].content.Visible = true
 	activeTab = tabs[1].id
 end
 
--- ─── Show / Hide logic ─────────────────────────
+-- ─── Show / Hide ───────────────────────────────
 local uiVisible = true
-
 local function setVisible(show)
 	uiVisible = show
 	if show then
 		main.Visible = true
 		backdrop.Active = true
-		tween(main, {
-			Size = UDim2.new(0, CONFIG.WindowSize.X, 0, CONFIG.WindowSize.Y),
-			Position = UDim2.new(0.5, -CONFIG.WindowSize.X / 2, 0.5, -CONFIG.WindowSize.Y / 2),
-		}, 0.3):Play()
+		tween(main, { Size = UDim2.new(0, CONFIG.WindowSize.X, 0, CONFIG.WindowSize.Y), Position = UDim2.new(0.5, -CONFIG.WindowSize.X/2, 0.5, -CONFIG.WindowSize.Y/2) }, 0.3):Play()
 	else
 		backdrop.Active = false
-		tween(main, { Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0) }, 0.3):Play()
-		task.delay(0.3, function()
-			if not uiVisible then
-				main.Visible = false
-			end
-		end)
+		tween(main, { Size = UDim2.new(0,0,0,0), Position = UDim2.new(0.5,0,0.5,0) }, 0.3):Play()
+		task.delay(0.3, function() if not uiVisible then main.Visible = false end end)
 	end
 end
-
-closeBtn.MouseButton1Click:Connect(function()
-	setVisible(false)
-end)
-
--- ─── Toggle UI (Right Ctrl) ───────────────────
+closeBtn.MouseButton1Click:Connect(function() setVisible(false) end)
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
-	if input.KeyCode == Enum.KeyCode.RightControl then
-		setVisible(not uiVisible)
-	end
+	if input.KeyCode == Enum.KeyCode.RightControl then setVisible(not uiVisible) end
 end)
 
--- ─── Intro Animation ────────────────────────────
-main.Size = UDim2.new(0, 0, 0, 0)
-main.Position = UDim2.new(0.5, 0, 0.5, 0)
-main.Visible = true
+-- ═══════════════════════════════════════════════
+--  LOADING SEQUENCE → reveal main UI
+-- ═══════════════════════════════════════════════
+task.spawn(function()
+	tween(barFill, { Size = UDim2.new(1, 0, 1, 0) }, 1.6, Enum.EasingStyle.Quad):Play()
+	task.wait(1.8)
 
-tween(main, {
-	Size = UDim2.new(0, CONFIG.WindowSize.X, 0, CONFIG.WindowSize.Y),
-	Position = UDim2.new(0.5, -CONFIG.WindowSize.X / 2, 0.5, -CONFIG.WindowSize.Y / 2),
-}, 0.4):Play()
+	-- fade out loading screen
+	tween(loadingScreen, { BackgroundTransparency = 1 }, 0.4):Play()
+	tween(loadTitle, { TextTransparency = 1 }, 0.3):Play()
+	tween(loadLabel, { TextTransparency = 1 }, 0.3):Play()
+	tween(glow, { ImageTransparency = 1 }, 0.4):Play()
+	tween(ringStroke, { Transparency = 1 }, 0.3):Play()
+	tween(barTrack, { BackgroundTransparency = 1 }, 0.3):Play()
+	tween(barFill, { BackgroundTransparency = 1 }, 0.3):Play()
 
-print("✅ Sidebar UI loaded! Press Right Ctrl or the ✕ button to toggle.")
+	task.wait(0.4)
+	loadingScreen.Visible = false
+	loadingScreen:Destroy()
+
+	-- reveal main window
+	main.Size = UDim2.new(0, 0, 0, 0)
+	main.Position = UDim2.new(0.5, 0, 0.5, 0)
+	main.Visible = true
+	tween(main, { Size = UDim2.new(0, CONFIG.WindowSize.X, 0, CONFIG.WindowSize.Y), Position = UDim2.new(0.5, -CONFIG.WindowSize.X/2, 0.5, -CONFIG.WindowSize.Y/2) }, 0.4):Play()
+end)
+
+print("✅ Sidebar UI v3 loaded! Press Right Ctrl or × to toggle.")
