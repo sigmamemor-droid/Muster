@@ -1,7 +1,6 @@
--- linbergz Team MOBILE HUB v16.0 — SACRACIA UI Edition
--- Sacracia Style Interface with Settings Upgrade (Anti-AFK, Fonts, Languages, Scalers)
--- Loading Screen animation remains untouched by request.
--- UI-only. Native Roblox Luau; no external libraries.
+-- linbergz Team MOBILE HUB v17.0 — SACRACIA UI (FIXED MOBILE TOGGLE)
+-- Loading Screen animation untouched.
+-- Native Roblox Luau; UI-Only.
 
 ---------------------------------------------------------
 -- SERVICES
@@ -29,7 +28,7 @@ ScreenGui.Name = "MM2HubMobile"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
-ScreenGui.DisplayOrder = 100
+ScreenGui.DisplayOrder = 999
 ScreenGui.Parent = player.PlayerGui
 
 ---------------------------------------------------------
@@ -58,7 +57,7 @@ LS.Name = "LoadingScreen"
 LS.Size = UDim2.new(1, 0, 1, 0)
 LS.BackgroundColor3 = C.sidebar
 LS.BorderSizePixel = 0
-LS.ZIndex = 100
+LS.ZIndex = 500
 LS.Parent = ScreenGui
 
 local LogoBox = Instance.new("Frame")
@@ -67,7 +66,7 @@ LogoBox.Size = UDim2.new(0, 300, 0, 150)
 LogoBox.AnchorPoint = Vector2.new(0.5, 0.5)
 LogoBox.Position = UDim2.new(0.5, 0, 0.5, 0)
 LogoBox.BackgroundTransparency = 1
-LogoBox.ZIndex = 101
+LogoBox.ZIndex = 501
 LogoBox.Parent = LS
 
 local LoaderTitle = Instance.new("TextLabel")
@@ -78,7 +77,7 @@ LoaderTitle.Text = "INITIALIZING"
 LoaderTitle.TextColor3 = C.textDim
 LoaderTitle.TextSize = 9
 LoaderTitle.Font = Enum.Font.GothamBold
-LoaderTitle.ZIndex = 102
+LoaderTitle.ZIndex = 502
 LoaderTitle.Parent = LogoBox
 
 local Word = Instance.new("Frame")
@@ -86,7 +85,7 @@ Word.Name = "AnimatedWord"
 Word.Size = UDim2.new(1, 0, 0, 50)
 Word.Position = UDim2.new(0, 0, 0, 31)
 Word.BackgroundTransparency = 1
-Word.ZIndex = 102
+Word.ZIndex = 502
 Word.Parent = LogoBox
 
 local WL = Instance.new("UIListLayout")
@@ -107,7 +106,7 @@ for index, char in utf8.graphemes("LINBERGZ") do
     letter.TextTransparency = 0.32
     letter.TextSize = 34
     letter.Font = Enum.Font.GothamBlack
-    letter.ZIndex = 103
+    letter.ZIndex = 503
     letter.Parent = Word
     table.insert(letters, letter)
 end
@@ -120,7 +119,7 @@ Underline.Position = UDim2.new(0.5, 0, 0, 91)
 Underline.BackgroundColor3 = C.elevated
 Underline.BorderSizePixel = 0
 Underline.ClipsDescendants = true
-Underline.ZIndex = 102
+Underline.ZIndex = 502
 Underline.Parent = LogoBox
 Instance.new("UICorner", Underline).CornerRadius = UDim.new(1, 0)
 
@@ -129,7 +128,7 @@ LineGlow.Size = UDim2.new(0, 36, 1, 0)
 LineGlow.Position = UDim2.new(0, -36, 0, 0)
 LineGlow.BackgroundColor3 = C.white
 LineGlow.BorderSizePixel = 0
-LineGlow.ZIndex = 103
+LineGlow.ZIndex = 503
 LineGlow.Parent = Underline
 Instance.new("UICorner", LineGlow).CornerRadius = UDim.new(1, 0)
 
@@ -141,7 +140,7 @@ Status.Text = "LOADING INTERFACE"
 Status.TextColor3 = C.textSec
 Status.TextSize = 9
 Status.Font = Enum.Font.GothamBold
-Status.ZIndex = 102
+Status.ZIndex = 502
 Status.Parent = LogoBox
 
 task.spawn(function()
@@ -199,7 +198,7 @@ task.spawn(function()
 end)
 
 ---------------------------------------------------------
--- SACRACIA PALETTE & SYSTEM CONFIG
+-- SACRACIA PALETTE & CONFIG
 ---------------------------------------------------------
 local AppC = {
     bg = Color3.fromRGB(22, 22, 26),
@@ -217,7 +216,6 @@ local AppC = {
     red = Color3.fromRGB(245, 66, 66),
 }
 
--- SYSTEM STATE & LOCALIZATION
 local currentLang = "RU"
 local currentFont = Enum.Font.GothamBold
 
@@ -226,14 +224,10 @@ local Translations = {
         Stats = "Статистика", Entities = "Сущности", Visuals = "Визуалы",
         Valuables = "Ценности", Items = "Предметы", Level = "Уровень",
         Miscellaneous = "Разное", Settings = "Настройки",
-        
-        -- Settings Text
         MainSettings = "ОСНОВНЫЕ НАСТРОЙКИ", UIAppearance = "ВНЕШНИЙ ВИД",
         AntiAfk = "Анти-АФК", AntiAfkDesc = "Защита от вылета за неактивность",
         MenuSize = "Размер меню", ScreenStretch = "Растяжение экрана",
         FontSelect = "Шрифт интерфейса", LangSelect = "Язык интерфейса",
-        
-        -- Other UI Text
         Health = "Здоровье", Movement = "Перемещение", Grab = "Захват", Cosmetics = "Косметика",
         Godmode = "Режим бога", InfStamina = "Бесконечная стамина", WalkSpeed = "Скорость ходьбы",
         RunSpeed = "Скорость бега", CrouchSpeed = "Скорость приседания", InfJumps = "Бесконечные прыжки",
@@ -244,14 +238,10 @@ local Translations = {
         Stats = "Stats", Entities = "Entities", Visuals = "Visuals",
         Valuables = "Valuables", Items = "Items", Level = "Level",
         Miscellaneous = "Miscellaneous", Settings = "Settings",
-        
-        -- Settings Text
         MainSettings = "MAIN SETTINGS", UIAppearance = "UI APPEARANCE",
         AntiAfk = "Anti-AFK", AntiAfkDesc = "Prevents idle kick (20 mins)",
         MenuSize = "Menu Size", ScreenStretch = "Screen Stretch",
         FontSelect = "UI Font", LangSelect = "UI Language",
-        
-        -- Other UI Text
         Health = "Health", Movement = "Movement", Grab = "Grab", Cosmetics = "Cosmetics",
         Godmode = "Godmode", InfStamina = "Infinite stamina", WalkSpeed = "Walking speed",
         RunSpeed = "Running speed", CrouchSpeed = "Crouching speed", InfJumps = "Infinite jumps",
@@ -269,26 +259,25 @@ local fontMap = {
 }
 
 ---------------------------------------------------------
--- MOBILE TOGGLE BUTTON
+-- FIXED RELIABLE MOBILE TOGGLE BUTTON
 ---------------------------------------------------------
 local hubOpen = false
-local toggleDrag = nil
 
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "HubToggle"
-ToggleBtn.Size = UDim2.new(0, 130, 0, 34)
-ToggleBtn.Position = UDim2.new(0, 16, 0.32, 0)
+ToggleBtn.Size = UDim2.new(0, 130, 0, 36)
+ToggleBtn.Position = UDim2.new(0, 16, 0.35, 0)
 ToggleBtn.BackgroundColor3 = AppC.sidebar
 ToggleBtn.Text = ""
 ToggleBtn.AutoButtonColor = false
-ToggleBtn.ZIndex = 50
+ToggleBtn.ZIndex = 300
 ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 10)
 
 local ToggleStroke = Instance.new("UIStroke")
 ToggleStroke.Color = AppC.accent
-ToggleStroke.Thickness = 1.2
-ToggleStroke.Transparency = 0.3
+ToggleStroke.Thickness = 1.4
+ToggleStroke.Transparency = 0.2
 ToggleStroke.Parent = ToggleBtn
 
 local ToggleLogo = Instance.new("TextLabel")
@@ -297,9 +286,9 @@ ToggleLogo.Position = UDim2.new(0, 10, 0, 0)
 ToggleLogo.BackgroundTransparency = 1
 ToggleLogo.Text = "◈"
 ToggleLogo.TextColor3 = AppC.accent
-ToggleLogo.TextSize = 13
+ToggleLogo.TextSize = 14
 ToggleLogo.Font = Enum.Font.GothamBold
-ToggleLogo.ZIndex = 52
+ToggleLogo.ZIndex = 301
 ToggleLogo.Parent = ToggleBtn
 
 local ToggleText = Instance.new("TextLabel")
@@ -311,7 +300,7 @@ ToggleText.TextColor3 = AppC.text
 ToggleText.TextSize = 10
 ToggleText.Font = Enum.Font.GothamBold
 ToggleText.TextXAlignment = Enum.TextXAlignment.Left
-ToggleText.ZIndex = 52
+ToggleText.ZIndex = 301
 ToggleText.Parent = ToggleBtn
 
 local function SetToggleVisual(isOpen)
@@ -322,25 +311,8 @@ local function SetToggleVisual(isOpen)
     ToggleLogo.TextColor3 = isOpen and AppC.red or AppC.accent
 end
 
-do
-    ToggleBtn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            toggleDrag = {input = input, start = input.Position, position = ToggleBtn.Position, moved = false}
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if not toggleDrag or (input.UserInputType ~= Enum.UserInputType.MouseMovement and input ~= toggleDrag.input) then return end
-        local delta = input.Position - toggleDrag.start
-        if delta.Magnitude > 7 then toggleDrag.moved = true end
-        local viewport = ScreenGui.AbsoluteSize
-        local x = math.clamp(toggleDrag.position.X.Offset + delta.X, 8, math.max(8, viewport.X - ToggleBtn.AbsoluteSize.X - 8))
-        local y = math.clamp(toggleDrag.position.Y.Offset + delta.Y, 8, math.max(8, viewport.Y - ToggleBtn.AbsoluteSize.Y - 8))
-        ToggleBtn.Position = UDim2.fromOffset(x, y)
-    end)
-end
-
 ---------------------------------------------------------
--- MAIN HUB FRAME (SACRACIA WINDOW)
+-- MAIN HUB WINDOW
 ---------------------------------------------------------
 local BASE_W, BASE_H = 600, 390
 local HUB_W, HUB_H, SIDEBAR_W = BASE_W, BASE_H, 150
@@ -356,7 +328,7 @@ HubShadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 HubShadow.BackgroundTransparency = 0.4
 HubShadow.BorderSizePixel = 0
 HubShadow.Visible = false
-HubShadow.ZIndex = 8
+HubShadow.ZIndex = 90
 HubShadow.Parent = ScreenGui
 Instance.new("UICorner", HubShadow).CornerRadius = UDim.new(0, 12)
 
@@ -368,7 +340,7 @@ Hub.BackgroundColor3 = AppC.bg
 Hub.BorderSizePixel = 0
 Hub.Visible = false
 Hub.ClipsDescendants = true
-Hub.ZIndex = 10
+Hub.ZIndex = 100
 Hub.Parent = ScreenGui
 Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 12)
 
@@ -411,6 +383,75 @@ ScreenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
 end)
 
 ---------------------------------------------------------
+-- OPEN / CLOSE HUB TOGGLE LOGIC
+---------------------------------------------------------
+local function ToggleHub()
+    hubOpen = not hubOpen
+    SetToggleVisual(hubOpen)
+
+    if hubOpen then
+        Hub.Visible = true
+        HubShadow.Visible = true
+        ensureWindowRect()
+        Hub.Size = UDim2.fromOffset(windowSize.X, 0)
+        HubShadow.Size = UDim2.fromOffset(windowSize.X, 0)
+        TweenService:Create(Hub, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(windowSize.X, windowSize.Y)}):Play()
+        TweenService:Create(HubShadow, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(windowSize.X, windowSize.Y)}):Play()
+    else
+        local tw = TweenService:Create(Hub, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.fromOffset(windowSize.X, 0)})
+        tw:Play()
+        TweenService:Create(HubShadow, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.fromOffset(windowSize.X, 0)}):Play()
+        tw.Completed:Connect(function()
+            if not hubOpen then
+                Hub.Visible = false
+                HubShadow.Visible = false
+                Hub.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
+                HubShadow.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
+            end
+        end)
+    end
+end
+
+-- SMART MOBILE TAP & DRAG SYSTEM FOR TOGGLE BUTTON
+do
+    local dragStart, startPos
+    local hasMoved = false
+
+    ToggleBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragStart = input.Position
+            startPos = ToggleBtn.Position
+            hasMoved = false
+
+            local moveConn, releaseConn
+
+            moveConn = UserInputService.InputChanged:Connect(function(moveInput)
+                if moveInput.UserInputType == Enum.UserInputType.MouseMovement or moveInput.UserInputType == Enum.UserInputType.Touch then
+                    local delta = moveInput.Position - dragStart
+                    if delta.Magnitude > 8 then
+                        hasMoved = true
+                        local viewport = getViewport()
+                        local newX = math.clamp(startPos.X.Offset + delta.X, 8, viewport.X - ToggleBtn.AbsoluteSize.X - 8)
+                        local newY = math.clamp(startPos.Y.Offset + delta.Y, 8, viewport.Y - ToggleBtn.AbsoluteSize.Y - 8)
+                        ToggleBtn.Position = UDim2.fromOffset(newX, newY)
+                    end
+                end
+            end)
+
+            releaseConn = UserInputService.InputEnded:Connect(function(endInput)
+                if endInput.UserInputType == Enum.UserInputType.MouseButton1 or endInput.UserInputType == Enum.UserInputType.Touch then
+                    moveConn:Disconnect()
+                    releaseConn:Disconnect()
+                    if not hasMoved then
+                        ToggleHub()
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+---------------------------------------------------------
 -- SACRACIA SIDEBAR
 ---------------------------------------------------------
 local Sidebar = Instance.new("Frame")
@@ -419,7 +460,7 @@ Sidebar.Size = UDim2.new(0, SIDEBAR_W, 1, 0)
 Sidebar.Position = UDim2.new(0, 0, 0, 0)
 Sidebar.BackgroundColor3 = AppC.sidebar
 Sidebar.BorderSizePixel = 0
-Sidebar.ZIndex = 12
+Sidebar.ZIndex = 110
 Sidebar.Parent = Hub
 
 local SideRule = Instance.new("Frame")
@@ -427,13 +468,13 @@ SideRule.Size = UDim2.new(0, 1, 1, 0)
 SideRule.Position = UDim2.new(1, -1, 0, 0)
 SideRule.BackgroundColor3 = AppC.border
 SideRule.BorderSizePixel = 0
-SideRule.ZIndex = 13
+SideRule.ZIndex = 111
 SideRule.Parent = Sidebar
 
 local LogoFrame = Instance.new("Frame")
 LogoFrame.Size = UDim2.new(1, 0, 0, 50)
 LogoFrame.BackgroundTransparency = 1
-LogoFrame.ZIndex = 13
+LogoFrame.ZIndex = 111
 LogoFrame.Parent = Sidebar
 
 local LogoText = Instance.new("TextLabel")
@@ -445,7 +486,7 @@ LogoText.TextColor3 = AppC.text
 LogoText.TextSize = 13
 LogoText.Font = Enum.Font.GothamBlack
 LogoText.TextXAlignment = Enum.TextXAlignment.Left
-LogoText.ZIndex = 14
+LogoText.ZIndex = 112
 LogoText.Parent = LogoFrame
 
 local SideScroll = Instance.new("ScrollingFrame")
@@ -454,7 +495,7 @@ SideScroll.Position = UDim2.new(0, 0, 0, 50)
 SideScroll.BackgroundTransparency = 1
 SideScroll.BorderSizePixel = 0
 SideScroll.ScrollBarThickness = 0
-SideScroll.ZIndex = 13
+SideScroll.ZIndex = 111
 SideScroll.Parent = Sidebar
 
 local SideList = Instance.new("UIListLayout")
@@ -475,13 +516,14 @@ ClB.Text = "✕"
 ClB.TextColor3 = AppC.textDim
 ClB.TextSize = 12
 ClB.Font = Enum.Font.GothamBold
-ClB.ZIndex = 20
+ClB.ZIndex = 150
 ClB.Parent = Hub
 
 ClB.MouseEnter:Connect(function() ClB.TextColor3 = AppC.red end)
 ClB.MouseLeave:Connect(function() ClB.TextColor3 = AppC.textDim end)
+ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
 
--- DRAG LOGIC
+-- WINDOW DRAG LOGIC
 do
     local dragging, activeInput, dragStart, startPos
     local function isInside(object, point)
@@ -509,14 +551,14 @@ do
 end
 
 ---------------------------------------------------------
--- UI BUILDERS (TOGGLE, SLIDER, EXPANDABLE CARD)
+-- UI BUILDERS & LOCALIZATION
 ---------------------------------------------------------
 local PageHolder = Instance.new("Frame")
 PageHolder.Name = "PageHolder"
 PageHolder.Size = UDim2.new(1, -SIDEBAR_W, 1, 0)
 PageHolder.Position = UDim2.new(0, SIDEBAR_W, 0, 0)
 PageHolder.BackgroundTransparency = 1
-PageHolder.ZIndex = 11
+PageHolder.ZIndex = 110
 PageHolder.Parent = Hub
 
 local textBindingMap = {}
@@ -552,7 +594,7 @@ local function CreateSectionHeader(parent, langKey)
     header.TextSize = 9
     header.Font = currentFont
     header.TextXAlignment = Enum.TextXAlignment.Left
-    header.ZIndex = 13
+    header.ZIndex = 113
     header.Parent = parent
     RegisterTextBinding(header, langKey)
     return header
@@ -562,7 +604,7 @@ local function CreateToggle(parent, titleKey, descKey, defaultState, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 0, descKey and 36 or 24)
     frame.BackgroundTransparency = 1
-    frame.ZIndex = 13
+    frame.ZIndex = 113
     frame.Parent = parent
 
     local textContainer = Instance.new("Frame")
@@ -577,7 +619,7 @@ local function CreateToggle(parent, titleKey, descKey, defaultState, callback)
     title.TextSize = 10
     title.Font = currentFont
     title.TextXAlignment = Enum.TextXAlignment.Left
-    title.ZIndex = 14
+    title.ZIndex = 114
     title.Parent = textContainer
     RegisterTextBinding(title, titleKey)
 
@@ -590,7 +632,7 @@ local function CreateToggle(parent, titleKey, descKey, defaultState, callback)
         desc.TextSize = 8
         desc.Font = currentFont
         desc.TextXAlignment = Enum.TextXAlignment.Left
-        desc.ZIndex = 14
+        desc.ZIndex = 114
         desc.Parent = textContainer
         RegisterTextBinding(desc, descKey)
     end
@@ -601,7 +643,7 @@ local function CreateToggle(parent, titleKey, descKey, defaultState, callback)
     switchTrack.BackgroundColor3 = defaultState and AppC.accent or AppC.switchOff
     switchTrack.Text = ""
     switchTrack.AutoButtonColor = false
-    switchTrack.ZIndex = 14
+    switchTrack.ZIndex = 114
     switchTrack.Parent = frame
     Instance.new("UICorner", switchTrack).CornerRadius = UDim.new(1, 0)
 
@@ -610,7 +652,7 @@ local function CreateToggle(parent, titleKey, descKey, defaultState, callback)
     switchThumb.Position = defaultState and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
     switchThumb.BackgroundColor3 = AppC.white
     switchThumb.BorderSizePixel = 0
-    switchThumb.ZIndex = 15
+    switchThumb.ZIndex = 115
     switchThumb.Parent = switchTrack
     Instance.new("UICorner", switchThumb).CornerRadius = UDim.new(1, 0)
 
@@ -630,7 +672,7 @@ local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 0, 32)
     frame.BackgroundTransparency = 1
-    frame.ZIndex = 13
+    frame.ZIndex = 113
     frame.Parent = parent
 
     prefix = prefix or "x"
@@ -642,7 +684,7 @@ local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix
     title.TextSize = 10
     title.Font = currentFont
     title.TextXAlignment = Enum.TextXAlignment.Left
-    title.ZIndex = 14
+    title.ZIndex = 114
     title.Parent = frame
     RegisterTextBinding(title, titleKey)
 
@@ -655,7 +697,7 @@ local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix
     valLabel.TextSize = 10
     valLabel.Font = currentFont
     valLabel.TextXAlignment = Enum.TextXAlignment.Right
-    valLabel.ZIndex = 14
+    valLabel.ZIndex = 114
     valLabel.Parent = frame
 
     local track = Instance.new("TextButton")
@@ -664,7 +706,7 @@ local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix
     track.BackgroundColor3 = AppC.switchOff
     track.Text = ""
     track.AutoButtonColor = false
-    track.ZIndex = 14
+    track.ZIndex = 114
     track.Parent = frame
     Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
 
@@ -673,7 +715,7 @@ local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix
     fill.Size = UDim2.new(pct, 0, 1, 0)
     fill.BackgroundColor3 = AppC.accent
     fill.BorderSizePixel = 0
-    fill.ZIndex = 15
+    fill.ZIndex = 115
     fill.Parent = track
     Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
 
@@ -683,7 +725,7 @@ local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix
     thumb.Position = UDim2.new(pct, 0, 0.5, 0)
     thumb.BackgroundColor3 = AppC.white
     thumb.BorderSizePixel = 0
-    thumb.ZIndex = 16
+    thumb.ZIndex = 116
     thumb.Parent = track
     Instance.new("UICorner", thumb).CornerRadius = UDim.new(1, 0)
 
@@ -716,13 +758,12 @@ local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix
     return frame
 end
 
--- EXPANDABLE DROPDOWN CARD (FOR FONTS & LANGUAGES)
 local function CreateDropdownCard(parent, titleKey, options, defaultVal, callback)
     local container = Instance.new("Frame")
     container.Size = UDim2.new(1, 0, 0, 42)
     container.BackgroundTransparency = 1
     container.ClipsDescendants = true
-    container.ZIndex = 13
+    container.ZIndex = 113
     container.Parent = parent
 
     local header = Instance.new("TextLabel")
@@ -732,7 +773,7 @@ local function CreateDropdownCard(parent, titleKey, options, defaultVal, callbac
     header.TextSize = 10
     header.Font = currentFont
     header.TextXAlignment = Enum.TextXAlignment.Left
-    header.ZIndex = 14
+    header.ZIndex = 114
     header.Parent = container
     RegisterTextBinding(header, titleKey)
 
@@ -742,7 +783,7 @@ local function CreateDropdownCard(parent, titleKey, options, defaultVal, callbac
     card.BackgroundColor3 = AppC.cardInner
     card.Text = ""
     card.AutoButtonColor = false
-    card.ZIndex = 14
+    card.ZIndex = 114
     card.Parent = container
     Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
 
@@ -760,7 +801,7 @@ local function CreateDropdownCard(parent, titleKey, options, defaultVal, callbac
     valText.TextSize = 9
     valText.Font = currentFont
     valText.TextXAlignment = Enum.TextXAlignment.Left
-    valText.ZIndex = 15
+    valText.ZIndex = 115
     valText.Parent = card
 
     local arrow = Instance.new("TextLabel")
@@ -771,14 +812,14 @@ local function CreateDropdownCard(parent, titleKey, options, defaultVal, callbac
     arrow.TextColor3 = AppC.textDim
     arrow.TextSize = 10
     arrow.Font = Enum.Font.GothamBold
-    arrow.ZIndex = 15
+    arrow.ZIndex = 115
     arrow.Parent = card
 
     local listFrame = Instance.new("Frame")
     listFrame.Size = UDim2.new(1, 0, 0, #options * 22)
     listFrame.Position = UDim2.new(0, 0, 0, 46)
     listFrame.BackgroundColor3 = AppC.sidebar
-    listFrame.ZIndex = 16
+    listFrame.ZIndex = 116
     listFrame.Parent = container
     Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0, 6)
 
@@ -806,7 +847,7 @@ local function CreateDropdownCard(parent, titleKey, options, defaultVal, callbac
         optBtn.TextSize = 9
         optBtn.Font = currentFont
         optBtn.TextXAlignment = Enum.TextXAlignment.Left
-        optBtn.ZIndex = 17
+        optBtn.ZIndex = 117
         optBtn.Parent = listFrame
 
         optBtn.MouseButton1Click:Connect(function()
@@ -855,7 +896,7 @@ for _, item in ipairs(categories) do
     btn.BorderSizePixel = 0
     btn.Text = ""
     btn.AutoButtonColor = false
-    btn.ZIndex = 14
+    btn.ZIndex = 112
     btn.Parent = SideScroll
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
 
@@ -867,7 +908,7 @@ for _, item in ipairs(categories) do
     icon.Text = item.icon
     icon.TextColor3 = AppC.textDim
     icon.TextSize = 11
-    icon.ZIndex = 15
+    icon.ZIndex = 113
     icon.Parent = btn
 
     local label = Instance.new("TextLabel")
@@ -878,19 +919,16 @@ for _, item in ipairs(categories) do
     label.TextSize = 9
     label.Font = currentFont
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 15
+    label.ZIndex = 113
     label.Parent = btn
     RegisterTextBinding(label, item.nameKey)
 
     sidebarButtons[item.id] = btn
-
-    btn.MouseButton1Click:Connect(function()
-        ShowPage(item.id)
-    end)
+    btn.MouseButton1Click:Connect(function() ShowPage(item.id) end)
 end
 
 ---------------------------------------------------------
--- ANTI-AFK LOGIC
+-- ANTI-AFK & COSMETICS LOGIC
 ---------------------------------------------------------
 local antiAfkConn = nil
 local function SetAntiAFK(state)
@@ -907,9 +945,6 @@ local function SetAntiAFK(state)
     end
 end
 
----------------------------------------------------------
--- REAL WORKING VISUALS LOGIC FOR COSMETICS
----------------------------------------------------------
 local betaState = {
     wings = false,
     aura = false,
@@ -1098,7 +1133,6 @@ for _, item in ipairs(categories) do
     listR.Parent = colRight
 
     if item.id == "Settings" then
-        -- MAIN SETTINGS (LEFT COLUMN)
         CreateSectionHeader(colLeft, "MainSettings")
         CreateToggle(colLeft, "AntiAfk", "AntiAfkDesc", false, SetAntiAFK)
         
@@ -1115,7 +1149,6 @@ for _, item in ipairs(categories) do
             end
         end)
 
-        -- UI APPEARANCE (RIGHT COLUMN)
         CreateSectionHeader(colRight, "UIAppearance")
         
         CreateDropdownCard(colRight, "FontSelect", {"Gotham", "Roboto", "SourceSans", "Arial", "Code"}, "Gotham", function(selectedFont)
@@ -1163,43 +1196,4 @@ for _, item in ipairs(categories) do
     end
 end
 
----------------------------------------------------------
--- OPEN / CLOSE TOGGLE
----------------------------------------------------------
-local function ToggleHub()
-    hubOpen = not hubOpen
-    SetToggleVisual(hubOpen)
-
-    if hubOpen then
-        Hub.Visible = true
-        HubShadow.Visible = true
-        ensureWindowRect()
-        Hub.Size = UDim2.fromOffset(windowSize.X, 0)
-        HubShadow.Size = UDim2.fromOffset(windowSize.X, 0)
-        TweenService:Create(Hub, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(windowSize.X, windowSize.Y)}):Play()
-        TweenService:Create(HubShadow, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(windowSize.X, windowSize.Y)}):Play()
-    else
-        local tw = TweenService:Create(Hub, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.fromOffset(windowSize.X, 0)})
-        tw:Play()
-        TweenService:Create(HubShadow, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.fromOffset(windowSize.X, 0)}):Play()
-        tw.Completed:Connect(function()
-            if not hubOpen then
-                Hub.Visible = false
-                HubShadow.Visible = false
-                Hub.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
-                HubShadow.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
-            end
-        end)
-    end
-end
-
-UserInputService.InputEnded:Connect(function(input)
-    if toggleDrag and (input == toggleDrag.input or input.UserInputType == Enum.UserInputType.MouseButton1) then
-        local moved = toggleDrag.moved
-        toggleDrag = nil
-        if not moved then ToggleHub() end
-    end
-end)
-
-ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
 ShowPage("Stats")
