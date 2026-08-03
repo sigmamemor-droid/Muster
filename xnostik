@@ -1,4 +1,4 @@
--- linbergz Team MOBILE HUB v14.0 — Modern Glass Mobile Redesign
+-- linbergz Team MOBILE HUB v15.0 — Aurora Glass Mobile Redesign
 -- Modern visual refresh: polished glass panels, improved hierarchy, responsive desktop/mobile sizing, and preserved controls.
 -- v14 removes the menu-size setting by request; drag, resize, themes, language, tabs, launcher, and close controls remain intact.
 -- UI-only. Native Roblox Luau; no external libraries.
@@ -100,13 +100,20 @@ WL.FillDirection = Enum.FillDirection.Horizontal
 WL.HorizontalAlignment = Enum.HorizontalAlignment.Center
 WL.VerticalAlignment = Enum.VerticalAlignment.Center
 WL.Padding = UDim.new(0, -1)
+WL.Enabled = false -- letters are positioned manually so their wave motion is visible
 WL.Parent = Word
 
 local letters = {}
-for index, char in utf8.graphemes("LINBERGZ") do
+local letterCount = 0
+local logoText = "LINBERGZ"
+for first, last in utf8.graphemes(logoText) do
+    local char = string.sub(logoText, first, last)
+    letterCount += 1
     local letter = Instance.new("TextLabel")
-    letter.Name = "Letter" .. tostring(index)
+    letter.Name = "Letter" .. tostring(first)
     letter.Size = UDim2.new(0, 31, 0, 48)
+    letter.AnchorPoint = Vector2.new(0.5, 0)
+    letter.Position = UDim2.new(0.5, (letterCount - 4.5) * 30, 0, 0)
     letter.BackgroundTransparency = 1
     letter.Text = char
     letter.TextColor3 = C.white
@@ -356,13 +363,27 @@ end
 ---------------------------------------------------------
 -- MAIN HUB FRAME
 ---------------------------------------------------------
-local HUB_W, HUB_H, SIDEBAR_W, TOPBAR_H = 580, 390, 154, 50
+local HUB_W, HUB_H, SIDEBAR_W, TOPBAR_H = 610, 410, 164, 54
 local DEFAULT_SIZE = Vector2.new(HUB_W, HUB_H)
 local MIN_SIZE = Vector2.new(430, 300)
 local windowSize = DEFAULT_SIZE
 local windowPos
 local activeWindowTween
 local windowInteraction = nil -- one owner at a time: drag and resize cannot fight each other
+local applyResponsiveLayout -- initialized after the tab UI exists
+
+-- Soft focus veil gives the hub a premium modal presence over gameplay.
+local Backdrop = Instance.new("TextButton")
+Backdrop.Name = "FocusBackdrop"
+Backdrop.Size = UDim2.new(1, 0, 1, 0)
+Backdrop.BackgroundColor3 = Color3.fromRGB(3, 5, 14)
+Backdrop.BackgroundTransparency = 0.38
+Backdrop.BorderSizePixel = 0
+Backdrop.Text = ""
+Backdrop.AutoButtonColor = false
+Backdrop.Visible = false
+Backdrop.ZIndex = 8
+Backdrop.Parent = ScreenGui
 
 -- Мягкая тень отделяет окно от игрового фона.
 local HubShadow = Instance.new("Frame")
@@ -393,6 +414,27 @@ HSk.Thickness = 1
 HSk.Transparency = 0.35
 HSk.Parent = Hub
 
+-- Aurora layers add depth without sacrificing legibility on small screens.
+local HubGradient = Instance.new("UIGradient")
+HubGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(23, 29, 52)),
+    ColorSequenceKeypoint.new(0.55, AppC.bg),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(19, 22, 40)),
+})
+HubGradient.Rotation = 35
+HubGradient.Parent = Hub
+
+local InnerGlow = Instance.new("Frame")
+InnerGlow.Name = "InnerGlow"
+InnerGlow.Size = UDim2.new(1, -2, 0, 90)
+InnerGlow.Position = UDim2.new(0, 1, 0, 1)
+InnerGlow.BackgroundColor3 = Color3.fromRGB(133, 155, 255)
+InnerGlow.BackgroundTransparency = 0.94
+InnerGlow.BorderSizePixel = 0
+InnerGlow.ZIndex = 10
+InnerGlow.Parent = Hub
+Instance.new("UICorner", InnerGlow).CornerRadius = UDim.new(0, 17)
+
 -- Единый источник истины для позиции и размера окна.
 -- Все изменения (перетаскивание и изменение размера) проходят через эту функцию.
 local function getViewport()
@@ -421,6 +463,7 @@ local function applyWindowRect(position, size)
     Hub.Size = UDim2.fromOffset(width, height)
     HubShadow.Position = UDim2.fromOffset(windowPos.X, windowPos.Y + 8)
     HubShadow.Size = UDim2.fromOffset(width, height)
+    if applyResponsiveLayout then applyResponsiveLayout() end
 end
 
 local function ensureWindowRect()
@@ -448,6 +491,10 @@ TopB.BackgroundColor3 = AppC.surface
 TopB.BorderSizePixel = 0
 TopB.ZIndex = 12
 TopB.Parent = Hub
+local TopGradient = Instance.new("UIGradient")
+TopGradient.Color = ColorSequence.new(Color3.fromRGB(37, 45, 75), AppC.surface)
+TopGradient.Rotation = 15
+TopGradient.Parent = TopB
 
 local PageTitle = Instance.new("TextLabel")
 PageTitle.Size = UDim2.new(1, -74, 1, 0)
@@ -455,7 +502,7 @@ PageTitle.Position = UDim2.new(0, 20, 0, 0)
 PageTitle.BackgroundTransparency = 1
 PageTitle.Text = "Главная"
 PageTitle.TextColor3 = AppC.text
-PageTitle.TextSize = 15
+PageTitle.TextSize = 16
 PageTitle.Font = Enum.Font.GothamBold
 PageTitle.TextXAlignment = Enum.TextXAlignment.Left
 PageTitle.ZIndex = 13
@@ -470,8 +517,8 @@ TopRule.ZIndex = 13
 TopRule.Parent = TopB
 
 local ClB = Instance.new("TextButton")
-ClB.Size = UDim2.new(0, 28, 0, 28)
-ClB.Position = UDim2.new(1, -38, 0.5, -14)
+ClB.Size = UDim2.new(0, 32, 0, 32)
+ClB.Position = UDim2.new(1, -42, 0.5, -16)
 ClB.BackgroundColor3 = AppC.redDark
 ClB.Text = "×"
 ClB.TextColor3 = AppC.red
@@ -479,7 +526,7 @@ ClB.TextSize = 15
 ClB.Font = Enum.Font.GothamBold
 ClB.ZIndex = 13
 ClB.Parent = TopB
-Instance.new("UICorner", ClB).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", ClB).CornerRadius = UDim.new(0, 10)
 
 do
     local dragging, activeInput, dragStart, startPos
@@ -580,6 +627,10 @@ Sidebar.BackgroundColor3 = AppC.sidebar
 Sidebar.BorderSizePixel = 0
 Sidebar.ZIndex = 12
 Sidebar.Parent = Hub
+local SideGradient = Instance.new("UIGradient")
+SideGradient.Color = ColorSequence.new(Color3.fromRGB(20, 25, 45), AppC.sidebar)
+SideGradient.Rotation = 90
+SideGradient.Parent = Sidebar
 
 local SideRule = Instance.new("Frame")
 SideRule.Size = UDim2.new(0, 1, 1, 0)
@@ -609,7 +660,7 @@ local VersionLabel = Instance.new("TextLabel")
 VersionLabel.Size = UDim2.new(1, -28, 0, 12)
 VersionLabel.Position = UDim2.new(0, 14, 0, 36)
 VersionLabel.BackgroundTransparency = 1
-VersionLabel.Text = "MOBILE HUB  •  V14"
+VersionLabel.Text = "MOBILE HUB  •  V15"
 VersionLabel.TextColor3 = AppC.textDim
 VersionLabel.TextSize = 7
 VersionLabel.Font = Enum.Font.GothamBold
@@ -642,7 +693,7 @@ TabList.Parent = TabHolder
 
 local THL = Instance.new("UIListLayout")
 THL.SortOrder = Enum.SortOrder.LayoutOrder
-THL.Padding = UDim.new(0, 4) -- компактный 2px-зазор между вкладками
+THL.Padding = UDim.new(0, 4) -- ровный 4px-зазор между вкладками
 THL.Parent = TabList
 
 local TabGlider = Instance.new("Frame")
@@ -677,7 +728,7 @@ local function BuildPlaceholder(parent)
 
     local card = Instance.new("Frame")
     card.Name = "ComingSoonCard"
-    card.Size = UDim2.new(1, -40, 0, 210)
+    card.Size = UDim2.new(1, -40, 0, 224)
     card.Position = UDim2.new(0, 20, 0.5, 0)
     card.AnchorPoint = Vector2.new(0, 0.5)
     card.BackgroundColor3 = AppC.surface
@@ -700,7 +751,7 @@ local function BuildPlaceholder(parent)
     kicker.Size = UDim2.new(1, -52, 0, 16)
     kicker.Position = UDim2.new(0, 24, 0, 25)
     kicker.BackgroundTransparency = 1
-    kicker.Text = "LINBERGZ  /  WORKSPACE"
+    kicker.Text = "LINBERGZ  /  MODULE"
     kicker.TextColor3 = AppC.accentLight
     kicker.TextSize = 9
     kicker.Font = Enum.Font.GothamBold
@@ -711,7 +762,7 @@ local function BuildPlaceholder(parent)
     title.Size = UDim2.new(1, -52, 0, 28)
     title.Position = UDim2.new(0, 24, 0, 46)
     title.BackgroundTransparency = 1
-    title.Text = "Раздел готовится"
+    title.Text = "Пространство модуля"
     title.TextColor3 = AppC.text
     title.TextSize = 18
     title.Font = Enum.Font.GothamBlack
@@ -722,7 +773,7 @@ local function BuildPlaceholder(parent)
     desc.Size = UDim2.new(1, -52, 0, 38)
     desc.Position = UDim2.new(0, 24, 0, 82)
     desc.BackgroundTransparency = 1
-    desc.Text = "Мы собираем инструменты этого раздела в едином, удобном рабочем пространстве."
+    desc.Text = "Раздел аккуратно подготовлен для ваших инструментов. Выберите модуль в меню, чтобы продолжить."
     desc.TextWrapped = true
     desc.TextColor3 = AppC.textSec
     desc.TextSize = 11
@@ -743,7 +794,7 @@ local function BuildPlaceholder(parent)
     status.Size = UDim2.new(1, -48, 0, 18)
     status.Position = UDim2.new(0, 24, 0, 160)
     status.BackgroundTransparency = 1
-    status.Text = "●  STATUS: IN DEVELOPMENT"
+    status.Text = "●  READY FOR CONFIGURATION"
     status.TextColor3 = AppC.accentLight
     status.TextSize = 9
     status.Font = Enum.Font.GothamBold
@@ -898,17 +949,18 @@ end
 ---------------------------------------------------------
 -- ASCII-маркеры отображаются одинаково на ПК и мобильных устройствах.
 local tabDefs = {
-    {name = "Home",     title = "Главная",           icon = ""},
-    {name = "Combat",   title = "Сражение",          icon = ""},
-    {name = "ESP",      title = "ЕСП / ВХ",          icon = ""},
-    {name = "Fun",      title = "Фан и троллинг",    icon = ""},
-    {name = "Boombox",  title = "Музыка",            icon = ""},
-    {name = "Nexus",    title = "Nexus",             icon = ""},
-    {name = "Settings", title = "Настройки",         icon = ""},
-    {name = "Info",     title = "Информация",        icon = ""},
+    {name = "Home",     title = "Главная",           icon = "H"},
+    {name = "Combat",   title = "Сражение",          icon = "C"},
+    {name = "ESP",      title = "ЕСП / ВХ",          icon = "E"},
+    {name = "Fun",      title = "Фан и троллинг",    icon = "F"},
+    {name = "Boombox",  title = "Музыка",            icon = "B"},
+    {name = "Nexus",    title = "Nexus",             icon = "N"},
+    {name = "Settings", title = "Настройки",         icon = "S"},
+    {name = "Info",     title = "Информация",        icon = "I"},
 }
 
 local tabPages, tabButtons, currentTab = {}, {}, nil
+local compactMode = false
 
 local function ShowTab(name, index)
     if currentTab == name then return end
@@ -930,7 +982,7 @@ local function ShowTab(name, index)
     end
 
     TweenService:Create(TabGlider, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0, 8, 0, 74 + (index - 1) * 36) -- 28px + 2px gap
+        Position = UDim2.new(0, compactMode and 5 or 8, 0, (compactMode and 20 or 74) + (index - 1) * 36)
     }):Play()
 end
 
@@ -955,7 +1007,7 @@ for idx, def in ipairs(tabDefs) do
     Btn.Name = "Tab_" .. def.name
     Btn.Size = UDim2.new(1, 0, 0, 32)
     Btn.BackgroundTransparency = 1
-    Btn.Text = "   " .. def.title
+    Btn.Text = "   " .. def.icon .. "    " .. def.title
     Btn.TextColor3 = AppC.textDim
     Btn.TextSize = 11
     Btn.Font = Enum.Font.GothamBold
@@ -984,6 +1036,44 @@ end
 
 
 ---------------------------------------------------------
+-- RESPONSIVE LAYOUT — full navigation on desktop, compact rail on phones
+---------------------------------------------------------
+applyResponsiveLayout = function()
+    local viewport = getViewport()
+    compactMode = viewport.X < 520 or windowSize.X < 500
+    local sideWidth = compactMode and 58 or SIDEBAR_W
+    Sidebar.Size = UDim2.new(0, sideWidth, 1, 0)
+    TopB.Size = UDim2.new(1, -sideWidth, 0, TOPBAR_H)
+    TopB.Position = UDim2.new(0, sideWidth, 0, 0)
+    for _, page in pairs(tabPages) do
+        page.Size = UDim2.new(1, -sideWidth - 1, 1, -TOPBAR_H)
+        page.Position = UDim2.new(0, sideWidth + 1, 0, TOPBAR_H)
+    end
+    SLogo.Visible = not compactMode
+    TabHolder.Position = UDim2.new(0, 0, 0, compactMode and 12 or 66)
+    TabHolder.Size = UDim2.new(1, 0, 1, compactMode and -12 or -66)
+    TabList.Size = UDim2.new(1, compactMode and -10 or -16, 1, -16)
+    TabList.Position = UDim2.new(0, compactMode and 5 or 8, 0, 8)
+    for _, def in ipairs(tabDefs) do
+        local btn = tabButtons[def.name]
+        if btn then
+            btn.Text = compactMode and def.icon or ("   " .. def.icon .. "    " .. def.title)
+            btn.TextXAlignment = compactMode and Enum.TextXAlignment.Center or Enum.TextXAlignment.Left
+            btn.TextSize = compactMode and 12 or 11
+        end
+    end
+    TabGlider.Size = UDim2.new(1, compactMode and -10 or -16, 0, 32)
+    local selectedIndex = 1
+    for index, def in ipairs(tabDefs) do
+        if def.name == currentTab then selectedIndex = index break end
+    end
+    TabGlider.Position = UDim2.new(0, compactMode and 5 or 8, 0, (compactMode and 20 or 74) + (selectedIndex - 1) * 36)
+    GliderLine.Visible = not compactMode
+end
+ScreenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(applyResponsiveLayout)
+applyResponsiveLayout()
+
+---------------------------------------------------------
 -- LIVE SETTINGS UPDATERS
 ---------------------------------------------------------
 local function markThemeRoles()
@@ -1000,10 +1090,16 @@ local function applyTheme()
     local p=accentPalettes[chosenAccent]
     AppC.accent,AppC.accentLight,AppC.selectedSurface=p.accent,p.accentLight,p.selectedSurface
     if amoledEnabled then AppC.bg=Color3.fromRGB(0,0,0);AppC.sidebar=Color3.fromRGB(0,0,0);AppC.surface=Color3.fromRGB(5,5,5);AppC.elevated=Color3.fromRGB(12,12,12);AppC.border=Color3.fromRGB(43,43,43);AppC.hover=Color3.fromRGB(22,22,22) else AppC.bg=Color3.fromRGB(13,16,28);AppC.sidebar=Color3.fromRGB(10,13,24);AppC.surface=Color3.fromRGB(24,29,46);AppC.elevated=Color3.fromRGB(34,41,63);AppC.border=Color3.fromRGB(72,84,116);AppC.hover=Color3.fromRGB(48,57,85) end
+    -- Gradients follow the selected palette, including a restrained true-black AMOLED appearance.
+    HubGradient.Color = ColorSequence.new(amoledEnabled and Color3.fromRGB(8,8,10) or AppC.elevated, AppC.bg)
+    TopGradient.Color = ColorSequence.new(amoledEnabled and Color3.fromRGB(12,12,14) or AppC.selectedSurface, AppC.surface)
+    SideGradient.Color = ColorSequence.new(amoledEnabled and Color3.fromRGB(6,6,7) or AppC.hover, AppC.sidebar)
+    InnerGlow.BackgroundColor3 = AppC.accent
+    InnerGlow.BackgroundTransparency = amoledEnabled and 0.97 or 0.94
     for _,o in ipairs(ScreenGui:GetDescendants()) do
-        local r=o:GetAttribute("ThemeBackground");if r and C[r] and o:IsA("GuiObject") then o.BackgroundColor3=C[r] end
-        r=o:GetAttribute("ThemeText");if r and C[r] and (o:IsA("TextLabel") or o:IsA("TextButton")) then o.TextColor3=C[r] end
-        r=o:GetAttribute("ThemeStroke");if r and C[r] and o:IsA("UIStroke") then o.Color=C[r] end
+        local r=o:GetAttribute("ThemeBackground");if r and AppC[r] and o:IsA("GuiObject") then o.BackgroundColor3=AppC[r] end
+        r=o:GetAttribute("ThemeText");if r and AppC[r] and (o:IsA("TextLabel") or o:IsA("TextButton")) then o.TextColor3=AppC[r] end
+        r=o:GetAttribute("ThemeStroke");if r and AppC[r] and o:IsA("UIStroke") then o.Color=AppC[r] end
     end
     local dotColors={Violet=Color3.fromRGB(112,128,255),Blue=Color3.fromRGB(53,151,255),Red=Color3.fromRGB(255,86,128),Green=Color3.fromRGB(45,211,145)}
     for name,b in pairs(accentButtons) do
@@ -1021,7 +1117,7 @@ local function applyLanguage()
     local t=lang[language]
     for _,def in ipairs(tabDefs) do
         def.title=t[def.name]
-        local b=tabButtons[def.name]; b.Text="   "..def.title
+        local b=tabButtons[def.name]; b.Text=compactMode and def.icon or ("   "..def.icon.."    "..def.title)
     end
     local d
     for _,v in ipairs(tabDefs) do if v.name==currentTab then d=v break end end
@@ -1059,7 +1155,9 @@ local function ToggleHub()
     if hubOpen then
         Hub.Visible = true
         HubShadow.Visible = true
+        Backdrop.Visible = true
         ensureWindowRect()
+        applyResponsiveLayout()
         Hub.Size = UDim2.fromOffset(windowSize.X, 0)
         HubShadow.Size = UDim2.fromOffset(windowSize.X, 0)
         TweenService:Create(Hub, TweenInfo.new(0.20, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(windowSize.X, windowSize.Y)}):Play()
@@ -1072,6 +1170,7 @@ local function ToggleHub()
             if not hubOpen then
                 Hub.Visible = false
                 HubShadow.Visible = false
+                Backdrop.Visible = false
                 Hub.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
                 HubShadow.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
             end
@@ -1088,3 +1187,6 @@ UserInputService.InputEnded:Connect(function(input)
 end)
 ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
 ShowTab("Home", 1)
+
+-- Tapping the dimmed area closes the modal on touch devices.
+Backdrop.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
