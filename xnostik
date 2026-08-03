@@ -1,4 +1,4 @@
--- linbergz Team MOBILE HUB v14.0 — MIDNIGHT UI Edition
+-- linbergz Team MOBILE HUB v14.0 — MIDNIGHT UI Edition (Clean Header)
 -- Midnight CS2 Style Interface: Dark Matte, Cyan Accents, Grid Cards, Custom Controls.
 -- Loading Screen animation remains untouched by request.
 -- UI-only. Native Roblox Luau; no external libraries.
@@ -296,7 +296,7 @@ end
 ---------------------------------------------------------
 -- MAIN HUB FRAME (MIDNIGHT WINDOW)
 ---------------------------------------------------------
-local HUB_W, HUB_H, SIDEBAR_W, TOPBAR_H = 640, 430, 160, 46
+local HUB_W, HUB_H, SIDEBAR_W, TOPBAR_H = 640, 420, 160, 42
 local DEFAULT_SIZE = Vector2.new(HUB_W, HUB_H)
 local MIN_SIZE = Vector2.new(460, 320)
 local windowSize = DEFAULT_SIZE
@@ -373,7 +373,7 @@ ScreenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
 end)
 
 ---------------------------------------------------------
--- TOP BAR (MIDNIGHT HEADER & MAIN TABS)
+-- TOP BAR (HEADER WITHOUT TOP CATEGORIES)
 ---------------------------------------------------------
 local TopB = Instance.new("Frame")
 TopB.Name = "TopBar"
@@ -420,68 +420,6 @@ LogoText.Font = Enum.Font.GothamBlack
 LogoText.TextXAlignment = Enum.TextXAlignment.Left
 LogoText.ZIndex = 13
 LogoText.Parent = LogoFrame
-
--- TOP CATEGORY TABS (GLOBALS, WEAPONS, SETTINGS)
-local TopTabHolder = Instance.new("Frame")
-TopTabHolder.Size = UDim2.new(1, -SIDEBAR_W - 80, 1, 0)
-TopTabHolder.Position = UDim2.new(0, SIDEBAR_W + 10, 0, 0)
-TopTabHolder.BackgroundTransparency = 1
-TopTabHolder.ZIndex = 13
-TopTabHolder.Parent = TopB
-
-local TopTabLayout = Instance.new("UIListLayout")
-TopTabLayout.FillDirection = Enum.FillDirection.Horizontal
-TopTabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-TopTabLayout.Padding = UDim.new(0, 20)
-TopTabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-TopTabLayout.Parent = TopTabHolder
-
-local topCategories = {"GLOBALS", "WEAPONS", "SETTINGS"}
-local activeTopTab = "WEAPONS"
-local topTabButtons = {}
-
-local TopTabLine = Instance.new("Frame")
-TopTabLine.Name = "ActiveTabLine"
-TopTabLine.Size = UDim2.new(0, 60, 0, 2)
-TopTabLine.Position = UDim2.new(0, 100, 1, -2)
-TopTabLine.BackgroundColor3 = AppC.accent
-TopTabLine.BorderSizePixel = 0
-TopTabLine.ZIndex = 14
-TopTabLine.Parent = TopB
-
-for idx, catName in ipairs(topCategories) do
-    local btn = Instance.new("TextButton")
-    btn.Name = "TopTab_" .. catName
-    btn.Size = UDim2.new(0, 70, 1, 0)
-    btn.BackgroundTransparency = 1
-    btn.Text = catName
-    btn.TextColor3 = (catName == activeTopTab) and AppC.text or AppC.textDim
-    btn.TextSize = 10
-    btn.Font = Enum.Font.GothamBold
-    btn.AutoButtonColor = false
-    btn.ZIndex = 14
-    btn.Parent = TopTabHolder
-    topTabButtons[catName] = btn
-
-    btn.MouseButton1Click:Connect(function()
-        activeTopTab = catName
-        for name, button in pairs(topTabButtons) do
-            button.TextColor3 = (name == activeTopTab) and AppC.text or AppC.textDim
-        end
-        TweenService:Create(TopTabLine, TweenInfo.new(0.2), {
-            Position = UDim2.new(0, btn.AbsolutePosition.X - TopB.AbsolutePosition.X, 1, -2),
-            Size = UDim2.new(0, btn.AbsoluteSize.X, 0, 2)
-        }):Play()
-    end)
-end
-
-task.defer(function()
-    local activeBtn = topTabButtons[activeTopTab]
-    if activeBtn then
-        TopTabLine.Position = UDim2.new(0, activeBtn.AbsolutePosition.X - TopB.AbsolutePosition.X, 1, -2)
-        TopTabLine.Size = UDim2.new(0, activeBtn.AbsoluteSize.X, 0, 2)
-    end
-end)
 
 -- CLOSE BUTTON
 local ClB = Instance.new("TextButton")
@@ -934,7 +872,7 @@ for _, catGroup in ipairs(categories) do
 end
 
 ---------------------------------------------------------
--- MIDNIGHT AIMBOT PAGE BUILD (MIRRORING THE IMAGE)
+-- MIDNIGHT AIMBOT PAGE BUILD
 ---------------------------------------------------------
 local function BuildAimbotPage(parent)
     local pageScroll = Instance.new("ScrollingFrame")
