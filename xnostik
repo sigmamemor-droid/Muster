@@ -298,7 +298,6 @@ end
 ---------------------------------------------------------
 local HUB_W, HUB_H, SIDEBAR_W, TOPBAR_H = 640, 430, 160, 46
 local DEFAULT_SIZE = Vector2.new(HUB_W, HUB_H)
-local MIN_SIZE = Vector2.new(460, 320)
 local windowSize = DEFAULT_SIZE
 local windowPos
 local windowInteraction = nil
@@ -341,22 +340,15 @@ local function getViewport()
     return size
 end
 
-local function applyWindowRect(position, size)
+local function applyWindowRect(position)
     local viewport = getViewport()
-    local minWidth = math.max(1, math.min(MIN_SIZE.X, viewport.X - 16))
-    local minHeight = math.max(1, math.min(MIN_SIZE.Y, viewport.Y - 16))
-    local maxW = math.max(minWidth, viewport.X - 16)
-    local maxH = math.max(minHeight, viewport.Y - 16)
-    local width = math.clamp(size.X, minWidth, maxW)
-    local height = math.clamp(size.Y, minHeight, maxH)
-    local maxX = math.max(8, viewport.X - width - 8)
-    local maxY = math.max(8, viewport.Y - height - 8)
+    local maxX = math.max(8, viewport.X - windowSize.X - 8)
+    local maxY = math.max(8, viewport.Y - windowSize.Y - 8)
     windowPos = Vector2.new(math.clamp(position.X, 8, maxX), math.clamp(position.Y, 8, maxY))
-    windowSize = Vector2.new(width, height)
     Hub.Position = UDim2.fromOffset(windowPos.X, windowPos.Y)
-    Hub.Size = UDim2.fromOffset(width, height)
+    Hub.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
     HubShadow.Position = UDim2.fromOffset(windowPos.X, windowPos.Y + 8)
-    HubShadow.Size = UDim2.fromOffset(width, height)
+    HubShadow.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
 end
 
 local function ensureWindowRect()
@@ -364,12 +356,12 @@ local function ensureWindowRect()
         local viewport = getViewport()
         windowPos = Vector2.new(math.max(8, (viewport.X - windowSize.X) / 2), math.max(8, (viewport.Y - windowSize.Y) / 2))
     end
-    applyWindowRect(windowPos, windowSize)
+    applyWindowRect(windowPos)
 end
 
 task.defer(ensureWindowRect)
 ScreenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-    if windowPos then applyWindowRect(windowPos, windowSize) end
+    if windowPos then applyWindowRect(windowPos) end
 end)
 
 ---------------------------------------------------------
@@ -515,7 +507,7 @@ do
     end)
     UserInputService.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input == activeInput) then
-            applyWindowRect(startPos + (input.Position - dragStart), windowSize)
+            applyWindowRect(startPos + (input.Position - dragStart))
         end
     end)
     UserInputService.InputEnded:Connect(function(input)
@@ -524,51 +516,6 @@ do
         end
     end)
 end
-
--- RESIZE HANDLES
-local function addResizeHandle(name, position, size, left, right, top, bottom)
-    local handle = Instance.new("TextButton")
-    handle.Name = "Resize_" .. name
-    handle.Position, handle.Size = position, size
-    handle.BackgroundTransparency, handle.TextTransparency = 1, 1
-    handle.AutoButtonColor, handle.Active = false, true
-    handle.ZIndex = 30
-    handle.Parent = Hub
-
-    local resizing, activeInput, startPointer, startPosition, startSize
-    handle.InputBegan:Connect(function(input)
-        if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
-        if windowInteraction then return end
-        ensureWindowRect()
-        windowInteraction = "resize"
-        resizing, activeInput = true, input
-        startPointer, startPosition, startSize = input.Position, windowPos, windowSize
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if not resizing or (input.UserInputType ~= Enum.UserInputType.MouseMovement and input ~= activeInput) then return end
-        local delta = input.Position - startPointer
-        local x, y, w, h = startPosition.X, startPosition.Y, startSize.X, startSize.Y
-        if left then x, w = x + delta.X, w - delta.X end
-        if right then w = w + delta.X end
-        if top then y, h = y + delta.Y, h - delta.Y end
-        if bottom then h = h + delta.Y end
-        local viewport = getViewport()
-        local effectiveMinW = math.max(1, math.min(MIN_SIZE.X, viewport.X - 16))
-        local effectiveMinH = math.max(1, math.min(MIN_SIZE.Y, viewport.Y - 16))
-        if left and w < effectiveMinW then x = startPosition.X + startSize.X - effectiveMinW end
-        if top and h < effectiveMinH then y = startPosition.Y + startSize.Y - effectiveMinH end
-        applyWindowRect(Vector2.new(x, y), Vector2.new(w, h))
-    end)
-    UserInputService.InputEnded:Connect(function(input)
-        if input == activeInput or (activeInput and activeInput.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.MouseButton1) then
-            resizing, activeInput, windowInteraction = false, nil, nil
-        end
-    end)
-end
-addResizeHandle("N",  UDim2.new(0,16,0,0),       UDim2.new(1,-32,0,10), false,false,true,false)
-addResizeHandle("S",  UDim2.new(0,16,1,-10),     UDim2.new(1,-32,0,10), false,false,false,true)
-addResizeHandle("W",  UDim2.new(0,0,0,16),       UDim2.new(0,10,1,-32), true,false,false,false)
-addResizeHandle("E",  UDim2.new(1,-10,0,16),     UDim2.new(0,10,1,-32), false,true,false,false)
 
 ---------------------------------------------------------
 -- SIDEBAR (MIDNIGHT CATEGORIES)
