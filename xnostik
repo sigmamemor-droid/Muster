@@ -1,15 +1,15 @@
--- linbergz Team MOBILE HUB v18.0 — SACRACIA UI (GUARANTEED TOGGLE FIX)
--- Loading Screen animation untouched.
--- Native Roblox Luau; UI-Only.
+-- linbergz Team MOBILE HUB v15.0 — SACRACIA UI Edition
+-- Sacracia Style Interface: Dark Minimalist, Vibrant Blue Accents, iOS Switches, Sleek Sliders.
+-- Loading Screen animation remains untouched by request.
+-- UI-only. Native Roblox Luau; no external libraries.
 
 ---------------------------------------------------------
--- SERVICES & LOCAL PLAYER
+-- SERVICES
 ---------------------------------------------------------
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
-local VirtualUser = game:GetService("VirtualUser")
 
 local player = Players.LocalPlayer
 if not player then
@@ -17,12 +17,10 @@ if not player then
     player = Players.LocalPlayer
 end
 
-local playerGui = player:WaitForChild("PlayerGui")
-
 ---------------------------------------------------------
 -- CLEANUP / SCREEN GUI
 ---------------------------------------------------------
-local oldGui = playerGui:FindFirstChild("MM2HubMobile")
+local oldGui = player.PlayerGui:FindFirstChild("MM2HubMobile")
 if oldGui then oldGui:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -30,8 +28,8 @@ ScreenGui.Name = "MM2HubMobile"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
-ScreenGui.DisplayOrder = 999999
-ScreenGui.Parent = playerGui
+ScreenGui.DisplayOrder = 100
+ScreenGui.Parent = player.PlayerGui
 
 ---------------------------------------------------------
 -- COLOR PALETTE (LOADER SPECIFIC - UNTOUCHED)
@@ -59,7 +57,7 @@ LS.Name = "LoadingScreen"
 LS.Size = UDim2.new(1, 0, 1, 0)
 LS.BackgroundColor3 = C.sidebar
 LS.BorderSizePixel = 0
-LS.ZIndex = 5000
+LS.ZIndex = 100
 LS.Parent = ScreenGui
 
 local LogoBox = Instance.new("Frame")
@@ -68,7 +66,7 @@ LogoBox.Size = UDim2.new(0, 300, 0, 150)
 LogoBox.AnchorPoint = Vector2.new(0.5, 0.5)
 LogoBox.Position = UDim2.new(0.5, 0, 0.5, 0)
 LogoBox.BackgroundTransparency = 1
-LogoBox.ZIndex = 5001
+LogoBox.ZIndex = 101
 LogoBox.Parent = LS
 
 local LoaderTitle = Instance.new("TextLabel")
@@ -79,7 +77,7 @@ LoaderTitle.Text = "INITIALIZING"
 LoaderTitle.TextColor3 = C.textDim
 LoaderTitle.TextSize = 9
 LoaderTitle.Font = Enum.Font.GothamBold
-LoaderTitle.ZIndex = 5002
+LoaderTitle.ZIndex = 102
 LoaderTitle.Parent = LogoBox
 
 local Word = Instance.new("Frame")
@@ -87,7 +85,7 @@ Word.Name = "AnimatedWord"
 Word.Size = UDim2.new(1, 0, 0, 50)
 Word.Position = UDim2.new(0, 0, 0, 31)
 Word.BackgroundTransparency = 1
-Word.ZIndex = 5002
+Word.ZIndex = 102
 Word.Parent = LogoBox
 
 local WL = Instance.new("UIListLayout")
@@ -108,7 +106,7 @@ for index, char in utf8.graphemes("LINBERGZ") do
     letter.TextTransparency = 0.32
     letter.TextSize = 34
     letter.Font = Enum.Font.GothamBlack
-    letter.ZIndex = 5003
+    letter.ZIndex = 103
     letter.Parent = Word
     table.insert(letters, letter)
 end
@@ -121,7 +119,7 @@ Underline.Position = UDim2.new(0.5, 0, 0, 91)
 Underline.BackgroundColor3 = C.elevated
 Underline.BorderSizePixel = 0
 Underline.ClipsDescendants = true
-Underline.ZIndex = 5002
+Underline.ZIndex = 102
 Underline.Parent = LogoBox
 Instance.new("UICorner", Underline).CornerRadius = UDim.new(1, 0)
 
@@ -130,7 +128,7 @@ LineGlow.Size = UDim2.new(0, 36, 1, 0)
 LineGlow.Position = UDim2.new(0, -36, 0, 0)
 LineGlow.BackgroundColor3 = C.white
 LineGlow.BorderSizePixel = 0
-LineGlow.ZIndex = 5003
+LineGlow.ZIndex = 103
 LineGlow.Parent = Underline
 Instance.new("UICorner", LineGlow).CornerRadius = UDim.new(1, 0)
 
@@ -142,11 +140,11 @@ Status.Text = "LOADING INTERFACE"
 Status.TextColor3 = C.textSec
 Status.TextSize = 9
 Status.Font = Enum.Font.GothamBold
-Status.ZIndex = 5002
+Status.ZIndex = 102
 Status.Parent = LogoBox
 
 task.spawn(function()
-    while LS and LS.Parent do
+    while LS.Parent do
         for i, letter in ipairs(letters) do
             local centerDistance = math.abs(i - 4.5) / 3.5
             local baseSize = math.floor(34 - centerDistance * 10)
@@ -174,7 +172,7 @@ task.spawn(function()
 end)
 
 task.spawn(function()
-    while LineGlow and LineGlow.Parent do
+    while LineGlow.Parent do
         LineGlow.Position = UDim2.new(0, -36, 0, 0)
         local sweep = TweenService:Create(LineGlow, TweenInfo.new(1.25, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
             Position = UDim2.new(1, 0, 0, 0),
@@ -185,143 +183,114 @@ task.spawn(function()
     end
 end)
 
--- FAILSAFE LOADER DESTROY
 task.spawn(function()
     task.wait(1.9)
-    if LS and LS.Parent then
-        local fadeInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        for _, object in ipairs(LS:GetDescendants()) do
-            if object:IsA("TextLabel") then
-                TweenService:Create(object, fadeInfo, {TextTransparency = 1}):Play()
-            elseif object:IsA("Frame") then
-                TweenService:Create(object, fadeInfo, {BackgroundTransparency = 1}):Play()
-            end
+    local fadeInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    for _, object in ipairs(LS:GetDescendants()) do
+        if object:IsA("TextLabel") then
+            TweenService:Create(object, fadeInfo, {TextTransparency = 1}):Play()
+        elseif object:IsA("Frame") then
+            TweenService:Create(object, fadeInfo, {BackgroundTransparency = 1}):Play()
         end
-        task.wait(0.4)
-        if LS then LS:Destroy() end
     end
+    task.wait(0.4)
+    LS:Destroy()
 end)
 
 ---------------------------------------------------------
--- SACRACIA PALETTE & CONFIG
+-- SACRACIA PALETTE & STYLES
 ---------------------------------------------------------
 local AppC = {
-    bg = Color3.fromRGB(22, 22, 26),
-    sidebar = Color3.fromRGB(16, 16, 20),
-    accent = Color3.fromRGB(52, 120, 246),
+    bg = Color3.fromRGB(22, 22, 26),          -- Main Window Background
+    sidebar = Color3.fromRGB(16, 16, 20),     -- Dark Sidebar Background
+    accent = Color3.fromRGB(52, 120, 246),     -- Sacracia Blue Accent
     accentDark = Color3.fromRGB(30, 80, 180),
-    switchOff = Color3.fromRGB(42, 44, 52),
-    cardInner = Color3.fromRGB(28, 30, 36),
+    switchOff = Color3.fromRGB(42, 44, 52),    -- Switch Off State
     white = Color3.fromRGB(255, 255, 255),
     text = Color3.fromRGB(240, 242, 245),
     textSec = Color3.fromRGB(140, 145, 155),
     textDim = Color3.fromRGB(90, 95, 105),
-    border = Color3.fromRGB(32, 34, 42),
+    border = Color3.fromRGB(30, 32, 38),
     activeTab = Color3.fromRGB(32, 34, 42),
     red = Color3.fromRGB(245, 66, 66),
-}
-
-local currentLang = "RU"
-local currentFont = Enum.Font.GothamBold
-
-local Translations = {
-    RU = {
-        Stats = "Статистика", Entities = "Сущности", Visuals = "Визуалы",
-        Valuables = "Ценности", Items = "Предметы", Level = "Уровень",
-        Miscellaneous = "Разное", Settings = "Настройки",
-        MainSettings = "ОСНОВНЫЕ НАСТРОЙКИ", UIAppearance = "ВНЕШНИЙ ВИД",
-        AntiAfk = "Анти-АФК", AntiAfkDesc = "Защита от вылета за неактивность",
-        MenuSize = "Размер меню", ScreenStretch = "Растяжение экрана",
-        FontSelect = "Шрифт интерфейса", LangSelect = "Язык интерфейса",
-        Health = "Здоровье", Movement = "Перемещение", Grab = "Захват", Cosmetics = "Косметика",
-        Godmode = "Режим бога", InfStamina = "Бесконечная стамина", WalkSpeed = "Скорость ходьбы",
-        RunSpeed = "Скорость бега", CrouchSpeed = "Скорость приседания", InfJumps = "Бесконечные прыжки",
-        HighStrength = "Высокая сила", UnlimRange = "Безлимитный радиус", Wings = "Включить крылья",
-        WingSpeed = "Скорость крыльев", Aura = "Включить ауру"
-    },
-    EN = {
-        Stats = "Stats", Entities = "Entities", Visuals = "Visuals",
-        Valuables = "Valuables", Items = "Items", Level = "Level",
-        Miscellaneous = "Miscellaneous", Settings = "Settings",
-        MainSettings = "MAIN SETTINGS", UIAppearance = "UI APPEARANCE",
-        AntiAfk = "Anti-AFK", AntiAfkDesc = "Prevents idle kick (20 mins)",
-        MenuSize = "Menu Size", ScreenStretch = "Screen Stretch",
-        FontSelect = "UI Font", LangSelect = "UI Language",
-        Health = "Health", Movement = "Movement", Grab = "Grab", Cosmetics = "Cosmetics",
-        Godmode = "Godmode", InfStamina = "Infinite stamina", WalkSpeed = "Walking speed",
-        RunSpeed = "Running speed", CrouchSpeed = "Crouching speed", InfJumps = "Infinite jumps",
-        HighStrength = "High strength", UnlimRange = "Unlimited range", Wings = "Enable Wings",
-        WingSpeed = "Wing Speed", Aura = "Enable Aura"
-    }
-}
-
-local fontMap = {
-    ["Gotham"] = Enum.Font.GothamBold,
-    ["Roboto"] = Enum.Font.RobotoBold,
-    ["SourceSans"] = Enum.Font.SourceSansBold,
-    ["Arial"] = Enum.Font.ArialBold,
-    ["Code"] = Enum.Font.Code,
+    pillBg = Color3.fromRGB(30, 32, 40)
 }
 
 ---------------------------------------------------------
--- ULTRA RELIABLE FLOATING TOGGLE BUTTON (ZINDEX 10000)
+-- MOBILE TOGGLE BUTTON (SACRACIA CAPSULE)
 ---------------------------------------------------------
 local hubOpen = false
+local toggleDrag = nil
 
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "HubToggle"
-ToggleBtn.Size = UDim2.new(0, 140, 0, 38)
-ToggleBtn.Position = UDim2.new(0, 15, 0.25, 0)
+ToggleBtn.Size = UDim2.new(0, 130, 0, 34)
+ToggleBtn.Position = UDim2.new(0, 16, 0.32, 0)
 ToggleBtn.BackgroundColor3 = AppC.sidebar
 ToggleBtn.Text = ""
 ToggleBtn.AutoButtonColor = false
-ToggleBtn.ZIndex = 10000
-ToggleBtn.Visible = true
+ToggleBtn.ZIndex = 50
 ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 10)
 
 local ToggleStroke = Instance.new("UIStroke")
 ToggleStroke.Color = AppC.accent
-ToggleStroke.Thickness = 1.8
-ToggleStroke.Transparency = 0.1
+ToggleStroke.Thickness = 1.2
+ToggleStroke.Transparency = 0.3
 ToggleStroke.Parent = ToggleBtn
 
 local ToggleLogo = Instance.new("TextLabel")
-ToggleLogo.Size = UDim2.new(0, 24, 1, 0)
-ToggleLogo.Position = UDim2.new(0, 8, 0, 0)
+ToggleLogo.Size = UDim2.new(0, 20, 1, 0)
+ToggleLogo.Position = UDim2.new(0, 10, 0, 0)
 ToggleLogo.BackgroundTransparency = 1
 ToggleLogo.Text = "◈"
 ToggleLogo.TextColor3 = AppC.accent
-ToggleLogo.TextSize = 15
+ToggleLogo.TextSize = 13
 ToggleLogo.Font = Enum.Font.GothamBold
-ToggleLogo.ZIndex = 10001
+ToggleLogo.ZIndex = 52
 ToggleLogo.Parent = ToggleBtn
 
 local ToggleText = Instance.new("TextLabel")
-ToggleText.Size = UDim2.new(1, -36, 1, 0)
-ToggleText.Position = UDim2.new(0, 32, 0, 0)
+ToggleText.Size = UDim2.new(1, -34, 1, 0)
+ToggleText.Position = UDim2.new(0, 28, 0, 0)
 ToggleText.BackgroundTransparency = 1
 ToggleText.Text = "SACRACIA"
 ToggleText.TextColor3 = AppC.text
 ToggleText.TextSize = 10
 ToggleText.Font = Enum.Font.GothamBold
 ToggleText.TextXAlignment = Enum.TextXAlignment.Left
-ToggleText.ZIndex = 10001
+ToggleText.ZIndex = 52
 ToggleText.Parent = ToggleBtn
 
 local function SetToggleVisual(isOpen)
-    ToggleText.Text = isOpen and "CLOSE [X]" or "SACRACIA"
+    ToggleText.Text = isOpen and "CLOSE" or "SACRACIA"
     TweenService:Create(ToggleStroke, TweenInfo.new(0.2), {
         Color = isOpen and AppC.red or AppC.accent
     }):Play()
     ToggleLogo.TextColor3 = isOpen and AppC.red or AppC.accent
 end
 
+do
+    ToggleBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            toggleDrag = {input = input, start = input.Position, position = ToggleBtn.Position, moved = false}
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if not toggleDrag or (input.UserInputType ~= Enum.UserInputType.MouseMovement and input ~= toggleDrag.input) then return end
+        local delta = input.Position - toggleDrag.start
+        if delta.Magnitude > 7 then toggleDrag.moved = true end
+        local viewport = ScreenGui.AbsoluteSize
+        local x = math.clamp(toggleDrag.position.X.Offset + delta.X, 8, math.max(8, viewport.X - ToggleBtn.AbsoluteSize.X - 8))
+        local y = math.clamp(toggleDrag.position.Y.Offset + delta.Y, 8, math.max(8, viewport.Y - ToggleBtn.AbsoluteSize.Y - 8))
+        ToggleBtn.Position = UDim2.fromOffset(x, y)
+    end)
+end
+
 ---------------------------------------------------------
--- MAIN HUB WINDOW
+-- MAIN HUB FRAME (SACRACIA WINDOW)
 ---------------------------------------------------------
-local BASE_W, BASE_H = 600, 390
-local HUB_W, HUB_H, SIDEBAR_W = BASE_W, BASE_H, 150
+local HUB_W, HUB_H, SIDEBAR_W = 600, 390, 150
 local windowSize = Vector2.new(HUB_W, HUB_H)
 local windowPos
 local windowInteraction = nil
@@ -334,7 +303,7 @@ HubShadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 HubShadow.BackgroundTransparency = 0.4
 HubShadow.BorderSizePixel = 0
 HubShadow.Visible = false
-HubShadow.ZIndex = 900
+HubShadow.ZIndex = 8
 HubShadow.Parent = ScreenGui
 Instance.new("UICorner", HubShadow).CornerRadius = UDim.new(0, 12)
 
@@ -346,7 +315,7 @@ Hub.BackgroundColor3 = AppC.bg
 Hub.BorderSizePixel = 0
 Hub.Visible = false
 Hub.ClipsDescendants = true
-Hub.ZIndex = 1000
+Hub.ZIndex = 10
 Hub.Parent = ScreenGui
 Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 12)
 
@@ -389,74 +358,7 @@ ScreenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
 end)
 
 ---------------------------------------------------------
--- OPEN / CLOSE TOGGLE FUNCTION
----------------------------------------------------------
-local function ToggleHub()
-    hubOpen = not hubOpen
-    SetToggleVisual(hubOpen)
-
-    if hubOpen then
-        Hub.Visible = true
-        HubShadow.Visible = true
-        ensureWindowRect()
-        Hub.Size = UDim2.fromOffset(windowSize.X, 0)
-        HubShadow.Size = UDim2.fromOffset(windowSize.X, 0)
-        TweenService:Create(Hub, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(windowSize.X, windowSize.Y)}):Play()
-        TweenService:Create(HubShadow, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(windowSize.X, windowSize.Y)}):Play()
-    else
-        local tw = TweenService:Create(Hub, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.fromOffset(windowSize.X, 0)})
-        tw:Play()
-        TweenService:Create(HubShadow, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.fromOffset(windowSize.X, 0)}):Play()
-        tw.Completed:Connect(function()
-            if not hubOpen then
-                Hub.Visible = false
-                HubShadow.Visible = false
-                Hub.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
-                HubShadow.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
-            end
-        end)
-    end
-end
-
--- ROBLOX NATIVE ACTIVATED EVENT (GUARANTEED MOBILE & DESKTOP CLICK)
-ToggleBtn.Activated:Connect(function()
-    ToggleHub()
-end)
-
--- SMOOTH DRAG SYSTEM FOR TOGGLE BUTTON
-do
-    local dragging = false
-    local dragStart, startPos
-
-    ToggleBtn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = ToggleBtn.Position
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - dragStart
-            if delta.Magnitude > 6 then
-                local viewport = getViewport()
-                local newX = math.clamp(startPos.X.Offset + delta.X, 8, viewport.X - ToggleBtn.AbsoluteSize.X - 8)
-                local newY = math.clamp(startPos.Y.Offset + delta.Y, 8, viewport.Y - ToggleBtn.AbsoluteSize.Y - 8)
-                ToggleBtn.Position = UDim2.fromOffset(newX, newY)
-            end
-        end
-    end)
-
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
-end
-
----------------------------------------------------------
--- SACRACIA SIDEBAR
+-- SACRACIA SIDEBAR (LEFT NAVIGATION)
 ---------------------------------------------------------
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
@@ -464,7 +366,7 @@ Sidebar.Size = UDim2.new(0, SIDEBAR_W, 1, 0)
 Sidebar.Position = UDim2.new(0, 0, 0, 0)
 Sidebar.BackgroundColor3 = AppC.sidebar
 Sidebar.BorderSizePixel = 0
-Sidebar.ZIndex = 1010
+Sidebar.ZIndex = 12
 Sidebar.Parent = Hub
 
 local SideRule = Instance.new("Frame")
@@ -472,13 +374,14 @@ SideRule.Size = UDim2.new(0, 1, 1, 0)
 SideRule.Position = UDim2.new(1, -1, 0, 0)
 SideRule.BackgroundColor3 = AppC.border
 SideRule.BorderSizePixel = 0
-SideRule.ZIndex = 1011
+SideRule.ZIndex = 13
 SideRule.Parent = Sidebar
 
+-- BRAND LOGO
 local LogoFrame = Instance.new("Frame")
 LogoFrame.Size = UDim2.new(1, 0, 0, 50)
 LogoFrame.BackgroundTransparency = 1
-LogoFrame.ZIndex = 1011
+LogoFrame.ZIndex = 13
 LogoFrame.Parent = Sidebar
 
 local LogoText = Instance.new("TextLabel")
@@ -490,7 +393,7 @@ LogoText.TextColor3 = AppC.text
 LogoText.TextSize = 13
 LogoText.Font = Enum.Font.GothamBlack
 LogoText.TextXAlignment = Enum.TextXAlignment.Left
-LogoText.ZIndex = 1012
+LogoText.ZIndex = 14
 LogoText.Parent = LogoFrame
 
 local SideScroll = Instance.new("ScrollingFrame")
@@ -499,7 +402,7 @@ SideScroll.Position = UDim2.new(0, 0, 0, 50)
 SideScroll.BackgroundTransparency = 1
 SideScroll.BorderSizePixel = 0
 SideScroll.ScrollBarThickness = 0
-SideScroll.ZIndex = 1011
+SideScroll.ZIndex = 13
 SideScroll.Parent = Sidebar
 
 local SideList = Instance.new("UIListLayout")
@@ -512,6 +415,7 @@ SidePad.PaddingLeft = UDim.new(0, 10)
 SidePad.PaddingRight = UDim.new(0, 10)
 SidePad.Parent = SideScroll
 
+-- CLOSE BUTTON
 local ClB = Instance.new("TextButton")
 ClB.Size = UDim2.new(0, 24, 0, 24)
 ClB.Position = UDim2.new(1, -30, 0, 12)
@@ -520,12 +424,11 @@ ClB.Text = "✕"
 ClB.TextColor3 = AppC.textDim
 ClB.TextSize = 12
 ClB.Font = Enum.Font.GothamBold
-ClB.ZIndex = 1500
+ClB.ZIndex = 20
 ClB.Parent = Hub
 
 ClB.MouseEnter:Connect(function() ClB.TextColor3 = AppC.red end)
 ClB.MouseLeave:Connect(function() ClB.TextColor3 = AppC.textDim end)
-ClB.Activated:Connect(function() if hubOpen then ToggleHub() end end)
 
 -- WINDOW DRAG LOGIC
 do
@@ -555,60 +458,36 @@ do
 end
 
 ---------------------------------------------------------
--- UI BUILDERS & LOCALIZATION
+-- SACRACIA UI CONTROLS BUILDERS
 ---------------------------------------------------------
 local PageHolder = Instance.new("Frame")
 PageHolder.Name = "PageHolder"
 PageHolder.Size = UDim2.new(1, -SIDEBAR_W, 1, 0)
 PageHolder.Position = UDim2.new(0, SIDEBAR_W, 0, 0)
 PageHolder.BackgroundTransparency = 1
-PageHolder.ZIndex = 1010
+PageHolder.ZIndex = 11
 PageHolder.Parent = Hub
 
-local textBindingMap = {}
-
-local function RegisterTextBinding(element, langKey)
-    textBindingMap[element] = langKey
-    element.Text = Translations[currentLang][langKey] or langKey
-end
-
-local function UpdateLanguage(newLang)
-    currentLang = newLang
-    for element, langKey in pairs(textBindingMap) do
-        if element.Parent then
-            element.Text = Translations[currentLang][langKey] or langKey
-        end
-    end
-end
-
-local function UpdateAllFonts(newFont)
-    currentFont = newFont
-    for _, obj in ipairs(Hub:GetDescendants()) do
-        if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-            obj.Font = newFont
-        end
-    end
-end
-
-local function CreateSectionHeader(parent, langKey)
+local function CreateSectionHeader(parent, text)
     local header = Instance.new("TextLabel")
     header.Size = UDim2.new(1, 0, 0, 20)
     header.BackgroundTransparency = 1
+    header.Text = string.upper(text)
     header.TextColor3 = AppC.textSec
     header.TextSize = 9
-    header.Font = currentFont
+    header.Font = Enum.Font.GothamBold
     header.TextXAlignment = Enum.TextXAlignment.Left
-    header.ZIndex = 1013
+    header.ZIndex = 13
     header.Parent = parent
-    RegisterTextBinding(header, langKey)
     return header
 end
 
-local function CreateToggle(parent, titleKey, descKey, defaultState, callback)
+-- iOS / SACRACIA SWITCH TOGGLE
+local function CreateToggle(parent, titleText, descText, defaultState, callback)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, descKey and 36 or 24)
+    frame.Size = UDim2.new(1, 0, 0, descText and 36 or 24)
     frame.BackgroundTransparency = 1
-    frame.ZIndex = 1013
+    frame.ZIndex = 13
     frame.Parent = parent
 
     local textContainer = Instance.new("Frame")
@@ -619,26 +498,26 @@ local function CreateToggle(parent, titleKey, descKey, defaultState, callback)
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, 0, 0, 16)
     title.BackgroundTransparency = 1
+    title.Text = titleText
     title.TextColor3 = AppC.text
     title.TextSize = 10
-    title.Font = currentFont
+    title.Font = Enum.Font.GothamBold
     title.TextXAlignment = Enum.TextXAlignment.Left
-    title.ZIndex = 1014
+    title.ZIndex = 14
     title.Parent = textContainer
-    RegisterTextBinding(title, titleKey)
 
-    if descKey then
+    if descText then
         local desc = Instance.new("TextLabel")
         desc.Size = UDim2.new(1, 0, 0, 14)
         desc.Position = UDim2.new(0, 0, 0, 16)
         desc.BackgroundTransparency = 1
+        desc.Text = descText
         desc.TextColor3 = AppC.textDim
         desc.TextSize = 8
-        desc.Font = currentFont
+        desc.Font = Enum.Font.GothamMedium
         desc.TextXAlignment = Enum.TextXAlignment.Left
-        desc.ZIndex = 1014
+        desc.ZIndex = 14
         desc.Parent = textContainer
-        RegisterTextBinding(desc, descKey)
     end
 
     local switchTrack = Instance.new("TextButton")
@@ -647,7 +526,7 @@ local function CreateToggle(parent, titleKey, descKey, defaultState, callback)
     switchTrack.BackgroundColor3 = defaultState and AppC.accent or AppC.switchOff
     switchTrack.Text = ""
     switchTrack.AutoButtonColor = false
-    switchTrack.ZIndex = 1014
+    switchTrack.ZIndex = 14
     switchTrack.Parent = frame
     Instance.new("UICorner", switchTrack).CornerRadius = UDim.new(1, 0)
 
@@ -656,7 +535,7 @@ local function CreateToggle(parent, titleKey, descKey, defaultState, callback)
     switchThumb.Position = defaultState and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
     switchThumb.BackgroundColor3 = AppC.white
     switchThumb.BorderSizePixel = 0
-    switchThumb.ZIndex = 1015
+    switchThumb.ZIndex = 15
     switchThumb.Parent = switchTrack
     Instance.new("UICorner", switchThumb).CornerRadius = UDim.new(1, 0)
 
@@ -668,15 +547,16 @@ local function CreateToggle(parent, titleKey, descKey, defaultState, callback)
         if callback then callback(state) end
     end
 
-    switchTrack.Activated:Connect(toggle)
+    switchTrack.MouseButton1Click:Connect(toggle)
     return frame
 end
 
-local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix, callback)
+-- SACRACIA SLIDER WITH MULTIPLIER/VALUE TAG
+local function CreateSlider(parent, titleText, minVal, maxVal, defaultVal, prefix, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 0, 32)
     frame.BackgroundTransparency = 1
-    frame.ZIndex = 1013
+    frame.ZIndex = 13
     frame.Parent = parent
 
     prefix = prefix or "x"
@@ -684,13 +564,13 @@ local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(0.7, 0, 0, 14)
     title.BackgroundTransparency = 1
+    title.Text = titleText
     title.TextColor3 = AppC.text
     title.TextSize = 10
-    title.Font = currentFont
+    title.Font = Enum.Font.GothamBold
     title.TextXAlignment = Enum.TextXAlignment.Left
-    title.ZIndex = 1014
+    title.ZIndex = 14
     title.Parent = frame
-    RegisterTextBinding(title, titleKey)
 
     local valLabel = Instance.new("TextLabel")
     valLabel.Size = UDim2.new(0.3, 0, 0, 14)
@@ -699,9 +579,9 @@ local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix
     valLabel.Text = prefix .. tostring(defaultVal)
     valLabel.TextColor3 = AppC.text
     valLabel.TextSize = 10
-    valLabel.Font = currentFont
+    valLabel.Font = Enum.Font.GothamBold
     valLabel.TextXAlignment = Enum.TextXAlignment.Right
-    valLabel.ZIndex = 1014
+    valLabel.ZIndex = 14
     valLabel.Parent = frame
 
     local track = Instance.new("TextButton")
@@ -710,16 +590,16 @@ local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix
     track.BackgroundColor3 = AppC.switchOff
     track.Text = ""
     track.AutoButtonColor = false
-    track.ZIndex = 1014
+    track.ZIndex = 14
     track.Parent = frame
     Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
 
-    local pct = math.clamp((defaultVal - minVal) / (maxVal - minVal), 0, 1)
+    local pct = (defaultVal - minVal) / (maxVal - minVal)
     local fill = Instance.new("Frame")
     fill.Size = UDim2.new(pct, 0, 1, 0)
     fill.BackgroundColor3 = AppC.accent
     fill.BorderSizePixel = 0
-    fill.ZIndex = 1015
+    fill.ZIndex = 15
     fill.Parent = track
     Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
 
@@ -729,7 +609,7 @@ local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix
     thumb.Position = UDim2.new(pct, 0, 0.5, 0)
     thumb.BackgroundColor3 = AppC.white
     thumb.BorderSizePixel = 0
-    thumb.ZIndex = 1016
+    thumb.ZIndex = 16
     thumb.Parent = track
     Instance.new("UICorner", thumb).CornerRadius = UDim.new(1, 0)
 
@@ -762,119 +642,18 @@ local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix
     return frame
 end
 
-local function CreateDropdownCard(parent, titleKey, options, defaultVal, callback)
-    local container = Instance.new("Frame")
-    container.Size = UDim2.new(1, 0, 0, 42)
-    container.BackgroundTransparency = 1
-    container.ClipsDescendants = true
-    container.ZIndex = 1013
-    container.Parent = parent
-
-    local header = Instance.new("TextLabel")
-    header.Size = UDim2.new(1, 0, 0, 14)
-    header.BackgroundTransparency = 1
-    header.TextColor3 = AppC.text
-    header.TextSize = 10
-    header.Font = currentFont
-    header.TextXAlignment = Enum.TextXAlignment.Left
-    header.ZIndex = 1014
-    header.Parent = container
-    RegisterTextBinding(header, titleKey)
-
-    local card = Instance.new("TextButton")
-    card.Size = UDim2.new(1, 0, 0, 24)
-    card.Position = UDim2.new(0, 0, 0, 18)
-    card.BackgroundColor3 = AppC.cardInner
-    card.Text = ""
-    card.AutoButtonColor = false
-    card.ZIndex = 1014
-    card.Parent = container
-    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
-
-    local cardStroke = Instance.new("UIStroke")
-    cardStroke.Color = AppC.border
-    cardStroke.Thickness = 1
-    cardStroke.Parent = card
-
-    local valText = Instance.new("TextLabel")
-    valText.Size = UDim2.new(1, -24, 1, 0)
-    valText.Position = UDim2.new(0, 8, 0, 0)
-    valText.BackgroundTransparency = 1
-    valText.Text = defaultVal
-    valText.TextColor3 = AppC.text
-    valText.TextSize = 9
-    valText.Font = currentFont
-    valText.TextXAlignment = Enum.TextXAlignment.Left
-    valText.ZIndex = 1015
-    valText.Parent = card
-
-    local arrow = Instance.new("TextLabel")
-    arrow.Size = UDim2.new(0, 20, 1, 0)
-    arrow.Position = UDim2.new(1, -20, 0, 0)
-    arrow.BackgroundTransparency = 1
-    arrow.Text = "^"
-    arrow.TextColor3 = AppC.textDim
-    arrow.TextSize = 10
-    arrow.Font = Enum.Font.GothamBold
-    arrow.ZIndex = 1015
-    arrow.Parent = card
-
-    local listFrame = Instance.new("Frame")
-    listFrame.Size = UDim2.new(1, 0, 0, #options * 22)
-    listFrame.Position = UDim2.new(0, 0, 0, 46)
-    listFrame.BackgroundColor3 = AppC.sidebar
-    listFrame.ZIndex = 1016
-    listFrame.Parent = container
-    Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0, 6)
-
-    local listLayout = Instance.new("UIListLayout")
-    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    listLayout.Parent = listFrame
-
-    local expanded = false
-
-    local function toggleDropdown()
-        expanded = not expanded
-        arrow.Text = expanded and "v" or "^"
-        local targetH = expanded and (48 + #options * 22) or 42
-        TweenService:Create(container, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, targetH)}):Play()
-    end
-
-    card.Activated:Connect(toggleDropdown)
-
-    for _, opt in ipairs(options) do
-        local optBtn = Instance.new("TextButton")
-        optBtn.Size = UDim2.new(1, 0, 0, 22)
-        optBtn.BackgroundTransparency = 1
-        optBtn.Text = "  " .. opt
-        optBtn.TextColor3 = AppC.textSec
-        optBtn.TextSize = 9
-        optBtn.Font = currentFont
-        optBtn.TextXAlignment = Enum.TextXAlignment.Left
-        optBtn.ZIndex = 1017
-        optBtn.Parent = listFrame
-
-        optBtn.Activated:Connect(function()
-            valText.Text = opt
-            toggleDropdown()
-            if callback then callback(opt) end
-        end)
-    end
-    return container
-end
-
 ---------------------------------------------------------
--- NAVIGATION SYSTEM
+-- NAVIGATION & CATEGORIES (MATCHING SACRACIA SIDEBAR)
 ---------------------------------------------------------
 local categories = {
-    {id = "Stats",        icon = "📊", nameKey = "Stats"},
-    {id = "Entities",     icon = "👁", nameKey = "Entities"},
-    {id = "Visuals",      icon = "🎯", nameKey = "Visuals"},
-    {id = "Valuables",    icon = "🎒", nameKey = "Valuables"},
-    {id = "Items",        icon = "📦", nameKey = "Items"},
-    {id = "Level",        icon = "⚡", nameKey = "Level"},
-    {id = "Miscellaneous",icon = "⚙", nameKey = "Miscellaneous"},
-    {id = "Settings",     icon = "🛠", nameKey = "Settings"},
+    {id = "Stats",        icon = "📊", name = "Stats"},
+    {id = "Entities",     icon = "👁", name = "Entities"},
+    {id = "Visuals",      icon = "🎯", name = "Visuals"},
+    {id = "Valuables",    icon = "🎒", name = "Valuables"},
+    {id = "Items",        icon = "📦", name = "Items"},
+    {id = "Level",        icon = "⚡", name = "Level"},
+    {id = "Miscellaneous",icon = "⚙", name = "Miscellaneous"},
+    {id = "Settings",     icon = "🛠", name = "Settings"},
 }
 
 local sidebarButtons = {}
@@ -887,6 +666,7 @@ local function ShowPage(id)
     for pageId, btn in pairs(sidebarButtons) do
         local selected = (pageId == id)
         btn.BackgroundColor3 = selected and AppC.activeTab or AppC.sidebar
+        btn.TextColor3 = selected and AppC.text or AppC.textDim
         local icon = btn:FindFirstChild("Icon")
         if icon then icon.TextColor3 = selected and AppC.accent or AppC.textDim end
     end
@@ -900,7 +680,7 @@ for _, item in ipairs(categories) do
     btn.BorderSizePixel = 0
     btn.Text = ""
     btn.AutoButtonColor = false
-    btn.ZIndex = 1012
+    btn.ZIndex = 14
     btn.Parent = SideScroll
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
 
@@ -912,43 +692,31 @@ for _, item in ipairs(categories) do
     icon.Text = item.icon
     icon.TextColor3 = AppC.textDim
     icon.TextSize = 11
-    icon.ZIndex = 1013
+    icon.ZIndex = 15
     icon.Parent = btn
 
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, -34, 1, 0)
     label.Position = UDim2.new(0, 32, 0, 0)
     label.BackgroundTransparency = 1
-    label.TextColor3 = AppC.text
+    label.Text = item.name
+    label.TextColor3 = AppC.textDim
     label.TextSize = 9
-    label.Font = currentFont
+    label.Font = Enum.Font.GothamBold
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 1013
+    label.ZIndex = 15
     label.Parent = btn
-    RegisterTextBinding(label, item.nameKey)
 
     sidebarButtons[item.id] = btn
-    btn.Activated:Connect(function() ShowPage(item.id) end)
+
+    btn.MouseButton1Click:Connect(function()
+        ShowPage(item.id)
+    end)
 end
 
 ---------------------------------------------------------
--- ANTI-AFK & COSMETICS LOGIC
+-- REAL WORKING VISUALS LOGIC FOR COSMETICS
 ---------------------------------------------------------
-local antiAfkConn = nil
-local function SetAntiAFK(state)
-    if state then
-        antiAfkConn = player.Idled:Connect(function()
-            VirtualUser:CaptureController()
-            VirtualUser:ClickButton2(Vector2.new())
-        end)
-    else
-        if antiAfkConn then
-            antiAfkConn:Disconnect()
-            antiAfkConn = nil
-        end
-    end
-end
-
 local betaState = {
     wings = false,
     aura = false,
@@ -961,7 +729,10 @@ local betaState = {
 }
 
 local function RemoveWings()
-    if betaState.wingFolder then betaState.wingFolder:Destroy() betaState.wingFolder = nil end
+    if betaState.wingFolder then
+        betaState.wingFolder:Destroy()
+        betaState.wingFolder = nil
+    end
 end
 
 local function RemoveAura()
@@ -1001,12 +772,14 @@ local function ApplyWings()
     leftRoot.Size = Vector3.new(0.1,0.1,0.1)
     leftRoot.Transparency = 1
     leftRoot.CanCollide = false
+    leftRoot.Massless = true
     leftRoot.Parent = folder
 
     local rightRoot = Instance.new("Part")
     rightRoot.Size = Vector3.new(0.1,0.1,0.1)
     rightRoot.Transparency = 1
     rightRoot.CanCollide = false
+    rightRoot.Massless = true
     rightRoot.Parent = folder
 
     local wL = Instance.new("Weld")
@@ -1053,20 +826,24 @@ local function ApplyAura()
     if not hrp then return end
 
     local hl = Instance.new("Highlight")
+    hl.Name = "MidnightAuraHL"
     hl.FillColor = AppC.accent
     hl.OutlineColor = AppC.white
     hl.FillTransparency = 0.65
+    hl.OutlineTransparency = 0.2
     hl.Adornee = char
     hl.Parent = char
     betaState.auraHighlight = hl
 
     local pe = Instance.new("ParticleEmitter")
+    pe.Name = "MidnightAuraParticles"
     pe.Color = ColorSequence.new(AppC.accent, AppC.white)
     pe.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 0)})
     pe.Texture = "rbxassetid://242200285"
     pe.Lifetime = NumberRange.new(0.8, 1.4)
     pe.Rate = 20
     pe.Speed = NumberRange.new(1.5, 3.5)
+    pe.VelocitySpread = 180
     pe.Parent = hrp
     betaState.auraParticles = pe
 
@@ -1088,8 +865,14 @@ if not betaState.conn then
     end)
 end
 
+player.CharacterAdded:Connect(function()
+    task.wait(0.5)
+    if betaState.wings then ApplyWings() end
+    if betaState.aura then ApplyAura() end
+end)
+
 ---------------------------------------------------------
--- POPULATE PAGES
+-- POPULATE SACRACIA PAGES (TWO COLUMN LAYOUT)
 ---------------------------------------------------------
 for _, item in ipairs(categories) do
     local page = Instance.new("Frame")
@@ -1115,8 +898,10 @@ for _, item in ipairs(categories) do
     pad.PaddingBottom = UDim.new(0, 20)
     pad.Parent = pageScroll
 
+    -- 2 Columns Grid Layout
     local colLeft = Instance.new("Frame")
     colLeft.Size = UDim2.new(0.48, 0, 1, 0)
+    colLeft.Position = UDim2.new(0, 0, 0, 0)
     colLeft.BackgroundTransparency = 1
     colLeft.Parent = pageScroll
 
@@ -1136,68 +921,87 @@ for _, item in ipairs(categories) do
     listR.Padding = UDim.new(0, 12)
     listR.Parent = colRight
 
-    if item.id == "Settings" then
-        CreateSectionHeader(colLeft, "MainSettings")
-        CreateToggle(colLeft, "AntiAfk", "AntiAfkDesc", false, SetAntiAFK)
-        
-        CreateSlider(colLeft, "MenuSize", 0, 100, 50, "%", function(val)
-            local scale = 0.7 + (val / 100) * 0.6
-            windowSize = Vector2.new(math.floor(BASE_W * scale), math.floor(BASE_H * scale))
-            ensureWindowRect()
-        end)
-
-        CreateSlider(colLeft, "ScreenStretch", 0, 100, 0, "%", function(val)
-            local cam = workspace.CurrentCamera
-            if cam then
-                cam.FieldOfView = 70 + (val / 100) * 50
-            end
-        end)
-
-        CreateSectionHeader(colRight, "UIAppearance")
-        
-        CreateDropdownCard(colRight, "FontSelect", {"Gotham", "Roboto", "SourceSans", "Arial", "Code"}, "Gotham", function(selectedFont)
-            if fontMap[selectedFont] then
-                UpdateAllFonts(fontMap[selectedFont])
-            end
-        end)
-
-        CreateDropdownCard(colRight, "LangSelect", {"Русский", "English"}, currentLang == "RU" and "Русский" or "English", function(selectedLang)
-            local code = (selectedLang == "Русский") and "RU" or "EN"
-            UpdateLanguage(code)
-        end)
-
-    elseif item.id == "Stats" then
+    if item.id == "Stats" then
+        -- LEFT COLUMN: HEALTH & MOVEMENT
         CreateSectionHeader(colLeft, "Health")
         CreateToggle(colLeft, "Godmode", nil, true)
 
         CreateSectionHeader(colLeft, "Movement")
-        CreateToggle(colLeft, "InfStamina", nil, false)
-        CreateSlider(colLeft, "WalkSpeed", 1, 10, 6, "x")
-        CreateSlider(colLeft, "RunSpeed", 1, 10, 3, "x")
-        CreateSlider(colLeft, "CrouchSpeed", 1, 10, 5, "x")
-        CreateToggle(colLeft, "InfJumps", nil, true)
+        CreateToggle(colLeft, "Infinite stamina", nil, false)
+        CreateSlider(colLeft, "Walking speed", 1, 10, 6, "x")
+        CreateSlider(colLeft, "Running speed", 1, 10, 3, "x")
+        CreateSlider(colLeft, "Crouching speed", 1, 10, 5, "x")
+        CreateToggle(colLeft, "Infinite jumps", nil, true)
+        CreateToggle(colLeft, "Dont tumble", "Double tumbling from external sources", false)
 
+        -- RIGHT COLUMN: GRAB & POWERUPS
         CreateSectionHeader(colRight, "Grab")
-        CreateToggle(colRight, "HighStrength", nil, true)
-        CreateToggle(colRight, "UnlimRange", nil, true)
+        CreateToggle(colRight, "High strength", "Disables if you take damage", true)
+        CreateToggle(colRight, "Unlimited range", nil, true)
+        CreateToggle(colRight, "No doorforge", nil, false)
 
-        CreateSectionHeader(colRight, "Cosmetics")
-        CreateToggle(colRight, "Wings", nil, false, function(s)
+        CreateSectionHeader(colRight, "Cosmetics & Aura")
+        CreateToggle(colRight, "Enable Wings", "Attach glowing wings to character", false, function(s)
             betaState.wings = s
             ApplyWings()
         end)
-        CreateSlider(colRight, "WingSpeed", 1, 10, 3, "x", function(v)
+        CreateSlider(colRight, "Wing Speed", 1, 10, 3, "x", function(v)
             betaState.wingSpeed = v
         end)
-        CreateToggle(colRight, "Aura", nil, false, function(s)
+        CreateToggle(colRight, "Enable Aura", "Body highlight & particles", false, function(s)
             betaState.aura = s
             ApplyAura()
         end)
+
     else
-        CreateSectionHeader(colLeft, item.nameKey)
-        CreateToggle(colLeft, "Godmode", nil, true)
-        CreateSlider(colLeft, "WalkSpeed", 1, 100, 50, "%")
+        -- DEFAULT DUMMY PAGE CONTENT
+        CreateSectionHeader(colLeft, item.name .. " Settings")
+        CreateToggle(colLeft, "Enable " .. item.name, "Toggle option feature", true)
+        CreateSlider(colLeft, "Intensity", 1, 100, 50, "%")
+
+        CreateSectionHeader(colRight, "Advanced Options")
+        CreateToggle(colRight, "Bypass Anti-Cheat", nil, true)
+        CreateToggle(colRight, "Silent Mode", nil, false)
     end
 end
 
+---------------------------------------------------------
+-- TOGGLE HUB FUNCTIONALITY
+---------------------------------------------------------
+local function ToggleHub()
+    hubOpen = not hubOpen
+    SetToggleVisual(hubOpen)
+
+    if hubOpen then
+        Hub.Visible = true
+        HubShadow.Visible = true
+        ensureWindowRect()
+        Hub.Size = UDim2.fromOffset(windowSize.X, 0)
+        HubShadow.Size = UDim2.fromOffset(windowSize.X, 0)
+        TweenService:Create(Hub, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(windowSize.X, windowSize.Y)}):Play()
+        TweenService:Create(HubShadow, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(windowSize.X, windowSize.Y)}):Play()
+    else
+        local tw = TweenService:Create(Hub, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.fromOffset(windowSize.X, 0)})
+        tw:Play()
+        TweenService:Create(HubShadow, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.fromOffset(windowSize.X, 0)}):Play()
+        tw.Completed:Connect(function()
+            if not hubOpen then
+                Hub.Visible = false
+                HubShadow.Visible = false
+                Hub.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
+                HubShadow.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
+            end
+        end)
+    end
+end
+
+UserInputService.InputEnded:Connect(function(input)
+    if toggleDrag and (input == toggleDrag.input or input.UserInputType == Enum.UserInputType.MouseButton1) then
+        local moved = toggleDrag.moved
+        toggleDrag = nil
+        if not moved then ToggleHub() end
+    end
+end)
+
+ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
 ShowPage("Stats")
