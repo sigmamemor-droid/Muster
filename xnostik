@@ -853,22 +853,22 @@ local function CreateDropdown(parent, text, selectedText)
 end
 
 ---------------------------------------------------------
--- NAVIGATION SYSTEM & PAGE GENERATION
+-- NAVIGATION SYSTEM & PAGE GENERATION (UNICODE GLYPHS)
 ---------------------------------------------------------
 local categories = {
     {header = "Combat", items = {
-        {id = "Aimbot", icon = "🎯", name = "Aimbot"},
+        {id = "Aimbot", icon = "⌖", name = "Aimbot"},
     }},
     {header = "Visuals", items = {
-        {id = "Players", icon = "👤", name = "Players"},
-        {id = "Items",   icon = "🔫", name = "Items"},
-        {id = "View",    icon = "👁️", name = "View"},
-        {id = "Hud",     icon = "🔳", name = "Hud"},
+        {id = "Players", icon = "♟", name = "Players"},
+        {id = "Items",   icon = "⚔", name = "Items"},
+        {id = "View",    icon = "◉", name = "View"},
+        {id = "Hud",     icon = "▣", name = "Hud"},
     }},
     {header = "Misc", items = {
-        {id = "Main",     icon = "⚙️", name = "Main"},
-        {id = "Movement", icon = "🏃", name = "Movement"},
-        {id = "Cloud",    icon = "☁️", name = "Cloud"},
+        {id = "Main",     icon = "⚙", name = "Main"},
+        {id = "Movement", icon = "⚡", name = "Movement"},
+        {id = "Cloud",    icon = "☁", name = "Cloud"},
     }},
 }
 
@@ -917,7 +917,7 @@ for _, catGroup in ipairs(categories) do
         btn.BorderSizePixel = 0
         btn.Text = "   " .. item.icon .. "  " .. item.name
         btn.TextColor3 = AppC.textDim
-        btn.TextSize = 10
+        btn.TextSize = 11
         btn.Font = Enum.Font.GothamBold
         btn.TextXAlignment = Enum.TextXAlignment.Left
         btn.AutoButtonColor = false
