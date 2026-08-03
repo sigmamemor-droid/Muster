@@ -1,9 +1,9 @@
--- linbergz Team MOBILE HUB v17.0 — SACRACIA UI (FIXED MOBILE TOGGLE)
+-- linbergz Team MOBILE HUB v18.0 — SACRACIA UI (GUARANTEED TOGGLE FIX)
 -- Loading Screen animation untouched.
 -- Native Roblox Luau; UI-Only.
 
 ---------------------------------------------------------
--- SERVICES
+-- SERVICES & LOCAL PLAYER
 ---------------------------------------------------------
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -17,10 +17,12 @@ if not player then
     player = Players.LocalPlayer
 end
 
+local playerGui = player:WaitForChild("PlayerGui")
+
 ---------------------------------------------------------
 -- CLEANUP / SCREEN GUI
 ---------------------------------------------------------
-local oldGui = player.PlayerGui:FindFirstChild("MM2HubMobile")
+local oldGui = playerGui:FindFirstChild("MM2HubMobile")
 if oldGui then oldGui:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -28,8 +30,8 @@ ScreenGui.Name = "MM2HubMobile"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
-ScreenGui.DisplayOrder = 999
-ScreenGui.Parent = player.PlayerGui
+ScreenGui.DisplayOrder = 999999
+ScreenGui.Parent = playerGui
 
 ---------------------------------------------------------
 -- COLOR PALETTE (LOADER SPECIFIC - UNTOUCHED)
@@ -57,7 +59,7 @@ LS.Name = "LoadingScreen"
 LS.Size = UDim2.new(1, 0, 1, 0)
 LS.BackgroundColor3 = C.sidebar
 LS.BorderSizePixel = 0
-LS.ZIndex = 500
+LS.ZIndex = 5000
 LS.Parent = ScreenGui
 
 local LogoBox = Instance.new("Frame")
@@ -66,7 +68,7 @@ LogoBox.Size = UDim2.new(0, 300, 0, 150)
 LogoBox.AnchorPoint = Vector2.new(0.5, 0.5)
 LogoBox.Position = UDim2.new(0.5, 0, 0.5, 0)
 LogoBox.BackgroundTransparency = 1
-LogoBox.ZIndex = 501
+LogoBox.ZIndex = 5001
 LogoBox.Parent = LS
 
 local LoaderTitle = Instance.new("TextLabel")
@@ -77,7 +79,7 @@ LoaderTitle.Text = "INITIALIZING"
 LoaderTitle.TextColor3 = C.textDim
 LoaderTitle.TextSize = 9
 LoaderTitle.Font = Enum.Font.GothamBold
-LoaderTitle.ZIndex = 502
+LoaderTitle.ZIndex = 5002
 LoaderTitle.Parent = LogoBox
 
 local Word = Instance.new("Frame")
@@ -85,7 +87,7 @@ Word.Name = "AnimatedWord"
 Word.Size = UDim2.new(1, 0, 0, 50)
 Word.Position = UDim2.new(0, 0, 0, 31)
 Word.BackgroundTransparency = 1
-Word.ZIndex = 502
+Word.ZIndex = 5002
 Word.Parent = LogoBox
 
 local WL = Instance.new("UIListLayout")
@@ -106,7 +108,7 @@ for index, char in utf8.graphemes("LINBERGZ") do
     letter.TextTransparency = 0.32
     letter.TextSize = 34
     letter.Font = Enum.Font.GothamBlack
-    letter.ZIndex = 503
+    letter.ZIndex = 5003
     letter.Parent = Word
     table.insert(letters, letter)
 end
@@ -119,7 +121,7 @@ Underline.Position = UDim2.new(0.5, 0, 0, 91)
 Underline.BackgroundColor3 = C.elevated
 Underline.BorderSizePixel = 0
 Underline.ClipsDescendants = true
-Underline.ZIndex = 502
+Underline.ZIndex = 5002
 Underline.Parent = LogoBox
 Instance.new("UICorner", Underline).CornerRadius = UDim.new(1, 0)
 
@@ -128,7 +130,7 @@ LineGlow.Size = UDim2.new(0, 36, 1, 0)
 LineGlow.Position = UDim2.new(0, -36, 0, 0)
 LineGlow.BackgroundColor3 = C.white
 LineGlow.BorderSizePixel = 0
-LineGlow.ZIndex = 503
+LineGlow.ZIndex = 5003
 LineGlow.Parent = Underline
 Instance.new("UICorner", LineGlow).CornerRadius = UDim.new(1, 0)
 
@@ -140,11 +142,11 @@ Status.Text = "LOADING INTERFACE"
 Status.TextColor3 = C.textSec
 Status.TextSize = 9
 Status.Font = Enum.Font.GothamBold
-Status.ZIndex = 502
+Status.ZIndex = 5002
 Status.Parent = LogoBox
 
 task.spawn(function()
-    while LS.Parent do
+    while LS and LS.Parent do
         for i, letter in ipairs(letters) do
             local centerDistance = math.abs(i - 4.5) / 3.5
             local baseSize = math.floor(34 - centerDistance * 10)
@@ -172,7 +174,7 @@ task.spawn(function()
 end)
 
 task.spawn(function()
-    while LineGlow.Parent do
+    while LineGlow and LineGlow.Parent do
         LineGlow.Position = UDim2.new(0, -36, 0, 0)
         local sweep = TweenService:Create(LineGlow, TweenInfo.new(1.25, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
             Position = UDim2.new(1, 0, 0, 0),
@@ -183,18 +185,21 @@ task.spawn(function()
     end
 end)
 
+-- FAILSAFE LOADER DESTROY
 task.spawn(function()
     task.wait(1.9)
-    local fadeInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    for _, object in ipairs(LS:GetDescendants()) do
-        if object:IsA("TextLabel") then
-            TweenService:Create(object, fadeInfo, {TextTransparency = 1}):Play()
-        elseif object:IsA("Frame") then
-            TweenService:Create(object, fadeInfo, {BackgroundTransparency = 1}):Play()
+    if LS and LS.Parent then
+        local fadeInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        for _, object in ipairs(LS:GetDescendants()) do
+            if object:IsA("TextLabel") then
+                TweenService:Create(object, fadeInfo, {TextTransparency = 1}):Play()
+            elseif object:IsA("Frame") then
+                TweenService:Create(object, fadeInfo, {BackgroundTransparency = 1}):Play()
+            end
         end
+        task.wait(0.4)
+        if LS then LS:Destroy() end
     end
-    task.wait(0.4)
-    LS:Destroy()
 end)
 
 ---------------------------------------------------------
@@ -259,52 +264,53 @@ local fontMap = {
 }
 
 ---------------------------------------------------------
--- FIXED RELIABLE MOBILE TOGGLE BUTTON
+-- ULTRA RELIABLE FLOATING TOGGLE BUTTON (ZINDEX 10000)
 ---------------------------------------------------------
 local hubOpen = false
 
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "HubToggle"
-ToggleBtn.Size = UDim2.new(0, 130, 0, 36)
-ToggleBtn.Position = UDim2.new(0, 16, 0.35, 0)
+ToggleBtn.Size = UDim2.new(0, 140, 0, 38)
+ToggleBtn.Position = UDim2.new(0, 15, 0.25, 0)
 ToggleBtn.BackgroundColor3 = AppC.sidebar
 ToggleBtn.Text = ""
 ToggleBtn.AutoButtonColor = false
-ToggleBtn.ZIndex = 300
+ToggleBtn.ZIndex = 10000
+ToggleBtn.Visible = true
 ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 10)
 
 local ToggleStroke = Instance.new("UIStroke")
 ToggleStroke.Color = AppC.accent
-ToggleStroke.Thickness = 1.4
-ToggleStroke.Transparency = 0.2
+ToggleStroke.Thickness = 1.8
+ToggleStroke.Transparency = 0.1
 ToggleStroke.Parent = ToggleBtn
 
 local ToggleLogo = Instance.new("TextLabel")
-ToggleLogo.Size = UDim2.new(0, 20, 1, 0)
-ToggleLogo.Position = UDim2.new(0, 10, 0, 0)
+ToggleLogo.Size = UDim2.new(0, 24, 1, 0)
+ToggleLogo.Position = UDim2.new(0, 8, 0, 0)
 ToggleLogo.BackgroundTransparency = 1
 ToggleLogo.Text = "◈"
 ToggleLogo.TextColor3 = AppC.accent
-ToggleLogo.TextSize = 14
+ToggleLogo.TextSize = 15
 ToggleLogo.Font = Enum.Font.GothamBold
-ToggleLogo.ZIndex = 301
+ToggleLogo.ZIndex = 10001
 ToggleLogo.Parent = ToggleBtn
 
 local ToggleText = Instance.new("TextLabel")
-ToggleText.Size = UDim2.new(1, -34, 1, 0)
-ToggleText.Position = UDim2.new(0, 28, 0, 0)
+ToggleText.Size = UDim2.new(1, -36, 1, 0)
+ToggleText.Position = UDim2.new(0, 32, 0, 0)
 ToggleText.BackgroundTransparency = 1
 ToggleText.Text = "SACRACIA"
 ToggleText.TextColor3 = AppC.text
 ToggleText.TextSize = 10
 ToggleText.Font = Enum.Font.GothamBold
 ToggleText.TextXAlignment = Enum.TextXAlignment.Left
-ToggleText.ZIndex = 301
+ToggleText.ZIndex = 10001
 ToggleText.Parent = ToggleBtn
 
 local function SetToggleVisual(isOpen)
-    ToggleText.Text = isOpen and "CLOSE" or "SACRACIA"
+    ToggleText.Text = isOpen and "CLOSE [X]" or "SACRACIA"
     TweenService:Create(ToggleStroke, TweenInfo.new(0.2), {
         Color = isOpen and AppC.red or AppC.accent
     }):Play()
@@ -328,7 +334,7 @@ HubShadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 HubShadow.BackgroundTransparency = 0.4
 HubShadow.BorderSizePixel = 0
 HubShadow.Visible = false
-HubShadow.ZIndex = 90
+HubShadow.ZIndex = 900
 HubShadow.Parent = ScreenGui
 Instance.new("UICorner", HubShadow).CornerRadius = UDim.new(0, 12)
 
@@ -340,7 +346,7 @@ Hub.BackgroundColor3 = AppC.bg
 Hub.BorderSizePixel = 0
 Hub.Visible = false
 Hub.ClipsDescendants = true
-Hub.ZIndex = 100
+Hub.ZIndex = 1000
 Hub.Parent = ScreenGui
 Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 12)
 
@@ -383,7 +389,7 @@ ScreenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
 end)
 
 ---------------------------------------------------------
--- OPEN / CLOSE HUB TOGGLE LOGIC
+-- OPEN / CLOSE TOGGLE FUNCTION
 ---------------------------------------------------------
 local function ToggleHub()
     hubOpen = not hubOpen
@@ -412,41 +418,39 @@ local function ToggleHub()
     end
 end
 
--- SMART MOBILE TAP & DRAG SYSTEM FOR TOGGLE BUTTON
+-- ROBLOX NATIVE ACTIVATED EVENT (GUARANTEED MOBILE & DESKTOP CLICK)
+ToggleBtn.Activated:Connect(function()
+    ToggleHub()
+end)
+
+-- SMOOTH DRAG SYSTEM FOR TOGGLE BUTTON
 do
+    local dragging = false
     local dragStart, startPos
-    local hasMoved = false
 
     ToggleBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
             dragStart = input.Position
             startPos = ToggleBtn.Position
-            hasMoved = false
+        end
+    end)
 
-            local moveConn, releaseConn
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            if delta.Magnitude > 6 then
+                local viewport = getViewport()
+                local newX = math.clamp(startPos.X.Offset + delta.X, 8, viewport.X - ToggleBtn.AbsoluteSize.X - 8)
+                local newY = math.clamp(startPos.Y.Offset + delta.Y, 8, viewport.Y - ToggleBtn.AbsoluteSize.Y - 8)
+                ToggleBtn.Position = UDim2.fromOffset(newX, newY)
+            end
+        end
+    end)
 
-            moveConn = UserInputService.InputChanged:Connect(function(moveInput)
-                if moveInput.UserInputType == Enum.UserInputType.MouseMovement or moveInput.UserInputType == Enum.UserInputType.Touch then
-                    local delta = moveInput.Position - dragStart
-                    if delta.Magnitude > 8 then
-                        hasMoved = true
-                        local viewport = getViewport()
-                        local newX = math.clamp(startPos.X.Offset + delta.X, 8, viewport.X - ToggleBtn.AbsoluteSize.X - 8)
-                        local newY = math.clamp(startPos.Y.Offset + delta.Y, 8, viewport.Y - ToggleBtn.AbsoluteSize.Y - 8)
-                        ToggleBtn.Position = UDim2.fromOffset(newX, newY)
-                    end
-                end
-            end)
-
-            releaseConn = UserInputService.InputEnded:Connect(function(endInput)
-                if endInput.UserInputType == Enum.UserInputType.MouseButton1 or endInput.UserInputType == Enum.UserInputType.Touch then
-                    moveConn:Disconnect()
-                    releaseConn:Disconnect()
-                    if not hasMoved then
-                        ToggleHub()
-                    end
-                end
-            end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
         end
     end)
 end
@@ -460,7 +464,7 @@ Sidebar.Size = UDim2.new(0, SIDEBAR_W, 1, 0)
 Sidebar.Position = UDim2.new(0, 0, 0, 0)
 Sidebar.BackgroundColor3 = AppC.sidebar
 Sidebar.BorderSizePixel = 0
-Sidebar.ZIndex = 110
+Sidebar.ZIndex = 1010
 Sidebar.Parent = Hub
 
 local SideRule = Instance.new("Frame")
@@ -468,13 +472,13 @@ SideRule.Size = UDim2.new(0, 1, 1, 0)
 SideRule.Position = UDim2.new(1, -1, 0, 0)
 SideRule.BackgroundColor3 = AppC.border
 SideRule.BorderSizePixel = 0
-SideRule.ZIndex = 111
+SideRule.ZIndex = 1011
 SideRule.Parent = Sidebar
 
 local LogoFrame = Instance.new("Frame")
 LogoFrame.Size = UDim2.new(1, 0, 0, 50)
 LogoFrame.BackgroundTransparency = 1
-LogoFrame.ZIndex = 111
+LogoFrame.ZIndex = 1011
 LogoFrame.Parent = Sidebar
 
 local LogoText = Instance.new("TextLabel")
@@ -486,7 +490,7 @@ LogoText.TextColor3 = AppC.text
 LogoText.TextSize = 13
 LogoText.Font = Enum.Font.GothamBlack
 LogoText.TextXAlignment = Enum.TextXAlignment.Left
-LogoText.ZIndex = 112
+LogoText.ZIndex = 1012
 LogoText.Parent = LogoFrame
 
 local SideScroll = Instance.new("ScrollingFrame")
@@ -495,7 +499,7 @@ SideScroll.Position = UDim2.new(0, 0, 0, 50)
 SideScroll.BackgroundTransparency = 1
 SideScroll.BorderSizePixel = 0
 SideScroll.ScrollBarThickness = 0
-SideScroll.ZIndex = 111
+SideScroll.ZIndex = 1011
 SideScroll.Parent = Sidebar
 
 local SideList = Instance.new("UIListLayout")
@@ -516,12 +520,12 @@ ClB.Text = "✕"
 ClB.TextColor3 = AppC.textDim
 ClB.TextSize = 12
 ClB.Font = Enum.Font.GothamBold
-ClB.ZIndex = 150
+ClB.ZIndex = 1500
 ClB.Parent = Hub
 
 ClB.MouseEnter:Connect(function() ClB.TextColor3 = AppC.red end)
 ClB.MouseLeave:Connect(function() ClB.TextColor3 = AppC.textDim end)
-ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
+ClB.Activated:Connect(function() if hubOpen then ToggleHub() end end)
 
 -- WINDOW DRAG LOGIC
 do
@@ -558,7 +562,7 @@ PageHolder.Name = "PageHolder"
 PageHolder.Size = UDim2.new(1, -SIDEBAR_W, 1, 0)
 PageHolder.Position = UDim2.new(0, SIDEBAR_W, 0, 0)
 PageHolder.BackgroundTransparency = 1
-PageHolder.ZIndex = 110
+PageHolder.ZIndex = 1010
 PageHolder.Parent = Hub
 
 local textBindingMap = {}
@@ -594,7 +598,7 @@ local function CreateSectionHeader(parent, langKey)
     header.TextSize = 9
     header.Font = currentFont
     header.TextXAlignment = Enum.TextXAlignment.Left
-    header.ZIndex = 113
+    header.ZIndex = 1013
     header.Parent = parent
     RegisterTextBinding(header, langKey)
     return header
@@ -604,7 +608,7 @@ local function CreateToggle(parent, titleKey, descKey, defaultState, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 0, descKey and 36 or 24)
     frame.BackgroundTransparency = 1
-    frame.ZIndex = 113
+    frame.ZIndex = 1013
     frame.Parent = parent
 
     local textContainer = Instance.new("Frame")
@@ -619,7 +623,7 @@ local function CreateToggle(parent, titleKey, descKey, defaultState, callback)
     title.TextSize = 10
     title.Font = currentFont
     title.TextXAlignment = Enum.TextXAlignment.Left
-    title.ZIndex = 114
+    title.ZIndex = 1014
     title.Parent = textContainer
     RegisterTextBinding(title, titleKey)
 
@@ -632,7 +636,7 @@ local function CreateToggle(parent, titleKey, descKey, defaultState, callback)
         desc.TextSize = 8
         desc.Font = currentFont
         desc.TextXAlignment = Enum.TextXAlignment.Left
-        desc.ZIndex = 114
+        desc.ZIndex = 1014
         desc.Parent = textContainer
         RegisterTextBinding(desc, descKey)
     end
@@ -643,7 +647,7 @@ local function CreateToggle(parent, titleKey, descKey, defaultState, callback)
     switchTrack.BackgroundColor3 = defaultState and AppC.accent or AppC.switchOff
     switchTrack.Text = ""
     switchTrack.AutoButtonColor = false
-    switchTrack.ZIndex = 114
+    switchTrack.ZIndex = 1014
     switchTrack.Parent = frame
     Instance.new("UICorner", switchTrack).CornerRadius = UDim.new(1, 0)
 
@@ -652,7 +656,7 @@ local function CreateToggle(parent, titleKey, descKey, defaultState, callback)
     switchThumb.Position = defaultState and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
     switchThumb.BackgroundColor3 = AppC.white
     switchThumb.BorderSizePixel = 0
-    switchThumb.ZIndex = 115
+    switchThumb.ZIndex = 1015
     switchThumb.Parent = switchTrack
     Instance.new("UICorner", switchThumb).CornerRadius = UDim.new(1, 0)
 
@@ -664,7 +668,7 @@ local function CreateToggle(parent, titleKey, descKey, defaultState, callback)
         if callback then callback(state) end
     end
 
-    switchTrack.MouseButton1Click:Connect(toggle)
+    switchTrack.Activated:Connect(toggle)
     return frame
 end
 
@@ -672,7 +676,7 @@ local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 0, 32)
     frame.BackgroundTransparency = 1
-    frame.ZIndex = 113
+    frame.ZIndex = 1013
     frame.Parent = parent
 
     prefix = prefix or "x"
@@ -684,7 +688,7 @@ local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix
     title.TextSize = 10
     title.Font = currentFont
     title.TextXAlignment = Enum.TextXAlignment.Left
-    title.ZIndex = 114
+    title.ZIndex = 1014
     title.Parent = frame
     RegisterTextBinding(title, titleKey)
 
@@ -697,7 +701,7 @@ local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix
     valLabel.TextSize = 10
     valLabel.Font = currentFont
     valLabel.TextXAlignment = Enum.TextXAlignment.Right
-    valLabel.ZIndex = 114
+    valLabel.ZIndex = 1014
     valLabel.Parent = frame
 
     local track = Instance.new("TextButton")
@@ -706,7 +710,7 @@ local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix
     track.BackgroundColor3 = AppC.switchOff
     track.Text = ""
     track.AutoButtonColor = false
-    track.ZIndex = 114
+    track.ZIndex = 1014
     track.Parent = frame
     Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
 
@@ -715,7 +719,7 @@ local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix
     fill.Size = UDim2.new(pct, 0, 1, 0)
     fill.BackgroundColor3 = AppC.accent
     fill.BorderSizePixel = 0
-    fill.ZIndex = 115
+    fill.ZIndex = 1015
     fill.Parent = track
     Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
 
@@ -725,7 +729,7 @@ local function CreateSlider(parent, titleKey, minVal, maxVal, defaultVal, prefix
     thumb.Position = UDim2.new(pct, 0, 0.5, 0)
     thumb.BackgroundColor3 = AppC.white
     thumb.BorderSizePixel = 0
-    thumb.ZIndex = 116
+    thumb.ZIndex = 1016
     thumb.Parent = track
     Instance.new("UICorner", thumb).CornerRadius = UDim.new(1, 0)
 
@@ -763,7 +767,7 @@ local function CreateDropdownCard(parent, titleKey, options, defaultVal, callbac
     container.Size = UDim2.new(1, 0, 0, 42)
     container.BackgroundTransparency = 1
     container.ClipsDescendants = true
-    container.ZIndex = 113
+    container.ZIndex = 1013
     container.Parent = parent
 
     local header = Instance.new("TextLabel")
@@ -773,7 +777,7 @@ local function CreateDropdownCard(parent, titleKey, options, defaultVal, callbac
     header.TextSize = 10
     header.Font = currentFont
     header.TextXAlignment = Enum.TextXAlignment.Left
-    header.ZIndex = 114
+    header.ZIndex = 1014
     header.Parent = container
     RegisterTextBinding(header, titleKey)
 
@@ -783,7 +787,7 @@ local function CreateDropdownCard(parent, titleKey, options, defaultVal, callbac
     card.BackgroundColor3 = AppC.cardInner
     card.Text = ""
     card.AutoButtonColor = false
-    card.ZIndex = 114
+    card.ZIndex = 1014
     card.Parent = container
     Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
 
@@ -801,7 +805,7 @@ local function CreateDropdownCard(parent, titleKey, options, defaultVal, callbac
     valText.TextSize = 9
     valText.Font = currentFont
     valText.TextXAlignment = Enum.TextXAlignment.Left
-    valText.ZIndex = 115
+    valText.ZIndex = 1015
     valText.Parent = card
 
     local arrow = Instance.new("TextLabel")
@@ -812,14 +816,14 @@ local function CreateDropdownCard(parent, titleKey, options, defaultVal, callbac
     arrow.TextColor3 = AppC.textDim
     arrow.TextSize = 10
     arrow.Font = Enum.Font.GothamBold
-    arrow.ZIndex = 115
+    arrow.ZIndex = 1015
     arrow.Parent = card
 
     local listFrame = Instance.new("Frame")
     listFrame.Size = UDim2.new(1, 0, 0, #options * 22)
     listFrame.Position = UDim2.new(0, 0, 0, 46)
     listFrame.BackgroundColor3 = AppC.sidebar
-    listFrame.ZIndex = 116
+    listFrame.ZIndex = 1016
     listFrame.Parent = container
     Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0, 6)
 
@@ -836,7 +840,7 @@ local function CreateDropdownCard(parent, titleKey, options, defaultVal, callbac
         TweenService:Create(container, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, targetH)}):Play()
     end
 
-    card.MouseButton1Click:Connect(toggleDropdown)
+    card.Activated:Connect(toggleDropdown)
 
     for _, opt in ipairs(options) do
         local optBtn = Instance.new("TextButton")
@@ -847,10 +851,10 @@ local function CreateDropdownCard(parent, titleKey, options, defaultVal, callbac
         optBtn.TextSize = 9
         optBtn.Font = currentFont
         optBtn.TextXAlignment = Enum.TextXAlignment.Left
-        optBtn.ZIndex = 117
+        optBtn.ZIndex = 1017
         optBtn.Parent = listFrame
 
-        optBtn.MouseButton1Click:Connect(function()
+        optBtn.Activated:Connect(function()
             valText.Text = opt
             toggleDropdown()
             if callback then callback(opt) end
@@ -896,7 +900,7 @@ for _, item in ipairs(categories) do
     btn.BorderSizePixel = 0
     btn.Text = ""
     btn.AutoButtonColor = false
-    btn.ZIndex = 112
+    btn.ZIndex = 1012
     btn.Parent = SideScroll
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
 
@@ -908,7 +912,7 @@ for _, item in ipairs(categories) do
     icon.Text = item.icon
     icon.TextColor3 = AppC.textDim
     icon.TextSize = 11
-    icon.ZIndex = 113
+    icon.ZIndex = 1013
     icon.Parent = btn
 
     local label = Instance.new("TextLabel")
@@ -919,12 +923,12 @@ for _, item in ipairs(categories) do
     label.TextSize = 9
     label.Font = currentFont
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 113
+    label.ZIndex = 1013
     label.Parent = btn
     RegisterTextBinding(label, item.nameKey)
 
     sidebarButtons[item.id] = btn
-    btn.MouseButton1Click:Connect(function() ShowPage(item.id) end)
+    btn.Activated:Connect(function() ShowPage(item.id) end)
 end
 
 ---------------------------------------------------------
