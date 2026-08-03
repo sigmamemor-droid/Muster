@@ -102,7 +102,9 @@ WL.Padding = UDim.new(0, -1)
 WL.Parent = Word
 
 local letters = {}
-for index, char in utf8.graphemes("LINBERGZ") do
+for startIndex, endIndex in utf8.graphemes("LINBERGZ") do
+    local index = #letters + 1
+    local char = string.sub("LINBERGZ", startIndex, endIndex)
     local letter = Instance.new("TextLabel")
     letter.Name = "Letter" .. tostring(index)
     letter.Size = UDim2.new(0, 31, 0, 48)
@@ -250,7 +252,7 @@ local ToggleLogo = Instance.new("TextLabel")
 ToggleLogo.Size = UDim2.new(0, 20, 1, 0)
 ToggleLogo.Position = UDim2.new(0, 10, 0, 0)
 ToggleLogo.BackgroundTransparency = 1
-ToggleLogo.Text = "▲"
+ToggleLogo.Text = "[M]"
 ToggleLogo.TextColor3 = AppC.accent
 ToggleLogo.TextSize = 11
 ToggleLogo.Font = Enum.Font.GothamBold
@@ -280,7 +282,7 @@ end
 do
     ToggleBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            toggleDrag = {input = input, start = input.Position, position = ToggleBtn.Position, moved = false}
+            toggleDrag = {input = input, start = input.Position, position = UDim2.fromOffset(ToggleBtn.AbsolutePosition.X, ToggleBtn.AbsolutePosition.Y), moved = false}
         end
     end)
     UserInputService.InputChanged:Connect(function(input)
@@ -394,7 +396,7 @@ local LogoIcon = Instance.new("TextLabel")
 LogoIcon.Size = UDim2.new(0, 18, 1, 0)
 LogoIcon.Position = UDim2.new(0, 12, 0, 0)
 LogoIcon.BackgroundTransparency = 1
-LogoIcon.Text = "▲"
+LogoIcon.Text = "[M]"
 LogoIcon.TextColor3 = AppC.text
 LogoIcon.TextSize = 11
 LogoIcon.Font = Enum.Font.GothamBold
@@ -480,7 +482,7 @@ local ClB = Instance.new("TextButton")
 ClB.Size = UDim2.new(0, 22, 0, 22)
 ClB.Position = UDim2.new(1, -28, 0.5, -11)
 ClB.BackgroundTransparency = 1
-ClB.Text = "✕"
+ClB.Text = "X"
 ClB.TextColor3 = AppC.textDim
 ClB.TextSize = 11
 ClB.Font = Enum.Font.GothamBold
@@ -614,7 +616,7 @@ local function CreateCheckbox(parent, text, defaultState, callback)
     box.Size = UDim2.new(0, 15, 0, 15)
     box.Position = UDim2.new(0, 0, 0.5, -7)
     box.BackgroundColor3 = defaultState and AppC.accent or AppC.cardInner
-    box.Text = defaultState and "✓" or ""
+    box.Text = defaultState and "+" or ""
     box.TextColor3 = AppC.white
     box.TextSize = 10
     box.Font = Enum.Font.GothamBold
@@ -643,7 +645,7 @@ local function CreateCheckbox(parent, text, defaultState, callback)
     local state = defaultState
     local function toggle()
         state = not state
-        box.Text = state and "✓" or ""
+        box.Text = state and "+" or ""
         TweenService:Create(box, TweenInfo.new(0.15), {BackgroundColor3 = state and AppC.accent or AppC.cardInner}):Play()
         stroke.Color = state and AppC.accent or AppC.border
         if callback then callback(state) end
@@ -741,7 +743,7 @@ local function CreateSlider(parent, text, minVal, maxVal, defaultVal, decimals, 
     return frame
 end
 
-local function CreateDropdown(parent, text, selectedText)
+local function CreateDropdown(parent, text, options, defaultIndex, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 0, 36)
     frame.BackgroundTransparency = 1
@@ -759,11 +761,13 @@ local function CreateDropdown(parent, text, selectedText)
     label.ZIndex = 14
     label.Parent = frame
 
-    local box = Instance.new("Frame")
+    local box = Instance.new("TextButton")
     box.Size = UDim2.new(1, 0, 0, 22)
     box.Position = UDim2.new(0, 0, 0, 14)
     box.BackgroundColor3 = AppC.cardInner
     box.BorderSizePixel = 0
+    box.Text = ""
+    box.AutoButtonColor = false
     box.ZIndex = 14
     box.Parent = frame
     Instance.new("UICorner", box).CornerRadius = UDim.new(0, 4)
@@ -774,10 +778,9 @@ local function CreateDropdown(parent, text, selectedText)
     stroke.Parent = box
 
     local valText = Instance.new("TextLabel")
-    valText.Size = UDim2.new(1, -18, 1, 0)
+    valText.Size = UDim2.new(1, -24, 1, 0)
     valText.Position = UDim2.new(0, 6, 0, 0)
     valText.BackgroundTransparency = 1
-    valText.Text = selectedText
     valText.TextColor3 = AppC.text
     valText.TextSize = 9
     valText.Font = Enum.Font.GothamMedium
@@ -787,15 +790,26 @@ local function CreateDropdown(parent, text, selectedText)
     valText.Parent = box
 
     local arrow = Instance.new("TextLabel")
-    arrow.Size = UDim2.new(0, 14, 1, 0)
-    arrow.Position = UDim2.new(1, -16, 0, 0)
+    arrow.Size = UDim2.new(0, 18, 1, 0)
+    arrow.Position = UDim2.new(1, -20, 0, 0)
     arrow.BackgroundTransparency = 1
-    arrow.Text = "▾"
+    arrow.Text = ">"
     arrow.TextColor3 = AppC.textDim
     arrow.TextSize = 9
     arrow.Font = Enum.Font.GothamBold
     arrow.ZIndex = 15
     arrow.Parent = box
+
+    local index = math.clamp(defaultIndex or 1, 1, #options)
+    local function setValue(newIndex)
+        index = newIndex
+        valText.Text = options[index]
+        if callback then callback(options[index], index) end
+    end
+    setValue(index)
+    box.MouseButton1Click:Connect(function()
+        setValue(index % #options + 1)
+    end)
     return frame
 end
 
@@ -804,19 +818,19 @@ end
 ---------------------------------------------------------
 local categories = {
     {header = "Combat", items = {
-        {id = "Aimbot", icon = "⌖", name = "Aimbot"},
+        {id = "Aimbot", icon = "[A]", name = "Aimbot"},
     }},
     {header = "Visuals", items = {
-        {id = "Players", icon = "♟", name = "Players"},
-        {id = "Items",   icon = "⚔", name = "Items"},
-        {id = "View",    icon = "◉", name = "View"},
-        {id = "Hud",     icon = "▣", name = "Hud"},
+        {id = "Players", icon = "[P]", name = "Players"},
+        {id = "Items",   icon = "[I]", name = "Items"},
+        {id = "View",    icon = "[V]", name = "View"},
+        {id = "Hud",     icon = "[H]", name = "Hud"},
     }},
     {header = "Misc", items = {
-        {id = "Main",     icon = "⚙", name = "Main"},
-        {id = "Movement", icon = "⚡", name = "Movement"},
-        {id = "Cloud",    icon = "☁", name = "Cloud"},
-        {id = "Beta",     icon = "★", name = "(beta)"},
+        {id = "Main",     icon = "[M]", name = "Main"},
+        {id = "Movement", icon = "[>]", name = "Movement"},
+        {id = "Cloud",    icon = "[C]", name = "Cloud"},
+        {id = "Beta",     icon = "[B]", name = "(beta)"},
     }},
 }
 
@@ -908,12 +922,12 @@ local function BuildAimbotPage(parent)
 
     -- LEFT COLUMN CARDS
     local weaponCard = CreateSectionCard(grid, "Weapon", UDim2.new(0.485, 0, 0, 58), UDim2.new(0, 0, 0, 0))
-    CreateDropdown(weaponCard, "", "Desert Eagle")
+    CreateDropdown(weaponCard, "", {"Desert Eagle", "Revolver", "Knife"}, 1)
 
     local aimbotCard = CreateSectionCard(grid, "Aimbot", UDim2.new(0.485, 0, 0, 130), UDim2.new(0, 0, 0, 66))
     CreateCheckbox(aimbotCard, "Enable", true)
-    CreateDropdown(aimbotCard, "Hitboxes", "Head, Neck, Pelvis")
-    CreateDropdown(aimbotCard, "Smooth type", "Decrease")
+    CreateDropdown(aimbotCard, "Hitboxes", {"Head, Neck, Pelvis", "Head", "Body"}, 1)
+    CreateDropdown(aimbotCard, "Smooth type", {"Decrease", "Linear", "Instant"}, 1)
 
     local settingsCard = CreateSectionCard(grid, "Settings", UDim2.new(0.485, 0, 0, 120), UDim2.new(0, 0, 0, 204))
     CreateSlider(settingsCard, "FOV", 0, 10, 2.0, 1)
@@ -923,13 +937,13 @@ local function BuildAimbotPage(parent)
     -- RIGHT COLUMN CARDS
     local triggerCard = CreateSectionCard(grid, "Triggerbot", UDim2.new(0.485, 0, 0, 196), UDim2.new(0.515, 0, 0, 0))
     CreateCheckbox(triggerCard, "Enable", true)
-    CreateDropdown(triggerCard, "Hitboxes", "Head, Neck, Spine")
+    CreateDropdown(triggerCard, "Hitboxes", {"Head, Neck, Spine", "Head", "Body"}, 1)
     CreateCheckbox(triggerCard, "Only zoom", false)
     CreateSlider(triggerCard, "Hitchance", 0, 100, 65, 0)
     CreateSlider(triggerCard, "Delay shot", 0, 0.1, 0.010, 3)
 
     local delaysCard = CreateSectionCard(grid, "Delays", UDim2.new(0.485, 0, 0, 120), UDim2.new(0.515, 0, 0, 204))
-    CreateDropdown(delaysCard, "Type", "Combo")
+    CreateDropdown(delaysCard, "Type", {"Combo", "Fixed", "Random"}, 1)
     CreateSlider(delaysCard, "Time", 0, 0.2, 0.070, 3)
 end
 
@@ -989,7 +1003,7 @@ local function ApplyWings()
 
     -- Build Left & Right Wing Frames
     local leftRoot = Instance.new("Part")
-    leftRoot.Size = Vector2.new(0.1, 0.1) and Vector3.new(0.1,0.1,0.1)
+    leftRoot.Size = Vector3.new(0.1, 0.1, 0.1)
     leftRoot.Transparency = 1
     leftRoot.CanCollide = false
     leftRoot.Massless = true
