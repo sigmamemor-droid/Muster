@@ -1,5 +1,5 @@
--- linbergz Team MOBILE HUB v14.0 — MIDNIGHT UI Edition
--- Midnight CS2 Style Interface: Dark Matte, Cyan Accents, Grid Cards, Custom Controls.
+-- linbergz Team MOBILE HUB v15.0 — SACRACIA UI Edition
+-- Sacracia Style Interface: Dark Minimalist, Vibrant Blue Accents, iOS Switches, Sleek Sliders.
 -- Loading Screen animation remains untouched by request.
 -- UI-only. Native Roblox Luau; no external libraries.
 
@@ -46,14 +46,8 @@ local C = {
     textSec = Color3.fromRGB(174, 165, 198),
     textDim = Color3.fromRGB(112, 103, 136),
     red = Color3.fromRGB(255, 93, 111),
-    redDark = Color3.fromRGB(62, 20, 29),
-    gold = Color3.fromRGB(255, 202, 71),
     border = Color3.fromRGB(72, 62, 98),
-    hover = Color3.fromRGB(42, 35, 61),
-    selectedSurface = Color3.fromRGB(57, 38, 91),
-    shadow = Color3.fromRGB(0, 0, 0),
 }
-local currentFont = Enum.Font.GothamMedium
 
 ---------------------------------------------------------
 -- LOADING SCREEN — WAVING LOGOTYPE (UNTOUCHED)
@@ -204,27 +198,26 @@ task.spawn(function()
 end)
 
 ---------------------------------------------------------
--- MIDNIGHT PALETTE & STYLES
+-- SACRACIA PALETTE & STYLES
 ---------------------------------------------------------
 local AppC = {
-    bg = Color3.fromRGB(15, 17, 23),            -- Deep Matte Dark Blue/Black
-    sidebar = Color3.fromRGB(11, 13, 18),       -- Darker Left Panel
-    card = Color3.fromRGB(20, 23, 31),          -- Midnight Grid Card Background
-    cardInner = Color3.fromRGB(14, 16, 22),     -- Input/Dropdown Background
-    accent = Color3.fromRGB(0, 162, 255),       -- Midnight Cyan/Blue
-    accentDim = Color3.fromRGB(0, 110, 180),
+    bg = Color3.fromRGB(22, 22, 26),          -- Main Window Background
+    sidebar = Color3.fromRGB(16, 16, 20),     -- Dark Sidebar Background
+    accent = Color3.fromRGB(52, 120, 246),     -- Sacracia Blue Accent
+    accentDark = Color3.fromRGB(30, 80, 180),
+    switchOff = Color3.fromRGB(42, 44, 52),    -- Switch Off State
     white = Color3.fromRGB(255, 255, 255),
-    text = Color3.fromRGB(235, 238, 245),
-    textSec = Color3.fromRGB(135, 142, 160),
-    textDim = Color3.fromRGB(75, 82, 100),
-    border = Color3.fromRGB(28, 32, 44),
-    hover = Color3.fromRGB(25, 29, 40),
-    activeTabBg = Color3.fromRGB(22, 27, 38),
-    red = Color3.fromRGB(255, 75, 90),
+    text = Color3.fromRGB(240, 242, 245),
+    textSec = Color3.fromRGB(140, 145, 155),
+    textDim = Color3.fromRGB(90, 95, 105),
+    border = Color3.fromRGB(30, 32, 38),
+    activeTab = Color3.fromRGB(32, 34, 42),
+    red = Color3.fromRGB(245, 66, 66),
+    pillBg = Color3.fromRGB(30, 32, 40)
 }
 
 ---------------------------------------------------------
--- MOBILE TOGGLE BUTTON (MIDNIGHT CAPSULE)
+-- MOBILE TOGGLE BUTTON (SACRACIA CAPSULE)
 ---------------------------------------------------------
 local hubOpen = false
 local toggleDrag = nil
@@ -233,26 +226,26 @@ local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "HubToggle"
 ToggleBtn.Size = UDim2.new(0, 130, 0, 34)
 ToggleBtn.Position = UDim2.new(0, 16, 0.32, 0)
-ToggleBtn.BackgroundColor3 = AppC.bg
+ToggleBtn.BackgroundColor3 = AppC.sidebar
 ToggleBtn.Text = ""
 ToggleBtn.AutoButtonColor = false
 ToggleBtn.ZIndex = 50
 ToggleBtn.Parent = ScreenGui
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 10)
 
 local ToggleStroke = Instance.new("UIStroke")
 ToggleStroke.Color = AppC.accent
 ToggleStroke.Thickness = 1.2
-ToggleStroke.Transparency = 0.4
+ToggleStroke.Transparency = 0.3
 ToggleStroke.Parent = ToggleBtn
 
 local ToggleLogo = Instance.new("TextLabel")
 ToggleLogo.Size = UDim2.new(0, 20, 1, 0)
 ToggleLogo.Position = UDim2.new(0, 10, 0, 0)
 ToggleLogo.BackgroundTransparency = 1
-ToggleLogo.Text = "▲"
+ToggleLogo.Text = "◈"
 ToggleLogo.TextColor3 = AppC.accent
-ToggleLogo.TextSize = 11
+ToggleLogo.TextSize = 13
 ToggleLogo.Font = Enum.Font.GothamBold
 ToggleLogo.ZIndex = 52
 ToggleLogo.Parent = ToggleBtn
@@ -261,7 +254,7 @@ local ToggleText = Instance.new("TextLabel")
 ToggleText.Size = UDim2.new(1, -34, 1, 0)
 ToggleText.Position = UDim2.new(0, 28, 0, 0)
 ToggleText.BackgroundTransparency = 1
-ToggleText.Text = "MIDNIGHT"
+ToggleText.Text = "SACRACIA"
 ToggleText.TextColor3 = AppC.text
 ToggleText.TextSize = 10
 ToggleText.Font = Enum.Font.GothamBold
@@ -270,7 +263,7 @@ ToggleText.ZIndex = 52
 ToggleText.Parent = ToggleBtn
 
 local function SetToggleVisual(isOpen)
-    ToggleText.Text = isOpen and "CLOSE" or "MIDNIGHT"
+    ToggleText.Text = isOpen and "CLOSE" or "SACRACIA"
     TweenService:Create(ToggleStroke, TweenInfo.new(0.2), {
         Color = isOpen and AppC.red or AppC.accent
     }):Play()
@@ -295,9 +288,9 @@ do
 end
 
 ---------------------------------------------------------
--- MAIN HUB FRAME (COMPACT MIDNIGHT WINDOW)
+-- MAIN HUB FRAME (SACRACIA WINDOW)
 ---------------------------------------------------------
-local HUB_W, HUB_H, SIDEBAR_W, TOPBAR_H = 550, 360, 135, 40
+local HUB_W, HUB_H, SIDEBAR_W = 600, 390, 150
 local windowSize = Vector2.new(HUB_W, HUB_H)
 local windowPos
 local windowInteraction = nil
@@ -305,14 +298,14 @@ local windowInteraction = nil
 local HubShadow = Instance.new("Frame")
 HubShadow.Name = "HubShadow"
 HubShadow.Size = UDim2.new(0, HUB_W, 0, HUB_H)
-HubShadow.Position = UDim2.new(0.5, -HUB_W / 2, 0.5, -HUB_H / 2 + 8)
+HubShadow.Position = UDim2.new(0.5, -HUB_W / 2, 0.5, -HUB_H / 2 + 6)
 HubShadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-HubShadow.BackgroundTransparency = 0.5
+HubShadow.BackgroundTransparency = 0.4
 HubShadow.BorderSizePixel = 0
 HubShadow.Visible = false
 HubShadow.ZIndex = 8
 HubShadow.Parent = ScreenGui
-Instance.new("UICorner", HubShadow).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", HubShadow).CornerRadius = UDim.new(0, 12)
 
 local Hub = Instance.new("Frame")
 Hub.Name = "Hub"
@@ -324,7 +317,7 @@ Hub.Visible = false
 Hub.ClipsDescendants = true
 Hub.ZIndex = 10
 Hub.Parent = ScreenGui
-Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 12)
 
 local HSk = Instance.new("UIStroke")
 HSk.Color = AppC.border
@@ -347,7 +340,7 @@ local function applyWindowRect(position)
     windowPos = Vector2.new(math.clamp(position.X, 8, maxX), math.clamp(position.Y, 8, maxY))
     Hub.Position = UDim2.fromOffset(windowPos.X, windowPos.Y)
     Hub.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
-    HubShadow.Position = UDim2.fromOffset(windowPos.X, windowPos.Y + 8)
+    HubShadow.Position = UDim2.fromOffset(windowPos.X, windowPos.Y + 6)
     HubShadow.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
 end
 
@@ -365,127 +358,74 @@ ScreenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
 end)
 
 ---------------------------------------------------------
--- TOP BAR (MIDNIGHT HEADER & MAIN TABS)
+-- SACRACIA SIDEBAR (LEFT NAVIGATION)
 ---------------------------------------------------------
-local TopB = Instance.new("Frame")
-TopB.Name = "TopBar"
-TopB.Size = UDim2.new(1, 0, 0, TOPBAR_H)
-TopB.BackgroundColor3 = AppC.sidebar
-TopB.BorderSizePixel = 0
-TopB.ZIndex = 12
-TopB.Parent = Hub
+local Sidebar = Instance.new("Frame")
+Sidebar.Name = "Sidebar"
+Sidebar.Size = UDim2.new(0, SIDEBAR_W, 1, 0)
+Sidebar.Position = UDim2.new(0, 0, 0, 0)
+Sidebar.BackgroundColor3 = AppC.sidebar
+Sidebar.BorderSizePixel = 0
+Sidebar.ZIndex = 12
+Sidebar.Parent = Hub
 
-local TopBorder = Instance.new("Frame")
-TopBorder.Size = UDim2.new(1, 0, 0, 1)
-TopBorder.Position = UDim2.new(0, 0, 1, -1)
-TopBorder.BackgroundColor3 = AppC.border
-TopBorder.BorderSizePixel = 0
-TopBorder.ZIndex = 13
-TopBorder.Parent = TopB
+local SideRule = Instance.new("Frame")
+SideRule.Size = UDim2.new(0, 1, 1, 0)
+SideRule.Position = UDim2.new(1, -1, 0, 0)
+SideRule.BackgroundColor3 = AppC.border
+SideRule.BorderSizePixel = 0
+SideRule.ZIndex = 13
+SideRule.Parent = Sidebar
 
--- LOGO
+-- BRAND LOGO
 local LogoFrame = Instance.new("Frame")
-LogoFrame.Size = UDim2.new(0, SIDEBAR_W, 1, 0)
+LogoFrame.Size = UDim2.new(1, 0, 0, 50)
 LogoFrame.BackgroundTransparency = 1
 LogoFrame.ZIndex = 13
-LogoFrame.Parent = TopB
-
-local LogoIcon = Instance.new("TextLabel")
-LogoIcon.Size = UDim2.new(0, 18, 1, 0)
-LogoIcon.Position = UDim2.new(0, 12, 0, 0)
-LogoIcon.BackgroundTransparency = 1
-LogoIcon.Text = "▲"
-LogoIcon.TextColor3 = AppC.text
-LogoIcon.TextSize = 11
-LogoIcon.Font = Enum.Font.GothamBold
-LogoIcon.ZIndex = 13
-LogoIcon.Parent = LogoFrame
+LogoFrame.Parent = Sidebar
 
 local LogoText = Instance.new("TextLabel")
-LogoText.Size = UDim2.new(1, -34, 1, 0)
-LogoText.Position = UDim2.new(0, 30, 0, 0)
+LogoText.Size = UDim2.new(1, -20, 1, 0)
+LogoText.Position = UDim2.new(0, 16, 0, 0)
 LogoText.BackgroundTransparency = 1
-LogoText.Text = "MIDNIGHT"
+LogoText.Text = "SACRACIA"
 LogoText.TextColor3 = AppC.text
-LogoText.TextSize = 11
+LogoText.TextSize = 13
 LogoText.Font = Enum.Font.GothamBlack
 LogoText.TextXAlignment = Enum.TextXAlignment.Left
-LogoText.ZIndex = 13
+LogoText.ZIndex = 14
 LogoText.Parent = LogoFrame
 
--- TOP CATEGORY TABS
-local TopTabHolder = Instance.new("Frame")
-TopTabHolder.Size = UDim2.new(1, -SIDEBAR_W - 60, 1, 0)
-TopTabHolder.Position = UDim2.new(0, SIDEBAR_W + 8, 0, 0)
-TopTabHolder.BackgroundTransparency = 1
-TopTabHolder.ZIndex = 13
-TopTabHolder.Parent = TopB
+local SideScroll = Instance.new("ScrollingFrame")
+SideScroll.Size = UDim2.new(1, 0, 1, -50)
+SideScroll.Position = UDim2.new(0, 0, 0, 50)
+SideScroll.BackgroundTransparency = 1
+SideScroll.BorderSizePixel = 0
+SideScroll.ScrollBarThickness = 0
+SideScroll.ZIndex = 13
+SideScroll.Parent = Sidebar
 
-local TopTabLayout = Instance.new("UIListLayout")
-TopTabLayout.FillDirection = Enum.FillDirection.Horizontal
-TopTabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-TopTabLayout.Padding = UDim.new(0, 16)
-TopTabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-TopTabLayout.Parent = TopTabHolder
+local SideList = Instance.new("UIListLayout")
+SideList.SortOrder = Enum.SortOrder.LayoutOrder
+SideList.Padding = UDim.new(0, 4)
+SideList.Parent = SideScroll
 
-local topCategories = {"GLOBALS", "WEAPONS", "SETTINGS"}
-local activeTopTab = "WEAPONS"
-local topTabButtons = {}
-
-local TopTabLine = Instance.new("Frame")
-TopTabLine.Name = "ActiveTabLine"
-TopTabLine.Size = UDim2.new(0, 50, 0, 2)
-TopTabLine.Position = UDim2.new(0, 100, 1, -2)
-TopTabLine.BackgroundColor3 = AppC.accent
-TopTabLine.BorderSizePixel = 0
-TopTabLine.ZIndex = 14
-TopTabLine.Parent = TopB
-
-for idx, catName in ipairs(topCategories) do
-    local btn = Instance.new("TextButton")
-    btn.Name = "TopTab_" .. catName
-    btn.Size = UDim2.new(0, 60, 1, 0)
-    btn.BackgroundTransparency = 1
-    btn.Text = catName
-    btn.TextColor3 = (catName == activeTopTab) and AppC.text or AppC.textDim
-    btn.TextSize = 9
-    btn.Font = Enum.Font.GothamBold
-    btn.AutoButtonColor = false
-    btn.ZIndex = 14
-    btn.Parent = TopTabHolder
-    topTabButtons[catName] = btn
-
-    btn.MouseButton1Click:Connect(function()
-        activeTopTab = catName
-        for name, button in pairs(topTabButtons) do
-            button.TextColor3 = (name == activeTopTab) and AppC.text or AppC.textDim
-        end
-        TweenService:Create(TopTabLine, TweenInfo.new(0.2), {
-            Position = UDim2.new(0, btn.AbsolutePosition.X - TopB.AbsolutePosition.X, 1, -2),
-            Size = UDim2.new(0, btn.AbsoluteSize.X, 0, 2)
-        }):Play()
-    end)
-end
-
-task.defer(function()
-    local activeBtn = topTabButtons[activeTopTab]
-    if activeBtn then
-        TopTabLine.Position = UDim2.new(0, activeBtn.AbsolutePosition.X - TopB.AbsolutePosition.X, 1, -2)
-        TopTabLine.Size = UDim2.new(0, activeBtn.AbsoluteSize.X, 0, 2)
-    end
-end)
+local SidePad = Instance.new("UIPadding")
+SidePad.PaddingLeft = UDim.new(0, 10)
+SidePad.PaddingRight = UDim.new(0, 10)
+SidePad.Parent = SideScroll
 
 -- CLOSE BUTTON
 local ClB = Instance.new("TextButton")
-ClB.Size = UDim2.new(0, 22, 0, 22)
-ClB.Position = UDim2.new(1, -28, 0.5, -11)
+ClB.Size = UDim2.new(0, 24, 0, 24)
+ClB.Position = UDim2.new(1, -30, 0, 12)
 ClB.BackgroundTransparency = 1
 ClB.Text = "✕"
 ClB.TextColor3 = AppC.textDim
-ClB.TextSize = 11
+ClB.TextSize = 12
 ClB.Font = Enum.Font.GothamBold
-ClB.ZIndex = 14
-ClB.Parent = TopB
+ClB.ZIndex = 20
+ClB.Parent = Hub
 
 ClB.MouseEnter:Connect(function() ClB.TextColor3 = AppC.red end)
 ClB.MouseLeave:Connect(function() ClB.TextColor3 = AppC.textDim end)
@@ -497,7 +437,7 @@ do
         local p, s = object.AbsolutePosition, object.AbsoluteSize
         return point.X >= p.X and point.X <= p.X + s.X and point.Y >= p.Y and point.Y <= p.Y + s.Y
     end
-    TopB.InputBegan:Connect(function(input)
+    Sidebar.InputBegan:Connect(function(input)
         if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and not windowInteraction then
             if isInside(ClB, input.Position) then return end
             ensureWindowRect()
@@ -518,166 +458,127 @@ do
 end
 
 ---------------------------------------------------------
--- SIDEBAR (MIDNIGHT CATEGORIES)
+-- SACRACIA UI CONTROLS BUILDERS
 ---------------------------------------------------------
-local Sidebar = Instance.new("Frame")
-Sidebar.Name = "Sidebar"
-Sidebar.Size = UDim2.new(0, SIDEBAR_W, 1, -TOPBAR_H)
-Sidebar.Position = UDim2.new(0, 0, 0, TOPBAR_H)
-Sidebar.BackgroundColor3 = AppC.sidebar
-Sidebar.BorderSizePixel = 0
-Sidebar.ZIndex = 12
-Sidebar.Parent = Hub
+local PageHolder = Instance.new("Frame")
+PageHolder.Name = "PageHolder"
+PageHolder.Size = UDim2.new(1, -SIDEBAR_W, 1, 0)
+PageHolder.Position = UDim2.new(0, SIDEBAR_W, 0, 0)
+PageHolder.BackgroundTransparency = 1
+PageHolder.ZIndex = 11
+PageHolder.Parent = Hub
 
-local SideRule = Instance.new("Frame")
-SideRule.Size = UDim2.new(0, 1, 1, 0)
-SideRule.Position = UDim2.new(1, -1, 0, 0)
-SideRule.BackgroundColor3 = AppC.border
-SideRule.BorderSizePixel = 0
-SideRule.ZIndex = 13
-SideRule.Parent = Sidebar
-
-local SideScroll = Instance.new("ScrollingFrame")
-SideScroll.Size = UDim2.new(1, 0, 1, 0)
-SideScroll.BackgroundTransparency = 1
-SideScroll.BorderSizePixel = 0
-SideScroll.ScrollBarThickness = 0
-SideScroll.ZIndex = 13
-SideScroll.Parent = Sidebar
-
-local SideList = Instance.new("UIListLayout")
-SideList.SortOrder = Enum.SortOrder.LayoutOrder
-SideList.Padding = UDim.new(0, 2)
-SideList.Parent = SideScroll
-
-local SidePad = Instance.new("UIPadding")
-SidePad.PaddingTop = UDim.new(0, 8)
-SidePad.PaddingLeft = UDim.new(0, 8)
-SidePad.PaddingRight = UDim.new(0, 8)
-SidePad.Parent = SideScroll
-
----------------------------------------------------------
--- MIDNIGHT UI COMPONENT BUILDERS (CARDS, TOGGLES, SLIDERS)
----------------------------------------------------------
-local function CreateSectionCard(parent, titleText, size, position)
-    local card = Instance.new("Frame")
-    card.Name = "Card_" .. titleText
-    card.Size = size or UDim2.new(0.485, 0, 0, 160)
-    card.Position = position or UDim2.new(0,0,0,0)
-    card.BackgroundColor3 = AppC.card
-    card.BorderSizePixel = 0
-    card.ZIndex = 12
-    card.Parent = parent
-    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = AppC.border
-    stroke.Thickness = 1
-    stroke.Parent = card
-
-    local cardTitle = Instance.new("TextLabel")
-    cardTitle.Size = UDim2.new(1, -20, 0, 24)
-    cardTitle.Position = UDim2.new(0, 10, 0, 4)
-    cardTitle.BackgroundTransparency = 1
-    cardTitle.Text = titleText
-    cardTitle.TextColor3 = AppC.textSec
-    cardTitle.TextSize = 9
-    cardTitle.Font = Enum.Font.GothamBold
-    cardTitle.TextXAlignment = Enum.TextXAlignment.Left
-    cardTitle.ZIndex = 13
-    cardTitle.Parent = card
-
-    local cardContent = Instance.new("Frame")
-    cardContent.Name = "Content"
-    cardContent.Size = UDim2.new(1, -20, 1, -30)
-    cardContent.Position = UDim2.new(0, 10, 0, 26)
-    cardContent.BackgroundTransparency = 1
-    cardContent.ZIndex = 13
-    cardContent.Parent = card
-
-    local layout = Instance.new("UIListLayout")
-    layout.SortOrder = Enum.SortOrder.LayoutOrder
-    layout.Padding = UDim.new(0, 8)
-    layout.Parent = cardContent
-
-    return cardContent, card
+local function CreateSectionHeader(parent, text)
+    local header = Instance.new("TextLabel")
+    header.Size = UDim2.new(1, 0, 0, 20)
+    header.BackgroundTransparency = 1
+    header.Text = string.upper(text)
+    header.TextColor3 = AppC.textSec
+    header.TextSize = 9
+    header.Font = Enum.Font.GothamBold
+    header.TextXAlignment = Enum.TextXAlignment.Left
+    header.ZIndex = 13
+    header.Parent = parent
+    return header
 end
 
-local function CreateCheckbox(parent, text, defaultState, callback)
+-- iOS / SACRACIA SWITCH TOGGLE
+local function CreateToggle(parent, titleText, descText, defaultState, callback)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 18)
+    frame.Size = UDim2.new(1, 0, 0, descText and 36 or 24)
     frame.BackgroundTransparency = 1
     frame.ZIndex = 13
     frame.Parent = parent
 
-    local box = Instance.new("TextButton")
-    box.Size = UDim2.new(0, 15, 0, 15)
-    box.Position = UDim2.new(0, 0, 0.5, -7)
-    box.BackgroundColor3 = defaultState and AppC.accent or AppC.cardInner
-    box.Text = defaultState and "✓" or ""
-    box.TextColor3 = AppC.white
-    box.TextSize = 10
-    box.Font = Enum.Font.GothamBold
-    box.AutoButtonColor = false
-    box.ZIndex = 14
-    box.Parent = frame
-    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 4)
+    local textContainer = Instance.new("Frame")
+    textContainer.Size = UDim2.new(1, -45, 1, 0)
+    textContainer.BackgroundTransparency = 1
+    textContainer.Parent = frame
 
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = defaultState and AppC.accent or AppC.border
-    stroke.Thickness = 1
-    stroke.Parent = box
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 16)
+    title.BackgroundTransparency = 1
+    title.Text = titleText
+    title.TextColor3 = AppC.text
+    title.TextSize = 10
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.ZIndex = 14
+    title.Parent = textContainer
 
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, -22, 1, 0)
-    label.Position = UDim2.new(0, 22, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = AppC.text
-    label.TextSize = 9
-    label.Font = Enum.Font.GothamBold
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 14
-    label.Parent = frame
+    if descText then
+        local desc = Instance.new("TextLabel")
+        desc.Size = UDim2.new(1, 0, 0, 14)
+        desc.Position = UDim2.new(0, 0, 0, 16)
+        desc.BackgroundTransparency = 1
+        desc.Text = descText
+        desc.TextColor3 = AppC.textDim
+        desc.TextSize = 8
+        desc.Font = Enum.Font.GothamMedium
+        desc.TextXAlignment = Enum.TextXAlignment.Left
+        desc.ZIndex = 14
+        desc.Parent = textContainer
+    end
+
+    local switchTrack = Instance.new("TextButton")
+    switchTrack.Size = UDim2.new(0, 34, 0, 18)
+    switchTrack.Position = UDim2.new(1, -36, 0, (frame.Size.Y.Offset - 18) / 2)
+    switchTrack.BackgroundColor3 = defaultState and AppC.accent or AppC.switchOff
+    switchTrack.Text = ""
+    switchTrack.AutoButtonColor = false
+    switchTrack.ZIndex = 14
+    switchTrack.Parent = frame
+    Instance.new("UICorner", switchTrack).CornerRadius = UDim.new(1, 0)
+
+    local switchThumb = Instance.new("Frame")
+    switchThumb.Size = UDim2.new(0, 14, 0, 14)
+    switchThumb.Position = defaultState and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+    switchThumb.BackgroundColor3 = AppC.white
+    switchThumb.BorderSizePixel = 0
+    switchThumb.ZIndex = 15
+    switchThumb.Parent = switchTrack
+    Instance.new("UICorner", switchThumb).CornerRadius = UDim.new(1, 0)
 
     local state = defaultState
     local function toggle()
         state = not state
-        box.Text = state and "✓" or ""
-        TweenService:Create(box, TweenInfo.new(0.15), {BackgroundColor3 = state and AppC.accent or AppC.cardInner}):Play()
-        stroke.Color = state and AppC.accent or AppC.border
+        TweenService:Create(switchTrack, TweenInfo.new(0.18), {BackgroundColor3 = state and AppC.accent or AppC.switchOff}):Play()
+        TweenService:Create(switchThumb, TweenInfo.new(0.18), {Position = state and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)}):Play()
         if callback then callback(state) end
     end
 
-    box.MouseButton1Click:Connect(toggle)
+    switchTrack.MouseButton1Click:Connect(toggle)
     return frame
 end
 
-local function CreateSlider(parent, text, minVal, maxVal, defaultVal, decimals, callback)
+-- SACRACIA SLIDER WITH MULTIPLIER/VALUE TAG
+local function CreateSlider(parent, titleText, minVal, maxVal, defaultVal, prefix, callback)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 28)
+    frame.Size = UDim2.new(1, 0, 0, 32)
     frame.BackgroundTransparency = 1
     frame.ZIndex = 13
     frame.Parent = parent
 
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.7, 0, 0, 12)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = AppC.text
-    label.TextSize = 9
-    label.Font = Enum.Font.GothamBold
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 14
-    label.Parent = frame
+    prefix = prefix or "x"
+
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(0.7, 0, 0, 14)
+    title.BackgroundTransparency = 1
+    title.Text = titleText
+    title.TextColor3 = AppC.text
+    title.TextSize = 10
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.ZIndex = 14
+    title.Parent = frame
 
     local valLabel = Instance.new("TextLabel")
-    valLabel.Size = UDim2.new(0.3, 0, 0, 12)
+    valLabel.Size = UDim2.new(0.3, 0, 0, 14)
     valLabel.Position = UDim2.new(0.7, 0, 0, 0)
     valLabel.BackgroundTransparency = 1
-    valLabel.Text = string.format("%." .. (decimals or 1) .. "f", defaultVal)
+    valLabel.Text = prefix .. tostring(defaultVal)
     valLabel.TextColor3 = AppC.text
-    valLabel.TextSize = 9
+    valLabel.TextSize = 10
     valLabel.Font = Enum.Font.GothamBold
     valLabel.TextXAlignment = Enum.TextXAlignment.Right
     valLabel.ZIndex = 14
@@ -685,16 +586,16 @@ local function CreateSlider(parent, text, minVal, maxVal, defaultVal, decimals, 
 
     local track = Instance.new("TextButton")
     track.Size = UDim2.new(1, 0, 0, 4)
-    track.Position = UDim2.new(0, 0, 0, 18)
-    track.BackgroundColor3 = AppC.cardInner
+    track.Position = UDim2.new(0, 0, 0, 20)
+    track.BackgroundColor3 = AppC.switchOff
     track.Text = ""
     track.AutoButtonColor = false
     track.ZIndex = 14
     track.Parent = frame
     Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
 
-    local fill = Instance.new("Frame")
     local pct = (defaultVal - minVal) / (maxVal - minVal)
+    local fill = Instance.new("Frame")
     fill.Size = UDim2.new(pct, 0, 1, 0)
     fill.BackgroundColor3 = AppC.accent
     fill.BorderSizePixel = 0
@@ -703,10 +604,10 @@ local function CreateSlider(parent, text, minVal, maxVal, defaultVal, decimals, 
     Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
 
     local thumb = Instance.new("Frame")
-    thumb.Size = UDim2.new(0, 8, 0, 8)
+    thumb.Size = UDim2.new(0, 10, 0, 10)
     thumb.AnchorPoint = Vector2.new(0.5, 0.5)
     thumb.Position = UDim2.new(pct, 0, 0.5, 0)
-    thumb.BackgroundColor3 = AppC.accent
+    thumb.BackgroundColor3 = AppC.white
     thumb.BorderSizePixel = 0
     thumb.ZIndex = 16
     thumb.Parent = track
@@ -715,10 +616,10 @@ local function CreateSlider(parent, text, minVal, maxVal, defaultVal, decimals, 
     local dragging = false
     local function update(input)
         local delta = math.clamp((input.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-        local val = minVal + (maxVal - minVal) * delta
+        local val = math.floor(minVal + (maxVal - minVal) * delta)
         fill.Size = UDim2.new(delta, 0, 1, 0)
         thumb.Position = UDim2.new(delta, 0, 0.5, 0)
-        valLabel.Text = string.format("%." .. (decimals or 1) .. "f", val)
+        valLabel.Text = prefix .. tostring(val)
         if callback then callback(val) end
     end
 
@@ -741,200 +642,80 @@ local function CreateSlider(parent, text, minVal, maxVal, defaultVal, decimals, 
     return frame
 end
 
-local function CreateDropdown(parent, text, selectedText)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 36)
-    frame.BackgroundTransparency = 1
-    frame.ZIndex = 13
-    frame.Parent = parent
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 12)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = AppC.textSec
-    label.TextSize = 8
-    label.Font = Enum.Font.GothamBold
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 14
-    label.Parent = frame
-
-    local box = Instance.new("Frame")
-    box.Size = UDim2.new(1, 0, 0, 22)
-    box.Position = UDim2.new(0, 0, 0, 14)
-    box.BackgroundColor3 = AppC.cardInner
-    box.BorderSizePixel = 0
-    box.ZIndex = 14
-    box.Parent = frame
-    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 4)
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = AppC.border
-    stroke.Thickness = 1
-    stroke.Parent = box
-
-    local valText = Instance.new("TextLabel")
-    valText.Size = UDim2.new(1, -18, 1, 0)
-    valText.Position = UDim2.new(0, 6, 0, 0)
-    valText.BackgroundTransparency = 1
-    valText.Text = selectedText
-    valText.TextColor3 = AppC.text
-    valText.TextSize = 9
-    valText.Font = Enum.Font.GothamMedium
-    valText.TextXAlignment = Enum.TextXAlignment.Left
-    valText.TextTruncate = Enum.TextTruncate.AtEnd
-    valText.ZIndex = 15
-    valText.Parent = box
-
-    local arrow = Instance.new("TextLabel")
-    arrow.Size = UDim2.new(0, 14, 1, 0)
-    arrow.Position = UDim2.new(1, -16, 0, 0)
-    arrow.BackgroundTransparency = 1
-    arrow.Text = "▾"
-    arrow.TextColor3 = AppC.textDim
-    arrow.TextSize = 9
-    arrow.Font = Enum.Font.GothamBold
-    arrow.ZIndex = 15
-    arrow.Parent = box
-    return frame
-end
-
 ---------------------------------------------------------
--- NAVIGATION SYSTEM & PAGE GENERATION (WITH BETA TAB)
+-- NAVIGATION & CATEGORIES (MATCHING SACRACIA SIDEBAR)
 ---------------------------------------------------------
 local categories = {
-    {header = "Combat", items = {
-        {id = "Aimbot", icon = "⌖", name = "Aimbot"},
-    }},
-    {header = "Visuals", items = {
-        {id = "Players", icon = "♟", name = "Players"},
-        {id = "Items",   icon = "⚔", name = "Items"},
-        {id = "View",    icon = "◉", name = "View"},
-        {id = "Hud",     icon = "▣", name = "Hud"},
-    }},
-    {header = "Misc", items = {
-        {id = "Main",     icon = "⚙", name = "Main"},
-        {id = "Movement", icon = "⚡", name = "Movement"},
-        {id = "Cloud",    icon = "☁", name = "Cloud"},
-        {id = "Beta",     icon = "★", name = "(beta)"},
-    }},
+    {id = "Stats",        icon = "📊", name = "Stats"},
+    {id = "Entities",     icon = "👁", name = "Entities"},
+    {id = "Visuals",      icon = "🎯", name = "Visuals"},
+    {id = "Valuables",    icon = "🎒", name = "Valuables"},
+    {id = "Items",        icon = "📦", name = "Items"},
+    {id = "Level",        icon = "⚡", name = "Level"},
+    {id = "Miscellaneous",icon = "⚙", name = "Miscellaneous"},
+    {id = "Settings",     icon = "🛠", name = "Settings"},
 }
 
 local sidebarButtons = {}
 local categoryPages = {}
-local activePage = "Aimbot"
 
-local PageHolder = Instance.new("Frame")
-PageHolder.Name = "PageHolder"
-PageHolder.Size = UDim2.new(1, -SIDEBAR_W, 1, -TOPBAR_H)
-PageHolder.Position = UDim2.new(0, SIDEBAR_W, 0, TOPBAR_H)
-PageHolder.BackgroundTransparency = 1
-PageHolder.ZIndex = 11
-PageHolder.Parent = Hub
-
-local function ShowSidebarPage(id)
-    activePage = id
+local function ShowPage(id)
     for pageId, page in pairs(categoryPages) do
         page.Visible = (pageId == id)
     end
     for pageId, btn in pairs(sidebarButtons) do
         local selected = (pageId == id)
-        btn.BackgroundColor3 = selected and AppC.activeTabBg or AppC.sidebar
-        btn.TextColor3 = selected and AppC.accent or AppC.textDim
+        btn.BackgroundColor3 = selected and AppC.activeTab or AppC.sidebar
+        btn.TextColor3 = selected and AppC.text or AppC.textDim
+        local icon = btn:FindFirstChild("Icon")
+        if icon then icon.TextColor3 = selected and AppC.accent or AppC.textDim end
     end
 end
 
--- BUILD SIDEBAR ITEMS
-for _, catGroup in ipairs(categories) do
-    local headerLbl = Instance.new("TextLabel")
-    headerLbl.Size = UDim2.new(1, 0, 0, 18)
-    headerLbl.BackgroundTransparency = 1
-    headerLbl.Text = catGroup.header
-    headerLbl.TextColor3 = AppC.textDim
-    headerLbl.TextSize = 8
-    headerLbl.Font = Enum.Font.GothamBold
-    headerLbl.TextXAlignment = Enum.TextXAlignment.Left
-    headerLbl.ZIndex = 14
-    headerLbl.Parent = SideScroll
+for _, item in ipairs(categories) do
+    local btn = Instance.new("TextButton")
+    btn.Name = "Side_" .. item.id
+    btn.Size = UDim2.new(1, 0, 0, 28)
+    btn.BackgroundColor3 = AppC.sidebar
+    btn.BorderSizePixel = 0
+    btn.Text = ""
+    btn.AutoButtonColor = false
+    btn.ZIndex = 14
+    btn.Parent = SideScroll
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
 
-    for _, item in ipairs(catGroup.items) do
-        local btn = Instance.new("TextButton")
-        btn.Name = "Side_" .. item.id
-        btn.Size = UDim2.new(1, 0, 0, 24)
-        btn.BackgroundColor3 = AppC.sidebar
-        btn.BorderSizePixel = 0
-        btn.Text = "  " .. item.icon .. "  " .. item.name
-        btn.TextColor3 = AppC.textDim
-        btn.TextSize = 10
-        btn.Font = Enum.Font.GothamBold
-        btn.TextXAlignment = Enum.TextXAlignment.Left
-        btn.AutoButtonColor = false
-        btn.ZIndex = 14
-        btn.Parent = SideScroll
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+    local icon = Instance.new("TextLabel")
+    icon.Name = "Icon"
+    icon.Size = UDim2.new(0, 20, 1, 0)
+    icon.Position = UDim2.new(0, 8, 0, 0)
+    icon.BackgroundTransparency = 1
+    icon.Text = item.icon
+    icon.TextColor3 = AppC.textDim
+    icon.TextSize = 11
+    icon.ZIndex = 15
+    icon.Parent = btn
 
-        sidebarButtons[item.id] = btn
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -34, 1, 0)
+    label.Position = UDim2.new(0, 32, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = item.name
+    label.TextColor3 = AppC.textDim
+    label.TextSize = 9
+    label.Font = Enum.Font.GothamBold
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 15
+    label.Parent = btn
 
-        btn.MouseButton1Click:Connect(function()
-            ShowSidebarPage(item.id)
-        end)
-    end
+    sidebarButtons[item.id] = btn
+
+    btn.MouseButton1Click:Connect(function()
+        ShowPage(item.id)
+    end)
 end
 
 ---------------------------------------------------------
--- MIDNIGHT AIMBOT PAGE BUILD
----------------------------------------------------------
-local function BuildAimbotPage(parent)
-    local pageScroll = Instance.new("ScrollingFrame")
-    pageScroll.Size = UDim2.new(1, 0, 1, 0)
-    pageScroll.BackgroundTransparency = 1
-    pageScroll.BorderSizePixel = 0
-    pageScroll.ScrollBarThickness = 2
-    pageScroll.ScrollBarImageColor3 = AppC.border
-    pageScroll.Parent = parent
-
-    local pad = Instance.new("UIPadding")
-    pad.PaddingTop = UDim.new(0, 10)
-    pad.PaddingLeft = UDim.new(0, 10)
-    pad.PaddingRight = UDim.new(0, 10)
-    pad.PaddingBottom = UDim.new(0, 10)
-    pad.Parent = pageScroll
-
-    -- GRID CONTAINER
-    local grid = Instance.new("Frame")
-    grid.Size = UDim2.new(1, 0, 1, 0)
-    grid.BackgroundTransparency = 1
-    grid.Parent = pageScroll
-
-    -- LEFT COLUMN CARDS
-    local weaponCard = CreateSectionCard(grid, "Weapon", UDim2.new(0.485, 0, 0, 58), UDim2.new(0, 0, 0, 0))
-    CreateDropdown(weaponCard, "", "Desert Eagle")
-
-    local aimbotCard = CreateSectionCard(grid, "Aimbot", UDim2.new(0.485, 0, 0, 130), UDim2.new(0, 0, 0, 66))
-    CreateCheckbox(aimbotCard, "Enable", true)
-    CreateDropdown(aimbotCard, "Hitboxes", "Head, Neck, Pelvis")
-    CreateDropdown(aimbotCard, "Smooth type", "Decrease")
-
-    local settingsCard = CreateSectionCard(grid, "Settings", UDim2.new(0.485, 0, 0, 120), UDim2.new(0, 0, 0, 204))
-    CreateSlider(settingsCard, "FOV", 0, 10, 2.0, 1)
-    CreateSlider(settingsCard, "Smooth", 1, 30, 17.0, 1)
-    CreateSlider(settingsCard, "Recoil FOV", 0, 10, 0.0, 1)
-
-    -- RIGHT COLUMN CARDS
-    local triggerCard = CreateSectionCard(grid, "Triggerbot", UDim2.new(0.485, 0, 0, 196), UDim2.new(0.515, 0, 0, 0))
-    CreateCheckbox(triggerCard, "Enable", true)
-    CreateDropdown(triggerCard, "Hitboxes", "Head, Neck, Spine")
-    CreateCheckbox(triggerCard, "Only zoom", false)
-    CreateSlider(triggerCard, "Hitchance", 0, 100, 65, 0)
-    CreateSlider(triggerCard, "Delay shot", 0, 0.1, 0.010, 3)
-
-    local delaysCard = CreateSectionCard(grid, "Delays", UDim2.new(0.485, 0, 0, 120), UDim2.new(0.515, 0, 0, 204))
-    CreateDropdown(delaysCard, "Type", "Combo")
-    CreateSlider(delaysCard, "Time", 0, 0.2, 0.070, 3)
-end
-
----------------------------------------------------------
--- REAL WORKING VISUALS LOGIC FOR (BETA) TAB
+-- REAL WORKING VISUALS LOGIC FOR COSMETICS
 ---------------------------------------------------------
 local betaState = {
     wings = false,
@@ -987,9 +768,8 @@ local function ApplyWings()
     folder.Parent = char
     betaState.wingFolder = folder
 
-    -- Build Left & Right Wing Frames
     local leftRoot = Instance.new("Part")
-    leftRoot.Size = Vector2.new(0.1, 0.1) and Vector3.new(0.1,0.1,0.1)
+    leftRoot.Size = Vector3.new(0.1,0.1,0.1)
     leftRoot.Transparency = 1
     leftRoot.CanCollide = false
     leftRoot.Massless = true
@@ -1014,7 +794,6 @@ local function ApplyWings()
     wR.C0 = CFrame.new(0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(15), 0)
     wR.Parent = rightRoot
 
-    -- Wing feathers/blades
     for i = 1, 4 do
         local scale = 1 - (i * 0.15)
         local lBlade = CreateWingPart(folder, Vector3.new(0.1, 1.8 * scale, 0.4 * scale), CFrame.identity)
@@ -1046,7 +825,6 @@ local function ApplyAura()
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    -- Glowing Body Highlight
     local hl = Instance.new("Highlight")
     hl.Name = "MidnightAuraHL"
     hl.FillColor = AppC.accent
@@ -1057,7 +835,6 @@ local function ApplyAura()
     hl.Parent = char
     betaState.auraHighlight = hl
 
-    -- Floating Sparkles
     local pe = Instance.new("ParticleEmitter")
     pe.Name = "MidnightAuraParticles"
     pe.Color = ColorSequence.new(AppC.accent, AppC.white)
@@ -1070,7 +847,6 @@ local function ApplyAura()
     pe.Parent = hrp
     betaState.auraParticles = pe
 
-    -- Point Light
     local pl = Instance.new("PointLight")
     pl.Color = AppC.accent
     pl.Range = 12
@@ -1079,7 +855,6 @@ local function ApplyAura()
     betaState.auraLight = pl
 end
 
--- RenderStepped Wing Flap Animation
 if not betaState.conn then
     betaState.conn = RunService.RenderStepped:Connect(function()
         if betaState.wings and betaState.leftWeld and betaState.rightWeld and betaState.leftWeld.Parent and betaState.rightWeld.Parent then
@@ -1090,7 +865,6 @@ if not betaState.conn then
     end)
 end
 
--- Character Respawn Handler
 player.CharacterAdded:Connect(function()
     task.wait(0.5)
     if betaState.wings then ApplyWings() end
@@ -1098,81 +872,101 @@ player.CharacterAdded:Connect(function()
 end)
 
 ---------------------------------------------------------
--- BUILD (BETA) PAGE
+-- POPULATE SACRACIA PAGES (TWO COLUMN LAYOUT)
 ---------------------------------------------------------
-local function BuildBetaPage(parent)
+for _, item in ipairs(categories) do
+    local page = Instance.new("Frame")
+    page.Name = "Page_" .. item.id
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.BackgroundTransparency = 1
+    page.Visible = false
+    page.Parent = PageHolder
+    categoryPages[item.id] = page
+
     local pageScroll = Instance.new("ScrollingFrame")
     pageScroll.Size = UDim2.new(1, 0, 1, 0)
     pageScroll.BackgroundTransparency = 1
     pageScroll.BorderSizePixel = 0
     pageScroll.ScrollBarThickness = 2
     pageScroll.ScrollBarImageColor3 = AppC.border
-    pageScroll.Parent = parent
+    pageScroll.Parent = page
 
     local pad = Instance.new("UIPadding")
-    pad.PaddingTop = UDim.new(0, 10)
-    pad.PaddingLeft = UDim.new(0, 10)
-    pad.PaddingRight = UDim.new(0, 10)
-    pad.PaddingBottom = UDim.new(0, 10)
+    pad.PaddingTop = UDim.new(0, 20)
+    pad.PaddingLeft = UDim.new(0, 20)
+    pad.PaddingRight = UDim.new(0, 20)
+    pad.PaddingBottom = UDim.new(0, 20)
     pad.Parent = pageScroll
 
-    local grid = Instance.new("Frame")
-    grid.Size = UDim2.new(1, 0, 1, 0)
-    grid.BackgroundTransparency = 1
-    grid.Parent = pageScroll
+    -- 2 Columns Grid Layout
+    local colLeft = Instance.new("Frame")
+    colLeft.Size = UDim2.new(0.48, 0, 1, 0)
+    colLeft.Position = UDim2.new(0, 0, 0, 0)
+    colLeft.BackgroundTransparency = 1
+    colLeft.Parent = pageScroll
 
-    -- VISUAL COSMETICS CARD
-    local cosmeticsCard = CreateSectionCard(grid, "Character Cosmetics (Beta)", UDim2.new(0.485, 0, 0, 210), UDim2.new(0, 0, 0, 0))
-    
-    CreateCheckbox(cosmeticsCard, "Enable Wings", false, function(state)
-        betaState.wings = state
-        ApplyWings()
-    end)
+    local colRight = Instance.new("Frame")
+    colRight.Size = UDim2.new(0.48, 0, 1, 0)
+    colRight.Position = UDim2.new(0.52, 0, 0, 0)
+    colRight.BackgroundTransparency = 1
+    colRight.Parent = pageScroll
 
-    CreateSlider(cosmeticsCard, "Wing Speed", 1, 10, 3, 1, function(val)
-        betaState.wingSpeed = val
-    end)
+    local listL = Instance.new("UIListLayout")
+    listL.SortOrder = Enum.SortOrder.LayoutOrder
+    listL.Padding = UDim.new(0, 12)
+    listL.Parent = colLeft
 
-    CreateCheckbox(cosmeticsCard, "Enable Aura", false, function(state)
-        betaState.aura = state
-        ApplyAura()
-    end)
+    local listR = Instance.new("UIListLayout")
+    listR.SortOrder = Enum.SortOrder.LayoutOrder
+    listR.Padding = UDim.new(0, 12)
+    listR.Parent = colRight
 
-    -- EXPERIMENTAL FX CARD
-    local experimentalCard = CreateSectionCard(grid, "Experimental FX", UDim2.new(0.485, 0, 0, 210), UDim2.new(0.515, 0, 0, 0))
-    CreateCheckbox(experimentalCard, "Rainbow Accent", false, function(state)
-        -- Visual preview toggle
-    end)
-    CreateSlider(experimentalCard, "Aura Brightness", 1, 5, 2.5, 1, function(val)
-        if betaState.auraLight then betaState.auraLight.Brightness = val end
-    end)
-end
+    if item.id == "Stats" then
+        -- LEFT COLUMN: HEALTH & MOVEMENT
+        CreateSectionHeader(colLeft, "Health")
+        CreateToggle(colLeft, "Godmode", nil, true)
 
--- POPULATE ALL PAGES
-for _, catGroup in ipairs(categories) do
-    for _, item in ipairs(catGroup.items) do
-        local pageFrame = Instance.new("Frame")
-        pageFrame.Name = "Page_" .. item.id
-        pageFrame.Size = UDim2.new(1, 0, 1, 0)
-        pageFrame.BackgroundTransparency = 1
-        pageFrame.Visible = false
-        pageFrame.Parent = PageHolder
-        categoryPages[item.id] = pageFrame
+        CreateSectionHeader(colLeft, "Movement")
+        CreateToggle(colLeft, "Infinite stamina", nil, false)
+        CreateSlider(colLeft, "Walking speed", 1, 10, 6, "x")
+        CreateSlider(colLeft, "Running speed", 1, 10, 3, "x")
+        CreateSlider(colLeft, "Crouching speed", 1, 10, 5, "x")
+        CreateToggle(colLeft, "Infinite jumps", nil, true)
+        CreateToggle(colLeft, "Dont tumble", "Double tumbling from external sources", false)
 
-        if item.id == "Aimbot" then
-            BuildAimbotPage(pageFrame)
-        elseif item.id == "Beta" then
-            BuildBetaPage(pageFrame)
-        else
-            local card = CreateSectionCard(pageFrame, item.name .. " Settings", UDim2.new(0.98, 0, 0, 160), UDim2.new(0, 0, 0, 0))
-            CreateCheckbox(card, "Enable " .. item.name .. " Feature", true)
-            CreateSlider(card, item.name .. " Distance", 0, 500, 150, 0)
-        end
+        -- RIGHT COLUMN: GRAB & POWERUPS
+        CreateSectionHeader(colRight, "Grab")
+        CreateToggle(colRight, "High strength", "Disables if you take damage", true)
+        CreateToggle(colRight, "Unlimited range", nil, true)
+        CreateToggle(colRight, "No doorforge", nil, false)
+
+        CreateSectionHeader(colRight, "Cosmetics & Aura")
+        CreateToggle(colRight, "Enable Wings", "Attach glowing wings to character", false, function(s)
+            betaState.wings = s
+            ApplyWings()
+        end)
+        CreateSlider(colRight, "Wing Speed", 1, 10, 3, "x", function(v)
+            betaState.wingSpeed = v
+        end)
+        CreateToggle(colRight, "Enable Aura", "Body highlight & particles", false, function(s)
+            betaState.aura = s
+            ApplyAura()
+        end)
+
+    else
+        -- DEFAULT DUMMY PAGE CONTENT
+        CreateSectionHeader(colLeft, item.name .. " Settings")
+        CreateToggle(colLeft, "Enable " .. item.name, "Toggle option feature", true)
+        CreateSlider(colLeft, "Intensity", 1, 100, 50, "%")
+
+        CreateSectionHeader(colRight, "Advanced Options")
+        CreateToggle(colRight, "Bypass Anti-Cheat", nil, true)
+        CreateToggle(colRight, "Silent Mode", nil, false)
     end
 end
 
 ---------------------------------------------------------
--- OPEN / CLOSE TOGGLE LOGIC
+-- TOGGLE HUB FUNCTIONALITY
 ---------------------------------------------------------
 local function ToggleHub()
     hubOpen = not hubOpen
@@ -1210,4 +1004,4 @@ UserInputService.InputEnded:Connect(function(input)
 end)
 
 ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
-ShowSidebarPage("Aimbot")
+ShowPage("Stats")
