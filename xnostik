@@ -1,338 +1,731 @@
--- FRIEND FINDER — Roblox Studio (безопасная версия)
---
--- УСТАНОВКА
--- 1) В ReplicatedStorage создай RemoteFunction: FriendLookup
--- 2) В ReplicatedStorage создай RemoteEvent: JoinFriendServer
--- 3) Блок SERVER помести в ServerScriptService как Script.
--- 4) Блок CLIENT помести в StarterPlayer > StarterPlayerScripts как LocalScript.
---
--- Ограничения Roblox: присутствие и переход доступны только для друзей и
--- только если Roblox возвращает доступный PlaceId + JobId. Приватные серверы
--- и приватность чужого профиля этот код не обходит.
+-- // linbergz Team - Player Tracker v3.1 FIX \\
+-- // Исправлено: 26.09.2025 \\
 
--- ================================================================
--- SERVER: ServerScriptService/FriendFinderServer
--- ================================================================
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
-
-local lookupFunction = ReplicatedStorage:WaitForChild("FriendLookup")
-local joinEvent = ReplicatedStorage:WaitForChild("JoinFriendServer")
-
-local function cleanUsername(value)
-	if typeof(value) ~= "string" then return nil end
-	value = value:match("^%s*(.-)%s*$")
-	if #value < 3 or #value > 20 or not value:match("^[%w_]+$") then
-		return nil
-	end
-	return value
-end
-
-local function getFriendPresence(player, targetId)
-	local ok, friends = pcall(function()
-		return player:GetFriendsOnline(200)
-	end)
-	if not ok then return nil end
-	for _, friend in ipairs(friends) do
-		if friend.UserId == targetId then
-			return friend
-		end
-	end
-	return nil
-end
-
-local function isFriend(player, targetId)
-	local ok, result = pcall(function()
-		return player:IsFriendsWith(targetId)
-	end)
-	return ok and result == true
-end
-
-lookupFunction.OnServerInvoke = function(player, rawName)
-	local username = cleanUsername(rawName)
-	if not username then
-		return { ok = false, message = "Ник: 3–20 символов, только буквы, цифры и _." }
-	end
-
-	local success, targetId = pcall(function()
-		return Players:GetUserIdFromNameAsync(username)
-	end)
-	if not success or not targetId then
-		return { ok = false, message = "Такого игрока не существует." }
-	end
-
-	local result = {
-		ok = true,
-		userId = targetId,
-		username = username,
-		isFriend = isFriend(player, targetId),
-		online = false,
-		canJoin = false,
-		location = "Статус недоступен",
-		jobId = nil,
-	}
-
-	if not result.isFriend then
-		result.message = "Игрок найден. Добавь его в друзья для просмотра статуса."
-		return result
-	end
-
-	local presence = getFriendPresence(player, targetId)
-	if not presence or presence.LocationType == Enum.LocationType.Offline then
-		result.location = "Не в сети"
-		result.message = "Друг сейчас не в сети."
-		return result
-	end
-
-	result.online = true
-	result.location = presence.LastLocation or "В сети"
-	if presence.LocationType == Enum.LocationType.InGame and presence.PlaceId and presence.GameId then
-		result.canJoin = true
-		result.placeId = presence.PlaceId
-		result.jobId = tostring(presence.GameId)
-		result.message = "Друг в игре — подключение доступно."
-	else
-		result.message = "Друг в сети, но не в доступной игре."
-	end
-	return result
-end
-
-joinEvent.OnServerEvent:Connect(function(player, targetId)
-	if typeof(targetId) ~= "number" or not isFriend(player, targetId) then return end
-
-	-- Повторно читаем присутствие: клиент не может передать свой PlaceId/JobId.
-	local presence = getFriendPresence(player, targetId)
-	if not presence
-		or presence.LocationType ~= Enum.LocationType.InGame
-		or not presence.PlaceId
-		or not presence.GameId then
-		return
-	end
-
-	pcall(function()
-		TeleportService:TeleportToPlaceInstance(presence.PlaceId, presence.GameId, player)
-	end)
-end)
-
-
--- ================================================================
--- CLIENT: StarterPlayer/StarterPlayerScripts/FriendFinderClient
--- ================================================================
---[[
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
+local StarterGui = game:GetService("StarterGui")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
 
-local player = Players.LocalPlayer
-local lookupFunction = ReplicatedStorage:WaitForChild("FriendLookup")
-local joinEvent = ReplicatedStorage:WaitForChild("JoinFriendServer")
-local REFRESH_SECONDS = 25
+-- Переменные
+local CurrentPlayerInfo = nil
+local AutoRefreshEnabled = false
+local RefreshConnection = nil
+local SearchHistory = {}
+local FavoritesData = {}
 
-local gui = Instance.new("ScreenGui")
-gui.Name = "FriendFinderGui"
-gui.ResetOnSpawn = false
-gui.IgnoreGuiInset = false
-gui.Parent = player:WaitForChild("PlayerGui")
-
-local function corner(object, radius)
-	local c = Instance.new("UICorner")
-	c.CornerRadius = UDim.new(0, radius)
-	c.Parent = object
+-- Очистка
+if CoreGui:FindFirstChild("linbergzTracker") then
+    CoreGui:FindFirstChild("linbergzTracker"):Destroy()
 end
 
-local function label(parent, text, size, pos, font, color)
-	local item = Instance.new("TextLabel")
-	item.BackgroundTransparency = 1
-	item.Size = size
-	item.Position = pos
-	item.Font = font or Enum.Font.Gotham
-	item.TextSize = 13
-	item.TextColor3 = color or Color3.fromRGB(198, 205, 225)
-	item.TextXAlignment = Enum.TextXAlignment.Left
-	item.Text = text
-	item.Parent = parent
-	return item
-end
+-- GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "linbergzTracker"
+ScreenGui.Parent = CoreGui
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-local panel = Instance.new("Frame")
-panel.Name = "Panel"
-panel.Size = UDim2.fromOffset(375, 278)
-panel.Position = UDim2.new(0.5, -187, 0.5, -139)
-panel.BackgroundColor3 = Color3.fromRGB(19, 22, 31)
-panel.BorderSizePixel = 0
-panel.Parent = gui
-corner(panel, 14)
-local stroke = Instance.new("UIStroke", panel)
-stroke.Color = Color3.fromRGB(82, 94, 137)
-stroke.Transparency = 0.45
+-- Главное окно
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 680, 0, 500)
+MainFrame.Position = UDim2.new(0.5, -340, 0.5, -250)
+MainFrame.BackgroundColor3 = Color3.fromRGB(17, 17, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = ScreenGui
 
-local header = Instance.new("TextButton")
-header.Size = UDim2.new(1, 0, 0, 42)
-header.BackgroundTransparency = 1
-header.Text = ""
-header.Active = true
-header.Parent = panel
-label(header, "FRIEND FINDER", UDim2.new(1, -68, 1, 0), UDim2.fromOffset(15, 0), Enum.Font.GothamBold, Color3.fromRGB(244, 246, 255)).TextSize = 16
-local dragHint = label(header, "↕", UDim2.fromOffset(30, 42), UDim2.new(1, -34, 0, 0), Enum.Font.GothamBold, Color3.fromRGB(140, 150, 180))
-dragHint.TextXAlignment = Enum.TextXAlignment.Center
-dragHint.TextSize = 18
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = MainFrame
 
--- Перетаскивание окна мышью и пальцем.
-local dragging, dragStart, startPos, dragInput = false, nil, nil, nil
-header.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		dragging, dragStart, startPos = true, input.Position, panel.Position
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then dragging = false end
-		end)
-	end
+-- Тень
+local Shadow = Instance.new("Frame")
+Shadow.Size = UDim2.new(1, 6, 1, 6)
+Shadow.Position = UDim2.new(0, -3, 0, -3)
+Shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Shadow.BackgroundTransparency = 0.85
+Shadow.BorderSizePixel = 0
+Shadow.ZIndex = -1
+Shadow.Parent = MainFrame
+
+local ShadowCorner = Instance.new("UICorner")
+ShadowCorner.CornerRadius = UDim.new(0, 10)
+ShadowCorner.Parent = Shadow
+
+-- Верхняя панель
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 40)
+TopBar.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+TopBar.BorderSizePixel = 0
+TopBar.Parent = MainFrame
+
+local TopBarCorner = Instance.new("UICorner")
+TopBarCorner.CornerRadius = UDim.new(0, 8)
+TopBarCorner.Parent = TopBar
+
+local TopCover = Instance.new("Frame")
+TopCover.Size = UDim2.new(1, 0, 0.5, 0)
+TopCover.Position = UDim2.new(0, 0, 0.5, 0)
+TopCover.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+TopCover.BorderSizePixel = 0
+TopCover.Parent = TopBar
+
+-- Заголовок
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(0, 200, 1, 0)
+Title.Position = UDim2.new(0, 12, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "linbergz Tracker"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 17
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TopBar
+
+-- Кнопка закрытия
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 26, 0, 26)
+CloseBtn.Position = UDim2.new(1, -32, 0, 7)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 55, 55)
+CloseBtn.Text = "✕"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextSize = 14
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.BorderSizePixel = 0
+CloseBtn.AutoButtonColor = false
+CloseBtn.Parent = TopBar
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 4)
+CloseCorner.Parent = CloseBtn
+
+CloseBtn.MouseButton1Click:Connect(function()
+    if RefreshConnection then RefreshConnection:Disconnect() end
+    ScreenGui:Destroy()
 end)
-header.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+
+-- Поле поиска
+local SearchFrame = Instance.new("Frame")
+SearchFrame.Size = UDim2.new(1, -20, 0, 40)
+SearchFrame.Position = UDim2.new(0, 10, 0, 50)
+SearchFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 38)
+SearchFrame.BorderSizePixel = 0
+SearchFrame.Parent = MainFrame
+
+local SearchCorner = Instance.new("UICorner")
+SearchCorner.CornerRadius = UDim.new(0, 6)
+SearchCorner.Parent = SearchFrame
+
+local SearchInput = Instance.new("TextBox")
+SearchInput.Size = UDim2.new(1, -50, 1, 0)
+SearchInput.Position = UDim2.new(0, 12, 0, 0)
+SearchInput.BackgroundTransparency = 1
+SearchInput.PlaceholderText = "Введите никнейм игрока..."
+SearchInput.PlaceholderColor3 = Color3.fromRGB(140, 140, 155)
+SearchInput.Text = ""
+SearchInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+SearchInput.TextSize = 14
+SearchInput.Font = Enum.Font.Gotham
+SearchInput.TextXAlignment = Enum.TextXAlignment.Left
+SearchInput.ClearTextOnFocus = false
+SearchInput.Parent = SearchFrame
+
+local SearchBtn = Instance.new("TextButton")
+SearchBtn.Size = UDim2.new(0, 40, 0, 32)
+SearchBtn.Position = UDim2.new(1, -44, 0, 4)
+SearchBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+SearchBtn.Text = "🔍"
+SearchBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SearchBtn.TextSize = 16
+SearchBtn.Font = Enum.Font.GothamBold
+SearchBtn.BorderSizePixel = 0
+SearchBtn.AutoButtonColor = false
+SearchBtn.Parent = SearchFrame
+
+local SearchBtnCorner = Instance.new("UICorner")
+SearchBtnCorner.CornerRadius = UDim.new(0, 5)
+SearchBtnCorner.Parent = SearchBtn
+
+-- Левая панель (Аватар)
+local LeftPanel = Instance.new("Frame")
+LeftPanel.Size = UDim2.new(0, 175, 0, 210)
+LeftPanel.Position = UDim2.new(0, 10, 0, 100)
+LeftPanel.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
+LeftPanel.BorderSizePixel = 0
+LeftPanel.Parent = MainFrame
+
+local LeftCorner = Instance.new("UICorner")
+LeftCorner.CornerRadius = UDim.new(0, 6)
+LeftCorner.Parent = LeftPanel
+
+-- Аватар
+local AvatarContainer = Instance.new("Frame")
+AvatarContainer.Size = UDim2.new(0, 130, 0, 130)
+AvatarContainer.Position = UDim2.new(0.5, -65, 0, 10)
+AvatarContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+AvatarContainer.BorderSizePixel = 0
+AvatarContainer.Parent = LeftPanel
+
+local AvatarContainerCorner = Instance.new("UICorner")
+AvatarContainerCorner.CornerRadius = UDim.new(1, 0)
+AvatarContainerCorner.Parent = AvatarContainer
+
+local AvatarImage = Instance.new("ImageLabel")
+AvatarImage.Name = "Avatar"
+AvatarImage.Size = UDim2.new(1, -8, 1, -8)
+AvatarImage.Position = UDim2.new(0, 4, 0, 4)
+AvatarImage.BackgroundColor3 = Color3.fromRGB(40, 40, 58)
+AvatarImage.BorderSizePixel = 0
+AvatarImage.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+AvatarImage.ScaleType = Enum.ScaleType.Crop
+AvatarImage.Parent = AvatarContainer
+
+local AvatarCorner = Instance.new("UICorner")
+AvatarCorner.CornerRadius = UDim.new(1, 0)
+AvatarCorner.Parent = AvatarImage
+
+-- Индикатор статуса
+local StatusDot = Instance.new("Frame")
+StatusDot.Size = UDim2.new(0, 16, 0, 16)
+StatusDot.Position = UDim2.new(1, -20, 1, -20)
+StatusDot.BackgroundColor3 = Color3.fromRGB(140, 140, 140)
+StatusDot.BorderSizePixel = 0
+StatusDot.Parent = AvatarContainer
+
+local StatusDotCorner = Instance.new("UICorner")
+StatusDotCorner.CornerRadius = UDim.new(1, 0)
+StatusDotCorner.Parent = StatusDot
+
+-- Имя под аватаром
+local AvatarName = Instance.new("TextLabel")
+AvatarName.Size = UDim2.new(1, -16, 0, 22)
+AvatarName.Position = UDim2.new(0, 8, 0, 148)
+AvatarName.BackgroundTransparency = 1
+AvatarName.Text = "Никнейм"
+AvatarName.TextColor3 = Color3.fromRGB(255, 255, 255)
+AvatarName.TextSize = 14
+AvatarName.Font = Enum.Font.GothamBold
+AvatarName.TextTruncate = Enum.TextTruncate.AtEnd
+AvatarName.Parent = LeftPanel
+
+local AvatarStatus = Instance.new("TextLabel")
+AvatarStatus.Size = UDim2.new(1, -16, 0, 18)
+AvatarStatus.Position = UDim2.new(0, 8, 0, 172)
+AvatarStatus.BackgroundTransparency = 1
+AvatarStatus.Text = "Введите ник"
+AvatarStatus.TextColor3 = Color3.fromRGB(150, 150, 165)
+AvatarStatus.TextSize = 11
+AvatarStatus.Font = Enum.Font.Gotham
+AvatarStatus.Parent = LeftPanel
+
+-- Кнопка обновления
+local RefreshBtn = Instance.new("TextButton")
+RefreshBtn.Size = UDim2.new(0, 22, 0, 22)
+RefreshBtn.Position = UDim2.new(1, -28, 0, 180)
+RefreshBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 58)
+RefreshBtn.Text = "↻"
+RefreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+RefreshBtn.TextSize = 16
+RefreshBtn.Font = Enum.Font.GothamBold
+RefreshBtn.BorderSizePixel = 0
+RefreshBtn.AutoButtonColor = false
+RefreshBtn.Parent = LeftPanel
+
+local RefreshCorner = Instance.new("UICorner")
+RefreshCorner.CornerRadius = UDim.new(0, 4)
+RefreshCorner.Parent = RefreshBtn
+
+-- Правая панель (Информация)
+local RightPanel = Instance.new("Frame")
+RightPanel.Size = UDim2.new(0, 475, 0, 210)
+RightPanel.Position = UDim2.new(0, 195, 0, 100)
+RightPanel.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
+RightPanel.BorderSizePixel = 0
+RightPanel.Parent = MainFrame
+
+local RightCorner = Instance.new("UICorner")
+RightCorner.CornerRadius = UDim.new(0, 6)
+RightCorner.Parent = RightPanel
+
+-- Создание строки информации
+local function CreateInfoLine(parent, y, icon, label)
+    local Row = Instance.new("Frame")
+    Row.Size = UDim2.new(1, -14, 0, 30)
+    Row.Position = UDim2.new(0, 7, 0, y)
+    Row.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
+    Row.BorderSizePixel = 0
+    Row.Parent = parent
+    
+    local RowCorner = Instance.new("UICorner")
+    RowCorner.CornerRadius = UDim.new(0, 4)
+    RowCorner.Parent = Row
+    
+    local IconLabel = Instance.new("TextLabel")
+    IconLabel.Size = UDim2.new(0, 28, 1, 0)
+    IconLabel.BackgroundTransparency = 1
+    IconLabel.Text = icon
+    IconLabel.TextSize = 13
+    IconLabel.TextXAlignment = Enum.TextXAlignment.Center
+    IconLabel.Parent = Row
+    
+    local LabelText = Instance.new("TextLabel")
+    LabelText.Size = UDim2.new(0, 120, 1, 0)
+    LabelText.Position = UDim2.new(0, 28, 0, 0)
+    LabelText.BackgroundTransparency = 1
+    LabelText.Text = label
+    LabelText.TextColor3 = Color3.fromRGB(165, 165, 178)
+    LabelText.TextSize = 11
+    LabelText.Font = Enum.Font.Gotham
+    LabelText.TextXAlignment = Enum.TextXAlignment.Left
+    LabelText.Parent = Row
+    
+    local ValueText = Instance.new("TextLabel")
+    ValueText.Name = "Value"
+    ValueText.Size = UDim2.new(1, -160, 1, 0)
+    ValueText.Position = UDim2.new(0, 148, 0, 0)
+    ValueText.BackgroundTransparency = 1
+    ValueText.Text = "..."
+    ValueText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ValueText.TextSize = 11
+    ValueText.Font = Enum.Font.GothamBold
+    ValueText.TextXAlignment = Enum.TextXAlignment.Left
+    ValueText.TextTruncate = Enum.TextTruncate.AtEnd
+    ValueText.Parent = Row
+    
+    return ValueText
+end
+
+-- Информационные строки
+local InfoValues = {}
+InfoValues.UserId = CreateInfoLine(RightPanel, 8, "🆔", "User ID:")
+InfoValues.DisplayName = CreateInfoLine(RightPanel, 42, "📝", "Отображаемое имя:")
+InfoValues.Status = CreateInfoLine(RightPanel, 76, "📡", "Статус:")
+InfoValues.Game = CreateInfoLine(RightPanel, 110, "🎮", "Игра:")
+InfoValues.PlaceId = CreateInfoLine(RightPanel, 144, "🔢", "Place ID:")
+InfoValues.JobId = CreateInfoLine(RightPanel, 178, "🔗", "Job ID:")
+
+-- Кнопки действий
+local JoinGameBtn = Instance.new("TextButton")
+JoinGameBtn.Size = UDim2.new(0, 165, 0, 30)
+JoinGameBtn.Position = UDim2.new(0, 7, 0, 175)
+JoinGameBtn.BackgroundColor3 = Color3.fromRGB(0, 185, 90)
+JoinGameBtn.Text = "🎮 ПРИСОЕДИНИТЬСЯ"
+JoinGameBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+JoinGameBtn.TextSize = 12
+JoinGameBtn.Font = Enum.Font.GothamBold
+JoinGameBtn.BorderSizePixel = 0
+JoinGameBtn.AutoButtonColor = false
+JoinGameBtn.Visible = false
+JoinGameBtn.Parent = RightPanel
+
+local JoinCorner = Instance.new("UICorner")
+JoinCorner.CornerRadius = UDim.new(0, 4)
+JoinCorner.Parent = JoinGameBtn
+
+local CopyJobBtn = Instance.new("TextButton")
+CopyJobBtn.Size = UDim2.new(0, 130, 0, 30)
+CopyJobBtn.Position = UDim2.new(0, 180, 0, 175)
+CopyJobBtn.BackgroundColor3 = Color3.fromRGB(90, 90, 170)
+CopyJobBtn.Text = "📋 Job ID"
+CopyJobBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CopyJobBtn.TextSize = 11
+CopyJobBtn.Font = Enum.Font.GothamBold
+CopyJobBtn.BorderSizePixel = 0
+CopyJobBtn.AutoButtonColor = false
+CopyJobBtn.Visible = false
+CopyJobBtn.Parent = RightPanel
+
+local CopyJobCorner = Instance.new("UICorner")
+CopyJobCorner.CornerRadius = UDim.new(0, 4)
+CopyJobCorner.Parent = CopyJobBtn
+
+local FavBtn = Instance.new("TextButton")
+FavBtn.Size = UDim2.new(0, 30, 0, 30)
+FavBtn.Position = UDim2.new(0, 320, 0, 175)
+FavBtn.BackgroundColor3 = Color3.fromRGB(255, 170, 0)
+FavBtn.Text = "⭐"
+FavBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FavBtn.TextSize = 14
+FavBtn.Font = Enum.Font.GothamBold
+FavBtn.BorderSizePixel = 0
+FavBtn.AutoButtonColor = false
+FavBtn.Visible = false
+FavBtn.Parent = RightPanel
+
+local FavCorner = Instance.new("UICorner")
+FavCorner.CornerRadius = UDim.new(0, 4)
+FavCorner.Parent = FavBtn
+
+-- Нижняя панель
+local BottomPanel = Instance.new("Frame")
+BottomPanel.Size = UDim2.new(1, -20, 0, 155)
+BottomPanel.Position = UDim2.new(0, 10, 0, 320)
+BottomPanel.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
+BottomPanel.BorderSizePixel = 0
+BottomPanel.Parent = MainFrame
+
+local BottomCorner = Instance.new("UICorner")
+BottomCorner.CornerRadius = UDim.new(0, 6)
+BottomCorner.Parent = BottomPanel
+
+local BottomTitle = Instance.new("TextLabel")
+BottomTitle.Size = UDim2.new(1, -14, 0, 24)
+BottomTitle.Position = UDim2.new(0, 7, 0, 4)
+BottomTitle.BackgroundTransparency = 1
+BottomTitle.Text = "📊 Дополнительная информация"
+BottomTitle.TextColor3 = Color3.fromRGB(180, 180, 192)
+BottomTitle.TextSize = 12
+BottomTitle.Font = Enum.Font.GothamBold
+BottomTitle.TextXAlignment = Enum.TextXAlignment.Left
+BottomTitle.Parent = BottomPanel
+
+local BottomValues = {}
+BottomValues.Friends = CreateInfoLine(BottomPanel, 32, "👥", "Друзей:")
+BottomValues.Followers = CreateInfoLine(BottomPanel, 66, "👤", "Подписчиков:")
+BottomValues.LastOnline = CreateInfoLine(BottomPanel, 100, "🕐", "Последний онлайн:")
+BottomValues.Private = CreateInfoLine(BottomPanel, 134, "🔒", "Приватность:")
+
+-- Автообновление
+local AutoRefreshBtn = Instance.new("TextButton")
+AutoRefreshBtn.Size = UDim2.new(0, 155, 0, 26)
+AutoRefreshBtn.Position = UDim2.new(1, -162, 0, 4)
+AutoRefreshBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 62)
+AutoRefreshBtn.Text = "🔄 Автообновление: ВЫКЛ"
+AutoRefreshBtn.TextColor3 = Color3.fromRGB(190, 190, 202)
+AutoRefreshBtn.TextSize = 11
+AutoRefreshBtn.Font = Enum.Font.GothamBold
+AutoRefreshBtn.BorderSizePixel = 0
+AutoRefreshBtn.AutoButtonColor = false
+AutoRefreshBtn.Parent = BottomPanel
+
+local AutoRefreshCorner = Instance.new("UICorner")
+AutoRefreshCorner.CornerRadius = UDim.new(0, 4)
+AutoRefreshCorner.Parent = AutoRefreshBtn
+
+-- Статус бар
+local StatusBar = Instance.new("TextLabel")
+StatusBar.Size = UDim2.new(1, -20, 0, 20)
+StatusBar.Position = UDim2.new(0, 10, 1, -30)
+StatusBar.BackgroundTransparency = 1
+StatusBar.Text = "✅ Готов | Введите никнейм"
+StatusBar.TextColor3 = Color3.fromRGB(140, 140, 155)
+StatusBar.TextSize = 11
+StatusBar.Font = Enum.Font.Gotham
+StatusBar.TextXAlignment = Enum.TextXAlignment.Left
+StatusBar.Parent = MainFrame
+
+-- Индикатор загрузки
+local LoadingLine = Instance.new("Frame")
+LoadingLine.Size = UDim2.new(0, 0, 0, 2)
+LoadingLine.Position = UDim2.new(0, 0, 1, -2)
+LoadingLine.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+LoadingLine.BorderSizePixel = 0
+LoadingLine.Parent = MainFrame
+
+-- === API ФУНКЦИИ (ПРОВЕРЕННЫЕ ИЗ v2.0) ===
+
+local function GetUserId(username)
+    local s, r = pcall(function()
+        local url = "https://users.roblox.com/v1/usernames/users"
+        local body = HttpService:JSONEncode({usernames = {username}, excludeBannedUsers = true})
+        local resp = HttpService:PostAsync(url, body, Enum.HttpContentType.ApplicationJson)
+        local data = HttpService:JSONDecode(resp)
+        if data.data and #data.data > 0 then
+            return data.data[1].id, data.data[1].name, data.data[1].displayName
+        end
+        return nil
+    end)
+    if s then return r else return nil end
+end
+
+local function GetAvatar(userId)
+    local s, r = pcall(function()
+        local url = "https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=" .. userId .. "&size=420x420&format=Png&isCircular=false"
+        local resp = HttpService:GetAsync(url)
+        local data = HttpService:JSONDecode(resp)
+        if data.data and #data.data > 0 then
+            return data.data[1].imageUrl
+        end
+        return nil
+    end)
+    if s then return r else return nil end
+end
+
+local function GetPresence(userId)
+    local result = {isOnline = false, presenceType = 0, gameId = nil, placeId = nil, jobId = nil, lastLocation = "Неизвестно", lastOnline = nil}
+    pcall(function()
+        local url = "https://presence.roblox.com/v1/presence/users"
+        local body = HttpService:JSONEncode({userIds = {userId}})
+        local resp = HttpService:PostAsync(url, body, Enum.HttpContentType.ApplicationJson)
+        local data = HttpService:JSONDecode(resp)
+        if data.userPresences and #data.userPresences > 0 then
+            local p = data.userPresences[1]
+            result.presenceType = p.userPresenceType or 0
+            result.isOnline = (p.userPresenceType == 2) or (p.userPresenceType == 1)
+            result.gameId = p.gameId
+            result.placeId = p.placeId
+            result.jobId = p.jobId
+            result.lastLocation = p.lastLocation or (p.userPresenceType == 1 and "На сайте" or "Неизвестно")
+            result.lastOnline = p.lastOnline
+        end
+    end)
+    return result
+end
+
+local function CheckPrivateProfile(userId)
+    local isPrivate = false
+    pcall(function()
+        local url = "https://inventory.roblox.com/v1/users/" .. userId .. "/assets/collectibles?limit=1"
+        local resp = HttpService:GetAsync(url)
+        local data = HttpService:JSONDecode(resp)
+        if data.errors then isPrivate = true end
+    end)
+    return isPrivate
+end
+
+local function GetSocialCounts(userId)
+    local friends, followers = 0, 0
+    pcall(function()
+        local resp = HttpService:GetAsync("https://friends.roblox.com/v1/users/" .. userId .. "/friends/count")
+        friends = HttpService:JSONDecode(resp).count or 0
+    end)
+    pcall(function()
+        local resp = HttpService:GetAsync("https://friends.roblox.com/v1/users/" .. userId .. "/followers/count")
+        followers = HttpService:JSONDecode(resp).count or 0
+    end)
+    return friends, followers
+end
+
+local function FormatLastOnline(lastOnline)
+    if not lastOnline then return "Неизвестно" end
+    local s, r = pcall(function()
+        local last = DateTime.fromIsoDate(lastOnline)
+        local now = DateTime.now()
+        local diff = (now.UnixTimestampMillis - last.UnixTimestampMillis) / 1000
+        if diff < 60 then return "Только что"
+        elseif diff < 3600 then return math.floor(diff/60) .. " мин. назад"
+        elseif diff < 86400 then return math.floor(diff/3600) .. " ч. назад"
+        else return math.floor(diff/86400) .. " дн. назад" end
+    end)
+    if s then return r else return "Неизвестно" end
+end
+
+-- Обновление UI
+local function UpdateUI(data)
+    if not data then
+        AvatarImage.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+        AvatarName.Text = "Не найдено"
+        AvatarStatus.Text = "Игрок не существует"
+        StatusDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+        for _, v in pairs(InfoValues) do v.Text = "-" end
+        for _, v in pairs(BottomValues) do v.Text = "-" end
+        JoinGameBtn.Visible = false
+        CopyJobBtn.Visible = false
+        FavBtn.Visible = false
+        StatusBar.Text = "❌ Игрок не найден"
+        return
+    end
+    
+    AvatarImage.Image = data.avatarUrl or "rbxasset://textures/ui/GuiImagePlaceholder.png"
+    AvatarName.Text = data.username
+    AvatarStatus.Text = data.isOnline and "🟢 Онлайн" or "🔴 Оффлайн"
+    StatusDot.BackgroundColor3 = data.isOnline and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 50, 50)
+    
+    InfoValues.UserId.Text = tostring(data.userId)
+    InfoValues.DisplayName.Text = data.displayName
+    InfoValues.Status.Text = data.isOnline and (data.presenceType == 2 and "🟢 В игре" or "🟢 На сайте") or "🔴 Не в сети"
+    InfoValues.Game.Text = data.lastLocation
+    InfoValues.PlaceId.Text = data.placeId and tostring(data.placeId) or "-"
+    InfoValues.JobId.Text = data.jobId or "-"
+    
+    BottomValues.Friends.Text = tostring(data.friendsCount)
+    BottomValues.Followers.Text = tostring(data.followersCount)
+    BottomValues.LastOnline.Text = data.lastOnlineFormatted
+    BottomValues.Private.Text = data.isPrivate and "🔒 Приватный" or "🔓 Открытый"
+    
+    JoinGameBtn.Visible = data.isOnline and data.gameId ~= nil
+    CopyJobBtn.Visible = data.isOnline and data.jobId ~= nil
+    FavBtn.Visible = true
+    
+    StatusBar.Text = "✅ " .. data.username .. (data.isOnline and " | 🟢 Онлайн" or " | 🔴 Оффлайн")
+end
+
+-- Основной поиск
+local function SearchPlayer()
+    local username = SearchInput.Text
+    if username == "" or username == " " then return end
+    
+    StatusBar.Text = "🔍 Поиск: " .. username
+    LoadingLine:TweenSize(UDim2.new(0.3, 0, 0, 2), "Out", "Linear", 0.2)
+    
+    local userId, name, displayName = GetUserId(username)
+    
+    if not userId then
+        UpdateUI(nil)
+        LoadingLine:TweenSize(UDim2.new(0, 0, 0, 2), "Out", "Linear", 0.2)
+        StarterGui:SetCore("SendNotification", {Title = "linbergz Tracker", Text = "❌ Игрок '" .. username .. "' не найден!", Duration = 3})
+        return
+    end
+    
+    LoadingLine:TweenSize(UDim2.new(0.6, 0, 0, 2), "Out", "Linear", 0.2)
+    
+    local avatarUrl = GetAvatar(userId)
+    local presence = GetPresence(userId)
+    local isPrivate = CheckPrivateProfile(userId)
+    local friendsCount, followersCount = GetSocialCounts(userId)
+    local lastOnlineFormatted = presence.isOnline and "Сейчас в сети" or FormatLastOnline(presence.lastOnline)
+    
+    local playerData = {
+        userId = userId,
+        username = name,
+        displayName = displayName,
+        avatarUrl = avatarUrl,
+        isOnline = presence.isOnline,
+        presenceType = presence.presenceType,
+        gameId = presence.gameId,
+        placeId = presence.placeId,
+        jobId = presence.jobId,
+        lastLocation = presence.lastLocation,
+        lastOnline = presence.lastOnline,
+        lastOnlineFormatted = lastOnlineFormatted,
+        isPrivate = isPrivate,
+        friendsCount = friendsCount,
+        followersCount = followersCount
+    }
+    
+    CurrentPlayerInfo = playerData
+    UpdateUI(playerData)
+    
+    -- История
+    table.insert(SearchHistory, 1, {username = name, isOnline = presence.isOnline})
+    if #SearchHistory > 15 then table.remove(SearchHistory) end
+    
+    LoadingLine:TweenSize(UDim2.new(1, 0, 0, 2), "Out", "Linear", 0.1)
+    wait(0.3)
+    LoadingLine:TweenSize(UDim2.new(0, 0, 0, 2), "Out", "Linear", 0.2)
+    
+    StarterGui:SetCore("SendNotification", {Title = "linbergz Tracker", Text = "✅ Найден: " .. name, Duration = 3})
+end
+
+-- Обновление текущего
+local function RefreshCurrent()
+    if not CurrentPlayerInfo then return end
+    local presence = GetPresence(CurrentPlayerInfo.userId)
+    local avatarUrl = GetAvatar(CurrentPlayerInfo.userId)
+    local isPrivate = CheckPrivateProfile(CurrentPlayerInfo.userId)
+    local friendsCount, followersCount = GetSocialCounts(CurrentPlayerInfo.userId)
+    
+    CurrentPlayerInfo.avatarUrl = avatarUrl or CurrentPlayerInfo.avatarUrl
+    CurrentPlayerInfo.isOnline = presence.isOnline
+    CurrentPlayerInfo.presenceType = presence.presenceType
+    CurrentPlayerInfo.gameId = presence.gameId
+    CurrentPlayerInfo.placeId = presence.placeId
+    CurrentPlayerInfo.jobId = presence.jobId
+    CurrentPlayerInfo.lastLocation = presence.lastLocation
+    CurrentPlayerInfo.lastOnline = presence.lastOnline
+    CurrentPlayerInfo.lastOnlineFormatted = presence.isOnline and "Сейчас в сети" or FormatLastOnline(presence.lastOnline)
+    CurrentPlayerInfo.isPrivate = isPrivate
+    CurrentPlayerInfo.friendsCount = friendsCount
+    CurrentPlayerInfo.followersCount = followersCount
+    
+    UpdateUI(CurrentPlayerInfo)
+    StatusBar.Text = "🔄 Обновлено: " .. CurrentPlayerInfo.username
+end
+
+-- === ОБРАБОТЧИКИ ===
+SearchBtn.MouseButton1Click:Connect(SearchPlayer)
+SearchInput.FocusLost:Connect(function(ep) if ep then SearchPlayer() end end)
+
+RefreshBtn.MouseButton1Click:Connect(function()
+    if CurrentPlayerInfo then
+        StatusBar.Text = "🔄 Обновление..."
+        RefreshCurrent()
+    end
+end)
+
+JoinGameBtn.MouseButton1Click:Connect(function()
+    if CurrentPlayerInfo and CurrentPlayerInfo.isOnline and CurrentPlayerInfo.gameId then
+        pcall(function()
+            TeleportService:TeleportToPlaceInstance(CurrentPlayerInfo.gameId, CurrentPlayerInfo.jobId or CurrentPlayerInfo.gameId, LocalPlayer)
+        end)
+        StarterGui:SetCore("SendNotification", {Title = "linbergz Tracker", Text = "🔄 Телепортация к " .. CurrentPlayerInfo.username, Duration = 5})
+    end
+end)
+
+CopyJobBtn.MouseButton1Click:Connect(function()
+    if CurrentPlayerInfo and CurrentPlayerInfo.jobId then
+        pcall(function() setclipboard(CurrentPlayerInfo.jobId) end)
+        StatusBar.Text = "📋 Job ID скопирован: " .. CurrentPlayerInfo.jobId
+        StarterGui:SetCore("SendNotification", {Title = "linbergz Tracker", Text = "📋 Job ID скопирован!", Duration = 3})
+    end
+end)
+
+FavBtn.MouseButton1Click:Connect(function()
+    if CurrentPlayerInfo then
+        local exists = false
+        for _, f in ipairs(FavoritesData) do
+            if f.userId == CurrentPlayerInfo.userId then exists = true break end
+        end
+        if not exists then
+            table.insert(FavoritesData, {userId = CurrentPlayerInfo.userId, username = CurrentPlayerInfo.username})
+            FavBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+            StatusBar.Text = "⭐ Добавлен: " .. CurrentPlayerInfo.username
+        else
+            StatusBar.Text = "⚠️ Уже в избранном"
+        end
+    end
+end)
+
+AutoRefreshBtn.MouseButton1Click:Connect(function()
+    AutoRefreshEnabled = not AutoRefreshEnabled
+    if AutoRefreshEnabled then
+        AutoRefreshBtn.BackgroundColor3 = Color3.fromRGB(0, 160, 100)
+        AutoRefreshBtn.Text = "🔄 Автообновление: ВКЛ"
+        RefreshConnection = RunService.Heartbeat:Connect(function()
+            if AutoRefreshEnabled and CurrentPlayerInfo then
+                task.wait(5)
+                if AutoRefreshEnabled then RefreshCurrent() end
+            end
+        end)
+    else
+        AutoRefreshBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 62)
+        AutoRefreshBtn.Text = "🔄 Автообновление: ВЫКЛ"
+        if RefreshConnection then RefreshConnection:Disconnect(); RefreshConnection = nil end
+    end
+end)
+
+-- Перетаскивание
+local dragging, dragStart, startPos = false, nil, nil
+TopBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+    end
 end)
 UserInputService.InputChanged:Connect(function(input)
-	if input == dragInput and dragging then
-		local delta = input.Position - dragStart
-		panel.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-	end
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
 end)
 
-local box = Instance.new("TextBox")
-box.Size = UDim2.new(1, -110, 0, 36)
-box.Position = UDim2.fromOffset(14, 47)
-box.BackgroundColor3 = Color3.fromRGB(34, 39, 54)
-box.BorderSizePixel = 0
-box.ClearTextOnFocus = false
-box.PlaceholderText = "Введите точный username"
-box.PlaceholderColor3 = Color3.fromRGB(137, 145, 170)
-box.Text = ""
-box.TextColor3 = Color3.fromRGB(250, 250, 255)
-box.Font = Enum.Font.Gotham
-box.TextSize = 13
-box.Parent = panel
-corner(box, 9)
+-- Анимация
+MainFrame.Size = UDim2.new(0, 0, 0, 0)
+MainFrame.BackgroundTransparency = 1
+TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+    Size = UDim2.new(0, 680, 0, 500),
+    BackgroundTransparency = 0
+}):Play()
 
-local search = Instance.new("TextButton")
-search.Size = UDim2.fromOffset(82, 36)
-search.Position = UDim2.new(1, -96, 0, 47)
-search.BackgroundColor3 = Color3.fromRGB(82, 101, 234)
-search.BorderSizePixel = 0
-search.Font = Enum.Font.GothamBold
-search.TextSize = 13
-search.TextColor3 = Color3.new(1, 1, 1)
-search.Text = "НАЙТИ"
-search.Parent = panel
-corner(search, 9)
-
-local avatar = Instance.new("ImageLabel")
-avatar.Size = UDim2.fromOffset(72, 72)
-avatar.Position = UDim2.fromOffset(14, 99)
-avatar.BackgroundColor3 = Color3.fromRGB(37, 43, 60)
-avatar.BorderSizePixel = 0
-avatar.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
-avatar.Parent = panel
-corner(avatar, 36)
-
-local nameLabel = label(panel, "Введите никнейм", UDim2.new(1, -104, 0, 22), UDim2.fromOffset(98, 99), Enum.Font.GothamBold, Color3.fromRGB(245, 247, 255))
-nameLabel.TextSize = 15
-local statusDot = label(panel, "●", UDim2.fromOffset(15, 18), UDim2.fromOffset(98, 123), Enum.Font.GothamBold, Color3.fromRGB(150, 158, 178))
-local statusLabel = label(panel, "Ожидание поиска", UDim2.new(1, -120, 0, 18), UDim2.fromOffset(116, 123), Enum.Font.Gotham, Color3.fromRGB(175, 182, 202))
-local locationLabel = label(panel, "", UDim2.new(1, -108, 0, 34), UDim2.fromOffset(98, 143), Enum.Font.Gotham, Color3.fromRGB(145, 155, 180))
-locationLabel.TextWrapped = true
-locationLabel.TextYAlignment = Enum.TextYAlignment.Top
-
-local jobBox = Instance.new("TextBox")
-jobBox.Size = UDim2.new(1, -28, 0, 29)
-jobBox.Position = UDim2.fromOffset(14, 184)
-jobBox.BackgroundColor3 = Color3.fromRGB(29, 34, 47)
-jobBox.BorderSizePixel = 0
-jobBox.ClearTextOnFocus = false
-jobBox.PlaceholderText = "Job ID появится при доступном подключении"
-jobBox.PlaceholderColor3 = Color3.fromRGB(116, 126, 152)
-jobBox.Text = ""
-jobBox.TextColor3 = Color3.fromRGB(187, 201, 255)
-jobBox.Font = Enum.Font.Code
-jobBox.TextSize = 11
-jobBox.Parent = panel
-corner(jobBox, 7)
-
-local join = Instance.new("TextButton")
-join.Size = UDim2.new(1, -28, 0, 38)
-join.Position = UDim2.fromOffset(14, 226)
-join.BackgroundColor3 = Color3.fromRGB(54, 62, 81)
-join.BorderSizePixel = 0
-join.Font = Enum.Font.GothamBold
-join.TextSize = 13
-join.TextColor3 = Color3.fromRGB(154, 164, 190)
-join.Text = "ПРИСОЕДИНИТЬСЯ"
-join.Active = false
-join.Parent = panel
-corner(join, 9)
-
-local foundUserId, lastQuery, canJoin = nil, nil, false
-local function setJoin(enabled)
-	canJoin = enabled
-	join.Active = enabled
-	join.BackgroundColor3 = enabled and Color3.fromRGB(45, 177, 110) or Color3.fromRGB(54, 62, 81)
-	join.TextColor3 = enabled and Color3.new(1, 1, 1) or Color3.fromRGB(154, 164, 190)
-end
-
-local function setAvatar(userId)
-	avatar.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
-	local ok, content = pcall(function()
-		return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
-	end)
-	if ok then avatar.Image = content end
-end
-
-local function doSearch(isRefresh)
-	local query = isRefresh and lastQuery or box.Text:match("^%s*(.-)%s*$")
-	if not query or query == "" then return end
-	if not isRefresh then
-		lastQuery = query
-		search.Text = "..."
-	end
-	local ok, data = pcall(function() return lookupFunction:InvokeServer(query) end)
-	if not isRefresh then search.Text = "НАЙТИ" end
-	setJoin(false)
-	jobBox.Text = ""
-	if not ok then
-		nameLabel.Text, statusLabel.Text = "Ошибка", "Не удалось получить данные."
-		statusDot.TextColor3 = Color3.fromRGB(245, 90, 95)
-		return
-	end
-	if not data.ok then
-		foundUserId = nil
-		avatar.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
-		nameLabel.Text, statusLabel.Text, locationLabel.Text = "Игрок не найден", data.message or "Проверь никнейм.", ""
-		statusDot.TextColor3 = Color3.fromRGB(245, 90, 95)
-		return
-	end
-	foundUserId = data.userId
-	nameLabel.Text = "@" .. data.username
-	statusLabel.Text = data.online and "В СЕТИ" or (data.isFriend and "НЕ В СЕТИ" or "НЕ В ДРУЗЬЯХ")
-	statusDot.TextColor3 = data.online and Color3.fromRGB(69, 220, 139) or Color3.fromRGB(160, 169, 192)
-	locationLabel.Text = data.message or data.location or ""
-	jobBox.Text = data.jobId or ""
-	setAvatar(data.userId)
-	setJoin(data.canJoin == true)
-end
-
-search.MouseButton1Click:Connect(function() doSearch(false) end)
-box.FocusLost:Connect(function(enterPressed) if enterPressed then doSearch(false) end end)
-join.MouseButton1Click:Connect(function()
-	if canJoin and foundUserId then
-		join.Text = "ПОДКЛЮЧЕНИЕ..."
-		joinEvent:FireServer(foundUserId)
-	end
-end)
-
--- Автоматически обновляет сохранённый результат, не перезапуская поиск вручную.
-task.spawn(function()
-	while gui.Parent do
-		task.wait(REFRESH_SECONDS)
-		if lastQuery then doSearch(true) end
-	end
-end)
-]]
+-- Старт
+StarterGui:SetCore("SendNotification", {Title = "linbergz Tracker v3.1", Text = "✅ Загружен! Введите никнейм.", Duration = 4})
+wait(0.5)
+SearchInput:CaptureFocus()
