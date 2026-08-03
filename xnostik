@@ -314,7 +314,7 @@ HubShadow.BorderSizePixel = 0
 HubShadow.Visible = false
 HubShadow.ZIndex = 8
 HubShadow.Parent = ScreenGui
-Instance.new("UICorner", HubShadow).CornerRadius = UDim.new(0, 0)
+Instance.new("UICorner", HubShadow).CornerRadius = UDim.new(0, 12)
 
 local Hub = Instance.new("Frame")
 Hub.Name = "Hub"
@@ -326,7 +326,7 @@ Hub.Visible = false
 Hub.ClipsDescendants = true
 Hub.ZIndex = 10
 Hub.Parent = ScreenGui
-Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 0)
+Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 12)
 
 local HSk = Instance.new("UIStroke")
 HSk.Color = AppC.border
@@ -417,7 +417,7 @@ LogoText.Parent = LogoFrame
 
 -- TOP CATEGORY TABS
 local TopTabHolder = Instance.new("Frame")
-TopTabHolder.Size = UDim2.new(1, -SIDEBAR_W - 118, 1, 0)
+TopTabHolder.Size = UDim2.new(1, -SIDEBAR_W - 60, 1, 0)
 TopTabHolder.Position = UDim2.new(0, SIDEBAR_W + 8, 0, 0)
 TopTabHolder.BackgroundTransparency = 1
 TopTabHolder.ZIndex = 13
@@ -475,80 +475,6 @@ task.defer(function()
         TopTabLine.Position = UDim2.new(0, activeBtn.AbsolutePosition.X - TopB.AbsolutePosition.X, 1, -2)
         TopTabLine.Size = UDim2.new(0, activeBtn.AbsoluteSize.X, 0, 2)
     end
-end)
-
--- SETTINGS SLIDERS BUTTON (Uiverse-inspired)
-local SettingsButton = Instance.new("TextButton")
-SettingsButton.Name = "SettingsButton"
-SettingsButton.Size = UDim2.new(0, 45, 0, 45)
-SettingsButton.Position = UDim2.new(1, -84, 0.5, -22)
-SettingsButton.BackgroundColor3 = Color3.fromRGB(129, 110, 216)
-SettingsButton.BorderSizePixel = 0
-SettingsButton.Text = ""
-SettingsButton.AutoButtonColor = false
-SettingsButton.ZIndex = 15
-SettingsButton.Parent = TopB
-
-local settingsCorner = Instance.new("UICorner")
-settingsCorner.CornerRadius = UDim.new(0, 10)
-settingsCorner.Parent = SettingsButton
-
-local settingsStroke = Instance.new("UIStroke")
-settingsStroke.Color = Color3.fromRGB(212, 209, 255)
-settingsStroke.Thickness = 2
-settingsStroke.Parent = SettingsButton
-
-local function CreateSettingsBar(name, yScale, knobOffset)
-    local bar = Instance.new("Frame")
-    bar.Name = name
-    bar.Size = UDim2.new(0.5, 0, 0, 2)
-    bar.Position = UDim2.new(0.25, 0, yScale, -1)
-    bar.BackgroundColor3 = Color3.fromRGB(229, 229, 229)
-    bar.BorderSizePixel = 0
-    bar.ZIndex = 16
-    bar.Parent = SettingsButton
-    Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
-
-    local knob = Instance.new("Frame")
-    knob.Name = "Knob"
-    knob.Size = UDim2.new(0, 6, 0, 6)
-    knob.AnchorPoint = Vector2.new(0.5, 0.5)
-    knob.Position = UDim2.new(0.5, knobOffset, 0.5, 0)
-    knob.BackgroundColor3 = Color3.fromRGB(126, 117, 255)
-    knob.BorderSizePixel = 0
-    knob.ZIndex = 17
-    knob.Parent = bar
-    Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
-
-    local knobStroke = Instance.new("UIStroke")
-    knobStroke.Color = Color3.fromRGB(255, 255, 255)
-    knobStroke.Thickness = 2
-    knobStroke.Parent = knob
-    return knob
-end
-
-local settingsKnob1 = CreateSettingsBar("Bar1", 0.43, -4)
-local settingsKnob2 = CreateSettingsBar("Bar2", 0.61, 4)
-
-SettingsButton.MouseEnter:Connect(function()
-    TweenService:Create(settingsKnob1, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, 4, 0.5, 0)}):Play()
-    TweenService:Create(settingsKnob2, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -4, 0.5, 0)}):Play()
-end)
-SettingsButton.MouseLeave:Connect(function()
-    TweenService:Create(settingsKnob1, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -4, 0.5, 0)}):Play()
-    TweenService:Create(settingsKnob2, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, 4, 0.5, 0)}):Play()
-end)
-SettingsButton.MouseButton1Click:Connect(function()
-    local settingsTab = topTabButtons["SETTINGS"]
-    if not settingsTab then return end
-    activeTopTab = "SETTINGS"
-    for name, button in pairs(topTabButtons) do
-        button.TextColor3 = (name == activeTopTab) and AppC.text or AppC.textDim
-    end
-    TweenService:Create(TopTabLine, TweenInfo.new(0.2), {
-        Position = UDim2.new(0, settingsTab.AbsolutePosition.X - TopB.AbsolutePosition.X, 1, -2),
-        Size = UDim2.new(0, settingsTab.AbsoluteSize.X, 0, 2)
-    }):Play()
 end)
 
 -- CLOSE BUTTON
