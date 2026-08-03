@@ -9,6 +9,7 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 if not player then
@@ -230,7 +231,7 @@ local toggleDrag = nil
 
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "HubToggle"
-ToggleBtn.Size = UDim2.new(0, 140, 0, 38)
+ToggleBtn.Size = UDim2.new(0, 130, 0, 34)
 ToggleBtn.Position = UDim2.new(0, 16, 0.32, 0)
 ToggleBtn.BackgroundColor3 = AppC.bg
 ToggleBtn.Text = ""
@@ -246,23 +247,23 @@ ToggleStroke.Transparency = 0.4
 ToggleStroke.Parent = ToggleBtn
 
 local ToggleLogo = Instance.new("TextLabel")
-ToggleLogo.Size = UDim2.new(0, 24, 1, 0)
+ToggleLogo.Size = UDim2.new(0, 20, 1, 0)
 ToggleLogo.Position = UDim2.new(0, 10, 0, 0)
 ToggleLogo.BackgroundTransparency = 1
 ToggleLogo.Text = "▲"
 ToggleLogo.TextColor3 = AppC.accent
-ToggleLogo.TextSize = 12
+ToggleLogo.TextSize = 11
 ToggleLogo.Font = Enum.Font.GothamBold
 ToggleLogo.ZIndex = 52
 ToggleLogo.Parent = ToggleBtn
 
 local ToggleText = Instance.new("TextLabel")
-ToggleText.Size = UDim2.new(1, -38, 1, 0)
-ToggleText.Position = UDim2.new(0, 32, 0, 0)
+ToggleText.Size = UDim2.new(1, -34, 1, 0)
+ToggleText.Position = UDim2.new(0, 28, 0, 0)
 ToggleText.BackgroundTransparency = 1
 ToggleText.Text = "MIDNIGHT"
 ToggleText.TextColor3 = AppC.text
-ToggleText.TextSize = 11
+ToggleText.TextSize = 10
 ToggleText.Font = Enum.Font.GothamBold
 ToggleText.TextXAlignment = Enum.TextXAlignment.Left
 ToggleText.ZIndex = 52
@@ -294,11 +295,10 @@ do
 end
 
 ---------------------------------------------------------
--- MAIN HUB FRAME (MIDNIGHT WINDOW)
+-- MAIN HUB FRAME (COMPACT MIDNIGHT WINDOW)
 ---------------------------------------------------------
-local HUB_W, HUB_H, SIDEBAR_W, TOPBAR_H = 640, 430, 160, 46
-local DEFAULT_SIZE = Vector2.new(HUB_W, HUB_H)
-local windowSize = DEFAULT_SIZE
+local HUB_W, HUB_H, SIDEBAR_W, TOPBAR_H = 550, 360, 135, 40
+local windowSize = Vector2.new(HUB_W, HUB_H)
 local windowPos
 local windowInteraction = nil
 
@@ -391,32 +391,32 @@ LogoFrame.ZIndex = 13
 LogoFrame.Parent = TopB
 
 local LogoIcon = Instance.new("TextLabel")
-LogoIcon.Size = UDim2.new(0, 20, 1, 0)
-LogoIcon.Position = UDim2.new(0, 16, 0, 0)
+LogoIcon.Size = UDim2.new(0, 18, 1, 0)
+LogoIcon.Position = UDim2.new(0, 12, 0, 0)
 LogoIcon.BackgroundTransparency = 1
 LogoIcon.Text = "▲"
 LogoIcon.TextColor3 = AppC.text
-LogoIcon.TextSize = 12
+LogoIcon.TextSize = 11
 LogoIcon.Font = Enum.Font.GothamBold
 LogoIcon.ZIndex = 13
 LogoIcon.Parent = LogoFrame
 
 local LogoText = Instance.new("TextLabel")
-LogoText.Size = UDim2.new(1, -42, 1, 0)
-LogoText.Position = UDim2.new(0, 36, 0, 0)
+LogoText.Size = UDim2.new(1, -34, 1, 0)
+LogoText.Position = UDim2.new(0, 30, 0, 0)
 LogoText.BackgroundTransparency = 1
 LogoText.Text = "MIDNIGHT"
 LogoText.TextColor3 = AppC.text
-LogoText.TextSize = 12
+LogoText.TextSize = 11
 LogoText.Font = Enum.Font.GothamBlack
 LogoText.TextXAlignment = Enum.TextXAlignment.Left
 LogoText.ZIndex = 13
 LogoText.Parent = LogoFrame
 
--- TOP CATEGORY TABS (GLOBALS, WEAPONS, SETTINGS)
+-- TOP CATEGORY TABS
 local TopTabHolder = Instance.new("Frame")
-TopTabHolder.Size = UDim2.new(1, -SIDEBAR_W - 80, 1, 0)
-TopTabHolder.Position = UDim2.new(0, SIDEBAR_W + 10, 0, 0)
+TopTabHolder.Size = UDim2.new(1, -SIDEBAR_W - 60, 1, 0)
+TopTabHolder.Position = UDim2.new(0, SIDEBAR_W + 8, 0, 0)
 TopTabHolder.BackgroundTransparency = 1
 TopTabHolder.ZIndex = 13
 TopTabHolder.Parent = TopB
@@ -424,7 +424,7 @@ TopTabHolder.Parent = TopB
 local TopTabLayout = Instance.new("UIListLayout")
 TopTabLayout.FillDirection = Enum.FillDirection.Horizontal
 TopTabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-TopTabLayout.Padding = UDim.new(0, 20)
+TopTabLayout.Padding = UDim.new(0, 16)
 TopTabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 TopTabLayout.Parent = TopTabHolder
 
@@ -434,7 +434,7 @@ local topTabButtons = {}
 
 local TopTabLine = Instance.new("Frame")
 TopTabLine.Name = "ActiveTabLine"
-TopTabLine.Size = UDim2.new(0, 60, 0, 2)
+TopTabLine.Size = UDim2.new(0, 50, 0, 2)
 TopTabLine.Position = UDim2.new(0, 100, 1, -2)
 TopTabLine.BackgroundColor3 = AppC.accent
 TopTabLine.BorderSizePixel = 0
@@ -444,11 +444,11 @@ TopTabLine.Parent = TopB
 for idx, catName in ipairs(topCategories) do
     local btn = Instance.new("TextButton")
     btn.Name = "TopTab_" .. catName
-    btn.Size = UDim2.new(0, 70, 1, 0)
+    btn.Size = UDim2.new(0, 60, 1, 0)
     btn.BackgroundTransparency = 1
     btn.Text = catName
     btn.TextColor3 = (catName == activeTopTab) and AppC.text or AppC.textDim
-    btn.TextSize = 10
+    btn.TextSize = 9
     btn.Font = Enum.Font.GothamBold
     btn.AutoButtonColor = false
     btn.ZIndex = 14
@@ -477,12 +477,12 @@ end)
 
 -- CLOSE BUTTON
 local ClB = Instance.new("TextButton")
-ClB.Size = UDim2.new(0, 24, 0, 24)
-ClB.Position = UDim2.new(1, -32, 0.5, -12)
+ClB.Size = UDim2.new(0, 22, 0, 22)
+ClB.Position = UDim2.new(1, -28, 0.5, -11)
 ClB.BackgroundTransparency = 1
 ClB.Text = "✕"
 ClB.TextColor3 = AppC.textDim
-ClB.TextSize = 12
+ClB.TextSize = 11
 ClB.Font = Enum.Font.GothamBold
 ClB.ZIndex = 14
 ClB.Parent = TopB
@@ -551,9 +551,9 @@ SideList.Padding = UDim.new(0, 2)
 SideList.Parent = SideScroll
 
 local SidePad = Instance.new("UIPadding")
-SidePad.PaddingTop = UDim.new(0, 12)
-SidePad.PaddingLeft = UDim.new(0, 10)
-SidePad.PaddingRight = UDim.new(0, 10)
+SidePad.PaddingTop = UDim.new(0, 8)
+SidePad.PaddingLeft = UDim.new(0, 8)
+SidePad.PaddingRight = UDim.new(0, 8)
 SidePad.Parent = SideScroll
 
 ---------------------------------------------------------
@@ -562,7 +562,7 @@ SidePad.Parent = SideScroll
 local function CreateSectionCard(parent, titleText, size, position)
     local card = Instance.new("Frame")
     card.Name = "Card_" .. titleText
-    card.Size = size or UDim2.new(0.485, 0, 0, 180)
+    card.Size = size or UDim2.new(0.485, 0, 0, 160)
     card.Position = position or UDim2.new(0,0,0,0)
     card.BackgroundColor3 = AppC.card
     card.BorderSizePixel = 0
@@ -576,12 +576,12 @@ local function CreateSectionCard(parent, titleText, size, position)
     stroke.Parent = card
 
     local cardTitle = Instance.new("TextLabel")
-    cardTitle.Size = UDim2.new(1, -24, 0, 26)
-    cardTitle.Position = UDim2.new(0, 14, 0, 6)
+    cardTitle.Size = UDim2.new(1, -20, 0, 24)
+    cardTitle.Position = UDim2.new(0, 10, 0, 4)
     cardTitle.BackgroundTransparency = 1
     cardTitle.Text = titleText
     cardTitle.TextColor3 = AppC.textSec
-    cardTitle.TextSize = 10
+    cardTitle.TextSize = 9
     cardTitle.Font = Enum.Font.GothamBold
     cardTitle.TextXAlignment = Enum.TextXAlignment.Left
     cardTitle.ZIndex = 13
@@ -589,15 +589,15 @@ local function CreateSectionCard(parent, titleText, size, position)
 
     local cardContent = Instance.new("Frame")
     cardContent.Name = "Content"
-    cardContent.Size = UDim2.new(1, -24, 1, -36)
-    cardContent.Position = UDim2.new(0, 14, 0, 32)
+    cardContent.Size = UDim2.new(1, -20, 1, -30)
+    cardContent.Position = UDim2.new(0, 10, 0, 26)
     cardContent.BackgroundTransparency = 1
     cardContent.ZIndex = 13
     cardContent.Parent = card
 
     local layout = Instance.new("UIListLayout")
     layout.SortOrder = Enum.SortOrder.LayoutOrder
-    layout.Padding = UDim.new(0, 10)
+    layout.Padding = UDim.new(0, 8)
     layout.Parent = cardContent
 
     return cardContent, card
@@ -605,18 +605,18 @@ end
 
 local function CreateCheckbox(parent, text, defaultState, callback)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 20)
+    frame.Size = UDim2.new(1, 0, 0, 18)
     frame.BackgroundTransparency = 1
     frame.ZIndex = 13
     frame.Parent = parent
 
     local box = Instance.new("TextButton")
-    box.Size = UDim2.new(0, 16, 0, 16)
-    box.Position = UDim2.new(0, 0, 0.5, -8)
+    box.Size = UDim2.new(0, 15, 0, 15)
+    box.Position = UDim2.new(0, 0, 0.5, -7)
     box.BackgroundColor3 = defaultState and AppC.accent or AppC.cardInner
     box.Text = defaultState and "✓" or ""
     box.TextColor3 = AppC.white
-    box.TextSize = 11
+    box.TextSize = 10
     box.Font = Enum.Font.GothamBold
     box.AutoButtonColor = false
     box.ZIndex = 14
@@ -629,12 +629,12 @@ local function CreateCheckbox(parent, text, defaultState, callback)
     stroke.Parent = box
 
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, -26, 1, 0)
-    label.Position = UDim2.new(0, 24, 0, 0)
+    label.Size = UDim2.new(1, -22, 1, 0)
+    label.Position = UDim2.new(0, 22, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = text
     label.TextColor3 = AppC.text
-    label.TextSize = 10
+    label.TextSize = 9
     label.Font = Enum.Font.GothamBold
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.ZIndex = 14
@@ -655,29 +655,29 @@ end
 
 local function CreateSlider(parent, text, minVal, maxVal, defaultVal, decimals, callback)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 32)
+    frame.Size = UDim2.new(1, 0, 0, 28)
     frame.BackgroundTransparency = 1
     frame.ZIndex = 13
     frame.Parent = parent
 
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.7, 0, 0, 14)
+    label.Size = UDim2.new(0.7, 0, 0, 12)
     label.BackgroundTransparency = 1
     label.Text = text
     label.TextColor3 = AppC.text
-    label.TextSize = 10
+    label.TextSize = 9
     label.Font = Enum.Font.GothamBold
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.ZIndex = 14
     label.Parent = frame
 
     local valLabel = Instance.new("TextLabel")
-    valLabel.Size = UDim2.new(0.3, 0, 0, 14)
+    valLabel.Size = UDim2.new(0.3, 0, 0, 12)
     valLabel.Position = UDim2.new(0.7, 0, 0, 0)
     valLabel.BackgroundTransparency = 1
     valLabel.Text = string.format("%." .. (decimals or 1) .. "f", defaultVal)
     valLabel.TextColor3 = AppC.text
-    valLabel.TextSize = 10
+    valLabel.TextSize = 9
     valLabel.Font = Enum.Font.GothamBold
     valLabel.TextXAlignment = Enum.TextXAlignment.Right
     valLabel.ZIndex = 14
@@ -685,7 +685,7 @@ local function CreateSlider(parent, text, minVal, maxVal, defaultVal, decimals, 
 
     local track = Instance.new("TextButton")
     track.Size = UDim2.new(1, 0, 0, 4)
-    track.Position = UDim2.new(0, 0, 0, 20)
+    track.Position = UDim2.new(0, 0, 0, 18)
     track.BackgroundColor3 = AppC.cardInner
     track.Text = ""
     track.AutoButtonColor = false
@@ -703,7 +703,7 @@ local function CreateSlider(parent, text, minVal, maxVal, defaultVal, decimals, 
     Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
 
     local thumb = Instance.new("Frame")
-    thumb.Size = UDim2.new(0, 10, 0, 10)
+    thumb.Size = UDim2.new(0, 8, 0, 8)
     thumb.AnchorPoint = Vector2.new(0.5, 0.5)
     thumb.Position = UDim2.new(pct, 0, 0.5, 0)
     thumb.BackgroundColor3 = AppC.accent
@@ -743,25 +743,25 @@ end
 
 local function CreateDropdown(parent, text, selectedText)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 42)
+    frame.Size = UDim2.new(1, 0, 0, 36)
     frame.BackgroundTransparency = 1
     frame.ZIndex = 13
     frame.Parent = parent
 
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 14)
+    label.Size = UDim2.new(1, 0, 0, 12)
     label.BackgroundTransparency = 1
     label.Text = text
     label.TextColor3 = AppC.textSec
-    label.TextSize = 9
+    label.TextSize = 8
     label.Font = Enum.Font.GothamBold
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.ZIndex = 14
     label.Parent = frame
 
     local box = Instance.new("Frame")
-    box.Size = UDim2.new(1, 0, 0, 24)
-    box.Position = UDim2.new(0, 0, 0, 16)
+    box.Size = UDim2.new(1, 0, 0, 22)
+    box.Position = UDim2.new(0, 0, 0, 14)
     box.BackgroundColor3 = AppC.cardInner
     box.BorderSizePixel = 0
     box.ZIndex = 14
@@ -774,12 +774,12 @@ local function CreateDropdown(parent, text, selectedText)
     stroke.Parent = box
 
     local valText = Instance.new("TextLabel")
-    valText.Size = UDim2.new(1, -20, 1, 0)
-    valText.Position = UDim2.new(0, 8, 0, 0)
+    valText.Size = UDim2.new(1, -18, 1, 0)
+    valText.Position = UDim2.new(0, 6, 0, 0)
     valText.BackgroundTransparency = 1
     valText.Text = selectedText
     valText.TextColor3 = AppC.text
-    valText.TextSize = 10
+    valText.TextSize = 9
     valText.Font = Enum.Font.GothamMedium
     valText.TextXAlignment = Enum.TextXAlignment.Left
     valText.TextTruncate = Enum.TextTruncate.AtEnd
@@ -787,12 +787,12 @@ local function CreateDropdown(parent, text, selectedText)
     valText.Parent = box
 
     local arrow = Instance.new("TextLabel")
-    arrow.Size = UDim2.new(0, 16, 1, 0)
-    arrow.Position = UDim2.new(1, -18, 0, 0)
+    arrow.Size = UDim2.new(0, 14, 1, 0)
+    arrow.Position = UDim2.new(1, -16, 0, 0)
     arrow.BackgroundTransparency = 1
     arrow.Text = "▾"
     arrow.TextColor3 = AppC.textDim
-    arrow.TextSize = 10
+    arrow.TextSize = 9
     arrow.Font = Enum.Font.GothamBold
     arrow.ZIndex = 15
     arrow.Parent = box
@@ -800,7 +800,7 @@ local function CreateDropdown(parent, text, selectedText)
 end
 
 ---------------------------------------------------------
--- NAVIGATION SYSTEM & PAGE GENERATION (UNICODE GLYPHS)
+-- NAVIGATION SYSTEM & PAGE GENERATION (WITH BETA TAB)
 ---------------------------------------------------------
 local categories = {
     {header = "Combat", items = {
@@ -816,6 +816,7 @@ local categories = {
         {id = "Main",     icon = "⚙", name = "Main"},
         {id = "Movement", icon = "⚡", name = "Movement"},
         {id = "Cloud",    icon = "☁", name = "Cloud"},
+        {id = "Beta",     icon = "★", name = "(beta)"},
     }},
 }
 
@@ -846,11 +847,11 @@ end
 -- BUILD SIDEBAR ITEMS
 for _, catGroup in ipairs(categories) do
     local headerLbl = Instance.new("TextLabel")
-    headerLbl.Size = UDim2.new(1, 0, 0, 22)
+    headerLbl.Size = UDim2.new(1, 0, 0, 18)
     headerLbl.BackgroundTransparency = 1
     headerLbl.Text = catGroup.header
     headerLbl.TextColor3 = AppC.textDim
-    headerLbl.TextSize = 9
+    headerLbl.TextSize = 8
     headerLbl.Font = Enum.Font.GothamBold
     headerLbl.TextXAlignment = Enum.TextXAlignment.Left
     headerLbl.ZIndex = 14
@@ -859,12 +860,12 @@ for _, catGroup in ipairs(categories) do
     for _, item in ipairs(catGroup.items) do
         local btn = Instance.new("TextButton")
         btn.Name = "Side_" .. item.id
-        btn.Size = UDim2.new(1, 0, 0, 28)
+        btn.Size = UDim2.new(1, 0, 0, 24)
         btn.BackgroundColor3 = AppC.sidebar
         btn.BorderSizePixel = 0
-        btn.Text = "   " .. item.icon .. "  " .. item.name
+        btn.Text = "  " .. item.icon .. "  " .. item.name
         btn.TextColor3 = AppC.textDim
-        btn.TextSize = 11
+        btn.TextSize = 10
         btn.Font = Enum.Font.GothamBold
         btn.TextXAlignment = Enum.TextXAlignment.Left
         btn.AutoButtonColor = false
@@ -881,7 +882,7 @@ for _, catGroup in ipairs(categories) do
 end
 
 ---------------------------------------------------------
--- MIDNIGHT AIMBOT PAGE BUILD (MIRRORING THE IMAGE)
+-- MIDNIGHT AIMBOT PAGE BUILD
 ---------------------------------------------------------
 local function BuildAimbotPage(parent)
     local pageScroll = Instance.new("ScrollingFrame")
@@ -893,10 +894,10 @@ local function BuildAimbotPage(parent)
     pageScroll.Parent = parent
 
     local pad = Instance.new("UIPadding")
-    pad.PaddingTop = UDim.new(0, 12)
-    pad.PaddingLeft = UDim.new(0, 14)
-    pad.PaddingRight = UDim.new(0, 14)
-    pad.PaddingBottom = UDim.new(0, 12)
+    pad.PaddingTop = UDim.new(0, 10)
+    pad.PaddingLeft = UDim.new(0, 10)
+    pad.PaddingRight = UDim.new(0, 10)
+    pad.PaddingBottom = UDim.new(0, 10)
     pad.Parent = pageScroll
 
     -- GRID CONTAINER
@@ -906,31 +907,245 @@ local function BuildAimbotPage(parent)
     grid.Parent = pageScroll
 
     -- LEFT COLUMN CARDS
-    local weaponCard = CreateSectionCard(grid, "Weapon", UDim2.new(0.485, 0, 0, 68), UDim2.new(0, 0, 0, 0))
+    local weaponCard = CreateSectionCard(grid, "Weapon", UDim2.new(0.485, 0, 0, 58), UDim2.new(0, 0, 0, 0))
     CreateDropdown(weaponCard, "", "Desert Eagle")
 
-    local aimbotCard = CreateSectionCard(grid, "Aimbot", UDim2.new(0.485, 0, 0, 150), UDim2.new(0, 0, 0, 78))
+    local aimbotCard = CreateSectionCard(grid, "Aimbot", UDim2.new(0.485, 0, 0, 130), UDim2.new(0, 0, 0, 66))
     CreateCheckbox(aimbotCard, "Enable", true)
-    CreateDropdown(aimbotCard, "Hitboxes", "Head, Neck, Pelvis, Spine 0, Spine 1")
+    CreateDropdown(aimbotCard, "Hitboxes", "Head, Neck, Pelvis")
     CreateDropdown(aimbotCard, "Smooth type", "Decrease")
 
-    local settingsCard = CreateSectionCard(grid, "Settings", UDim2.new(0.485, 0, 0, 140), UDim2.new(0, 0, 0, 238))
+    local settingsCard = CreateSectionCard(grid, "Settings", UDim2.new(0.485, 0, 0, 120), UDim2.new(0, 0, 0, 204))
     CreateSlider(settingsCard, "FOV", 0, 10, 2.0, 1)
     CreateSlider(settingsCard, "Smooth", 1, 30, 17.0, 1)
     CreateSlider(settingsCard, "Recoil FOV", 0, 10, 0.0, 1)
 
     -- RIGHT COLUMN CARDS
-    local triggerCard = CreateSectionCard(grid, "Triggerbot", UDim2.new(0.485, 0, 0, 228), UDim2.new(0.515, 0, 0, 0))
+    local triggerCard = CreateSectionCard(grid, "Triggerbot", UDim2.new(0.485, 0, 0, 196), UDim2.new(0.515, 0, 0, 0))
     CreateCheckbox(triggerCard, "Enable", true)
-    CreateDropdown(triggerCard, "Hitboxes", "Head, Neck, Pelvis, Spine 0, Spine 1")
+    CreateDropdown(triggerCard, "Hitboxes", "Head, Neck, Spine")
     CreateCheckbox(triggerCard, "Only zoom", false)
     CreateSlider(triggerCard, "Hitchance", 0, 100, 65, 0)
-    CreateSlider(triggerCard, "Delay before shot", 0, 0.1, 0.010, 3)
-    CreateSlider(triggerCard, "Delay after shot", 0, 0.1, 0.030, 3)
+    CreateSlider(triggerCard, "Delay shot", 0, 0.1, 0.010, 3)
 
-    local delaysCard = CreateSectionCard(grid, "Delays", UDim2.new(0.485, 0, 0, 130), UDim2.new(0.515, 0, 0, 238))
+    local delaysCard = CreateSectionCard(grid, "Delays", UDim2.new(0.485, 0, 0, 120), UDim2.new(0.515, 0, 0, 204))
     CreateDropdown(delaysCard, "Type", "Combo")
     CreateSlider(delaysCard, "Time", 0, 0.2, 0.070, 3)
+end
+
+---------------------------------------------------------
+-- REAL WORKING VISUALS LOGIC FOR (BETA) TAB
+---------------------------------------------------------
+local betaState = {
+    wings = false,
+    aura = false,
+    wingSpeed = 3,
+    wingFolder = nil,
+    auraHighlight = nil,
+    auraParticles = nil,
+    auraLight = nil,
+    conn = nil
+}
+
+local function RemoveWings()
+    if betaState.wingFolder then
+        betaState.wingFolder:Destroy()
+        betaState.wingFolder = nil
+    end
+end
+
+local function RemoveAura()
+    if betaState.auraHighlight then betaState.auraHighlight:Destroy() betaState.auraHighlight = nil end
+    if betaState.auraParticles then betaState.auraParticles:Destroy() betaState.auraParticles = nil end
+    if betaState.auraLight then betaState.auraLight:Destroy() betaState.auraLight = nil end
+end
+
+local function CreateWingPart(parent, size, cframe)
+    local p = Instance.new("Part")
+    p.Size = size
+    p.CFrame = cframe
+    p.Color = AppC.accent
+    p.Material = Enum.Material.Neon
+    p.CanCollide = false
+    p.Massless = true
+    p.CastShadow = false
+    p.Parent = parent
+    return p
+end
+
+local function ApplyWings()
+    RemoveWings()
+    if not betaState.wings then return end
+
+    local char = player.Character
+    if not char then return end
+    local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("HumanoidRootPart")
+    if not torso then return end
+
+    local folder = Instance.new("Folder")
+    folder.Name = "MidnightWings"
+    folder.Parent = char
+    betaState.wingFolder = folder
+
+    -- Build Left & Right Wing Frames
+    local leftRoot = Instance.new("Part")
+    leftRoot.Size = Vector2.new(0.1, 0.1) and Vector3.new(0.1,0.1,0.1)
+    leftRoot.Transparency = 1
+    leftRoot.CanCollide = false
+    leftRoot.Massless = true
+    leftRoot.Parent = folder
+
+    local rightRoot = Instance.new("Part")
+    rightRoot.Size = Vector3.new(0.1,0.1,0.1)
+    rightRoot.Transparency = 1
+    rightRoot.CanCollide = false
+    rightRoot.Massless = true
+    rightRoot.Parent = folder
+
+    local wL = Instance.new("Weld")
+    wL.Part0 = torso
+    wL.Part1 = leftRoot
+    wL.C0 = CFrame.new(-0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(-15), 0)
+    wL.Parent = leftRoot
+
+    local wR = Instance.new("Weld")
+    wR.Part0 = torso
+    wR.Part1 = rightRoot
+    wR.C0 = CFrame.new(0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(15), 0)
+    wR.Parent = rightRoot
+
+    -- Wing feathers/blades
+    for i = 1, 4 do
+        local scale = 1 - (i * 0.15)
+        local lBlade = CreateWingPart(folder, Vector3.new(0.1, 1.8 * scale, 0.4 * scale), CFrame.identity)
+        local rBlade = CreateWingPart(folder, Vector3.new(0.1, 1.8 * scale, 0.4 * scale), CFrame.identity)
+
+        local w1 = Instance.new("Weld")
+        w1.Part0 = leftRoot
+        w1.Part1 = lBlade
+        w1.C0 = CFrame.new(-i * 0.35, i * 0.1, -i * 0.1) * CFrame.Angles(0, 0, math.rad(25 + i * 12))
+        w1.Parent = lBlade
+
+        local w2 = Instance.new("Weld")
+        w2.Part0 = rightRoot
+        w2.Part1 = rBlade
+        w2.C0 = CFrame.new(i * 0.35, i * 0.1, -i * 0.1) * CFrame.Angles(0, 0, math.rad(-(25 + i * 12)))
+        w2.Parent = rBlade
+    end
+
+    betaState.leftWeld = wL
+    betaState.rightWeld = wR
+end
+
+local function ApplyAura()
+    RemoveAura()
+    if not betaState.aura then return end
+
+    local char = player.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    -- Glowing Body Highlight
+    local hl = Instance.new("Highlight")
+    hl.Name = "MidnightAuraHL"
+    hl.FillColor = AppC.accent
+    hl.OutlineColor = AppC.white
+    hl.FillTransparency = 0.65
+    hl.OutlineTransparency = 0.2
+    hl.Adornee = char
+    hl.Parent = char
+    betaState.auraHighlight = hl
+
+    -- Floating Sparkles
+    local pe = Instance.new("ParticleEmitter")
+    pe.Name = "MidnightAuraParticles"
+    pe.Color = ColorSequence.new(AppC.accent, AppC.white)
+    pe.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 0)})
+    pe.Texture = "rbxassetid://242200285"
+    pe.Lifetime = NumberRange.new(0.8, 1.4)
+    pe.Rate = 20
+    pe.Speed = NumberRange.new(1.5, 3.5)
+    pe.VelocitySpread = 180
+    pe.Parent = hrp
+    betaState.auraParticles = pe
+
+    -- Point Light
+    local pl = Instance.new("PointLight")
+    pl.Color = AppC.accent
+    pl.Range = 12
+    pl.Brightness = 2.5
+    pl.Parent = hrp
+    betaState.auraLight = pl
+end
+
+-- RenderStepped Wing Flap Animation
+if not betaState.conn then
+    betaState.conn = RunService.RenderStepped:Connect(function()
+        if betaState.wings and betaState.leftWeld and betaState.rightWeld and betaState.leftWeld.Parent and betaState.rightWeld.Parent then
+            local flap = math.sin(tick() * betaState.wingSpeed) * 0.25
+            betaState.leftWeld.C0 = CFrame.new(-0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(-15) - flap, flap * 0.5)
+            betaState.rightWeld.C0 = CFrame.new(0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(15) + flap, -flap * 0.5)
+        end
+    end)
+end
+
+-- Character Respawn Handler
+player.CharacterAdded:Connect(function()
+    task.wait(0.5)
+    if betaState.wings then ApplyWings() end
+    if betaState.aura then ApplyAura() end
+end)
+
+---------------------------------------------------------
+-- BUILD (BETA) PAGE
+---------------------------------------------------------
+local function BuildBetaPage(parent)
+    local pageScroll = Instance.new("ScrollingFrame")
+    pageScroll.Size = UDim2.new(1, 0, 1, 0)
+    pageScroll.BackgroundTransparency = 1
+    pageScroll.BorderSizePixel = 0
+    pageScroll.ScrollBarThickness = 2
+    pageScroll.ScrollBarImageColor3 = AppC.border
+    pageScroll.Parent = parent
+
+    local pad = Instance.new("UIPadding")
+    pad.PaddingTop = UDim.new(0, 10)
+    pad.PaddingLeft = UDim.new(0, 10)
+    pad.PaddingRight = UDim.new(0, 10)
+    pad.PaddingBottom = UDim.new(0, 10)
+    pad.Parent = pageScroll
+
+    local grid = Instance.new("Frame")
+    grid.Size = UDim2.new(1, 0, 1, 0)
+    grid.BackgroundTransparency = 1
+    grid.Parent = pageScroll
+
+    -- VISUAL COSMETICS CARD
+    local cosmeticsCard = CreateSectionCard(grid, "Character Cosmetics (Beta)", UDim2.new(0.485, 0, 0, 210), UDim2.new(0, 0, 0, 0))
+    
+    CreateCheckbox(cosmeticsCard, "Enable Wings", false, function(state)
+        betaState.wings = state
+        ApplyWings()
+    end)
+
+    CreateSlider(cosmeticsCard, "Wing Speed", 1, 10, 3, 1, function(val)
+        betaState.wingSpeed = val
+    end)
+
+    CreateCheckbox(cosmeticsCard, "Enable Aura", false, function(state)
+        betaState.aura = state
+        ApplyAura()
+    end)
+
+    -- EXPERIMENTAL FX CARD
+    local experimentalCard = CreateSectionCard(grid, "Experimental FX", UDim2.new(0.485, 0, 0, 210), UDim2.new(0.515, 0, 0, 0))
+    CreateCheckbox(experimentalCard, "Rainbow Accent", false, function(state)
+        -- Visual preview toggle
+    end)
+    CreateSlider(experimentalCard, "Aura Brightness", 1, 5, 2.5, 1, function(val)
+        if betaState.auraLight then betaState.auraLight.Brightness = val end
+    end)
 end
 
 -- POPULATE ALL PAGES
@@ -946,9 +1161,10 @@ for _, catGroup in ipairs(categories) do
 
         if item.id == "Aimbot" then
             BuildAimbotPage(pageFrame)
+        elseif item.id == "Beta" then
+            BuildBetaPage(pageFrame)
         else
-            -- PLACEHOLDER FOR OTHER PAGES
-            local card = CreateSectionCard(pageFrame, item.name .. " Settings", UDim2.new(0.98, 0, 0, 180), UDim2.new(0, 0, 0, 0))
+            local card = CreateSectionCard(pageFrame, item.name .. " Settings", UDim2.new(0.98, 0, 0, 160), UDim2.new(0, 0, 0, 0))
             CreateCheckbox(card, "Enable " .. item.name .. " Feature", true)
             CreateSlider(card, item.name .. " Distance", 0, 500, 150, 0)
         end
