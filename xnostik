@@ -10,7 +10,6 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
-local VirtualUser = game:GetService("VirtualUser")
 
 local player = Players.LocalPlayer
 if not player then
@@ -31,6 +30,67 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 100
 ScreenGui.Parent = player.PlayerGui
+
+---------------------------------------------------------
+-- НАСТРОЙКИ МЕНЮ
+---------------------------------------------------------
+local MenuSettings = {
+    menuSize = 100, -- Размер меню (0-100)
+    screenStretch = 100, -- Screen Stretch (0-100)
+    language = "Русский", -- Язык меню (Русский/English)
+    antiAFK = false, -- Анти-АФК
+}
+
+-- Система переводов
+local Translations = {
+    Russian = {
+        menuName = "SACRACIA",
+        closeButton = "ЗАКРЫТЬ",
+        loading = "ЗАГРУЗКА ИНТЕРФЕЙСА",
+        initializing = "ИНИЦИАЛИЗАЦИЯ",
+        settings = "Настройки",
+        menuSize = "Размер меню",
+        screenStretch = "Screen Stretch",
+        fontMenu = "Шрифт меню",
+        language = "Язык меню",
+        antiAFK = "Анти-АФК",
+        betaTitle = "БЕТА ТЕСТИРОВАНИЕ",
+        versionText = "Ожидайте обнов!",
+        stats = "Статистика",
+        entities = "Объекты",
+        visuals = "Визуалы",
+        valuables = "Ценности",
+        items = "Предметы",
+        level = "Уровень",
+        miscellaneous = "Разное",
+    },
+    English = {
+        menuName = "SACRACIA",
+        closeButton = "CLOSE",
+        loading = "LOADING INTERFACE",
+        initializing = "INITIALIZING",
+        settings = "Settings",
+        menuSize = "Menu Size",
+        screenStretch = "Screen Stretch",
+        fontMenu = "Menu Font",
+        language = "Menu Language",
+        antiAFK = "Anti-AFK",
+        betaTitle = "BETA TESTING",
+        versionText = "Wait for update!",
+        stats = "Stats",
+        entities = "Entities",
+        visuals = "Visuals",
+        valuables = "Valuables",
+        items = "Items",
+        level = "Level",
+        miscellaneous = "Miscellaneous",
+    }
+}
+
+local function getText(key)
+    local lang = MenuSettings.language == "English" and "English" or "Russian"
+    return Translations[lang][key] or key
+end
 
 ---------------------------------------------------------
 -- COLOR PALETTE (LOADER SPECIFIC - UNTOUCHED)
@@ -202,11 +262,11 @@ end)
 -- SACRACIA PALETTE & STYLES
 ---------------------------------------------------------
 local AppC = {
-    bg = Color3.fromRGB(22, 22, 26),
-    sidebar = Color3.fromRGB(16, 16, 20),
-    accent = Color3.fromRGB(52, 120, 246),
+    bg = Color3.fromRGB(22, 22, 26),          -- Main Window Background
+    sidebar = Color3.fromRGB(16, 16, 20),     -- Dark Sidebar Background
+    accent = Color3.fromRGB(52, 120, 246),     -- Sacracia Blue Accent
     accentDark = Color3.fromRGB(30, 80, 180),
-    switchOff = Color3.fromRGB(42, 44, 52),
+    switchOff = Color3.fromRGB(42, 44, 52),    -- Switch Off State
     white = Color3.fromRGB(255, 255, 255),
     text = Color3.fromRGB(240, 242, 245),
     textSec = Color3.fromRGB(140, 145, 155),
@@ -218,82 +278,35 @@ local AppC = {
 }
 
 ---------------------------------------------------------
--- MAIN HUB FRAME (SACRACIA WINDOW) - Forward declaration
+-- ANTI-AFK SYSTEM
 ---------------------------------------------------------
-local baseW, baseH, SIDEBAR_W = 600, 390, 150
-local windowSize = Vector2.new(baseW, baseH)
-local windowPos
-local windowInteraction = nil
-
-local HubShadow = Instance.new("Frame")
-HubShadow.Name = "HubShadow"
-HubShadow.Size = UDim2.new(0, baseW, 0, baseH)
-HubShadow.Position = UDim2.new(0.5, -baseW / 2, 0.5, -baseH / 2 + 6)
-HubShadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-HubShadow.BackgroundTransparency = 0.4
-HubShadow.BorderSizePixel = 0
-HubShadow.Visible = false
-HubShadow.ZIndex = 8
-HubShadow.Parent = ScreenGui
-Instance.new("UICorner", HubShadow).CornerRadius = UDim.new(0, 12)
-
-local Hub = Instance.new("Frame")
-Hub.Name = "Hub"
-Hub.Size = UDim2.new(0, baseW, 0, baseH)
-Hub.Position = UDim2.new(0.5, -baseW / 2, 0.5, -baseH / 2)
-Hub.BackgroundColor3 = AppC.bg
-Hub.BorderSizePixel = 0
-Hub.Visible = false
-Hub.ClipsDescendants = true
-Hub.ZIndex = 10
-Hub.Parent = ScreenGui
-Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 12)
-
-local uiScale = Instance.new("UIScale")
-uiScale.Parent = Hub
-
-local HSk = Instance.new("UIStroke")
-HSk.Color = AppC.border
-HSk.Thickness = 1
-HSk.Parent = Hub
-
-local function getViewport()
-    local size = ScreenGui.AbsoluteSize
-    if size.X < 1 or size.Y < 1 then
-        local camera = workspace.CurrentCamera
-        size = camera and camera.ViewportSize or Vector2.new(1280, 720)
+local antiAFKConnection = nil
+local function setupAntiAFK()
+    if antiAFKConnection then
+        antiAFKConnection:Disconnect()
+        antiAFKConnection = nil
     end
-    return size
-end
-
-local function applyWindowRect(position)
-    local viewport = getViewport()
-    local maxX = math.max(8, viewport.X - windowSize.X - 8)
-    local maxY = math.max(8, viewport.Y - windowSize.Y - 8)
-    windowPos = Vector2.new(math.clamp(position.X, 8, maxX), math.clamp(position.Y, 8, maxY))
-    Hub.Position = UDim2.fromOffset(windowPos.X, windowPos.Y)
-    Hub.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
-    HubShadow.Position = UDim2.fromOffset(windowPos.X, windowPos.Y + 6)
-    HubShadow.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
-end
-
-local function ensureWindowRect()
-    if not windowPos then
-        local viewport = getViewport()
-        windowPos = Vector2.new(math.max(8, (viewport.X - windowSize.X) / 2), math.max(8, (viewport.Y - windowSize.Y) / 2))
+    
+    if MenuSettings.antiAFK then
+        antiAFKConnection = RunService.RenderStepped:Connect(function()
+            -- Отправляем фиктивное действие чтобы игра не считала игрока AFK
+            pcall(function()
+                local vu = game:GetService("VirtualUser")
+                vu:CaptureController()
+                vu:ClickButton2(Vector2.new())
+            end)
+        end)
     end
-    applyWindowRect(windowPos)
 end
 
-task.defer(ensureWindowRect)
-ScreenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-    if windowPos then applyWindowRect(windowPos) end
-end)
+-- Автоматически активируем анти-АФК если опция включена при запуске
+setupAntiAFK()
 
 ---------------------------------------------------------
 -- MOBILE TOGGLE BUTTON (SACRACIA CAPSULE)
 ---------------------------------------------------------
 local hubOpen = false
+local toggleDrag = nil
 
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "HubToggle"
@@ -336,80 +349,133 @@ ToggleText.ZIndex = 52
 ToggleText.Parent = ToggleBtn
 
 local function SetToggleVisual(isOpen)
-    ToggleText.Text = isOpen and "CLOSE" or "SACRACIA"
+    ToggleText.Text = isOpen and getText("closeButton") or getText("menuName")
     TweenService:Create(ToggleStroke, TweenInfo.new(0.2), {
         Color = isOpen and AppC.red or AppC.accent
     }):Play()
     ToggleLogo.TextColor3 = isOpen and AppC.red or AppC.accent
 end
 
-local function ToggleHub()
-    hubOpen = not hubOpen
-    SetToggleVisual(hubOpen)
+do
+    ToggleBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            toggleDrag = {input = input, start = input.Position, position = ToggleBtn.Position, moved = false}
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if not toggleDrag or (input.UserInputType ~= Enum.UserInputType.MouseMovement and input ~= toggleDrag.input) then return end
+        local delta = input.Position - toggleDrag.start
+        if delta.Magnitude > 7 then toggleDrag.moved = true end
+        local viewport = ScreenGui.AbsoluteSize
+        local x = math.clamp(toggleDrag.position.X.Offset + delta.X, 8, math.max(8, viewport.X - ToggleBtn.AbsoluteSize.X - 8))
+        local y = math.clamp(toggleDrag.position.Y.Offset + delta.Y, 8, math.max(8, viewport.Y - ToggleBtn.AbsoluteSize.Y - 8))
+        ToggleBtn.Position = UDim2.fromOffset(x, y)
+    end)
+end
 
-    if hubOpen then
-        Hub.Visible = true
-        HubShadow.Visible = true
-        ensureWindowRect()
-        Hub.Size = UDim2.fromOffset(windowSize.X, 0)
-        HubShadow.Size = UDim2.fromOffset(windowSize.X, 0)
-        TweenService:Create(Hub, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(windowSize.X, windowSize.Y)}):Play()
-        TweenService:Create(HubShadow, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(windowSize.X, windowSize.Y)}):Play()
-    else
-        local tw = TweenService:Create(Hub, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.fromOffset(windowSize.X, 0)})
-        tw:Play()
-        TweenService:Create(HubShadow, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.fromOffset(windowSize.X, 0)}):Play()
-        tw.Completed:Connect(function()
-            if not hubOpen then
-                Hub.Visible = false
-                HubShadow.Visible = false
-                Hub.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
-                HubShadow.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
-            end
-        end)
+---------------------------------------------------------
+-- MAIN HUB FRAME (SACRACIA WINDOW) - DYNAMIC SIZE
+---------------------------------------------------------
+local baseW, baseH, SIDEBAR_W = 600, 390, 150
+
+local function getCurrentSize()
+    local scale = MenuSettings.menuSize / 100
+    return Vector2.new(baseW * scale, baseH * scale)
+end
+
+local function getCurrentStretch()
+    return MenuSettings.screenStretch / 100
+end
+
+local windowSize = getCurrentSize()
+local windowPos
+local windowInteraction = nil
+
+local HubShadow = Instance.new("Frame")
+HubShadow.Name = "HubShadow"
+HubShadow.Size = UDim2.new(0, windowSize.X, 0, windowSize.Y)
+HubShadow.Position = UDim2.new(0.5, -windowSize.X / 2, 0.5, -windowSize.Y / 2 + 6)
+HubShadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+HubShadow.BackgroundTransparency = 0.4
+HubShadow.BorderSizePixel = 0
+HubShadow.Visible = false
+HubShadow.ZIndex = 8
+HubShadow.Parent = ScreenGui
+Instance.new("UICorner", HubShadow).CornerRadius = UDim.new(0, 12)
+
+local Hub = Instance.new("Frame")
+Hub.Name = "Hub"
+Hub.Size = UDim2.new(0, windowSize.X, 0, windowSize.Y)
+Hub.Position = UDim2.new(0.5, -windowSize.X / 2, 0.5, -windowSize.Y / 2)
+Hub.BackgroundColor3 = AppC.bg
+Hub.BorderSizePixel = 0
+Hub.Visible = false
+Hub.ClipsDescendants = true
+Hub.ZIndex = 10
+Hub.Parent = ScreenGui
+Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 12)
+
+local HSk = Instance.new("UIStroke")
+HSk.Color = AppC.border
+HSk.Thickness = 1
+HSk.Parent = Hub
+
+-- Бета-тест метка
+local BetaLabel = Instance.new("TextLabel")
+BetaLabel.Size = UDim2.new(1, 0, 0, 20)
+BetaLabel.Position = UDim2.new(0, 0, 1, -20)
+BetaLabel.BackgroundColor3 = Color3.fromRGB(255, 165, 0)
+BetaLabel.BackgroundTransparency = 0.7
+BetaLabel.Text = "БЕТА ТЕСТИРОВАНИЕ | Ожидайте обнов!"
+BetaLabel.TextColor3 = AppC.white
+BetaLabel.TextSize = 9
+BetaLabel.Font = Enum.Font.GothamBold
+BetaLabel.ZIndex = 20
+BetaLabel.Visible = false
+BetaLabel.Parent = Hub
+
+local function getViewport()
+    local size = ScreenGui.AbsoluteSize
+    if size.X < 1 or size.Y < 1 then
+        local camera = workspace.CurrentCamera
+        size = camera and camera.ViewportSize or Vector2.new(1280, 720)
+    end
+    return size
+end
+
+local function applyWindowRect(position)
+    local viewport = getViewport()
+    windowSize = getCurrentSize()
+    local stretch = getCurrentStretch()
+    local scaledSize = Vector2.new(windowSize.X * stretch, windowSize.Y * stretch)
+    local maxX = math.max(8, viewport.X - scaledSize.X - 8)
+    local maxY = math.max(8, viewport.Y - scaledSize.Y - 8)
+    windowPos = Vector2.new(math.clamp(position.X, 8, maxX), math.clamp(position.Y, 8, maxY))
+    Hub.Position = UDim2.fromOffset(windowPos.X, windowPos.Y)
+    Hub.Size = UDim2.fromOffset(scaledSize.X, scaledSize.Y)
+    HubShadow.Position = UDim2.fromOffset(windowPos.X, windowPos.Y + 6)
+    HubShadow.Size = UDim2.fromOffset(scaledSize.X, scaledSize.Y)
+end
+
+local function updateWindowScale()
+    if windowPos then
+        applyWindowRect(windowPos)
     end
 end
 
--- НАДЕЖНАЯ ЛОГИКА КЛИКА И ПЕРЕТАСКИВАНИЯ ДЛЯ ПК И МОБИЛЬНЫХ УСТРОЙСТВ
-do
-    local startPosInput = nil
-    local startBtnPos = nil
-    local isDraggingToggle = false
-
-    ToggleBtn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            startPosInput = input.Position
-            startBtnPos = ToggleBtn.Position
-            isDraggingToggle = false
-
-            local conChanged, conEnded
-            conChanged = UserInputService.InputChanged:Connect(function(moveInput)
-                if moveInput.UserInputType == Enum.UserInputType.MouseMovement or moveInput.UserInputType == Enum.UserInputType.Touch then
-                    local delta = moveInput.Position - startPosInput
-                    if delta.Magnitude > 7 then
-                        isDraggingToggle = true
-                    end
-                    if isDraggingToggle then
-                        local viewport = getViewport()
-                        local x = math.clamp(startBtnPos.X.Offset + delta.X, 8, math.max(8, viewport.X - ToggleBtn.AbsoluteSize.X - 8))
-                        local y = math.clamp(startBtnPos.Y.Offset + delta.Y, 8, math.max(8, viewport.Y - ToggleBtn.AbsoluteSize.Y - 8))
-                        ToggleBtn.Position = UDim2.fromOffset(x, y)
-                    end
-                end
-            end)
-
-            conEnded = UserInputService.InputEnded:Connect(function(endInput)
-                if endInput.UserInputType == Enum.UserInputType.MouseButton1 or endInput.UserInputType == Enum.UserInputType.Touch then
-                    conChanged:Disconnect()
-                    conEnded:Disconnect()
-                    if not isDraggingToggle then
-                        ToggleHub()
-                    end
-                end
-            end)
-        end
-    end)
+local function ensureWindowRect()
+    if not windowPos then
+        local viewport = getViewport()
+        windowSize = getCurrentSize()
+        windowPos = Vector2.new(math.max(8, (viewport.X - windowSize.X) / 2), math.max(8, (viewport.Y - windowSize.Y) / 2))
+    end
+    applyWindowRect(windowPos)
 end
+
+task.defer(ensureWindowRect)
+ScreenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+    if windowPos then applyWindowRect(windowPos) end
+end)
 
 ---------------------------------------------------------
 -- SACRACIA SIDEBAR (LEFT NAVIGATION)
@@ -431,6 +497,7 @@ SideRule.BorderSizePixel = 0
 SideRule.ZIndex = 13
 SideRule.Parent = Sidebar
 
+-- BRAND LOGO
 local LogoFrame = Instance.new("Frame")
 LogoFrame.Size = UDim2.new(1, 0, 0, 50)
 LogoFrame.BackgroundTransparency = 1
@@ -455,8 +522,6 @@ SideScroll.Position = UDim2.new(0, 0, 0, 50)
 SideScroll.BackgroundTransparency = 1
 SideScroll.BorderSizePixel = 0
 SideScroll.ScrollBarThickness = 0
-SideScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-SideScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 SideScroll.ZIndex = 13
 SideScroll.Parent = Sidebar
 
@@ -470,6 +535,7 @@ SidePad.PaddingLeft = UDim.new(0, 10)
 SidePad.PaddingRight = UDim.new(0, 10)
 SidePad.Parent = SideScroll
 
+-- CLOSE BUTTON
 local ClB = Instance.new("TextButton")
 ClB.Size = UDim2.new(0, 24, 0, 24)
 ClB.Position = UDim2.new(1, -30, 0, 12)
@@ -483,8 +549,8 @@ ClB.Parent = Hub
 
 ClB.MouseEnter:Connect(function() ClB.TextColor3 = AppC.red end)
 ClB.MouseLeave:Connect(function() ClB.TextColor3 = AppC.textDim end)
-ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
 
+-- WINDOW DRAG LOGIC
 do
     local dragging, activeInput, dragStart, startPos
     local function isInside(object, point)
@@ -500,12 +566,12 @@ do
         end
     end)
     UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch or input == activeInput) then
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input == activeInput) then
             applyWindowRect(startPos + (input.Position - dragStart))
         end
     end)
     UserInputService.InputEnded:Connect(function(input)
-        if dragging and (input == activeInput or input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+        if dragging and (input == activeInput or (activeInput and activeInput.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.MouseButton1)) then
             dragging, activeInput, windowInteraction = false, nil, nil
         end
     end)
@@ -536,6 +602,7 @@ local function CreateSectionHeader(parent, text)
     return header
 end
 
+-- iOS / SACRACIA SWITCH TOGGLE
 local function CreateToggle(parent, titleText, descText, defaultState, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 0, descText and 36 or 24)
@@ -604,6 +671,7 @@ local function CreateToggle(parent, titleText, descText, defaultState, callback)
     return frame
 end
 
+-- SACRACIA SLIDER WITH MULTIPLIER/VALUE TAG
 local function CreateSlider(parent, titleText, minVal, maxVal, defaultVal, prefix, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 0, 32)
@@ -694,148 +762,87 @@ local function CreateSlider(parent, titleText, minVal, maxVal, defaultVal, prefi
     return frame
 end
 
-local function CreateMenuButton(parent, titleText, valueText, callback)
+-- Font selector function
+local function CreateFontSelector(parent)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 36)
+    frame.Size = UDim2.new(1, 0, 0, 60)
     frame.BackgroundTransparency = 1
     frame.ZIndex = 13
     frame.Parent = parent
 
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 1, 0)
-    btn.BackgroundColor3 = AppC.surface
-    btn.Text = ""
-    btn.AutoButtonColor = false
-    btn.ZIndex = 14
-    btn.Parent = frame
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-    
-    local pad = Instance.new("UIPadding")
-    pad.PaddingLeft = UDim.new(0, 8)
-    pad.PaddingRight = UDim.new(0, 8)
-    pad.Parent = btn
-
     local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(0.6, 0, 1, 0)
+    title.Size = UDim2.new(1, 0, 0, 16)
     title.BackgroundTransparency = 1
-    title.Text = titleText
+    title.Text = "Шрифт меню"
     title.TextColor3 = AppC.text
     title.TextSize = 10
     title.Font = Enum.Font.GothamBold
     title.TextXAlignment = Enum.TextXAlignment.Left
-    title.Parent = btn
+    title.ZIndex = 14
+    title.Parent = frame
 
-    local val = Instance.new("TextLabel")
-    val.Name = "ValLabel"
-    val.Size = UDim2.new(0.4, 0, 1, 0)
-    val.Position = UDim2.new(0.6, 0, 0, 0)
-    val.BackgroundTransparency = 1
-    val.Text = valueText
-    val.TextColor3 = AppC.textSec
-    val.TextSize = 9
-    val.Font = Enum.Font.GothamMedium
-    val.TextXAlignment = Enum.TextXAlignment.Right
-    val.Parent = btn
+    local fonts = {
+        {name = "Gotham", font = Enum.Font.GothamBold},
+        {name = "SourceSans", font = Enum.Font.SourceSansBold},
+        {name = "FredokaOne", font = Enum.Font.FredokaOne},
+        {name = "Ubuntu", font = Enum.Font.Ubuntu},
+    }
 
-    btn.MouseButton1Click:Connect(function()
-        if callback then callback(val) end
-    end)
+    local buttonContainer = Instance.new("Frame")
+    buttonContainer.Size = UDim2.new(1, 0, 0, 30)
+    buttonContainer.Position = UDim2.new(0, 0, 0, 20)
+    buttonContainer.BackgroundTransparency = 1
+    buttonContainer.ZIndex = 14
+    buttonContainer.Parent = frame
+
+    local grid = Instance.new("UIGridLayout")
+    grid.CellSize = UDim2.new(0, 85, 0, 28)
+    grid.CellPadding = UDim2.new(0, 4, 0, 2)
+    grid.FillDirectionMaxCells = 2
+    grid.Parent = buttonContainer
+
+    for _, fontData in ipairs(fonts) do
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 85, 0, 28)
+        btn.BackgroundColor3 = AppC.switchOff
+        btn.Text = fontData.name
+        btn.Font = fontData.font
+        btn.TextColor3 = AppC.textDim
+        btn.TextSize = 9
+        btn.AutoButtonColor = false
+        btn.ZIndex = 15
+        btn.Parent = buttonContainer
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+
+        btn.MouseButton1Click:Connect(function()
+            -- Update all buttons to dim color
+            for _, otherBtn in ipairs(buttonContainer:GetChildren()) do
+                if otherBtn:IsA("TextButton") then
+                    otherBtn.BackgroundColor3 = AppC.switchOff
+                    otherBtn.TextColor3 = AppC.textDim
+                end
+            end
+            -- Highlight selected button
+            btn.BackgroundColor3 = AppC.accent
+            btn.TextColor3 = AppC.white
+        end)
+    end
+
     return frame
 end
 
 ---------------------------------------------------------
--- MODAL CARD (Для шрифтов и языка)
----------------------------------------------------------
-local ModalBg = Instance.new("Frame")
-ModalBg.Size = UDim2.new(1, 0, 1, 0)
-ModalBg.BackgroundColor3 = Color3.new(0, 0, 0)
-ModalBg.BackgroundTransparency = 0.6
-ModalBg.Visible = false
-ModalBg.ZIndex = 90
-ModalBg.Parent = Hub
-
-local ModalCard = Instance.new("Frame")
-ModalCard.Size = UDim2.new(0, 240, 0, 320)
-ModalCard.Position = UDim2.new(0.5, 0, 0.5, 0)
-ModalCard.AnchorPoint = Vector2.new(0.5, 0.5)
-ModalCard.BackgroundColor3 = AppC.elevated
-ModalCard.BorderSizePixel = 0
-ModalCard.ZIndex = 91
-ModalCard.Parent = ModalBg
-Instance.new("UICorner", ModalCard).CornerRadius = UDim.new(0, 10)
-local MSk = Instance.new("UIStroke", ModalCard)
-MSk.Color = AppC.border
-MSk.Thickness = 1
-
-local ModalTitle = Instance.new("TextLabel")
-ModalTitle.Size = UDim2.new(1, -20, 0, 40)
-ModalTitle.Position = UDim2.new(0, 10, 0, 0)
-ModalTitle.BackgroundTransparency = 1
-ModalTitle.TextColor3 = AppC.text
-ModalTitle.TextSize = 12
-ModalTitle.Font = Enum.Font.GothamBold
-ModalTitle.TextXAlignment = Enum.TextXAlignment.Left
-ModalTitle.Parent = ModalCard
-
-local ModalScroll = Instance.new("ScrollingFrame")
-ModalScroll.Size = UDim2.new(1, -20, 1, -50)
-ModalScroll.Position = UDim2.new(0, 10, 0, 40)
-ModalScroll.BackgroundTransparency = 1
-ModalScroll.BorderSizePixel = 0
-ModalScroll.ScrollBarThickness = 2
-ModalScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-ModalScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-ModalScroll.ScrollBarImageColor3 = AppC.border
-ModalScroll.Parent = ModalCard
-
-local ModalList = Instance.new("UIListLayout")
-ModalList.SortOrder = Enum.SortOrder.LayoutOrder
-ModalList.Padding = UDim.new(0, 6)
-ModalList.Parent = ModalScroll
-
-local function ShowModal(title, options, onSelect)
-    ModalTitle.Text = title
-    for _, child in ipairs(ModalScroll:GetChildren()) do
-        if child:IsA("TextButton") then child:Destroy() end
-    end
-    for _, opt in ipairs(options) do
-        local optBtn = Instance.new("TextButton")
-        optBtn.Size = UDim2.new(1, 0, 0, 30)
-        optBtn.BackgroundColor3 = AppC.surface
-        optBtn.Text = opt
-        optBtn.TextColor3 = AppC.text
-        optBtn.TextSize = 10
-        optBtn.Font = Enum.Font.GothamBold
-        optBtn.AutoButtonColor = false
-        optBtn.Parent = ModalScroll
-        Instance.new("UICorner", optBtn).CornerRadius = UDim.new(0, 6)
-
-        optBtn.MouseButton1Click:Connect(function()
-            onSelect(opt)
-            ModalBg.Visible = false
-        end)
-    end
-    ModalBg.Visible = true
-end
-
-ModalBg.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        ModalBg.Visible = false
-    end
-end)
-
----------------------------------------------------------
--- NAVIGATION & CATEGORIES
+-- NAVIGATION & CATEGORIES (MATCHING SACRACIA SIDEBAR)
 ---------------------------------------------------------
 local categories = {
-    {id = "Stats",        icon = "📊", name = "Stats"},
-    {id = "Entities",     icon = "👁", name = "Entities"},
-    {id = "Visuals",      icon = "🎯", name = "Visuals"},
-    {id = "Valuables",    icon = "🎒", name = "Valuables"},
-    {id = "Items",        icon = "📦", name = "Items"},
-    {id = "Level",        icon = "⚡", name = "Level"},
-    {id = "Miscellaneous",icon = "⚙", name = "Misc"},
-    {id = "Settings",     icon = "🛠", name = "Settings"},
+    {id = "Stats",        icon = "📊", nameKey = "stats"},
+    {id = "Entities",     icon = "👁", nameKey = "entities"},
+    {id = "Visuals",      icon = "🎯", nameKey = "visuals"},
+    {id = "Valuables",    icon = "🎒", nameKey = "valuables"},
+    {id = "Items",        icon = "📦", nameKey = "items"},
+    {id = "Level",        icon = "⚡", nameKey = "level"},
+    {id = "Miscellaneous",icon = "⚙", nameKey = "miscellaneous"},
+    {id = "Settings",     icon = "🛠", nameKey = "settings"},
 }
 
 local sidebarButtons = {}
@@ -851,6 +858,30 @@ local function ShowPage(id)
         btn.TextColor3 = selected and AppC.text or AppC.textDim
         local icon = btn:FindFirstChild("Icon")
         if icon then icon.TextColor3 = selected and AppC.accent or AppC.textDim end
+    end
+    
+    -- Update beta label visibility
+    BetaLabel.Visible = (id == "Settings")
+    if id == "Settings" then
+        BetaLabel.Text = getText("betaTitle") .. " | " .. getText("versionText")
+    end
+end
+
+-- Функция обновления всех текстов интерфейса
+local function updateAllTexts()
+    LogoText.Text = getText("menuName")
+    ToggleText.Text = hubOpen and getText("closeButton") or getText("menuName")
+    BetaLabel.Text = getText("betaTitle") .. " | " .. getText("versionText")
+    
+    -- Обновляем названия категорий в сайдбаре
+    for _, item in ipairs(categories) do
+        local btn = sidebarButtons[item.id]
+        if btn then
+            local label = btn:FindFirstChildOfClass("TextLabel")
+            if label then
+                label.Text = getText(item.nameKey)
+            end
+        end
     end
 end
 
@@ -881,7 +912,7 @@ for _, item in ipairs(categories) do
     label.Size = UDim2.new(1, -34, 1, 0)
     label.Position = UDim2.new(0, 32, 0, 0)
     label.BackgroundTransparency = 1
-    label.Text = item.name
+    label.Text = getText(item.nameKey)
     label.TextColor3 = AppC.textDim
     label.TextSize = 9
     label.Font = Enum.Font.GothamBold
@@ -1054,38 +1085,8 @@ player.CharacterAdded:Connect(function()
 end)
 
 ---------------------------------------------------------
--- POPULATE SACRACIA PAGES 
+-- POPULATE SACRACIA PAGES (TWO COLUMN LAYOUT)
 ---------------------------------------------------------
-local antiAfkConn = nil
-local currentFont = "GothamBold"
-local currentLang = "Русский"
-
-local fontMap = {
-    ["Gotham"] = Enum.Font.Gotham,
-    ["GothamBold"] = Enum.Font.GothamBold,
-    ["GothamBlack"] = Enum.Font.GothamBlack,
-    ["GothamMedium"] = Enum.Font.GothamMedium,
-    ["GothamSemibold"] = Enum.Font.GothamSemibold,
-    ["Arial"] = Enum.Font.Arial,
-    ["ArialBold"] = Enum.Font.ArialBold,
-    ["SourceSans"] = Enum.Font.SourceSans,
-    ["SourceSansBold"] = Enum.Font.SourceSansBold,
-    ["SourceSansSemibold"] = Enum.Font.SourceSansSemibold,
-    ["RobotoMono"] = Enum.Font.RobotoMono,
-    ["Code"] = Enum.Font.Code
-}
-local fontNames = {"Gotham", "GothamBold", "GothamBlack", "GothamMedium", "GothamSemibold", "Arial", "ArialBold", "SourceSans", "SourceSansBold", "SourceSansSemibold", "RobotoMono", "Code"}
-
-local function SetMenuFont(fontName)
-    currentFont = fontName
-    local fontEnum = fontMap[fontName] or Enum.Font.GothamBold
-    for _, obj in ipairs(Hub:GetDescendants()) do
-        if (obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox")) and obj.Name ~= "Icon" then
-            obj.Font = fontEnum
-        end
-    end
-end
-
 for _, item in ipairs(categories) do
     local page = Instance.new("Frame")
     page.Name = "Page_" .. item.id
@@ -1100,8 +1101,6 @@ for _, item in ipairs(categories) do
     pageScroll.BackgroundTransparency = 1
     pageScroll.BorderSizePixel = 0
     pageScroll.ScrollBarThickness = 2
-    pageScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    pageScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
     pageScroll.ScrollBarImageColor3 = AppC.border
     pageScroll.Parent = page
 
@@ -1112,16 +1111,15 @@ for _, item in ipairs(categories) do
     pad.PaddingBottom = UDim.new(0, 20)
     pad.Parent = pageScroll
 
+    -- 2 Columns Grid Layout
     local colLeft = Instance.new("Frame")
-    colLeft.Size = UDim2.new(0.48, 0, 0, 0)
-    colLeft.AutomaticSize = Enum.AutomaticSize.Y
+    colLeft.Size = UDim2.new(0.48, 0, 1, 0)
     colLeft.Position = UDim2.new(0, 0, 0, 0)
     colLeft.BackgroundTransparency = 1
     colLeft.Parent = pageScroll
 
     local colRight = Instance.new("Frame")
-    colRight.Size = UDim2.new(0.48, 0, 0, 0)
-    colRight.AutomaticSize = Enum.AutomaticSize.Y
+    colRight.Size = UDim2.new(0.48, 0, 1, 0)
     colRight.Position = UDim2.new(0.52, 0, 0, 0)
     colRight.BackgroundTransparency = 1
     colRight.Parent = pageScroll
@@ -1137,7 +1135,7 @@ for _, item in ipairs(categories) do
     listR.Parent = colRight
 
     if item.id == "Stats" then
-        -- LEFT COLUMN
+        -- LEFT COLUMN: HEALTH & MOVEMENT
         CreateSectionHeader(colLeft, "Health")
         CreateToggle(colLeft, "Godmode", nil, true)
 
@@ -1149,7 +1147,7 @@ for _, item in ipairs(categories) do
         CreateToggle(colLeft, "Infinite jumps", nil, true)
         CreateToggle(colLeft, "Dont tumble", "Double tumbling from external sources", false)
 
-        -- RIGHT COLUMN
+        -- RIGHT COLUMN: GRAB & POWERUPS
         CreateSectionHeader(colRight, "Grab")
         CreateToggle(colRight, "High strength", "Disables if you take damage", true)
         CreateToggle(colRight, "Unlimited range", nil, true)
@@ -1169,67 +1167,44 @@ for _, item in ipairs(categories) do
         end)
 
     elseif item.id == "Settings" then
-        -- LEFT COLUMN: UI SCALING & FONTS
-        CreateSectionHeader(colLeft, "Интерфейс")
-        
-        CreateSlider(colLeft, "Размер меню", 0, 100, 50, "%", function(v)
-            uiScale.Scale = 0.8 + (v/100) * 0.6
+        -- SETTINGS PAGE - НАСТРОЙКИ
+        CreateSectionHeader(colLeft, getText("settings"))
+
+        -- Размер меню
+        CreateSlider(colLeft, getText("menuSize"), 50, 100, MenuSettings.menuSize, "%", function(val)
+            MenuSettings.menuSize = val
+            updateWindowScale()
         end)
 
-        CreateSlider(colLeft, "Screen Stretch", 0, 100, 0, "%", function(v)
-            windowSize = Vector2.new(baseW + (v/100)*200, baseH)
-            applyWindowRect(windowPos or Vector2.new(50, 50))
+        -- Screen Stretch
+        CreateSlider(colLeft, getText("screenStretch"), 50, 100, MenuSettings.screenStretch, "%", function(val)
+            MenuSettings.screenStretch = val
+            updateWindowScale()
         end)
 
-        CreateMenuButton(colLeft, "Шрифт меню", currentFont .. "  ⌄", function(valLabel)
-            ShowModal("Выберите шрифт", fontNames, function(selected)
-                SetMenuFont(selected)
-                valLabel.Text = selected .. "  ⌄"
-            end)
+        -- Шрифт меню
+        CreateSectionHeader(colLeft, getText("fontMenu"))
+        CreateFontSelector(colLeft)
+
+        -- Язык меню
+        CreateSectionHeader(colRight, getText("language"))
+        CreateToggle(colRight, "English", "Switch to English", MenuSettings.language == "English", function(state)
+            MenuSettings.language = state and "English" or "Русский"
+            updateAllTexts()
         end)
 
-        -- RIGHT COLUMN: SYSTEM & INFO
-        CreateSectionHeader(colRight, "Язык и Система")
-
-        CreateMenuButton(colRight, "Язык меню", currentLang .. "  ⌄", function(valLabel)
-            ShowModal("Выберите язык", {"Русский", "English"}, function(selected)
-                currentLang = selected
-                valLabel.Text = selected .. "  ⌄"
-            end)
+        -- Анти-АФК
+        CreateSectionHeader(colRight, getText("antiAFK"))
+        CreateToggle(colRight, getText("antiAFK"), "Prevent auto-kick for inactivity", MenuSettings.antiAFK, function(state)
+            MenuSettings.antiAFK = state
+            setupAntiAFK()
         end)
-
-        CreateToggle(colRight, "Анти-АФК", "Предотвращает кик за бездействие", false, function(s)
-            if s then
-                if not antiAfkConn then
-                    antiAfkConn = player.Idled:Connect(function()
-                        VirtualUser:CaptureController()
-                        VirtualUser:ClickButton2(Vector2.new())
-                    end)
-                end
-            else
-                if antiAfkConn then
-                    antiAfkConn:Disconnect()
-                    antiAfkConn = nil
-                end
-            end
-        end)
-
-        local infoLabel = Instance.new("TextLabel")
-        infoLabel.Size = UDim2.new(1, 0, 0, 40)
-        infoLabel.BackgroundTransparency = 1
-        infoLabel.Text = "Название меню в бета тестирование и версия ожидайте обнов! Все!"
-        infoLabel.TextColor3 = AppC.textDim
-        infoLabel.TextSize = 8
-        infoLabel.Font = Enum.Font.GothamMedium
-        infoLabel.TextWrapped = true
-        infoLabel.TextXAlignment = Enum.TextXAlignment.Left
-        infoLabel.LayoutOrder = 100
-        infoLabel.Parent = colRight
 
     else
         -- DEFAULT DUMMY PAGE CONTENT
-        CreateSectionHeader(colLeft, item.name .. " Settings")
-        CreateToggle(colLeft, "Enable " .. item.name, "Toggle option feature", true)
+        local pageName = getText(item.nameKey) or item.nameKey
+        CreateSectionHeader(colLeft, pageName .. " Settings")
+        CreateToggle(colLeft, "Enable " .. pageName, "Toggle option feature", true)
         CreateSlider(colLeft, "Intensity", 1, 100, 50, "%")
 
         CreateSectionHeader(colRight, "Advanced Options")
@@ -1238,4 +1213,50 @@ for _, item in ipairs(categories) do
     end
 end
 
+---------------------------------------------------------
+-- TOGGLE HUB FUNCTIONALITY
+---------------------------------------------------------
+local function ToggleHub()
+    hubOpen = not hubOpen
+    SetToggleVisual(hubOpen)
+
+    if hubOpen then
+        Hub.Visible = true
+        HubShadow.Visible = true
+        BetaLabel.Visible = true
+        BetaLabel.Text = getText("betaTitle") .. " | " .. getText("versionText")
+        ensureWindowRect()
+        windowSize = getCurrentSize()
+        local scaledSize = Vector2.new(windowSize.X * getCurrentStretch(), windowSize.Y * getCurrentStretch())
+        Hub.Size = UDim2.fromOffset(scaledSize.X, 0)
+        HubShadow.Size = UDim2.fromOffset(scaledSize.X, 0)
+        TweenService:Create(Hub, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(scaledSize.X, scaledSize.Y)}):Play()
+        TweenService:Create(HubShadow, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(scaledSize.X, scaledSize.Y)}):Play()
+    else
+        windowSize = getCurrentSize()
+        local scaledSize = Vector2.new(windowSize.X * getCurrentStretch(), windowSize.Y * getCurrentStretch())
+        local tw = TweenService:Create(Hub, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.fromOffset(scaledSize.X, 0)})
+        tw:Play()
+        TweenService:Create(HubShadow, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.fromOffset(scaledSize.X, 0)}):Play()
+        tw.Completed:Connect(function()
+            if not hubOpen then
+                Hub.Visible = false
+                HubShadow.Visible = false
+                BetaLabel.Visible = false
+                Hub.Size = UDim2.fromOffset(scaledSize.X, scaledSize.Y)
+                HubShadow.Size = UDim2.fromOffset(scaledSize.X, scaledSize.Y)
+            end
+        end)
+    end
+end
+
+UserInputService.InputEnded:Connect(function(input)
+    if toggleDrag and (input == toggleDrag.input or input.UserInputType == Enum.UserInputType.MouseButton1) then
+        local moved = toggleDrag.moved
+        toggleDrag = nil
+        if not moved then ToggleHub() end
+    end
+end)
+
+ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
 ShowPage("Stats")
