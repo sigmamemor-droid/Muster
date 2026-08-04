@@ -202,11 +202,11 @@ end)
 -- SACRACIA PALETTE & STYLES
 ---------------------------------------------------------
 local AppC = {
-    bg = Color3.fromRGB(22, 22, 26),          -- Main Window Background
-    sidebar = Color3.fromRGB(16, 16, 20),     -- Dark Sidebar Background
-    accent = Color3.fromRGB(52, 120, 246),     -- Sacracia Blue Accent
+    bg = Color3.fromRGB(22, 22, 26),
+    sidebar = Color3.fromRGB(16, 16, 20),
+    accent = Color3.fromRGB(52, 120, 246),
     accentDark = Color3.fromRGB(30, 80, 180),
-    switchOff = Color3.fromRGB(42, 44, 52),    -- Switch Off State
+    switchOff = Color3.fromRGB(42, 44, 52),
     white = Color3.fromRGB(255, 255, 255),
     text = Color3.fromRGB(240, 242, 245),
     textSec = Color3.fromRGB(140, 145, 155),
@@ -218,78 +218,7 @@ local AppC = {
 }
 
 ---------------------------------------------------------
--- MOBILE TOGGLE BUTTON (SACRACIA CAPSULE)
----------------------------------------------------------
-local hubOpen = false
-local toggleDrag = nil
-
-local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Name = "HubToggle"
-ToggleBtn.Size = UDim2.new(0, 130, 0, 34)
-ToggleBtn.Position = UDim2.new(0, 16, 0.32, 0)
-ToggleBtn.BackgroundColor3 = AppC.sidebar
-ToggleBtn.Text = ""
-ToggleBtn.AutoButtonColor = false
-ToggleBtn.ZIndex = 50
-ToggleBtn.Parent = ScreenGui
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 10)
-
-local ToggleStroke = Instance.new("UIStroke")
-ToggleStroke.Color = AppC.accent
-ToggleStroke.Thickness = 1.2
-ToggleStroke.Transparency = 0.3
-ToggleStroke.Parent = ToggleBtn
-
-local ToggleLogo = Instance.new("TextLabel")
-ToggleLogo.Size = UDim2.new(0, 20, 1, 0)
-ToggleLogo.Position = UDim2.new(0, 10, 0, 0)
-ToggleLogo.BackgroundTransparency = 1
-ToggleLogo.Text = "◈"
-ToggleLogo.TextColor3 = AppC.accent
-ToggleLogo.TextSize = 13
-ToggleLogo.Font = Enum.Font.GothamBold
-ToggleLogo.ZIndex = 52
-ToggleLogo.Parent = ToggleBtn
-
-local ToggleText = Instance.new("TextLabel")
-ToggleText.Size = UDim2.new(1, -34, 1, 0)
-ToggleText.Position = UDim2.new(0, 28, 0, 0)
-ToggleText.BackgroundTransparency = 1
-ToggleText.Text = "SACRACIA"
-ToggleText.TextColor3 = AppC.text
-ToggleText.TextSize = 10
-ToggleText.Font = Enum.Font.GothamBold
-ToggleText.TextXAlignment = Enum.TextXAlignment.Left
-ToggleText.ZIndex = 52
-ToggleText.Parent = ToggleBtn
-
-local function SetToggleVisual(isOpen)
-    ToggleText.Text = isOpen and "CLOSE" or "SACRACIA"
-    TweenService:Create(ToggleStroke, TweenInfo.new(0.2), {
-        Color = isOpen and AppC.red or AppC.accent
-    }):Play()
-    ToggleLogo.TextColor3 = isOpen and AppC.red or AppC.accent
-end
-
-do
-    ToggleBtn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            toggleDrag = {input = input, start = input.Position, position = ToggleBtn.Position, moved = false}
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if not toggleDrag or (input.UserInputType ~= Enum.UserInputType.MouseMovement and input ~= toggleDrag.input) then return end
-        local delta = input.Position - toggleDrag.start
-        if delta.Magnitude > 7 then toggleDrag.moved = true end
-        local viewport = ScreenGui.AbsoluteSize
-        local x = math.clamp(toggleDrag.position.X.Offset + delta.X, 8, math.max(8, viewport.X - ToggleBtn.AbsoluteSize.X - 8))
-        local y = math.clamp(toggleDrag.position.Y.Offset + delta.Y, 8, math.max(8, viewport.Y - ToggleBtn.AbsoluteSize.Y - 8))
-        ToggleBtn.Position = UDim2.fromOffset(x, y)
-    end)
-end
-
----------------------------------------------------------
--- MAIN HUB FRAME (SACRACIA WINDOW)
+-- MAIN HUB FRAME (SACRACIA WINDOW) - Forward declaration
 ---------------------------------------------------------
 local baseW, baseH, SIDEBAR_W = 600, 390, 150
 local windowSize = Vector2.new(baseW, baseH)
@@ -362,6 +291,127 @@ ScreenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
 end)
 
 ---------------------------------------------------------
+-- MOBILE TOGGLE BUTTON (SACRACIA CAPSULE)
+---------------------------------------------------------
+local hubOpen = false
+
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Name = "HubToggle"
+ToggleBtn.Size = UDim2.new(0, 130, 0, 34)
+ToggleBtn.Position = UDim2.new(0, 16, 0.32, 0)
+ToggleBtn.BackgroundColor3 = AppC.sidebar
+ToggleBtn.Text = ""
+ToggleBtn.AutoButtonColor = false
+ToggleBtn.ZIndex = 50
+ToggleBtn.Parent = ScreenGui
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 10)
+
+local ToggleStroke = Instance.new("UIStroke")
+ToggleStroke.Color = AppC.accent
+ToggleStroke.Thickness = 1.2
+ToggleStroke.Transparency = 0.3
+ToggleStroke.Parent = ToggleBtn
+
+local ToggleLogo = Instance.new("TextLabel")
+ToggleLogo.Size = UDim2.new(0, 20, 1, 0)
+ToggleLogo.Position = UDim2.new(0, 10, 0, 0)
+ToggleLogo.BackgroundTransparency = 1
+ToggleLogo.Text = "◈"
+ToggleLogo.TextColor3 = AppC.accent
+ToggleLogo.TextSize = 13
+ToggleLogo.Font = Enum.Font.GothamBold
+ToggleLogo.ZIndex = 52
+ToggleLogo.Parent = ToggleBtn
+
+local ToggleText = Instance.new("TextLabel")
+ToggleText.Size = UDim2.new(1, -34, 1, 0)
+ToggleText.Position = UDim2.new(0, 28, 0, 0)
+ToggleText.BackgroundTransparency = 1
+ToggleText.Text = "SACRACIA"
+ToggleText.TextColor3 = AppC.text
+ToggleText.TextSize = 10
+ToggleText.Font = Enum.Font.GothamBold
+ToggleText.TextXAlignment = Enum.TextXAlignment.Left
+ToggleText.ZIndex = 52
+ToggleText.Parent = ToggleBtn
+
+local function SetToggleVisual(isOpen)
+    ToggleText.Text = isOpen and "CLOSE" or "SACRACIA"
+    TweenService:Create(ToggleStroke, TweenInfo.new(0.2), {
+        Color = isOpen and AppC.red or AppC.accent
+    }):Play()
+    ToggleLogo.TextColor3 = isOpen and AppC.red or AppC.accent
+end
+
+local function ToggleHub()
+    hubOpen = not hubOpen
+    SetToggleVisual(hubOpen)
+
+    if hubOpen then
+        Hub.Visible = true
+        HubShadow.Visible = true
+        ensureWindowRect()
+        Hub.Size = UDim2.fromOffset(windowSize.X, 0)
+        HubShadow.Size = UDim2.fromOffset(windowSize.X, 0)
+        TweenService:Create(Hub, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(windowSize.X, windowSize.Y)}):Play()
+        TweenService:Create(HubShadow, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(windowSize.X, windowSize.Y)}):Play()
+    else
+        local tw = TweenService:Create(Hub, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.fromOffset(windowSize.X, 0)})
+        tw:Play()
+        TweenService:Create(HubShadow, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.fromOffset(windowSize.X, 0)}):Play()
+        tw.Completed:Connect(function()
+            if not hubOpen then
+                Hub.Visible = false
+                HubShadow.Visible = false
+                Hub.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
+                HubShadow.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
+            end
+        end)
+    end
+end
+
+-- НАДЕЖНАЯ ЛОГИКА КЛИКА И ПЕРЕТАСКИВАНИЯ ДЛЯ ПК И МОБИЛЬНЫХ УСТРОЙСТВ
+do
+    local startPosInput = nil
+    local startBtnPos = nil
+    local isDraggingToggle = false
+
+    ToggleBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            startPosInput = input.Position
+            startBtnPos = ToggleBtn.Position
+            isDraggingToggle = false
+
+            local conChanged, conEnded
+            conChanged = UserInputService.InputChanged:Connect(function(moveInput)
+                if moveInput.UserInputType == Enum.UserInputType.MouseMovement or moveInput.UserInputType == Enum.UserInputType.Touch then
+                    local delta = moveInput.Position - startPosInput
+                    if delta.Magnitude > 7 then
+                        isDraggingToggle = true
+                    end
+                    if isDraggingToggle then
+                        local viewport = getViewport()
+                        local x = math.clamp(startBtnPos.X.Offset + delta.X, 8, math.max(8, viewport.X - ToggleBtn.AbsoluteSize.X - 8))
+                        local y = math.clamp(startBtnPos.Y.Offset + delta.Y, 8, math.max(8, viewport.Y - ToggleBtn.AbsoluteSize.Y - 8))
+                        ToggleBtn.Position = UDim2.fromOffset(x, y)
+                    end
+                end
+            end)
+
+            conEnded = UserInputService.InputEnded:Connect(function(endInput)
+                if endInput.UserInputType == Enum.UserInputType.MouseButton1 or endInput.UserInputType == Enum.UserInputType.Touch then
+                    conChanged:Disconnect()
+                    conEnded:Disconnect()
+                    if not isDraggingToggle then
+                        ToggleHub()
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+---------------------------------------------------------
 -- SACRACIA SIDEBAR (LEFT NAVIGATION)
 ---------------------------------------------------------
 local Sidebar = Instance.new("Frame")
@@ -405,6 +455,8 @@ SideScroll.Position = UDim2.new(0, 0, 0, 50)
 SideScroll.BackgroundTransparency = 1
 SideScroll.BorderSizePixel = 0
 SideScroll.ScrollBarThickness = 0
+SideScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+SideScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 SideScroll.ZIndex = 13
 SideScroll.Parent = Sidebar
 
@@ -431,6 +483,7 @@ ClB.Parent = Hub
 
 ClB.MouseEnter:Connect(function() ClB.TextColor3 = AppC.red end)
 ClB.MouseLeave:Connect(function() ClB.TextColor3 = AppC.textDim end)
+ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
 
 do
     local dragging, activeInput, dragStart, startPos
@@ -447,12 +500,12 @@ do
         end
     end)
     UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input == activeInput) then
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch or input == activeInput) then
             applyWindowRect(startPos + (input.Position - dragStart))
         end
     end)
     UserInputService.InputEnded:Connect(function(input)
-        if dragging and (input == activeInput or (activeInput and activeInput.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.MouseButton1)) then
+        if dragging and (input == activeInput or input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
             dragging, activeInput, windowInteraction = false, nil, nil
         end
     end)
@@ -641,7 +694,6 @@ local function CreateSlider(parent, titleText, minVal, maxVal, defaultVal, prefi
     return frame
 end
 
--- Кнопка для настроек (Шрифт, Язык)
 local function CreateMenuButton(parent, titleText, valueText, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 0, 36)
@@ -731,8 +783,11 @@ ModalScroll.Position = UDim2.new(0, 10, 0, 40)
 ModalScroll.BackgroundTransparency = 1
 ModalScroll.BorderSizePixel = 0
 ModalScroll.ScrollBarThickness = 2
+ModalScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+ModalScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 ModalScroll.ScrollBarImageColor3 = AppC.border
 ModalScroll.Parent = ModalCard
+
 local ModalList = Instance.new("UIListLayout")
 ModalList.SortOrder = Enum.SortOrder.LayoutOrder
 ModalList.Padding = UDim.new(0, 6)
@@ -1045,6 +1100,8 @@ for _, item in ipairs(categories) do
     pageScroll.BackgroundTransparency = 1
     pageScroll.BorderSizePixel = 0
     pageScroll.ScrollBarThickness = 2
+    pageScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    pageScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
     pageScroll.ScrollBarImageColor3 = AppC.border
     pageScroll.Parent = page
 
@@ -1056,13 +1113,15 @@ for _, item in ipairs(categories) do
     pad.Parent = pageScroll
 
     local colLeft = Instance.new("Frame")
-    colLeft.Size = UDim2.new(0.48, 0, 1, 0)
+    colLeft.Size = UDim2.new(0.48, 0, 0, 0)
+    colLeft.AutomaticSize = Enum.AutomaticSize.Y
     colLeft.Position = UDim2.new(0, 0, 0, 0)
     colLeft.BackgroundTransparency = 1
     colLeft.Parent = pageScroll
 
     local colRight = Instance.new("Frame")
-    colRight.Size = UDim2.new(0.48, 0, 1, 0)
+    colRight.Size = UDim2.new(0.48, 0, 0, 0)
+    colRight.AutomaticSize = Enum.AutomaticSize.Y
     colRight.Position = UDim2.new(0.52, 0, 0, 0)
     colRight.BackgroundTransparency = 1
     colRight.Parent = pageScroll
@@ -1114,7 +1173,7 @@ for _, item in ipairs(categories) do
         CreateSectionHeader(colLeft, "Интерфейс")
         
         CreateSlider(colLeft, "Размер меню", 0, 100, 50, "%", function(v)
-            uiScale.Scale = 0.8 + (v/100) * 0.6 -- Scale from 0.8x to 1.4x
+            uiScale.Scale = 0.8 + (v/100) * 0.6
         end)
 
         CreateSlider(colLeft, "Screen Stretch", 0, 100, 0, "%", function(v)
@@ -1136,7 +1195,6 @@ for _, item in ipairs(categories) do
             ShowModal("Выберите язык", {"Русский", "English"}, function(selected)
                 currentLang = selected
                 valLabel.Text = selected .. "  ⌄"
-                -- Здесь можно добавить логику перевода, пока каркас
             end)
         end)
 
@@ -1180,43 +1238,4 @@ for _, item in ipairs(categories) do
     end
 end
 
----------------------------------------------------------
--- TOGGLE HUB FUNCTIONALITY
----------------------------------------------------------
-local function ToggleHub()
-    hubOpen = not hubOpen
-    SetToggleVisual(hubOpen)
-
-    if hubOpen then
-        Hub.Visible = true
-        HubShadow.Visible = true
-        ensureWindowRect()
-        Hub.Size = UDim2.fromOffset(windowSize.X, 0)
-        HubShadow.Size = UDim2.fromOffset(windowSize.X, 0)
-        TweenService:Create(Hub, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(windowSize.X, windowSize.Y)}):Play()
-        TweenService:Create(HubShadow, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(windowSize.X, windowSize.Y)}):Play()
-    else
-        local tw = TweenService:Create(Hub, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.fromOffset(windowSize.X, 0)})
-        tw:Play()
-        TweenService:Create(HubShadow, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.fromOffset(windowSize.X, 0)}):Play()
-        tw.Completed:Connect(function()
-            if not hubOpen then
-                Hub.Visible = false
-                HubShadow.Visible = false
-                Hub.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
-                HubShadow.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
-            end
-        end)
-    end
-end
-
-UserInputService.InputEnded:Connect(function(input)
-    if toggleDrag and (input == toggleDrag.input or input.UserInputType == Enum.UserInputType.MouseButton1) then
-        local moved = toggleDrag.moved
-        toggleDrag = nil
-        if not moved then ToggleHub() end
-    end
-end)
-
-ClB.MouseButton1Click:Connect(function() if hubOpen then ToggleHub() end end)
 ShowPage("Stats")
