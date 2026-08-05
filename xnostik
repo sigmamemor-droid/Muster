@@ -196,6 +196,7 @@ end)
 ---------------------------------------------------------
 local hubOpen = true
 local toggleDrag = nil
+local toggleSuppressClick = false
 
 local ToggleBtn = Instance.new("Frame")
 ToggleBtn.Name = "RedzToggle"
@@ -241,23 +242,52 @@ do
         if delta.Magnitude > 6 then toggleDrag.moved = true end
         ToggleBtn.Position = UDim2.fromOffset(toggleDrag.position.X.Offset + delta.X, toggleDrag.position.Y.Offset + delta.Y)
     end)
+    UserInputService.InputEnded:Connect(function(input)
+        if toggleDrag and input == toggleDrag.input then
+            toggleSuppressClick = toggleDrag.moved
+            toggleDrag = nil
+        end
+    end)
 end
 
 ---------------------------------------------------------
 -- MAIN HUB WINDOW
 ---------------------------------------------------------
-local HUB_W, HUB_H = 610, 380
+local HUB_W, HUB_H = 500, 330
 
 local Main = Instance.new("Frame")
 Main.Name = "MainFrame"
 Main.Size = UDim2.new(0, HUB_W, 0, HUB_H)
-Main.Position = UDim2.new(0.5, -HUB_W / 2, 0.5, -HUB_H / 2)
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 Main.BackgroundColor3 = C.bg
 Main.BorderSizePixel = 0
 Main.ClipsDescendants = true
 Main.ZIndex = 10
 Main.Parent = ScreenGui
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 16)
+
+-- Keep the compact desktop layout usable on narrow mobile viewports.
+local HubScale = Instance.new("UIScale")
+HubScale.Parent = Main
+local cameraConnection
+local function UpdateHubScale()
+    local camera = workspace.CurrentCamera
+    if not camera then return end
+    local viewport = camera.ViewportSize
+    local fit = math.min((viewport.X - 18) / HUB_W, (viewport.Y - 24) / HUB_H, 1)
+    HubScale.Scale = math.clamp(fit, 0.62, 1)
+end
+local function BindHubViewport()
+    if cameraConnection then cameraConnection:Disconnect() end
+    local camera = workspace.CurrentCamera
+    if camera then
+        cameraConnection = camera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateHubScale)
+    end
+    UpdateHubScale()
+end
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(BindHubViewport)
+BindHubViewport()
 
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Color = C.border
@@ -334,7 +364,7 @@ end
 ---------------------------------------------------------
 -- SIDEBAR & NAVIGATION
 ---------------------------------------------------------
-local SIDEBAR_W = 145
+local SIDEBAR_W = 126
 
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
@@ -343,7 +373,9 @@ Sidebar.Position = UDim2.new(0, 0, 0, 38)
 Sidebar.BackgroundColor3 = C.sidebar
 Sidebar.BorderSizePixel = 0
 Sidebar.ZIndex = 12
+Sidebar.ClipsDescendants = true
 Sidebar.Parent = Main
+Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 14)
 
 local SideScroll = Instance.new("ScrollingFrame")
 SideScroll.Size = UDim2.new(1, 0, 1, -10)
@@ -358,6 +390,9 @@ local SideList = Instance.new("UIListLayout")
 SideList.SortOrder = Enum.SortOrder.LayoutOrder
 SideList.Padding = UDim.new(0, 4)
 SideList.Parent = SideScroll
+SideList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    SideScroll.CanvasSize = UDim2.new(0, 0, 0, SideList.AbsoluteContentSize.Y + 10)
+end)
 
 local SidePad = Instance.new("UIPadding")
 SidePad.PaddingLeft = UDim.new(0, 8)
@@ -371,9 +406,12 @@ local PageHolder = Instance.new("Frame")
 PageHolder.Name = "PageHolder"
 PageHolder.Size = UDim2.new(1, -SIDEBAR_W, 1, -38)
 PageHolder.Position = UDim2.new(0, SIDEBAR_W, 0, 38)
-PageHolder.BackgroundTransparency = 1
+PageHolder.BackgroundTransparency = 0
+PageHolder.BackgroundColor3 = C.bg
+PageHolder.ClipsDescendants = true
 PageHolder.ZIndex = 11
 PageHolder.Parent = Main
+Instance.new("UICorner", PageHolder).CornerRadius = UDim.new(0, 14)
 
 local tabs = {}
 local pages = {}
@@ -385,7 +423,10 @@ local function SelectTab(tabId)
     for id, btn in pairs(tabs) do
         local isSelected = (id == tabId)
         btn.BackgroundColor3 = isSelected and C.card or C.sidebar
-        btn.TextColor3 = isSelected and C.text or C.textSec
+        local label = btn:FindFirstChild("TabLabel")
+        local icon = btn:FindFirstChild("TabIcon")
+        if label then label.TextColor3 = isSelected and C.text or C.textSec end
+        if icon then icon.TextColor3 = isSelected and C.accent or C.textSec end
         local bar = btn:FindFirstChild("Indicator")
         if bar then bar.Visible = isSelected end
     end
@@ -400,7 +441,7 @@ local function CreateTab(id, name, iconText)
     btn.AutoButtonColor = false
     btn.ZIndex = 14
     btn.Parent = SideScroll
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
 
     local indicator = Instance.new("Frame")
     indicator.Name = "Indicator"
@@ -414,6 +455,7 @@ local function CreateTab(id, name, iconText)
     Instance.new("UICorner", indicator).CornerRadius = UDim.new(1, 0)
 
     local icon = Instance.new("TextLabel")
+    icon.Name = "TabIcon"
     icon.Size = UDim2.new(0, 20, 1, 0)
     icon.Position = UDim2.new(0, 12, 0, 0)
     icon.BackgroundTransparency = 1
@@ -424,6 +466,7 @@ local function CreateTab(id, name, iconText)
     icon.Parent = btn
 
     local label = Instance.new("TextLabel")
+    label.Name = "TabLabel"
     label.Size = UDim2.new(1, -38, 1, 0)
     label.Position = UDim2.new(0, 34, 0, 0)
     label.BackgroundTransparency = 1
@@ -476,6 +519,12 @@ end
 ---------------------------------------------------------
 local UI = {}
 
+local function SafeCallback(callback, ...)
+    if not callback then return end
+    local ok, err = pcall(callback, ...)
+    if not ok then warn("Redz Hub UI callback failed:", err) end
+end
+
 function UI.AddSection(page, text)
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 0, 20)
@@ -489,13 +538,36 @@ function UI.AddSection(page, text)
     label.Parent = page
 end
 
+function UI.AddInfo(page, text)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 42)
+    frame.BackgroundColor3 = C.card
+    frame.ZIndex = 13
+    frame.Parent = page
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -24, 1, -12)
+    label.Position = UDim2.new(0, 12, 0, 6)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = C.textSec
+    label.TextSize = 10
+    label.Font = Enum.Font.Gotham
+    label.TextWrapped = true
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextYAlignment = Enum.TextYAlignment.Center
+    label.ZIndex = 14
+    label.Parent = frame
+end
+
 function UI.AddToggle(page, titleText, subText, defaultState, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 0, subText and 46 or 38)
     frame.BackgroundColor3 = C.card
     frame.ZIndex = 13
     frame.Parent = page
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
 
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, -60, 0, 20)
@@ -547,7 +619,7 @@ function UI.AddToggle(page, titleText, subText, defaultState, callback)
         state = not state
         TweenService:Create(switchTrack, TweenInfo.new(0.15), {BackgroundColor3 = state and C.accent or C.switchOff}):Play()
         TweenService:Create(switchThumb, TweenInfo.new(0.15), {Position = state and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)}):Play()
-        if callback then callback(state) end
+        SafeCallback(callback, state)
     end)
 end
 
@@ -558,7 +630,7 @@ function UI.AddDropdown(page, titleText, options, defaultOption, callback)
     frame.ClipsDescendants = true
     frame.ZIndex = 13
     frame.Parent = page
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
 
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(0.5, 0, 0, 38)
@@ -582,7 +654,7 @@ function UI.AddDropdown(page, titleText, options, defaultOption, callback)
     selector.Font = Enum.Font.GothamBold
     selector.ZIndex = 14
     selector.Parent = frame
-    Instance.new("UICorner", selector).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", selector).CornerRadius = UDim.new(0, 10)
 
     local isOpen = false
     selector.MouseButton1Click:Connect(function()
@@ -602,13 +674,13 @@ function UI.AddDropdown(page, titleText, options, defaultOption, callback)
         optBtn.Font = Enum.Font.GothamMedium
         optBtn.ZIndex = 15
         optBtn.Parent = frame
-        Instance.new("UICorner", optBtn).CornerRadius = UDim.new(0, 4)
+        Instance.new("UICorner", optBtn).CornerRadius = UDim.new(0, 9)
 
         optBtn.MouseButton1Click:Connect(function()
             selector.Text = opt .. "  ▼"
             isOpen = false
             TweenService:Create(frame, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 38)}):Play()
-            if callback then callback(opt) end
+            SafeCallback(callback, opt)
         end)
     end
 end
@@ -619,7 +691,7 @@ function UI.AddSlider(page, titleText, minVal, maxVal, defaultVal, prefix, callb
     frame.BackgroundColor3 = C.card
     frame.ZIndex = 13
     frame.Parent = page
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
 
     prefix = prefix or "x"
 
@@ -683,7 +755,7 @@ function UI.AddSlider(page, titleText, minVal, maxVal, defaultVal, prefix, callb
         fill.Size = UDim2.new(delta, 0, 1, 0)
         thumb.Position = UDim2.new(delta, 0, 0.5, 0)
         valLabel.Text = prefix .. tostring(val)
-        if callback then callback(val) end
+        SafeCallback(callback, val)
     end
 
     track.InputBegan:Connect(function(input)
@@ -714,14 +786,14 @@ function UI.AddButton(page, titleText, callback)
     btn.Font = Enum.Font.GothamBold
     btn.ZIndex = 14
     btn.Parent = page
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
 
     btn.MouseButton1Click:Connect(function()
         TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = C.accent}):Play()
         task.delay(0.12, function()
             TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = C.card}):Play()
         end)
-        if callback then callback() end
+        SafeCallback(callback)
     end)
 end
 
@@ -883,78 +955,91 @@ end)
 
 ---------------------------------------------------------
 -- POPULATE PAGES & TABS
----------------------------------------------------------
-local discordPage = CreateTab("Discord", "Discord", "🌐")
-local farmPage    = CreateTab("Farm", "Farm", "🏠")
-local itemsPage   = CreateTab("Items", "Items", "⚔")
-local powersPage  = CreateTab("Powers", "Powers", "🍎")
-local statsPage   = CreateTab("Stats", "Stats", "📊")
-local visualsPage = CreateTab("Visuals", "Visuals", "👁")
-local telePage    = CreateTab("Teleport", "Teleport", "🎯")
-local shopPage    = CreateTab("Shop", "Shop", "🛒")
-local pvpPage     = CreateTab("PvP", "PvP", "🤺")
-local oneClick    = CreateTab("OneClick", "One-Click", "⚡")
-local miscPage    = CreateTab("Misc", "Misc", "⚙")
+-- Exactly nine clear categories; only controls with existing, local behaviour are exposed.
+local homePage     = CreateTab("Home", "Главная", "⌂")
+local combatPage   = CreateTab("Combat", "Combat", "⚔")
+local farmPage     = CreateTab("Farm", "Авто фарм", "⌁")
+local telePage     = CreateTab("Teleport", "Телепорт", "⌖")
+local trollPage    = CreateTab("Troll", "Troll fun", "☻")
+local animsPage    = CreateTab("Anims", "Free anims", "✦")
+local flingPage    = CreateTab("Fling", "Флинг игроков", "↯")
+local settingsPage = CreateTab("Settings", "Настройки", "⚙")
+local serverPage   = CreateTab("Server", "Сервер", "◉")
 
-SelectTab("Farm")
+SelectTab("Home")
 
--- DISCORD PAGE
-UI.AddSection(discordPage, "Community")
-UI.AddButton(discordPage, "Copy Discord Server Link", function()
+-- ГЛАВНАЯ
+UI.AddSection(homePage, "Redz Hub Mobile")
+UI.AddInfo(homePage, "Компактное меню для мобильных устройств. Выберите раздел слева, чтобы открыть доступные локальные настройки.")
+UI.AddSection(homePage, "Сообщество")
+UI.AddButton(homePage, "Copy Discord Server Link", function()
     if setclipboard then setclipboard("https://discord.gg/linbergz") end
 end)
 
--- FARM PAGE (MATCHES REDZ HUB SCREENSHOT)
-UI.AddDropdown(farmPage, "Farm Tool", {"Fight", "Weapon", "Power"}, "Fight", function(v) end)
+-- COMBAT
+UI.AddSection(combatPage, "Combat")
+UI.AddInfo(combatPage, "В этой сборке нет отдельных безопасных боевых действий. Раздел оставлен как навигационная категория.")
 
+-- АВТО ФАРМ
+UI.AddDropdown(farmPage, "Farm Tool", {"Fight", "Weapon", "Power"}, "Fight", function(v) end)
 UI.AddSection(farmPage, "Farm")
 UI.AddToggle(farmPage, "Auto Farm Level", "MaxLevel: 2400", false, function(s) end)
 UI.AddToggle(farmPage, "Auto Farm Nearest", nil, false, function(s) end)
-
 UI.AddSection(farmPage, "Enemies")
 UI.AddDropdown(farmPage, "Select Enemie", {"Handsome Man", "Floppa", "Cheems", "Popcat"}, "Handsome Man", function(v) end)
 UI.AddToggle(farmPage, "Auto Farm Selected", nil, false, function(s) end)
 UI.AddToggle(farmPage, "Take Quest [ Enemie Selected ]", nil, true, function(s) end)
-
 UI.AddSection(farmPage, "Sea Event")
 UI.AddToggle(farmPage, "Auto Meme Beast [ Spawns every 30 Minutes ]", "Drops Portal [<25%], Meme Cube [<50%]", false, function(s) end)
-
 UI.AddSection(farmPage, "Raid")
 UI.AddToggle(farmPage, "Auto Farm Raid", "Req. Level 1000", false, function(s) end)
 
--- STATS PAGE
-UI.AddSection(statsPage, "Player Speed & Jumps")
-UI.AddSlider(statsPage, "Walking Speed", 16, 120, 16, "x", function(v)
-    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-    if hum then hum.WalkSpeed = v end
-end)
-UI.AddSlider(statsPage, "Jump Power", 50, 200, 50, "x", function(v)
-    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-    if hum then hum.JumpPower = v end
-end)
-UI.AddToggle(statsPage, "Infinite Stamina", nil, true, function(s) end)
-UI.AddToggle(statsPage, "Godmode", "Prevents taking environmental damage", false, function(s) end)
+-- ТЕЛЕПОРТ
+UI.AddSection(telePage, "Телепорт")
+UI.AddInfo(telePage, "Точки телепортации не заданы в исходном скрипте, поэтому этот раздел не выполняет перемещения.")
 
--- VISUALS PAGE (WORKING COSMETICS)
-UI.AddSection(visualsPage, "Character Cosmetics")
-UI.AddToggle(visualsPage, "Enable Wings", "Attach 3D Glowing Neon Wings", false, function(s)
+-- TROLL FUN
+UI.AddSection(trollPage, "Troll fun")
+UI.AddInfo(trollPage, "Раздел не содержит действий над другими игроками: игровая логика для них не добавлялась.")
+
+-- FREE ANIMS: existing local cosmetic controls are preserved here.
+UI.AddSection(animsPage, "Character Cosmetics")
+UI.AddInfo(animsPage, "Доступны только локальные визуальные эффекты из исходного скрипта; готовых анимаций здесь нет.")
+UI.AddToggle(animsPage, "Enable Wings", "Attach 3D Glowing Neon Wings", false, function(s)
     betaState.wings = s
     ApplyWings()
 end)
-UI.AddSlider(visualsPage, "Wing Flap Speed", 1, 10, 3, "x", function(v)
+UI.AddSlider(animsPage, "Wing Flap Speed", 1, 10, 3, "x", function(v)
     betaState.wingSpeed = v
 end)
-UI.AddToggle(visualsPage, "Enable Aura", "Highlight body & glowing particles", false, function(s)
+UI.AddToggle(animsPage, "Enable Aura", "Highlight body & glowing particles", false, function(s)
     betaState.aura = s
     ApplyAura()
 end)
 
--- MISC PAGE
-UI.AddSection(miscPage, "Utilities")
-UI.AddButton(miscPage, "Rejoin Server", function()
+-- ФЛИНГ ИГРОКОВ
+UI.AddSection(flingPage, "Флинг игроков")
+UI.AddInfo(flingPage, "Функция флинга намеренно не реализована: исходный файл не содержал безопасной локальной версии этой механики.")
+
+-- НАСТРОЙКИ
+UI.AddSection(settingsPage, "Player Speed & Jumps")
+UI.AddSlider(settingsPage, "Walking Speed", 16, 120, 16, "x", function(v)
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if hum then hum.WalkSpeed = v end
+end)
+UI.AddSlider(settingsPage, "Jump Power", 50, 200, 50, "x", function(v)
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if hum then hum.JumpPower = v end
+end)
+UI.AddToggle(settingsPage, "Infinite Stamina", nil, true, function(s) end)
+UI.AddToggle(settingsPage, "Godmode", "Prevents taking environmental damage", false, function(s) end)
+
+-- СЕРВЕР
+UI.AddSection(serverPage, "Server")
+UI.AddButton(serverPage, "Rejoin Server", function()
     game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
 end)
-UI.AddButton(miscPage, "Unload UI", function()
+UI.AddButton(serverPage, "Unload UI", function()
     ScreenGui:Destroy()
 end)
 
@@ -967,7 +1052,10 @@ local function ToggleHub()
 end
 
 ToggleClick.MouseButton1Click:Connect(function()
-    if toggleDrag and toggleDrag.moved then return end
+    if toggleSuppressClick then
+        toggleSuppressClick = false
+        return
+    end
     ToggleHub()
 end)
 
