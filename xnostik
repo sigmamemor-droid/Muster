@@ -1,6 +1,6 @@
 -- linbergz Team MOBILE HUB v15.0 — REDZ HUB EDITION
 -- Combined: Original Loading Screen + Exact redz Hub Interface + Working Custom Features
--- [FIXED & OPTIMIZED v3 - ICONS FIX]
+-- [FIXED & OPTIMIZED v4 - SMOOTH CORNERS & ICONS]
 
 ---------------------------------------------------------
 -- SERVICES
@@ -31,7 +31,7 @@ ScreenGui.DisplayOrder = 100
 ScreenGui.Parent = LocalPlayer.PlayerGui
 
 ---------------------------------------------------------
--- COLOR PALETTE (REDZ HUB STYLE & LOADER)
+-- COLOR PALETTE
 ---------------------------------------------------------
 local C = {
     loaderBg = Color3.fromRGB(9, 8, 16),
@@ -65,7 +65,7 @@ local function SafeCallback(callback, ...)
 end
 
 ---------------------------------------------------------
--- LOADING SCREEN — WAVING LOGOTYPE (linbergz)
+-- LOADING SCREEN
 ---------------------------------------------------------
 local LS = Instance.new("Frame")
 LS.Name = "LoadingScreen"
@@ -202,7 +202,7 @@ task.spawn(function()
 end)
 
 ---------------------------------------------------------
--- FLOATING TOGGLE BUTTON (WITH IMAGE)
+-- FLOATING TOGGLE BUTTON
 ---------------------------------------------------------
 local hubOpen = true
 local toggleDrag = nil
@@ -215,7 +215,7 @@ ToggleBtn.Position = UDim2.new(0, 16, 0, 200)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 20, 30)
 ToggleBtn.ZIndex = 200
 ToggleBtn.Parent = ScreenGui
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 14) -- Гладкий угол
 
 local ToggleBtnStroke = Instance.new("UIStroke")
 ToggleBtnStroke.Color = Color3.fromRGB(255, 60, 70)
@@ -273,7 +273,7 @@ Main.BorderSizePixel = 0
 Main.ClipsDescendants = true
 Main.ZIndex = 10
 Main.Parent = ScreenGui
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 16)
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 18) -- Гладкий угол
 
 local HubScale = Instance.new("UIScale")
 HubScale.Parent = Main
@@ -386,7 +386,7 @@ Sidebar.BorderSizePixel = 0
 Sidebar.ZIndex = 12
 Sidebar.ClipsDescendants = true
 Sidebar.Parent = Main
-Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 14)
+Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 18) -- Гладкий угол
 
 local SideScroll = Instance.new("ScrollingFrame")
 SideScroll.Size = UDim2.new(1, 0, 1, -10)
@@ -422,7 +422,7 @@ PageHolder.BackgroundColor3 = C.bg
 PageHolder.ClipsDescendants = true
 PageHolder.ZIndex = 11
 PageHolder.Parent = Main
-Instance.new("UICorner", PageHolder).CornerRadius = UDim.new(0, 14)
+Instance.new("UICorner", PageHolder).CornerRadius = UDim.new(0, 18) -- Гладкий угол
 
 local tabs = {}
 local pages = {}
@@ -452,7 +452,7 @@ local function CreateTab(id, name, iconText)
     btn.AutoButtonColor = false
     btn.ZIndex = 14
     btn.Parent = SideScroll
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12) -- Гладкий угол
 
     local indicator = Instance.new("Frame")
     indicator.Name = "Indicator"
@@ -470,10 +470,9 @@ local function CreateTab(id, name, iconText)
     icon.Size = UDim2.new(0, 20, 1, 0)
     icon.Position = UDim2.new(0, 12, 0, 0)
     icon.BackgroundTransparency = 1
-    -- Безопасные геометрические символы (не эмодзи)
     icon.Text = iconText or "≡"
     icon.TextColor3 = C.text
-    icon.TextSize = 18 -- Увеличено для лучшей видимости
+    icon.TextSize = 18
     icon.Font = Enum.Font.GothamBold
     icon.ZIndex = 15
     icon.Parent = btn
@@ -551,7 +550,7 @@ function UI.AddInfo(page, text)
     frame.BackgroundColor3 = C.card
     frame.ZIndex = 13
     frame.Parent = page
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 14) -- Гладкий угол
 
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, -24, 1, -12)
@@ -574,7 +573,7 @@ function UI.AddToggle(page, titleText, subText, defaultState, callback)
     frame.BackgroundColor3 = C.card
     frame.ZIndex = 13
     frame.Parent = page
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 14) -- Гладкий угол
 
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, -60, 0, 20)
@@ -645,7 +644,7 @@ function UI.AddDropdown(page, titleText, options, defaultOption, callback)
     frame.ClipsDescendants = true
     frame.ZIndex = 51
     frame.Parent = page
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 14) -- Гладкий угол
 
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(0.5, 0, 0, 38)
@@ -669,7 +668,7 @@ function UI.AddDropdown(page, titleText, options, defaultOption, callback)
     selector.Font = Enum.Font.GothamBold
     selector.ZIndex = 14
     selector.Parent = frame
-    Instance.new("UICorner", selector).CornerRadius = UDim.new(0, 10)
+    Instance.new("UICorner", selector).CornerRadius = UDim.new(0, 12) -- Гладкий угол
 
     local isOpen = false
     local function SetOpen(open)
@@ -694,7 +693,7 @@ function UI.AddDropdown(page, titleText, options, defaultOption, callback)
         optBtn.Font = Enum.Font.GothamMedium
         optBtn.ZIndex = 15
         optBtn.Parent = frame
-        Instance.new("UICorner", optBtn).CornerRadius = UDim.new(0, 9)
+        Instance.new("UICorner", optBtn).CornerRadius = UDim.new(0, 10) -- Гладкий угол
 
         Track(optBtn.MouseButton1Click:Connect(function()
             selector.Text = opt .. "  ▼"
@@ -722,7 +721,7 @@ function UI.AddSlider(page, titleText, minVal, maxVal, defaultVal, prefix, callb
     frame.BackgroundColor3 = C.card
     frame.ZIndex = 13
     frame.Parent = page
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 14) -- Гладкий угол
 
     prefix = prefix or "x"
 
@@ -810,7 +809,7 @@ function UI.AddButton(page, titleText, callback)
     btn.Font = Enum.Font.GothamBold
     btn.ZIndex = 14
     btn.Parent = page
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 14) -- Гладкий угол
 
     Track(btn.MouseButton1Click:Connect(function()
         TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = C.accent}):Play()
@@ -996,17 +995,16 @@ end))
 ---------------------------------------------------------
 -- POPULATE PAGES & TABS
 ---------------------------------------------------------
--- Использованы строгие геометрические символы (Mathematical Operators)
--- Они никогда не превращаются в эмодзи на iOS/Android и выглядят как чистый текст.
-local homePage     = CreateTab("Home", "Главная", "≡")    -- Меню/Главная
-local combatPage   = CreateTab("Combat", "Combat", "✚")    -- Крест/Бой
-local farmPage     = CreateTab("Farm", "Авто фарм", "❖")   -- Ромб/Фарм
-local telePage     = CreateTab("Teleport", "Телепорт", "⇄") -- Стрелки/Тп
-local trollPage    = CreateTab("Troll", "Troll fun", "◑")  -- Полукруг/Тролль
-local animsPage    = CreateTab("Anims", "Free anims", "✦") -- Звезда/Анимации
-local flingPage    = CreateTab("Fling", "Флинг игроков", "↯") -- Молния/Флинг
-local settingsPage = CreateTab("Settings", "Настройки", "⊠") -- Квадрат с крестом/Настройки
-local serverPage   = CreateTab("Server", "Сервер", "▣")   -- Квадрат с точкой/Сервер
+-- Исправлена иконка Free anims на ▶ (Play/Animation)
+local homePage     = CreateTab("Home", "Главная", "≡")
+local combatPage   = CreateTab("Combat", "Combat", "✚")
+local farmPage     = CreateTab("Farm", "Авто фарм", "❖")
+local telePage     = CreateTab("Teleport", "Телепорт", "⇄")
+local trollPage    = CreateTab("Troll", "Troll fun", "◑")
+local animsPage    = CreateTab("Anims", "Free anims", "▶") 
+local flingPage    = CreateTab("Fling", "Флинг игроков", "↯")
+local settingsPage = CreateTab("Settings", "Настройки", "⊠")
+local serverPage   = CreateTab("Server", "Сервер", "▣")
 
 SelectTab("Home")
 
