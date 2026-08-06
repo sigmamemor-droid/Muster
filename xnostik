@@ -1,6 +1,6 @@
 -- linbergz Team MOBILE HUB v15.0 — REDZ HUB EDITION
 -- Combined: Original Loading Screen + Exact redz Hub Interface + Working Custom Features
--- [FIXED & OPTIMIZED]
+-- [FIXED & OPTIMIZED v2]
 
 ---------------------------------------------------------
 -- SERVICES
@@ -52,7 +52,6 @@ local C = {
     border = Color3.fromRGB(34, 34, 40)
 }
 
--- Таблица для хранения всех соединений (для правильной выгрузки)
 local Connections = {}
 local function Track(conn)
     table.insert(Connections, conn)
@@ -66,7 +65,7 @@ local function SafeCallback(callback, ...)
 end
 
 ---------------------------------------------------------
--- LOADING SCREEN — WAVING LOGOTYPE (LINBERGZ)
+-- LOADING SCREEN — WAVING LOGOTYPE (linbergz)
 ---------------------------------------------------------
 local LS = Instance.new("Frame")
 LS.Name = "LoadingScreen"
@@ -112,10 +111,11 @@ WL.Padding = UDim.new(0, -1)
 WL.Parent = Word
 
 local letters = {}
-for index, char in utf8.graphemes("LINBERGZ") do
+-- Изменено на "linbergz" (нижний регистр)
+for index, char in utf8.graphemes("linbergz") do
     local letter = Instance.new("TextLabel")
     letter.Name = "Letter" .. tostring(index)
-    letter.Size = UDim2.new(0, 31, 0, 48)
+    letter.Size = UDim2.new(0, 26, 0, 48)
     letter.BackgroundTransparency = 1
     letter.Text = char
     letter.TextColor3 = C.white
@@ -203,7 +203,7 @@ task.spawn(function()
 end)
 
 ---------------------------------------------------------
--- FLOATING TOGGLE BUTTON (REDZ LOGO)
+-- FLOATING TOGGLE BUTTON (WITH IMAGE)
 ---------------------------------------------------------
 local hubOpen = true
 local toggleDrag = nil
@@ -212,7 +212,6 @@ local toggleSuppressClick = false
 local ToggleBtn = Instance.new("Frame")
 ToggleBtn.Name = "RedzToggle"
 ToggleBtn.Size = UDim2.new(0, 42, 0, 42)
--- Исправлено: используем Offset вместо Scale, чтобы перетаскивание работало корректно на мобилках
 ToggleBtn.Position = UDim2.new(0, 16, 0, 200) 
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 20, 30)
 ToggleBtn.ZIndex = 200
@@ -224,15 +223,15 @@ ToggleBtnStroke.Color = Color3.fromRGB(255, 60, 70)
 ToggleBtnStroke.Thickness = 1.5
 ToggleBtnStroke.Parent = ToggleBtn
 
-local ToggleText = Instance.new("TextLabel")
-ToggleText.Size = UDim2.new(1, 0, 1, 0)
-ToggleText.BackgroundTransparency = 1
-ToggleText.Text = "REDZ"
-ToggleText.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleText.TextSize = 11
-ToggleText.Font = Enum.Font.GothamBlack
-ToggleText.ZIndex = 201
-ToggleText.Parent = ToggleBtn
+-- Заменили текст на картинку
+local ToggleImage = Instance.new("ImageLabel")
+ToggleImage.Name = "Icon"
+ToggleImage.Size = UDim2.new(0, 26, 0, 26)
+ToggleImage.AnchorPoint = Vector2.new(0.5, 0.5)
+ToggleImage.Position = UDim2.new(0.5, 0, 0.5, 0)
+ToggleImage.BackgroundTransparency = 1
+ToggleImage.Image = "rbxassetid://9809139103" -- Стильная иконка (хакер/капюшон)
+ToggleImage.Parent = ToggleBtn
 
 local ToggleClick = Instance.new("TextButton")
 ToggleClick.Size = UDim2.new(1, 0, 1, 0)
@@ -241,7 +240,6 @@ ToggleClick.Text = ""
 ToggleClick.ZIndex = 202
 ToggleClick.Parent = ToggleBtn
 
--- Dragging Toggle Button Logic
 Track(ToggleClick.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         toggleDrag = {input = input, start = input.Position, position = ToggleBtn.Position, moved = false}
@@ -354,7 +352,6 @@ MinBtn.Font = Enum.Font.GothamBold
 MinBtn.ZIndex = 14
 MinBtn.Parent = Header
 
--- Dragging Window (Исправленная версия без утечек)
 do
     local dragging, dragStart, startPos
     Track(Header.InputBegan:Connect(function(input)
@@ -475,9 +472,11 @@ local function CreateTab(id, name, iconText)
     icon.Size = UDim2.new(0, 20, 1, 0)
     icon.Position = UDim2.new(0, 12, 0, 0)
     icon.BackgroundTransparency = 1
-    icon.Text = iconText or "⚙"
+    -- Заменили эмодзи на чистые юникод-символы
+    icon.Text = iconText or "≡"
     icon.TextColor3 = C.text
-    icon.TextSize = 12
+    icon.TextSize = 14
+    icon.Font = Enum.Font.GothamBold
     icon.ZIndex = 15
     icon.Parent = btn
 
@@ -531,7 +530,7 @@ local function CreateTab(id, name, iconText)
 end
 
 ---------------------------------------------------------
--- COMPONENT BUILDERS (EXACT REDZ STYLE)
+-- COMPONENT BUILDERS
 ---------------------------------------------------------
 local UI = {}
 
@@ -633,7 +632,6 @@ function UI.AddToggle(page, titleText, subText, defaultState, callback)
     end))
 end
 
--- Глобальный невидимый фон для закрытия dropdown
 local ClickCatcher = Instance.new("TextButton")
 ClickCatcher.Size = UDim2.new(1, 0, 1, 0)
 ClickCatcher.BackgroundTransparency = 1
@@ -647,7 +645,7 @@ function UI.AddDropdown(page, titleText, options, defaultOption, callback)
     frame.Size = UDim2.new(1, 0, 0, 38)
     frame.BackgroundColor3 = C.card
     frame.ClipsDescendants = true
-    frame.ZIndex = 51 -- Поверх ClickCatcher
+    frame.ZIndex = 51
     frame.Parent = page
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
 
@@ -708,7 +706,6 @@ function UI.AddDropdown(page, titleText, options, defaultOption, callback)
     end
 end
 
--- Единичный обработчик для всех слайдеров (Оптимизация)
 local activeSlider = nil
 Track(UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -829,7 +826,7 @@ function UI.AddButton(page, titleText, callback)
 end
 
 ---------------------------------------------------------
--- WORKING COSMETICS LOGIC (MIDNIGHT WINGS & AURA)
+-- WORKING COSMETICS LOGIC
 ---------------------------------------------------------
 local betaState = {
     wings = false,
@@ -843,7 +840,6 @@ local betaState = {
     rightWeld = nil
 }
 
--- Хранение настроек персонажа
 local playerSettings = {
     walkSpeed = 16,
     jumpPower = 50
@@ -977,7 +973,6 @@ local function ApplyAura()
     betaState.auraLight = pl
 end
 
--- Анимация крыльев (os.clock вместо tick())
 Track(RunService.RenderStepped:Connect(function()
     if betaState.wings and betaState.leftWeld and betaState.rightWeld and betaState.leftWeld.Parent and betaState.rightWeld.Parent then
         local flap = math.sin(os.clock() * betaState.wingSpeed) * 0.25
@@ -986,9 +981,8 @@ Track(RunService.RenderStepped:Connect(function()
     end
 end))
 
--- Применение эффектов и настроек при возрождении
 Track(LocalPlayer.CharacterAdded:Connect(function(char)
-    task.wait(0.5) -- Ждем прогрузки персонажа
+    task.wait(0.5)
     if betaState.wings then ApplyWings() end
     if betaState.aura then ApplyAura() end
     
@@ -1003,20 +997,20 @@ end))
 
 ---------------------------------------------------------
 -- POPULATE PAGES & TABS
+-- Изменены иконки на минималистичные юникод-символы
 ---------------------------------------------------------
-local homePage     = CreateTab("Home", "Главная", "⌂")
-local combatPage   = CreateTab("Combat", "Combat", "⚔")
-local farmPage     = CreateTab("Farm", "Авто фарм", "⌁")
-local telePage     = CreateTab("Teleport", "Телепорт", "⌖")
-local trollPage    = CreateTab("Troll", "Troll fun", "☻")
+local homePage     = CreateTab("Home", "Главная", "≡")
+local combatPage   = CreateTab("Combat", "Combat", "◆")
+local farmPage     = CreateTab("Farm", "Авто фарм", "⬢")
+local telePage     = CreateTab("Teleport", "Телепорт", "➤")
+local trollPage    = CreateTab("Troll", "Troll fun", "◉")
 local animsPage    = CreateTab("Anims", "Free anims", "✦")
 local flingPage    = CreateTab("Fling", "Флинг игроков", "↯")
 local settingsPage = CreateTab("Settings", "Настройки", "⚙")
-local serverPage   = CreateTab("Server", "Сервер", "◉")
+local serverPage   = CreateTab("Server", "Сервер", "▣")
 
 SelectTab("Home")
 
--- ГЛАВНАЯ
 UI.AddSection(homePage, "Redz Hub Mobile")
 UI.AddInfo(homePage, "Компактное меню для мобильных устройств. Выберите раздел слева, чтобы открыть доступные локальные настройки.")
 UI.AddSection(homePage, "Сообщество")
@@ -1024,11 +1018,9 @@ UI.AddButton(homePage, "Copy Discord Server Link", function()
     if setclipboard then setclipboard("https://discord.gg/linbergz") end
 end)
 
--- COMBAT
 UI.AddSection(combatPage, "Combat")
 UI.AddInfo(combatPage, "В этой сборке нет отдельных безопасных боевых действий. Раздел оставлен как навигационная категория.")
 
--- АВТО ФАРМ
 UI.AddDropdown(farmPage, "Farm Tool", {"Fight", "Weapon", "Power"}, "Fight", function(v) end)
 UI.AddSection(farmPage, "Farm")
 UI.AddToggle(farmPage, "Auto Farm Level", "MaxLevel: 2400", false, function(s) end)
@@ -1042,15 +1034,12 @@ UI.AddToggle(farmPage, "Auto Meme Beast [ Spawns every 30 Minutes ]", "Drops Por
 UI.AddSection(farmPage, "Raid")
 UI.AddToggle(farmPage, "Auto Farm Raid", "Req. Level 1000", false, function(s) end)
 
--- ТЕЛЕПОРТ
 UI.AddSection(telePage, "Телепорт")
 UI.AddInfo(telePage, "Точки телепортации не заданы в исходном скрипте, поэтому этот раздел не выполняет перемещения.")
 
--- TROLL FUN
 UI.AddSection(trollPage, "Troll fun")
 UI.AddInfo(trollPage, "Раздел не содержит действий над другими игроками: игровая логика для них не добавлялась.")
 
--- FREE ANIMS
 UI.AddSection(animsPage, "Character Cosmetics")
 UI.AddInfo(animsPage, "Доступны только локальные визуальные эффекты из исходного скрипта; готовых анимаций здесь нет.")
 UI.AddToggle(animsPage, "Enable Wings", "Attach 3D Glowing Neon Wings", false, function(s)
@@ -1065,11 +1054,9 @@ UI.AddToggle(animsPage, "Enable Aura", "Highlight body & glowing particles", fal
     ApplyAura()
 end)
 
--- ФЛИНГ ИГРОКОВ
 UI.AddSection(flingPage, "Флинг игроков")
 UI.AddInfo(flingPage, "Функция флинга намеренно не реализована: исходный файл не содержал безопасной локальной версии этой механики.")
 
--- НАСТРОЙКИ (С сохранением при смерти)
 UI.AddSection(settingsPage, "Player Speed & Jumps")
 UI.AddSlider(settingsPage, "Walking Speed", 16, 120, 16, "x", function(v)
     playerSettings.walkSpeed = v
@@ -1084,7 +1071,6 @@ end)
 UI.AddToggle(settingsPage, "Infinite Stamina", nil, true, function(s) end)
 UI.AddToggle(settingsPage, "Godmode", "Prevents taking environmental damage", false, function(s) end)
 
--- СЕРВЕР
 UI.AddSection(serverPage, "Server")
 UI.AddButton(serverPage, "Rejoin Server", function()
     pcall(function()
@@ -1092,7 +1078,6 @@ UI.AddButton(serverPage, "Rejoin Server", function()
     end)
 end)
 UI.AddButton(serverPage, "Unload UI", function()
-    -- Правильная очистка
     for _, conn in ipairs(Connections) do
         pcall(function() conn:Disconnect() end)
     end
@@ -1120,15 +1105,12 @@ end))
 Track(CloseBtn.MouseButton1Click:Connect(ToggleHub))
 Track(MinBtn.MouseButton1Click:Connect(ToggleHub))
 
--- Закрытие дропдауна глобальным кликом
 Track(ClickCatcher.MouseButton1Click:Connect(function()
     ClickCatcher.Visible = false
-    -- Принудительно закрываем все открытые дропдауны (визуально)
     for _, page in pairs(pages) do
         if page.Visible then
             for _, frame in ipairs(page:GetChildren()) do
                 if frame:IsA("Frame") and frame.Size.Y.Offset > 40 and frame:FindFirstChild("TextButton") then
-                    -- Простое анимированное закрытие
                     TweenService:Create(frame, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 38)}):Play()
                 end
             end
