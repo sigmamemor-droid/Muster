@@ -1,6 +1,6 @@
 -- linbergz Team MOBILE HUB v15.0 — REDZ HUB EDITION
 -- Combined: Original Loading Screen + Exact redz Hub Interface + Working Custom Features
--- [FIXED & OPTIMIZED v6 - FINAL BUGFIX]
+-- [FIXED & OPTIMIZED v7 - ANIMATIONS ADDED]
 
 ---------------------------------------------------------
 -- SERVICES
@@ -52,7 +52,6 @@ local C = {
     border = Color3.fromRGB(34, 34, 40)
 }
 
--- Таблица для хранения всех соединений (для правильной выгрузки)
 local Connections = {}
 local function Track(conn)
     table.insert(Connections, conn)
@@ -203,7 +202,7 @@ task.spawn(function()
 end)
 
 ---------------------------------------------------------
--- FLOATING TOGGLE BUTTON (БАТОНЧИК С НИКОМ)
+-- FLOATING TOGGLE BUTTON
 ---------------------------------------------------------
 local hubOpen = true
 local toggleDrag = nil
@@ -533,13 +532,12 @@ end
 ---------------------------------------------------------
 local UI = {}
 
--- Глобальный невидимый фон для закрытия dropdown
 local ClickCatcher = Instance.new("TextButton")
 ClickCatcher.Size = UDim2.new(1, 0, 1, 0)
 ClickCatcher.BackgroundTransparency = 1
 ClickCatcher.Text = ""
 ClickCatcher.Visible = false
-ClickCatcher.ZIndex = 49 -- Под dropdown, но над интерфейсом
+ClickCatcher.ZIndex = 49
 ClickCatcher.Parent = ScreenGui
 
 local currentOpenDropdown = nil
@@ -656,7 +654,7 @@ function UI.AddDropdown(page, titleText, options, defaultOption, callback)
     frame.Size = UDim2.new(1, 0, 0, 38)
     frame.BackgroundColor3 = C.card
     frame.ClipsDescendants = true
-    frame.ZIndex = 50 -- Поверх всего
+    frame.ZIndex = 50
     frame.Parent = page
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16)
 
@@ -849,8 +847,49 @@ function UI.AddButton(page, titleText, callback)
 end
 
 ---------------------------------------------------------
--- WORKING COSMETICS LOGIC
+-- ANIMATION & COSMETICS LOGIC
 ---------------------------------------------------------
+local currentAnimTrack = nil
+
+local function StopAnims()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
+    local animator = hum:FindFirstChildOfClass("Animator")
+    if animator then
+        for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+            track:Stop(0.1)
+        end
+    end
+end
+
+local function PlayAnim(animId)
+    StopAnims()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
+    
+    local animator = hum:FindFirstChildOfClass("Animator")
+    if not animator then
+        animator = Instance.new("Animator")
+        animator.Parent = hum
+    end
+
+    local ok, anim = pcall(function()
+        local a = Instance.new("Animation")
+        a.AnimationId = "rbxassetid://" .. animId
+        return animator:LoadAnimation(a)
+    end)
+
+    if ok and anim then
+        anim.Priority = Enum.AnimationPriority.Action
+        anim:Play()
+        currentAnimTrack = anim
+    end
+end
+
 local betaState = {
     wings = false,
     aura = false,
@@ -1062,8 +1101,36 @@ UI.AddInfo(telePage, "Точки телепортации не заданы в �
 UI.AddSection(trollPage, "Troll fun")
 UI.AddInfo(trollPage, "Раздел не содержит действий над другими игроками: игровая логика для них не добавлялась.")
 
+-- === FREE ANIMS TAB ===
+UI.AddSection(animsPage, "Управление анимациями")
+UI.AddButton(animsPage, "Stop All Animations", function()
+    StopAnims()
+end)
+
+UI.AddSection(animsPage, "Стандартные эмоции (Emotes)")
+UI.AddButton(animsPage, "Wave (Приветствие)", function() PlayAnim(507770239) end)
+UI.AddButton(animsPage, "Point (Указание)", function() PlayAnim(507770453) end)
+UI.AddButton(animsPage, "Cheer (Радость)", function() PlayAnim(507770677) end)
+UI.AddButton(animsPage, "Laugh (Смех)", function() PlayAnim(507770818) end)
+UI.AddButton(animsPage, "Dance (Танец 1)", function() PlayAnim(507771019) end)
+UI.AddButton(animsPage, "Dance 2 (Танец 2)", function() PlayAnim(507776043) end)
+UI.AddButton(animsPage, "Dance 3 (Танец 3)", function() PlayAnim(507777268) end)
+UI.AddButton(animsPage, "Confused (Непонимание)", function() PlayAnim(507777483) end)
+UI.AddButton(animsPage, "Salute (Воинский салют)", function() PlayAnim(507776223) end)
+
+UI.AddSection(animsPage, "Популярные паки анимаций")
+UI.AddButton(animsPage, "Ninja Backflip", function() PlayAnim(656118802) end)
+UI.AddButton(animsPage, "Zombie Walk", function() PlayAnim(616158922) end)
+UI.AddButton(animsPage, "Pirate Swing", function() PlayAnim(750781874) end)
+UI.AddButton(animsPage, "Sneaky Walk", function() PlayAnim(656114511) end)
+UI.AddButton(animsPage, "Toy Run", function() PlayAnim(616140287) end)
+UI.AddButton(animsPage, "Stylish Walk", function() PlayAnim(616163651) end)
+UI.AddButton(animsPage, "Patrol Walk", function() PlayAnim(1148871834) end)
+UI.AddButton(animsPage, "Levitation Animation", function() PlayAnim(616157680) end)
+UI.AddButton(animsPage, "Astronaut Walk", function() PlayAnim(616146140) end)
+UI.AddButton(animsPage, "Skeleton Walk", function() PlayAnim(616151525) end)
+
 UI.AddSection(animsPage, "Character Cosmetics")
-UI.AddInfo(animsPage, "Доступны только локальные визуальные эффекты из исходного скрипта; готовых анимаций здесь нет.")
 UI.AddToggle(animsPage, "Enable Wings", "Attach 3D Glowing Neon Wings", false, function(s)
     betaState.wings = s
     ApplyWings()
@@ -1075,6 +1142,7 @@ UI.AddToggle(animsPage, "Enable Aura", "Highlight body & glowing particles", fal
     betaState.aura = s
     ApplyAura()
 end)
+-- === END ANIMS TAB ===
 
 UI.AddSection(flingPage, "Флинг игроков")
 UI.AddInfo(flingPage, "Функция флинга намеренно не реализована: исходный файл не содержал безопасной локальной версии этой механики.")
@@ -1103,6 +1171,7 @@ UI.AddButton(serverPage, "Unload UI", function()
     for _, conn in ipairs(Connections) do
         pcall(function() conn:Disconnect() end)
     end
+    StopAnims()
     RemoveWings()
     RemoveAura()
     ScreenGui:Destroy()
