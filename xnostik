@@ -1,6 +1,6 @@
 -- linbergz Team MOBILE HUB v15.0 — REDZ HUB EDITION
 -- Combined: Original Loading Screen + Exact redz Hub Interface + Working Custom Features
--- [FIXED & OPTIMIZED v5 - SMOOTH CORNERS & NEW TOGGLE]
+-- [FIXED & OPTIMIZED v6 - FINAL BUGFIX]
 
 ---------------------------------------------------------
 -- SERVICES
@@ -52,6 +52,7 @@ local C = {
     border = Color3.fromRGB(34, 34, 40)
 }
 
+-- Таблица для хранения всех соединений (для правильной выгрузки)
 local Connections = {}
 local function Track(conn)
     table.insert(Connections, conn)
@@ -111,7 +112,6 @@ WL.Padding = UDim.new(0, -1)
 WL.Parent = Word
 
 local letters = {}
--- Строго "linbergz" без цифр
 for index, char in utf8.graphemes("linbergz") do
     local letter = Instance.new("TextLabel")
     letter.Name = "Letter" .. tostring(index)
@@ -211,12 +211,12 @@ local toggleSuppressClick = false
 
 local ToggleBtn = Instance.new("Frame")
 ToggleBtn.Name = "RedzToggle"
-ToggleBtn.Size = UDim2.new(0, 110, 0, 34) -- Форма батончика
+ToggleBtn.Size = UDim2.new(0, 110, 0, 34)
 ToggleBtn.Position = UDim2.new(0, 16, 0, 200) 
 ToggleBtn.BackgroundColor3 = C.bg
 ToggleBtn.ZIndex = 200
 ToggleBtn.Parent = ScreenGui
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0) -- Круглые края батончика
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 
 local ToggleBtnStroke = Instance.new("UIStroke")
 ToggleBtnStroke.Color = C.accent
@@ -275,7 +275,7 @@ Main.BorderSizePixel = 0
 Main.ClipsDescendants = true
 Main.ZIndex = 10
 Main.Parent = ScreenGui
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 20) -- Очень гладкие углы
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 20)
 
 local HubScale = Instance.new("UIScale")
 HubScale.Parent = Main
@@ -388,7 +388,7 @@ Sidebar.BorderSizePixel = 0
 Sidebar.ZIndex = 12
 Sidebar.ClipsDescendants = true
 Sidebar.Parent = Main
-Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 20) -- Гладкие углы
+Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 20)
 
 local SideScroll = Instance.new("ScrollingFrame")
 SideScroll.Size = UDim2.new(1, 0, 1, -10)
@@ -424,7 +424,7 @@ PageHolder.BackgroundColor3 = C.bg
 PageHolder.ClipsDescendants = true
 PageHolder.ZIndex = 11
 PageHolder.Parent = Main
-Instance.new("UICorner", PageHolder).CornerRadius = UDim.new(0, 20) -- Гладкие углы
+Instance.new("UICorner", PageHolder).CornerRadius = UDim.new(0, 20)
 
 local tabs = {}
 local pages = {}
@@ -454,7 +454,7 @@ local function CreateTab(id, name, iconText)
     btn.AutoButtonColor = false
     btn.ZIndex = 14
     btn.Parent = SideScroll
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 14) -- Гладкие углы вкладок
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 14)
 
     local indicator = Instance.new("Frame")
     indicator.Name = "Indicator"
@@ -533,6 +533,26 @@ end
 ---------------------------------------------------------
 local UI = {}
 
+-- Глобальный невидимый фон для закрытия dropdown
+local ClickCatcher = Instance.new("TextButton")
+ClickCatcher.Size = UDim2.new(1, 0, 1, 0)
+ClickCatcher.BackgroundTransparency = 1
+ClickCatcher.Text = ""
+ClickCatcher.Visible = false
+ClickCatcher.ZIndex = 49 -- Под dropdown, но над интерфейсом
+ClickCatcher.Parent = ScreenGui
+
+local currentOpenDropdown = nil
+local function CloseAllDropdowns()
+    if currentOpenDropdown then
+        currentOpenDropdown(false)
+        currentOpenDropdown = nil
+    end
+    ClickCatcher.Visible = false
+end
+
+Track(ClickCatcher.MouseButton1Click:Connect(CloseAllDropdowns))
+
 function UI.AddSection(page, text)
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 0, 20)
@@ -552,7 +572,7 @@ function UI.AddInfo(page, text)
     frame.BackgroundColor3 = C.card
     frame.ZIndex = 13
     frame.Parent = page
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16) -- Гладкие углы
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16)
 
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, -24, 1, -12)
@@ -575,7 +595,7 @@ function UI.AddToggle(page, titleText, subText, defaultState, callback)
     frame.BackgroundColor3 = C.card
     frame.ZIndex = 13
     frame.Parent = page
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16) -- Гладкие углы
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16)
 
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, -60, 0, 20)
@@ -631,22 +651,14 @@ function UI.AddToggle(page, titleText, subText, defaultState, callback)
     end))
 end
 
-local ClickCatcher = Instance.new("TextButton")
-ClickCatcher.Size = UDim2.new(1, 0, 1, 0)
-ClickCatcher.BackgroundTransparency = 1
-ClickCatcher.Text = ""
-ClickCatcher.Visible = false
-ClickCatcher.ZIndex = 50
-ClickCatcher.Parent = PageHolder
-
 function UI.AddDropdown(page, titleText, options, defaultOption, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 0, 38)
     frame.BackgroundColor3 = C.card
     frame.ClipsDescendants = true
-    frame.ZIndex = 51
+    frame.ZIndex = 50 -- Поверх всего
     frame.Parent = page
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16) -- Гладкие углы
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16)
 
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(0.5, 0, 0, 38)
@@ -670,14 +682,26 @@ function UI.AddDropdown(page, titleText, options, defaultOption, callback)
     selector.Font = Enum.Font.GothamBold
     selector.ZIndex = 14
     selector.Parent = frame
-    Instance.new("UICorner", selector).CornerRadius = UDim.new(0, 14) -- Гладкие углы
+    Instance.new("UICorner", selector).CornerRadius = UDim.new(0, 14)
 
     local isOpen = false
     local function SetOpen(open)
         isOpen = open
         local targetH = open and (38 + (#options * 26) + 6) or 38
         TweenService:Create(frame, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, targetH)}):Play()
-        ClickCatcher.Visible = open
+        
+        if open then
+            if currentOpenDropdown and currentOpenDropdown ~= SetOpen then
+                currentOpenDropdown(false)
+            end
+            currentOpenDropdown = SetOpen
+            ClickCatcher.Visible = true
+        else
+            if currentOpenDropdown == SetOpen then
+                currentOpenDropdown = nil
+            end
+            ClickCatcher.Visible = false
+        end
     end
 
     Track(selector.MouseButton1Click:Connect(function()
@@ -695,7 +719,7 @@ function UI.AddDropdown(page, titleText, options, defaultOption, callback)
         optBtn.Font = Enum.Font.GothamMedium
         optBtn.ZIndex = 15
         optBtn.Parent = frame
-        Instance.new("UICorner", optBtn).CornerRadius = UDim.new(0, 12) -- Гладкие углы
+        Instance.new("UICorner", optBtn).CornerRadius = UDim.new(0, 12)
 
         Track(optBtn.MouseButton1Click:Connect(function()
             selector.Text = opt .. "  ▼"
@@ -723,7 +747,7 @@ function UI.AddSlider(page, titleText, minVal, maxVal, defaultVal, prefix, callb
     frame.BackgroundColor3 = C.card
     frame.ZIndex = 13
     frame.Parent = page
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16) -- Гладкие углы
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16)
 
     prefix = prefix or "x"
 
@@ -811,7 +835,7 @@ function UI.AddButton(page, titleText, callback)
     btn.Font = Enum.Font.GothamBold
     btn.ZIndex = 14
     btn.Parent = page
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 16) -- Гладкие углы
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 16)
 
     Track(btn.MouseButton1Click:Connect(function()
         TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = C.accent}):Play()
@@ -903,13 +927,13 @@ local function ApplyWings()
     wL.Part0 = torso
     wL.Part1 = leftRoot
     wL.C0 = CFrame.new(-0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(-15), 0)
-    wL.Parent = leftRoot
+    wL.Parent = torso
 
     local wR = Instance.new("Weld")
     wR.Part0 = torso
     wR.Part1 = rightRoot
     wR.C0 = CFrame.new(0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(15), 0)
-    wR.Parent = rightRoot
+    wR.Parent = torso
 
     for i = 1, 4 do
         local scale = 1 - (i * 0.15)
@@ -920,13 +944,13 @@ local function ApplyWings()
         w1.Part0 = leftRoot
         w1.Part1 = lBlade
         w1.C0 = CFrame.new(-i * 0.35, i * 0.1, -i * 0.1) * CFrame.Angles(0, 0, math.rad(25 + i * 12))
-        w1.Parent = lBlade
+        w1.Parent = leftRoot
 
         local w2 = Instance.new("Weld")
         w2.Part0 = rightRoot
         w2.Part1 = rBlade
         w2.C0 = CFrame.new(i * 0.35, i * 0.1, -i * 0.1) * CFrame.Angles(0, 0, math.rad(-(25 + i * 12)))
-        w2.Parent = rBlade
+        w2.Parent = rightRoot
     end
 
     betaState.leftWeld = wL
@@ -1088,6 +1112,7 @@ end)
 -- TOGGLE HUB FUNCTIONALITY
 ---------------------------------------------------------
 local function ToggleHub()
+    CloseAllDropdowns()
     hubOpen = not hubOpen
     Main.Visible = hubOpen
 end
@@ -1102,16 +1127,3 @@ end))
 
 Track(CloseBtn.MouseButton1Click:Connect(ToggleHub))
 Track(MinBtn.MouseButton1Click:Connect(ToggleHub))
-
-Track(ClickCatcher.MouseButton1Click:Connect(function()
-    ClickCatcher.Visible = false
-    for _, page in pairs(pages) do
-        if page.Visible then
-            for _, frame in ipairs(page:GetChildren()) do
-                if frame:IsA("Frame") and frame.Size.Y.Offset > 40 and frame:FindFirstChild("TextButton") then
-                    TweenService:Create(frame, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 38)}):Play()
-                end
-            end
-        end
-    end
-end))
