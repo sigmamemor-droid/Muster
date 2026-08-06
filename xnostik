@@ -1,5 +1,6 @@
 -- linbergz Team MOBILE HUB v15.0 — REDZ HUB EDITION
 -- Combined: Original Loading Screen + Exact redz Hub Interface + Working Custom Features
+-- [FIXED & OPTIMIZED]
 
 ---------------------------------------------------------
 -- SERVICES
@@ -33,18 +34,15 @@ ScreenGui.Parent = LocalPlayer.PlayerGui
 -- COLOR PALETTE (REDZ HUB STYLE & LOADER)
 ---------------------------------------------------------
 local C = {
-    -- Loader Specific
     loaderBg = Color3.fromRGB(9, 8, 16),
     loaderElevated = Color3.fromRGB(31, 27, 47),
     loaderAccent = Color3.fromRGB(151, 82, 255),
     loaderAccentLight = Color3.fromRGB(204, 158, 255),
-
-    -- Redz UI Theme
     bg = Color3.fromRGB(16, 16, 18),
     sidebar = Color3.fromRGB(21, 21, 24),
     card = Color3.fromRGB(26, 26, 30),
     cardHover = Color3.fromRGB(32, 32, 38),
-    accent = Color3.fromRGB(88, 80, 236),        -- Redz Purple Accent
+    accent = Color3.fromRGB(88, 80, 236),
     switchOff = Color3.fromRGB(42, 42, 50),
     white = Color3.fromRGB(255, 255, 255),
     text = Color3.fromRGB(240, 240, 245),
@@ -53,6 +51,19 @@ local C = {
     red = Color3.fromRGB(235, 55, 65),
     border = Color3.fromRGB(34, 34, 40)
 }
+
+-- Таблица для хранения всех соединений (для правильной выгрузки)
+local Connections = {}
+local function Track(conn)
+    table.insert(Connections, conn)
+    return conn
+end
+
+local function SafeCallback(callback, ...)
+    if not callback then return end
+    local ok, err = pcall(callback, ...)
+    if not ok then warn("Redz Hub UI callback failed:", err) end
+end
 
 ---------------------------------------------------------
 -- LOADING SCREEN — WAVING LOGOTYPE (LINBERGZ)
@@ -201,7 +212,8 @@ local toggleSuppressClick = false
 local ToggleBtn = Instance.new("Frame")
 ToggleBtn.Name = "RedzToggle"
 ToggleBtn.Size = UDim2.new(0, 42, 0, 42)
-ToggleBtn.Position = UDim2.new(0, 16, 0.28, 0)
+-- Исправлено: используем Offset вместо Scale, чтобы перетаскивание работало корректно на мобилках
+ToggleBtn.Position = UDim2.new(0, 16, 0, 200) 
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 20, 30)
 ToggleBtn.ZIndex = 200
 ToggleBtn.Parent = ScreenGui
@@ -230,25 +242,25 @@ ToggleClick.ZIndex = 202
 ToggleClick.Parent = ToggleBtn
 
 -- Dragging Toggle Button Logic
-do
-    ToggleClick.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            toggleDrag = {input = input, start = input.Position, position = ToggleBtn.Position, moved = false}
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if not toggleDrag or (input.UserInputType ~= Enum.UserInputType.MouseMovement and input ~= toggleDrag.input) then return end
-        local delta = input.Position - toggleDrag.start
-        if delta.Magnitude > 6 then toggleDrag.moved = true end
-        ToggleBtn.Position = UDim2.fromOffset(toggleDrag.position.X.Offset + delta.X, toggleDrag.position.Y.Offset + delta.Y)
-    end)
-    UserInputService.InputEnded:Connect(function(input)
-        if toggleDrag and input == toggleDrag.input then
-            toggleSuppressClick = toggleDrag.moved
-            toggleDrag = nil
-        end
-    end)
-end
+Track(ToggleClick.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        toggleDrag = {input = input, start = input.Position, position = ToggleBtn.Position, moved = false}
+    end
+end))
+
+Track(UserInputService.InputChanged:Connect(function(input)
+    if not toggleDrag or (input.UserInputType ~= Enum.UserInputType.MouseMovement and input ~= toggleDrag.input) then return end
+    local delta = input.Position - toggleDrag.start
+    if delta.Magnitude > 6 then toggleDrag.moved = true end
+    ToggleBtn.Position = UDim2.fromOffset(toggleDrag.position.X.Offset + delta.X, toggleDrag.position.Y.Offset + delta.Y)
+end))
+
+Track(UserInputService.InputEnded:Connect(function(input)
+    if toggleDrag and input == toggleDrag.input then
+        toggleSuppressClick = toggleDrag.moved
+        toggleDrag = nil
+    end
+end))
 
 ---------------------------------------------------------
 -- MAIN HUB WINDOW
@@ -267,10 +279,9 @@ Main.ZIndex = 10
 Main.Parent = ScreenGui
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 16)
 
--- Keep the compact desktop layout usable on narrow mobile viewports.
 local HubScale = Instance.new("UIScale")
 HubScale.Parent = Main
-local cameraConnection
+
 local function UpdateHubScale()
     local camera = workspace.CurrentCamera
     if not camera then return end
@@ -278,15 +289,18 @@ local function UpdateHubScale()
     local fit = math.min((viewport.X - 18) / HUB_W, (viewport.Y - 24) / HUB_H, 1)
     HubScale.Scale = math.clamp(fit, 0.62, 1)
 end
+
+local cameraConnection
 local function BindHubViewport()
     if cameraConnection then cameraConnection:Disconnect() end
     local camera = workspace.CurrentCamera
     if camera then
         cameraConnection = camera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateHubScale)
+        Track(cameraConnection)
     end
     UpdateHubScale()
 end
-workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(BindHubViewport)
+Track(workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(BindHubViewport))
 BindHubViewport()
 
 local MainStroke = Instance.new("UIStroke")
@@ -340,25 +354,27 @@ MinBtn.Font = Enum.Font.GothamBold
 MinBtn.ZIndex = 14
 MinBtn.Parent = Header
 
--- Dragging Window
+-- Dragging Window (Исправленная версия без утечек)
 do
     local dragging, dragStart, startPos
-    Header.InputBegan:Connect(function(input)
+    Track(Header.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPos = Main.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then dragging = false end
-            end)
         end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
+    end))
+    Track(Header.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end))
+    Track(UserInputService.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
             Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
-    end)
+    end))
 end
 
 ---------------------------------------------------------
@@ -390,9 +406,9 @@ local SideList = Instance.new("UIListLayout")
 SideList.SortOrder = Enum.SortOrder.LayoutOrder
 SideList.Padding = UDim.new(0, 4)
 SideList.Parent = SideScroll
-SideList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+Track(SideList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     SideScroll.CanvasSize = UDim2.new(0, 0, 0, SideList.AbsoluteContentSize.Y + 10)
-end)
+end))
 
 local SidePad = Instance.new("UIPadding")
 SidePad.PaddingLeft = UDim.new(0, 8)
@@ -500,16 +516,16 @@ local function CreateTab(id, name, iconText)
     pagePad.PaddingBottom = UDim.new(0, 12)
     pagePad.Parent = pageScroll
 
-    pageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    Track(pageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         pageScroll.CanvasSize = UDim2.new(0, 0, 0, pageList.AbsoluteContentSize.Y + 20)
-    end)
+    end))
 
     tabs[id] = btn
     pages[id] = pageScroll
 
-    btn.MouseButton1Click:Connect(function()
+    Track(btn.MouseButton1Click:Connect(function()
         SelectTab(id)
-    end)
+    end))
 
     return pageScroll
 end
@@ -518,12 +534,6 @@ end
 -- COMPONENT BUILDERS (EXACT REDZ STYLE)
 ---------------------------------------------------------
 local UI = {}
-
-local function SafeCallback(callback, ...)
-    if not callback then return end
-    local ok, err = pcall(callback, ...)
-    if not ok then warn("Redz Hub UI callback failed:", err) end
-end
 
 function UI.AddSection(page, text)
     local label = Instance.new("TextLabel")
@@ -615,20 +625,29 @@ function UI.AddToggle(page, titleText, subText, defaultState, callback)
     Instance.new("UICorner", switchThumb).CornerRadius = UDim.new(1, 0)
 
     local state = defaultState
-    switchTrack.MouseButton1Click:Connect(function()
+    Track(switchTrack.MouseButton1Click:Connect(function()
         state = not state
         TweenService:Create(switchTrack, TweenInfo.new(0.15), {BackgroundColor3 = state and C.accent or C.switchOff}):Play()
         TweenService:Create(switchThumb, TweenInfo.new(0.15), {Position = state and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)}):Play()
         SafeCallback(callback, state)
-    end)
+    end))
 end
+
+-- Глобальный невидимый фон для закрытия dropdown
+local ClickCatcher = Instance.new("TextButton")
+ClickCatcher.Size = UDim2.new(1, 0, 1, 0)
+ClickCatcher.BackgroundTransparency = 1
+ClickCatcher.Text = ""
+ClickCatcher.Visible = false
+ClickCatcher.ZIndex = 50
+ClickCatcher.Parent = PageHolder
 
 function UI.AddDropdown(page, titleText, options, defaultOption, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 0, 38)
     frame.BackgroundColor3 = C.card
     frame.ClipsDescendants = true
-    frame.ZIndex = 13
+    frame.ZIndex = 51 -- Поверх ClickCatcher
     frame.Parent = page
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
 
@@ -657,11 +676,16 @@ function UI.AddDropdown(page, titleText, options, defaultOption, callback)
     Instance.new("UICorner", selector).CornerRadius = UDim.new(0, 10)
 
     local isOpen = false
-    selector.MouseButton1Click:Connect(function()
-        isOpen = not isOpen
-        local targetH = isOpen and (38 + (#options * 26) + 6) or 38
+    local function SetOpen(open)
+        isOpen = open
+        local targetH = open and (38 + (#options * 26) + 6) or 38
         TweenService:Create(frame, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, targetH)}):Play()
-    end)
+        ClickCatcher.Visible = open
+    end
+
+    Track(selector.MouseButton1Click:Connect(function()
+        SetOpen(not isOpen)
+    end))
 
     for i, opt in ipairs(options) do
         local optBtn = Instance.new("TextButton")
@@ -676,14 +700,26 @@ function UI.AddDropdown(page, titleText, options, defaultOption, callback)
         optBtn.Parent = frame
         Instance.new("UICorner", optBtn).CornerRadius = UDim.new(0, 9)
 
-        optBtn.MouseButton1Click:Connect(function()
+        Track(optBtn.MouseButton1Click:Connect(function()
             selector.Text = opt .. "  ▼"
-            isOpen = false
-            TweenService:Create(frame, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 38)}):Play()
+            SetOpen(false)
             SafeCallback(callback, opt)
-        end)
+        end))
     end
 end
+
+-- Единичный обработчик для всех слайдеров (Оптимизация)
+local activeSlider = nil
+Track(UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        activeSlider = nil
+    end
+end))
+Track(UserInputService.InputChanged:Connect(function(input)
+    if activeSlider and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        activeSlider.update(input)
+    end
+end))
 
 function UI.AddSlider(page, titleText, minVal, maxVal, defaultVal, prefix, callback)
     local frame = Instance.new("Frame")
@@ -748,32 +784,25 @@ function UI.AddSlider(page, titleText, minVal, maxVal, defaultVal, prefix, callb
     thumb.Parent = track
     Instance.new("UICorner", thumb).CornerRadius = UDim.new(1, 0)
 
-    local dragging = false
+    local currentVal = defaultVal
     local function update(input)
         local delta = math.clamp((input.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
         local val = math.floor(minVal + (maxVal - minVal) * delta)
-        fill.Size = UDim2.new(delta, 0, 1, 0)
-        thumb.Position = UDim2.new(delta, 0, 0.5, 0)
-        valLabel.Text = prefix .. tostring(val)
-        SafeCallback(callback, val)
+        if val ~= currentVal then
+            currentVal = val
+            fill.Size = UDim2.new(delta, 0, 1, 0)
+            thumb.Position = UDim2.new(delta, 0, 0.5, 0)
+            valLabel.Text = prefix .. tostring(val)
+            SafeCallback(callback, val)
+        end
     end
 
-    track.InputBegan:Connect(function(input)
+    Track(track.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
+            activeSlider = {update = update}
             update(input)
         end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            update(input)
-        end
-    end)
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
+    end))
 end
 
 function UI.AddButton(page, titleText, callback)
@@ -788,13 +817,15 @@ function UI.AddButton(page, titleText, callback)
     btn.Parent = page
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
 
-    btn.MouseButton1Click:Connect(function()
+    Track(btn.MouseButton1Click:Connect(function()
         TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = C.accent}):Play()
         task.delay(0.12, function()
-            TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = C.card}):Play()
+            if btn.Parent then
+                TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = C.card}):Play()
+            end
         end)
         SafeCallback(callback)
-    end)
+    end))
 end
 
 ---------------------------------------------------------
@@ -808,13 +839,22 @@ local betaState = {
     auraHighlight = nil,
     auraParticles = nil,
     auraLight = nil,
-    conn = nil
+    leftWeld = nil,
+    rightWeld = nil
+}
+
+-- Хранение настроек персонажа
+local playerSettings = {
+    walkSpeed = 16,
+    jumpPower = 50
 }
 
 local function RemoveWings()
     if betaState.wingFolder then
         betaState.wingFolder:Destroy()
         betaState.wingFolder = nil
+        betaState.leftWeld = nil
+        betaState.rightWeld = nil
     end
 end
 
@@ -937,25 +977,33 @@ local function ApplyAura()
     betaState.auraLight = pl
 end
 
-if not betaState.conn then
-    betaState.conn = RunService.RenderStepped:Connect(function()
-        if betaState.wings and betaState.leftWeld and betaState.rightWeld and betaState.leftWeld.Parent and betaState.rightWeld.Parent then
-            local flap = math.sin(tick() * betaState.wingSpeed) * 0.25
-            betaState.leftWeld.C0 = CFrame.new(-0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(-15) - flap, flap * 0.5)
-            betaState.rightWeld.C0 = CFrame.new(0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(15) + flap, -flap * 0.5)
-        end
-    end)
-end
+-- Анимация крыльев (os.clock вместо tick())
+Track(RunService.RenderStepped:Connect(function()
+    if betaState.wings and betaState.leftWeld and betaState.rightWeld and betaState.leftWeld.Parent and betaState.rightWeld.Parent then
+        local flap = math.sin(os.clock() * betaState.wingSpeed) * 0.25
+        betaState.leftWeld.C0 = CFrame.new(-0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(-15) - flap, flap * 0.5)
+        betaState.rightWeld.C0 = CFrame.new(0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(15) + flap, -flap * 0.5)
+    end
+end))
 
-LocalPlayer.CharacterAdded:Connect(function()
-    task.wait(0.5)
+-- Применение эффектов и настроек при возрождении
+Track(LocalPlayer.CharacterAdded:Connect(function(char)
+    task.wait(0.5) -- Ждем прогрузки персонажа
     if betaState.wings then ApplyWings() end
     if betaState.aura then ApplyAura() end
-end)
+    
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.WalkSpeed = playerSettings.walkSpeed
+        if hum:GetAttribute("UseJumpPower") ~= false then
+            hum.JumpPower = playerSettings.jumpPower
+        end
+    end
+end))
 
 ---------------------------------------------------------
 -- POPULATE PAGES & TABS
--- Exactly nine clear categories; only controls with existing, local behaviour are exposed.
+---------------------------------------------------------
 local homePage     = CreateTab("Home", "Главная", "⌂")
 local combatPage   = CreateTab("Combat", "Combat", "⚔")
 local farmPage     = CreateTab("Farm", "Авто фарм", "⌁")
@@ -1002,7 +1050,7 @@ UI.AddInfo(telePage, "Точки телепортации не заданы в �
 UI.AddSection(trollPage, "Troll fun")
 UI.AddInfo(trollPage, "Раздел не содержит действий над другими игроками: игровая логика для них не добавлялась.")
 
--- FREE ANIMS: existing local cosmetic controls are preserved here.
+-- FREE ANIMS
 UI.AddSection(animsPage, "Character Cosmetics")
 UI.AddInfo(animsPage, "Доступны только локальные визуальные эффекты из исходного скрипта; готовых анимаций здесь нет.")
 UI.AddToggle(animsPage, "Enable Wings", "Attach 3D Glowing Neon Wings", false, function(s)
@@ -1021,13 +1069,15 @@ end)
 UI.AddSection(flingPage, "Флинг игроков")
 UI.AddInfo(flingPage, "Функция флинга намеренно не реализована: исходный файл не содержал безопасной локальной версии этой механики.")
 
--- НАСТРОЙКИ
+-- НАСТРОЙКИ (С сохранением при смерти)
 UI.AddSection(settingsPage, "Player Speed & Jumps")
 UI.AddSlider(settingsPage, "Walking Speed", 16, 120, 16, "x", function(v)
+    playerSettings.walkSpeed = v
     local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     if hum then hum.WalkSpeed = v end
 end)
 UI.AddSlider(settingsPage, "Jump Power", 50, 200, 50, "x", function(v)
+    playerSettings.jumpPower = v
     local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     if hum then hum.JumpPower = v end
 end)
@@ -1037,9 +1087,17 @@ UI.AddToggle(settingsPage, "Godmode", "Prevents taking environmental damage", fa
 -- СЕРВЕР
 UI.AddSection(serverPage, "Server")
 UI.AddButton(serverPage, "Rejoin Server", function()
-    game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+    pcall(function()
+        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+    end)
 end)
 UI.AddButton(serverPage, "Unload UI", function()
+    -- Правильная очистка
+    for _, conn in ipairs(Connections) do
+        pcall(function() conn:Disconnect() end)
+    end
+    RemoveWings()
+    RemoveAura()
     ScreenGui:Destroy()
 end)
 
@@ -1051,13 +1109,29 @@ local function ToggleHub()
     Main.Visible = hubOpen
 end
 
-ToggleClick.MouseButton1Click:Connect(function()
+Track(ToggleClick.MouseButton1Click:Connect(function()
     if toggleSuppressClick then
         toggleSuppressClick = false
         return
     end
     ToggleHub()
-end)
+end))
 
-CloseBtn.MouseButton1Click:Connect(ToggleHub)
-MinBtn.MouseButton1Click:Connect(ToggleHub)
+Track(CloseBtn.MouseButton1Click:Connect(ToggleHub))
+Track(MinBtn.MouseButton1Click:Connect(ToggleHub))
+
+-- Закрытие дропдауна глобальным кликом
+Track(ClickCatcher.MouseButton1Click:Connect(function()
+    ClickCatcher.Visible = false
+    -- Принудительно закрываем все открытые дропдауны (визуально)
+    for _, page in pairs(pages) do
+        if page.Visible then
+            for _, frame in ipairs(page:GetChildren()) do
+                if frame:IsA("Frame") and frame.Size.Y.Offset > 40 and frame:FindFirstChild("TextButton") then
+                    -- Простое анимированное закрытие
+                    TweenService:Create(frame, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 38)}):Play()
+                end
+            end
+        end
+    end
+end))
