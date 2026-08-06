@@ -1,6 +1,6 @@
 -- linbergz Team MOBILE HUB v15.0 — REDZ HUB EDITION
 -- Combined: Original Loading Screen + Exact redz Hub Interface + Working Custom Features
--- [FIXED & OPTIMIZED v2]
+-- [FIXED & OPTIMIZED v3 - ICONS FIX]
 
 ---------------------------------------------------------
 -- SERVICES
@@ -111,7 +111,6 @@ WL.Padding = UDim.new(0, -1)
 WL.Parent = Word
 
 local letters = {}
--- Изменено на "linbergz" (нижний регистр)
 for index, char in utf8.graphemes("linbergz") do
     local letter = Instance.new("TextLabel")
     letter.Name = "Letter" .. tostring(index)
@@ -223,14 +222,13 @@ ToggleBtnStroke.Color = Color3.fromRGB(255, 60, 70)
 ToggleBtnStroke.Thickness = 1.5
 ToggleBtnStroke.Parent = ToggleBtn
 
--- Заменили текст на картинку
 local ToggleImage = Instance.new("ImageLabel")
 ToggleImage.Name = "Icon"
 ToggleImage.Size = UDim2.new(0, 26, 0, 26)
 ToggleImage.AnchorPoint = Vector2.new(0.5, 0.5)
 ToggleImage.Position = UDim2.new(0.5, 0, 0.5, 0)
 ToggleImage.BackgroundTransparency = 1
-ToggleImage.Image = "rbxassetid://9809139103" -- Стильная иконка (хакер/капюшон)
+ToggleImage.Image = "rbxassetid://9809139103" 
 ToggleImage.Parent = ToggleBtn
 
 local ToggleClick = Instance.new("TextButton")
@@ -472,10 +470,10 @@ local function CreateTab(id, name, iconText)
     icon.Size = UDim2.new(0, 20, 1, 0)
     icon.Position = UDim2.new(0, 12, 0, 0)
     icon.BackgroundTransparency = 1
-    -- Заменили эмодзи на чистые юникод-символы
+    -- Безопасные геометрические символы (не эмодзи)
     icon.Text = iconText or "≡"
     icon.TextColor3 = C.text
-    icon.TextSize = 14
+    icon.TextSize = 18 -- Увеличено для лучшей видимости
     icon.Font = Enum.Font.GothamBold
     icon.ZIndex = 15
     icon.Parent = btn
@@ -997,17 +995,18 @@ end))
 
 ---------------------------------------------------------
 -- POPULATE PAGES & TABS
--- Изменены иконки на минималистичные юникод-символы
 ---------------------------------------------------------
-local homePage     = CreateTab("Home", "Главная", "≡")
-local combatPage   = CreateTab("Combat", "Combat", "◆")
-local farmPage     = CreateTab("Farm", "Авто фарм", "⬢")
-local telePage     = CreateTab("Teleport", "Телепорт", "➤")
-local trollPage    = CreateTab("Troll", "Troll fun", "◉")
-local animsPage    = CreateTab("Anims", "Free anims", "✦")
-local flingPage    = CreateTab("Fling", "Флинг игроков", "↯")
-local settingsPage = CreateTab("Settings", "Настройки", "⚙")
-local serverPage   = CreateTab("Server", "Сервер", "▣")
+-- Использованы строгие геометрические символы (Mathematical Operators)
+-- Они никогда не превращаются в эмодзи на iOS/Android и выглядят как чистый текст.
+local homePage     = CreateTab("Home", "Главная", "≡")    -- Меню/Главная
+local combatPage   = CreateTab("Combat", "Combat", "✚")    -- Крест/Бой
+local farmPage     = CreateTab("Farm", "Авто фарм", "❖")   -- Ромб/Фарм
+local telePage     = CreateTab("Teleport", "Телепорт", "⇄") -- Стрелки/Тп
+local trollPage    = CreateTab("Troll", "Troll fun", "◑")  -- Полукруг/Тролль
+local animsPage    = CreateTab("Anims", "Free anims", "✦") -- Звезда/Анимации
+local flingPage    = CreateTab("Fling", "Флинг игроков", "↯") -- Молния/Флинг
+local settingsPage = CreateTab("Settings", "Настройки", "⊠") -- Квадрат с крестом/Настройки
+local serverPage   = CreateTab("Server", "Сервер", "▣")   -- Квадрат с точкой/Сервер
 
 SelectTab("Home")
 
