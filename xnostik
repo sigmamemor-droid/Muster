@@ -1,6 +1,6 @@
 -- linbergz Team MOBILE HUB v15.0 — REDZ HUB EDITION
 -- Combined: Original Loading Screen + Exact redz Hub Interface + Working Custom Features
--- [FIXED & OPTIMIZED v4 - SMOOTH CORNERS & ICONS]
+-- [FIXED & OPTIMIZED v5 - SMOOTH CORNERS & NEW TOGGLE]
 
 ---------------------------------------------------------
 -- SERVICES
@@ -111,6 +111,7 @@ WL.Padding = UDim.new(0, -1)
 WL.Parent = Word
 
 local letters = {}
+-- Строго "linbergz" без цифр
 for index, char in utf8.graphemes("linbergz") do
     local letter = Instance.new("TextLabel")
     letter.Name = "Letter" .. tostring(index)
@@ -202,7 +203,7 @@ task.spawn(function()
 end)
 
 ---------------------------------------------------------
--- FLOATING TOGGLE BUTTON
+-- FLOATING TOGGLE BUTTON (БАТОНЧИК С НИКОМ)
 ---------------------------------------------------------
 local hubOpen = true
 local toggleDrag = nil
@@ -210,26 +211,27 @@ local toggleSuppressClick = false
 
 local ToggleBtn = Instance.new("Frame")
 ToggleBtn.Name = "RedzToggle"
-ToggleBtn.Size = UDim2.new(0, 42, 0, 42)
+ToggleBtn.Size = UDim2.new(0, 110, 0, 34) -- Форма батончика
 ToggleBtn.Position = UDim2.new(0, 16, 0, 200) 
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 20, 30)
+ToggleBtn.BackgroundColor3 = C.bg
 ToggleBtn.ZIndex = 200
 ToggleBtn.Parent = ScreenGui
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 14) -- Гладкий угол
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0) -- Круглые края батончика
 
 local ToggleBtnStroke = Instance.new("UIStroke")
-ToggleBtnStroke.Color = Color3.fromRGB(255, 60, 70)
+ToggleBtnStroke.Color = C.accent
 ToggleBtnStroke.Thickness = 1.5
 ToggleBtnStroke.Parent = ToggleBtn
 
-local ToggleImage = Instance.new("ImageLabel")
-ToggleImage.Name = "Icon"
-ToggleImage.Size = UDim2.new(0, 26, 0, 26)
-ToggleImage.AnchorPoint = Vector2.new(0.5, 0.5)
-ToggleImage.Position = UDim2.new(0.5, 0, 0.5, 0)
-ToggleImage.BackgroundTransparency = 1
-ToggleImage.Image = "rbxassetid://9809139103" 
-ToggleImage.Parent = ToggleBtn
+local ToggleText = Instance.new("TextLabel")
+ToggleText.Size = UDim2.new(1, 0, 1, 0)
+ToggleText.BackgroundTransparency = 1
+ToggleText.Text = "linbergz"
+ToggleText.TextColor3 = C.white
+ToggleText.TextSize = 13
+ToggleText.Font = Enum.Font.GothamBold
+ToggleText.ZIndex = 201
+ToggleText.Parent = ToggleBtn
 
 local ToggleClick = Instance.new("TextButton")
 ToggleClick.Size = UDim2.new(1, 0, 1, 0)
@@ -273,7 +275,7 @@ Main.BorderSizePixel = 0
 Main.ClipsDescendants = true
 Main.ZIndex = 10
 Main.Parent = ScreenGui
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 18) -- Гладкий угол
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 20) -- Очень гладкие углы
 
 local HubScale = Instance.new("UIScale")
 HubScale.Parent = Main
@@ -319,7 +321,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -100, 1, 0)
 Title.Position = UDim2.new(0, 16, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "redz Hub : Mobile v15.0 <font color=\"rgb(130,130,140)\">by linbergz</font>"
+Title.Text = "redz Hub : Mobile <font color=\"rgb(130,130,140)\">by linbergz</font>"
 Title.RichText = true
 Title.TextColor3 = C.text
 Title.TextSize = 13
@@ -386,7 +388,7 @@ Sidebar.BorderSizePixel = 0
 Sidebar.ZIndex = 12
 Sidebar.ClipsDescendants = true
 Sidebar.Parent = Main
-Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 18) -- Гладкий угол
+Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 20) -- Гладкие углы
 
 local SideScroll = Instance.new("ScrollingFrame")
 SideScroll.Size = UDim2.new(1, 0, 1, -10)
@@ -422,7 +424,7 @@ PageHolder.BackgroundColor3 = C.bg
 PageHolder.ClipsDescendants = true
 PageHolder.ZIndex = 11
 PageHolder.Parent = Main
-Instance.new("UICorner", PageHolder).CornerRadius = UDim.new(0, 18) -- Гладкий угол
+Instance.new("UICorner", PageHolder).CornerRadius = UDim.new(0, 20) -- Гладкие углы
 
 local tabs = {}
 local pages = {}
@@ -452,7 +454,7 @@ local function CreateTab(id, name, iconText)
     btn.AutoButtonColor = false
     btn.ZIndex = 14
     btn.Parent = SideScroll
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12) -- Гладкий угол
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 14) -- Гладкие углы вкладок
 
     local indicator = Instance.new("Frame")
     indicator.Name = "Indicator"
@@ -550,7 +552,7 @@ function UI.AddInfo(page, text)
     frame.BackgroundColor3 = C.card
     frame.ZIndex = 13
     frame.Parent = page
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 14) -- Гладкий угол
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16) -- Гладкие углы
 
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, -24, 1, -12)
@@ -573,7 +575,7 @@ function UI.AddToggle(page, titleText, subText, defaultState, callback)
     frame.BackgroundColor3 = C.card
     frame.ZIndex = 13
     frame.Parent = page
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 14) -- Гладкий угол
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16) -- Гладкие углы
 
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, -60, 0, 20)
@@ -644,7 +646,7 @@ function UI.AddDropdown(page, titleText, options, defaultOption, callback)
     frame.ClipsDescendants = true
     frame.ZIndex = 51
     frame.Parent = page
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 14) -- Гладкий угол
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16) -- Гладкие углы
 
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(0.5, 0, 0, 38)
@@ -668,7 +670,7 @@ function UI.AddDropdown(page, titleText, options, defaultOption, callback)
     selector.Font = Enum.Font.GothamBold
     selector.ZIndex = 14
     selector.Parent = frame
-    Instance.new("UICorner", selector).CornerRadius = UDim.new(0, 12) -- Гладкий угол
+    Instance.new("UICorner", selector).CornerRadius = UDim.new(0, 14) -- Гладкие углы
 
     local isOpen = false
     local function SetOpen(open)
@@ -693,7 +695,7 @@ function UI.AddDropdown(page, titleText, options, defaultOption, callback)
         optBtn.Font = Enum.Font.GothamMedium
         optBtn.ZIndex = 15
         optBtn.Parent = frame
-        Instance.new("UICorner", optBtn).CornerRadius = UDim.new(0, 10) -- Гладкий угол
+        Instance.new("UICorner", optBtn).CornerRadius = UDim.new(0, 12) -- Гладкие углы
 
         Track(optBtn.MouseButton1Click:Connect(function()
             selector.Text = opt .. "  ▼"
@@ -721,7 +723,7 @@ function UI.AddSlider(page, titleText, minVal, maxVal, defaultVal, prefix, callb
     frame.BackgroundColor3 = C.card
     frame.ZIndex = 13
     frame.Parent = page
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 14) -- Гладкий угол
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16) -- Гладкие углы
 
     prefix = prefix or "x"
 
@@ -809,7 +811,7 @@ function UI.AddButton(page, titleText, callback)
     btn.Font = Enum.Font.GothamBold
     btn.ZIndex = 14
     btn.Parent = page
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 14) -- Гладкий угол
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 16) -- Гладкие углы
 
     Track(btn.MouseButton1Click:Connect(function()
         TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = C.accent}):Play()
@@ -995,13 +997,12 @@ end))
 ---------------------------------------------------------
 -- POPULATE PAGES & TABS
 ---------------------------------------------------------
--- Исправлена иконка Free anims на ▶ (Play/Animation)
 local homePage     = CreateTab("Home", "Главная", "≡")
 local combatPage   = CreateTab("Combat", "Combat", "✚")
 local farmPage     = CreateTab("Farm", "Авто фарм", "❖")
 local telePage     = CreateTab("Teleport", "Телепорт", "⇄")
 local trollPage    = CreateTab("Troll", "Troll fun", "◑")
-local animsPage    = CreateTab("Anims", "Free anims", "▶") 
+local animsPage    = CreateTab("Anims", "Free anims", "▶")
 local flingPage    = CreateTab("Fling", "Флинг игроков", "↯")
 local settingsPage = CreateTab("Settings", "Настройки", "⊠")
 local serverPage   = CreateTab("Server", "Сервер", "▣")
