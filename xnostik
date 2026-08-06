@@ -1,6 +1,6 @@
 -- linbergz Team MOBILE HUB — E//HACK CS2 EDITION
 -- Complete redesign matching exact photo UI
--- Improved: Smooth animations, pixel-perfect cards, "ЛУЧШИЙ ЧИТ!" watermark, adaptive scaling
+-- Improved: Normal icons, all corners rounded, fixed sliders/toggles
 
 ---------------------------------------------------------
 -- SERVICES
@@ -38,7 +38,7 @@ local C = {
     sidebar = Color3.fromRGB(16, 16, 20),
     card = Color3.fromRGB(22, 22, 28),
     cardHover = Color3.fromRGB(28, 28, 36),
-    accent = Color3.fromRGB(255, 42, 85),          -- Bright Pink/Red Accent
+    accent = Color3.fromRGB(255, 42, 85),
     accentDark = Color3.fromRGB(200, 25, 65),
     switchOff = Color3.fromRGB(38, 38, 48),
     white = Color3.fromRGB(255, 255, 255),
@@ -275,12 +275,15 @@ LogoFrame.BackgroundTransparency = 1
 LogoFrame.ZIndex = 14
 LogoFrame.Parent = Sidebar
 
+-- Normal icon instead of emoji
 local LogoIcon = Instance.new("TextLabel")
 LogoIcon.Size = UDim2.new(0, 30, 0, 30)
 LogoIcon.Position = UDim2.new(0, 14, 0, 12)
 LogoIcon.BackgroundTransparency = 1
-LogoIcon.Text = "🏃"
+LogoIcon.Text = "▶" -- Normal text character
+LogoIcon.TextColor3 = C.accent
 LogoIcon.TextSize = 16
+LogoIcon.Font = Enum.Font.GothamBold
 LogoIcon.ZIndex = 14
 LogoIcon.Parent = LogoFrame
 
@@ -323,7 +326,7 @@ LangFrame.Position = UDim2.new(0, 10, 1, -38)
 LangFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 15)
 LangFrame.ZIndex = 14
 LangFrame.Parent = Sidebar
-Instance.new("UICorner", LangFrame).CornerRadius = UDim.new(0, 6)
+Instance.new("UICorner", LangFrame).CornerRadius = UDim.new(0, 8)
 
 local LangTitle = Instance.new("TextLabel")
 LangTitle.Size = UDim2.new(1, -10, 0, 12)
@@ -341,7 +344,7 @@ local LangVal = Instance.new("TextLabel")
 LangVal.Size = UDim2.new(1, -10, 0, 14)
 LangVal.Position = UDim2.new(0, 8, 0, 15)
 LangVal.BackgroundTransparency = 1
-LangVal.Text = "English  ▼"
+LangVal.Text = "English  V"
 LangVal.TextColor3 = C.text
 LangVal.TextSize = 9
 LangVal.Font = Enum.Font.GothamBold
@@ -360,12 +363,12 @@ PageHolder.BackgroundTransparency = 1
 PageHolder.ZIndex = 11
 PageHolder.Parent = Main
 
--- ЛУЧШИЙ ЧИТ! WATERMARK
+-- WATERMARK
 local Watermark = Instance.new("TextLabel")
 Watermark.Size = UDim2.new(1, 0, 0, 40)
 Watermark.Position = UDim2.new(0, 0, 1, -35)
 Watermark.BackgroundTransparency = 1
-Watermark.Text = "ЛУЧШИЙ ЧИТ!"
+Watermark.Text = "THE BEST CHEAT!"
 Watermark.TextColor3 = C.accent
 Watermark.TextTransparency = 0.3
 Watermark.TextSize = 22
@@ -462,9 +465,10 @@ local function CreateTab(id, name, iconText, pageTitle, pageDesc)
     icon.Size = UDim2.new(0, 24, 1, 0)
     icon.Position = UDim2.new(0, 8, 0, 0)
     icon.BackgroundTransparency = 1
-    icon.Text = iconText or "🎯"
+    icon.Text = iconText or ">" -- Normal icon
     icon.TextColor3 = C.textSec
     icon.TextSize = 12
+    icon.Font = Enum.Font.GothamBold
     icon.ZIndex = 16
     icon.Parent = btn
 
@@ -484,7 +488,7 @@ local function CreateTab(id, name, iconText, pageTitle, pageDesc)
     -- PAGE SCROLL FRAME
     local pageScroll = Instance.new("ScrollingFrame")
     pageScroll.Name = "Page_" .. id
-    pageScroll.Size = UDim2.new(1, 0, 1, -45) -- Leave space for watermark
+    pageScroll.Size = UDim2.new(1, 0, 1, -45)
     pageScroll.Position = UDim2.new(0, 0, 0, 0)
     pageScroll.BackgroundTransparency = 1
     pageScroll.BorderSizePixel = 0
@@ -510,9 +514,10 @@ local function CreateTab(id, name, iconText, pageTitle, pageDesc)
     PageIcon.Size = UDim2.new(0, 24, 0, 24)
     PageIcon.Position = UDim2.new(0, 0, 0, 2)
     PageIcon.BackgroundTransparency = 1
-    PageIcon.Text = iconText or "✦"
+    PageIcon.Text = iconText or ">"
     PageIcon.TextColor3 = C.white
     PageIcon.TextSize = 16
+    PageIcon.Font = Enum.Font.GothamBold
     PageIcon.Parent = HeaderFrame
 
     local PageTitle = Instance.new("TextLabel")
@@ -537,7 +542,7 @@ local function CreateTab(id, name, iconText, pageTitle, pageDesc)
     PageSub.TextXAlignment = Enum.TextXAlignment.Left
     PageSub.Parent = HeaderFrame
 
-    -- GRID CONTAINER FOR CARDS (2 COLUMNS)
+    -- GRID CONTAINER FOR CARDS
     local GridFrame = Instance.new("Frame")
     GridFrame.Name = "Grid"
     GridFrame.Size = UDim2.new(1, 0, 0, 0)
@@ -568,7 +573,7 @@ local function CreateTab(id, name, iconText, pageTitle, pageDesc)
 end
 
 ---------------------------------------------------------
--- COMPONENT BUILDERS (CS2 / E//HACK TILE STYLE)
+-- COMPONENT BUILDERS (WITH FIXED TOGGLES & SLIDERS)
 ---------------------------------------------------------
 local UI = {}
 
@@ -576,7 +581,7 @@ local function SafeCallback(cb, ...)
     if cb then pcall(cb, ...) end
 end
 
--- TILE WITH TOGGLE
+-- TILE WITH TOGGLE (FIXED SWITCH LOGIC)
 function UI.AddToggle(grid, titleText, descText, defaultState, callback)
     local card = Instance.new("Frame")
     card.BackgroundColor3 = C.card
@@ -615,36 +620,43 @@ function UI.AddToggle(grid, titleText, descText, defaultState, callback)
     desc.ZIndex = 14
     desc.Parent = card
 
-    -- SWITCH (TOGGLE)
-    local switchTrack = Instance.new("TextButton")
-    switchTrack.Size = UDim2.new(0, 32, 0, 18)
-    switchTrack.Position = UDim2.new(1, -40, 0, 10)
-    switchTrack.BackgroundColor3 = defaultState and C.accent or C.switchOff
-    switchTrack.Text = ""
-    switchTrack.AutoButtonColor = false
-    switchTrack.ZIndex = 15
-    switchTrack.Parent = card
-    Instance.new("UICorner", switchTrack).CornerRadius = UDim.new(1, 0)
+    -- SWITCH (TOGGLE) - FIXED
+    local state = defaultState
+    
+    local switchFrame = Instance.new("Frame")
+    switchFrame.Size = UDim2.new(0, 32, 0, 18)
+    switchFrame.Position = UDim2.new(1, -40, 0, 10)
+    switchFrame.BackgroundColor3 = state and C.accent or C.switchOff
+    switchFrame.BorderSizePixel = 0
+    switchFrame.ZIndex = 15
+    switchFrame.Parent = card
+    Instance.new("UICorner", switchFrame).CornerRadius = UDim.new(1, 0)
 
     local switchThumb = Instance.new("Frame")
     switchThumb.Size = UDim2.new(0, 12, 0, 12)
-    switchThumb.Position = defaultState and UDim2.new(1, -15, 0.5, -6) or UDim2.new(0, 3, 0.5, -6)
+    switchThumb.Position = state and UDim2.new(1, -15, 0.5, -6) or UDim2.new(0, 3, 0.5, -6)
     switchThumb.BackgroundColor3 = C.white
     switchThumb.BorderSizePixel = 0
     switchThumb.ZIndex = 16
-    switchThumb.Parent = switchTrack
+    switchThumb.Parent = switchFrame
     Instance.new("UICorner", switchThumb).CornerRadius = UDim.new(1, 0)
 
-    local state = defaultState
-    switchTrack.MouseButton1Click:Connect(function()
+    local switchButton = Instance.new("TextButton")
+    switchButton.Size = UDim2.new(1, 0, 1, 0)
+    switchButton.BackgroundTransparency = 1
+    switchButton.Text = ""
+    switchButton.ZIndex = 17
+    switchButton.Parent = switchFrame
+
+    switchButton.MouseButton1Click:Connect(function()
         state = not state
-        TweenService:Create(switchTrack, TweenInfo.new(0.15), {BackgroundColor3 = state and C.accent or C.switchOff}):Play()
+        TweenService:Create(switchFrame, TweenInfo.new(0.15), {BackgroundColor3 = state and C.accent or C.switchOff}):Play()
         TweenService:Create(switchThumb, TweenInfo.new(0.15), {Position = state and UDim2.new(1, -15, 0.5, -6) or UDim2.new(0, 3, 0.5, -6)}):Play()
         SafeCallback(callback, state)
     end)
 end
 
--- PINK ACTION BUTTON
+-- PINK ACTION BUTTON (ROUNDED)
 function UI.AddButton(grid, titleText, callback)
     local btn = Instance.new("TextButton")
     btn.BackgroundColor3 = C.accent
@@ -666,7 +678,7 @@ function UI.AddButton(grid, titleText, callback)
     end)
 end
 
--- SLIDER TILE
+-- SLIDER TILE (FIXED MOBILE SUPPORT)
 function UI.AddSlider(grid, titleText, minVal, maxVal, defaultVal, prefix, callback)
     local card = Instance.new("Frame")
     card.BackgroundColor3 = C.card
@@ -705,12 +717,11 @@ function UI.AddSlider(grid, titleText, minVal, maxVal, defaultVal, prefix, callb
     valLabel.ZIndex = 14
     valLabel.Parent = card
 
-    local track = Instance.new("TextButton")
+    local track = Instance.new("Frame")
     track.Size = UDim2.new(1, -24, 0, 4)
     track.Position = UDim2.new(0, 12, 0, 42)
     track.BackgroundColor3 = C.switchOff
-    track.Text = ""
-    track.AutoButtonColor = false
+    track.BorderSizePixel = 0
     track.ZIndex = 15
     track.Parent = card
     Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
@@ -724,35 +735,47 @@ function UI.AddSlider(grid, titleText, minVal, maxVal, defaultVal, prefix, callb
     fill.Parent = track
     Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
 
+    -- FIXED SLIDER INPUT (works on touch)
     local dragging = false
-    local function update(input)
-        local delta = math.clamp((input.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-        local val = math.floor(minVal + (maxVal - minVal) * delta)
+    local function updateValue(input)
+        local pos = input.Position
+        local trackAbsPos = track.AbsolutePosition
+        local trackAbsSize = track.AbsoluteSize
+        local delta = math.clamp((pos.X - trackAbsPos.X) / trackAbsSize.X, 0, 1)
+        local val = math.floor(minVal + (maxVal - minVal) * delta + 0.5)
         fill.Size = UDim2.new(delta, 0, 1, 0)
         valLabel.Text = prefix .. tostring(val)
         SafeCallback(callback, val)
     end
 
-    track.InputBegan:Connect(function(input)
+    local sliderInput = Instance.new("TextButton")
+    sliderInput.Size = UDim2.new(1, 0, 1, 10)
+    sliderInput.Position = UDim2.new(0, 0, 0, -5)
+    sliderInput.BackgroundTransparency = 1
+    sliderInput.Text = ""
+    sliderInput.ZIndex = 20
+    sliderInput.Parent = track
+
+    sliderInput.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
-            update(input)
+            updateValue(input)
         end
     end)
     UserInputService.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            update(input)
+            updateValue(input)
         end
     end)
     UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
             dragging = false
         end
     end)
 end
 
 ---------------------------------------------------------
--- COSMETICS LOGIC (MIDNIGHT WINGS & AURA)
+-- COSMETICS LOGIC (WINGS & AURA)
 ---------------------------------------------------------
 local betaState = {
     wings = false,
@@ -762,11 +785,15 @@ local betaState = {
     auraHighlight = nil,
     auraParticles = nil,
     auraLight = nil,
+    leftWeld = nil,
+    rightWeld = nil,
     conn = nil
 }
 
 local function RemoveWings()
     if betaState.wingFolder then betaState.wingFolder:Destroy() betaState.wingFolder = nil end
+    betaState.leftWeld = nil
+    betaState.rightWeld = nil
 end
 
 local function RemoveAura()
@@ -881,17 +908,17 @@ if not betaState.conn then
 end
 
 ---------------------------------------------------------
--- POPULATE PAGES & TABS (E//HACK STRUCTURE)
+-- POPULATE PAGES & TABS (REPLACED EMOJIS WITH TEXT ICONS)
 ---------------------------------------------------------
-local legitPage   = CreateTab("legit", "Legitbot", "🎯", "Legitbot", "Features for subtle shooting assistance")
-local visualsPage = CreateTab("visuals", "Visuals", "👁", "Visuals", "Displays extra information about players and world")
-local skinsPage   = CreateTab("skins", "Skin Changer", "👕", "Skin Changer", "Modify character appearance and cosmetic items")
-local otherPage   = CreateTab("other", "Other", "✦", "Other", "Various features for simplification of your game process")
-local configPage  = CreateTab("config", "Config", "📄", "Config", "Manage user configurations and profile settings")
+local legitPage   = CreateTab("legit", "Legitbot", ">", "Legitbot", "Features for subtle shooting assistance")
+local visualsPage = CreateTab("visuals", "Visuals", "O", "Visuals", "Displays extra information about players and world")
+local skinsPage   = CreateTab("skins", "Skin Changer", "#", "Skin Changer", "Modify character appearance and cosmetic items")
+local otherPage   = CreateTab("other", "Other", "*", "Other", "Various features for simplification of your game process")
+local configPage  = CreateTab("config", "Config", "=", "Config", "Manage user configurations and profile settings")
 
 SelectTab("other")
 
--- OTHER PAGE CONTENT (MATCHING SCREENSHOT)
+-- OTHER PAGE CONTENT
 UI.AddToggle(otherPage, "Spectator list", "Displays a list of players that are watching you", false)
 UI.AddToggle(otherPage, "Sniper crosshair", "Displays an additional crosshair for sniper rifles", true)
 UI.AddToggle(otherPage, "Auto accept", "Auto game acceptance", true)
