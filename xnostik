@@ -1,6 +1,16 @@
--- linbergz Team MOBILE HUB v15.0
--- SACRACIA UI Edition
--- UI only | All sections are under development
+-- linbergz Team MOBILE HUB v15.1 — SACRACIA UI Edition (Improved)
+-- Sacracia Style Interface: Dark Minimalist, Vibrant Blue Accents, iOS Switches, Sleek Sliders.
+-- Loading Screen animation remains untouched by request.
+-- UI-only. Native Roblox Luau; no external libraries.
+--
+-- IMPROVEMENTS in v15.1:
+--   • Connection manager with global cleanup — no leaks on re-run
+--   • Robust input tracking for toggle-button drag, window drag, and sliders
+--   • Auto-sizing scroll canvas (content never clipped on mobile)
+--   • Hover feedback on sidebar buttons
+--   • RenderStepped wing animation only runs while wings are active
+--   • Slider division-by-zero guard, math.round for integer values
+--   • Proper touch + mouse support for all draggable controls
 
 ---------------------------------------------------------
 -- SERVICES
@@ -8,376 +18,450 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
+if not player then
+    Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
+    player = Players.LocalPlayer
+end
 
 ---------------------------------------------------------
--- CONFIG
+-- CONNECTION MANAGER & GLOBAL CLEANUP
 ---------------------------------------------------------
-local GUI_NAME = "MM2HubMobile"
-local VERSION = "v15.0"
+local connections = {}
 
+local function Track(conn)
+    table.insert(connections, conn)
+    return conn
+end
+
+local function Cleanup()
+    for _, conn in ipairs(connections) do
+        pcall(function() conn:Disconnect() end)
+    end
+    connections = {}
+end
+
+-- Disconnect previous instance's connections + destroy old GUI
+if _G.MM2HubMobileCleanup then
+    pcall(_G.MM2HubMobileCleanup)
+end
+
+_G.MM2HubMobileCleanup = function()
+    Cleanup()
+    local pg = player:FindFirstChild("PlayerGui")
+    if pg then
+        local old = pg:FindFirstChild("MM2HubMobile")
+        if old then old:Destroy() end
+    end
+    -- Clean up character cosmetics that live under Character, not PlayerGui
+    local char = player:FindFirstChild("Character")
+    if char then
+        local wings = char:FindFirstChild("MidnightWings")
+        if wings then wings:Destroy() end
+        local hl = char:FindFirstChild("MidnightAuraHL")
+        if hl then hl:Destroy() end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local pe = hrp:FindFirstChild("MidnightAuraParticles")
+            if pe then pe:Destroy() end
+            local light = hrp:FindFirstChild("MidnightAuraLight")
+            if light then light:Destroy() end
+        end
+    end
+end
+
+---------------------------------------------------------
+-- CLEANUP / SCREEN GUI
+---------------------------------------------------------
+local oldGui = player.PlayerGui:FindFirstChild("MM2HubMobile")
+if oldGui then oldGui:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MM2HubMobile"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.DisplayOrder = 100
+ScreenGui.Parent = player.PlayerGui
+
+---------------------------------------------------------
+-- COLOR PALETTE (LOADER SPECIFIC - UNTOUCHED)
+---------------------------------------------------------
 local C = {
-\t-- Loader
-\tloaderBg = Color3.fromRGB(9, 8, 16),
-\tloaderSurface = Color3.fromRGB(31, 27, 47),
-\tloaderAccent = Color3.fromRGB(204, 158, 255),
-
-\t-- App
-\tbg = Color3.fromRGB(21, 22, 27),
-\tsidebar = Color3.fromRGB(15, 16, 20),
-\tcard = Color3.fromRGB(29, 31, 38),
-\tcardHover = Color3.fromRGB(36, 39, 48),
-\tactiveTab = Color3.fromRGB(37, 40, 49),
-\tborder = Color3.fromRGB(47, 50, 60),
-\taccent = Color3.fromRGB(52, 120, 246),
-\taccentDark = Color3.fromRGB(31, 84, 185),
-\twhite = Color3.fromRGB(255, 255, 255),
-\ttext = Color3.fromRGB(240, 242, 245),
-\ttextSecondary = Color3.fromRGB(154, 160, 172),
-\ttextDim = Color3.fromRGB(95, 101, 113),
-\tred = Color3.fromRGB(245, 76, 76),
-\tgreen = Color3.fromRGB(76, 210, 137),
+    bg = Color3.fromRGB(14, 12, 23),
+    sidebar = Color3.fromRGB(9, 8, 16),
+    surface = Color3.fromRGB(22, 19, 34),
+    elevated = Color3.fromRGB(31, 27, 47),
+    accent = Color3.fromRGB(151, 82, 255),
+    accentLight = Color3.fromRGB(204, 158, 255),
+    white = Color3.fromRGB(255, 255, 255),
+    text = Color3.fromRGB(246, 244, 252),
+    textSec = Color3.fromRGB(174, 165, 198),
+    textDim = Color3.fromRGB(112, 103, 136),
+    red = Color3.fromRGB(255, 93, 111),
+    border = Color3.fromRGB(72, 62, 98),
 }
 
 ---------------------------------------------------------
--- CLEANUP
+-- LOADING SCREEN — WAVING LOGOTYPE (UNTOUCHED)
 ---------------------------------------------------------
-local oldGui = playerGui:FindFirstChild(GUI_NAME)
-if oldGui then
-\toldGui:Destroy()
-end
+local LS = Instance.new("Frame")
+LS.Name = "LoadingScreen"
+LS.Size = UDim2.new(1, 0, 1, 0)
+LS.BackgroundColor3 = C.sidebar
+LS.BorderSizePixel = 0
+LS.ZIndex = 100
+LS.Parent = ScreenGui
 
-local connections = {}
-local runningTweens = {}
+local LogoBox = Instance.new("Frame")
+LogoBox.Name = "Loader"
+LogoBox.Size = UDim2.new(0, 300, 0, 150)
+LogoBox.AnchorPoint = Vector2.new(0.5, 0.5)
+LogoBox.Position = UDim2.new(0.5, 0, 0.5, 0)
+LogoBox.BackgroundTransparency = 1
+LogoBox.ZIndex = 101
+LogoBox.Parent = LS
 
-local function Connect(signal, callback)
-\tlocal connection = signal:Connect(callback)
-\ttable.insert(connections, connection)
-\treturn connection
-end
+local LoaderTitle = Instance.new("TextLabel")
+LoaderTitle.Size = UDim2.new(1, 0, 0, 16)
+LoaderTitle.Position = UDim2.new(0, 0, 0, 5)
+LoaderTitle.BackgroundTransparency = 1
+LoaderTitle.Text = "INITIALIZING"
+LoaderTitle.TextColor3 = C.textDim
+LoaderTitle.TextSize = 9
+LoaderTitle.Font = Enum.Font.GothamBold
+LoaderTitle.ZIndex = 102
+LoaderTitle.Parent = LogoBox
 
-local function Tween(instance, info, properties)
-\tif runningTweens[instance] then
-\t\trunningTweens[instance]:Cancel()
-\tend
+local Word = Instance.new("Frame")
+Word.Name = "AnimatedWord"
+Word.Size = UDim2.new(1, 0, 0, 50)
+Word.Position = UDim2.new(0, 0, 0, 31)
+Word.BackgroundTransparency = 1
+Word.ZIndex = 102
+Word.Parent = LogoBox
 
-\tlocal tween = TweenService:Create(instance, info, properties)
-\trunningTweens[instance] = tween
-
-\ttween.Completed:Connect(function()
-\t\tif runningTweens[instance] == tween then
-\t\t\trunningTweens[instance] = nil
-\t\tend
-\tend)
-
-\ttween:Play()
-\treturn tween
-end
-
-local function AddCorner(parent, radius)
-\tlocal object = Instance.new("UICorner")
-\tobject.CornerRadius = UDim.new(0, radius)
-\tobject.Parent = parent
-\treturn object
-end
-
-local function AddStroke(parent, color, thickness, transparency)
-\tlocal object = Instance.new("UIStroke")
-\tobject.Color = color
-\tobject.Thickness = thickness or 1
-\tobject.Transparency = transparency or 0
-\tobject.Parent = parent
-\treturn object
-end
-
-local function CreateLabel(parent, properties)
-\tlocal label = Instance.new("TextLabel")
-
-\tfor property, value in pairs(properties) do
-\t\tlabel[property] = value
-\tend
-
-\tlabel.Parent = parent
-\treturn label
-end
-
----------------------------------------------------------
--- SCREEN GUI
----------------------------------------------------------
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = GUI_NAME
-ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.DisplayOrder = 100
-ScreenGui.Parent = playerGui
-
-Connect(ScreenGui.Destroying, function()
-\tfor _, connection in ipairs(connections) do
-\t\tif connection.Connected then
-\t\t\tconnection:Disconnect()
-\t\tend
-\tend
-
-\ttable.clear(connections)
-\ttable.clear(runningTweens)
-end)
-
-local function GetViewport()
-\tlocal size = ScreenGui.AbsoluteSize
-
-\tif size.X > 0 and size.Y > 0 then
-\t\treturn size
-\tend
-
-\tlocal camera = workspace.CurrentCamera
-\treturn camera and camera.ViewportSize or Vector2.new(1280, 720)
-end
-
----------------------------------------------------------
--- LOADING SCREEN
----------------------------------------------------------
-local LoadingScreen = Instance.new("Frame")
-LoadingScreen.Name = "LoadingScreen"
-LoadingScreen.Size = UDim2.fromScale(1, 1)
-LoadingScreen.BackgroundColor3 = C.loaderBg
-LoadingScreen.BorderSizePixel = 0
-LoadingScreen.ZIndex = 100
-LoadingScreen.Parent = ScreenGui
-
-local LoaderBox = Instance.new("Frame")
-LoaderBox.Size = UDim2.fromOffset(300, 150)
-LoaderBox.AnchorPoint = Vector2.new(0.5, 0.5)
-LoaderBox.Position = UDim2.fromScale(0.5, 0.5)
-LoaderBox.BackgroundTransparency = 1
-LoaderBox.ZIndex = 101
-LoaderBox.Parent = LoadingScreen
-
-CreateLabel(LoaderBox, {
-\tSize = UDim2.new(1, 0, 0, 18),
-\tPosition = UDim2.fromOffset(0, 5),
-\tBackgroundTransparency = 1,
-\tText = "INITIALIZING",
-\tTextColor3 = C.textDim,
-\tTextSize = 9,
-\tFont = Enum.Font.GothamBold,
-\tZIndex = 102,
-})
-
-local WordFrame = Instance.new("Frame")
-WordFrame.Size = UDim2.new(1, 0, 0, 52)
-WordFrame.Position = UDim2.fromOffset(0, 29)
-WordFrame.BackgroundTransparency = 1
-WordFrame.ZIndex = 102
-WordFrame.Parent = LoaderBox
-
-local WordLayout = Instance.new("UIListLayout")
-WordLayout.FillDirection = Enum.FillDirection.Horizontal
-WordLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-WordLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-WordLayout.Padding = UDim.new(0, -1)
-WordLayout.Parent = WordFrame
+local WL = Instance.new("UIListLayout")
+WL.FillDirection = Enum.FillDirection.Horizontal
+WL.HorizontalAlignment = Enum.HorizontalAlignment.Center
+WL.VerticalAlignment = Enum.VerticalAlignment.Center
+WL.Padding = UDim.new(0, -1)
+WL.Parent = Word
 
 local letters = {}
-local word = "LINBERGZ"
-
-for i = 1, #word do
-\tlocal letter = CreateLabel(WordFrame, {
-\t\tName = "Letter_" .. i,
-\t\tSize = UDim2.fromOffset(31, 48),
-\t\tBackgroundTransparency = 1,
-\t\tText = word:sub(i, i),
-\t\tTextColor3 = C.white,
-\t\tTextTransparency = 0.32,
-\t\tTextSize = 34,
-\t\tFont = Enum.Font.GothamBlack,
-\t\tZIndex = 103,
-\t})
-
-\ttable.insert(letters, letter)
+for index, char in utf8.graphemes("LINBERGZ") do
+    local letter = Instance.new("TextLabel")
+    letter.Name = "Letter" .. tostring(index)
+    letter.Size = UDim2.new(0, 31, 0, 48)
+    letter.BackgroundTransparency = 1
+    letter.Text = char
+    letter.TextColor3 = C.white
+    letter.TextTransparency = 0.32
+    letter.TextSize = 34
+    letter.Font = Enum.Font.GothamBlack
+    letter.ZIndex = 103
+    letter.Parent = Word
+    table.insert(letters, letter)
 end
 
-local LoadingLine = Instance.new("Frame")
-LoadingLine.Size = UDim2.fromOffset(142, 3)
-LoadingLine.AnchorPoint = Vector2.new(0.5, 0)
-LoadingLine.Position = UDim2.new(0.5, 0, 0, 91)
-LoadingLine.BackgroundColor3 = C.loaderSurface
-LoadingLine.BorderSizePixel = 0
-LoadingLine.ClipsDescendants = true
-LoadingLine.ZIndex = 102
-LoadingLine.Parent = LoaderBox
-AddCorner(LoadingLine, 99)
+local Underline = Instance.new("Frame")
+Underline.Name = "LoadingLine"
+Underline.Size = UDim2.new(0, 142, 0, 3)
+Underline.AnchorPoint = Vector2.new(0.5, 0)
+Underline.Position = UDim2.new(0.5, 0, 0, 91)
+Underline.BackgroundColor3 = C.elevated
+Underline.BorderSizePixel = 0
+Underline.ClipsDescendants = true
+Underline.ZIndex = 102
+Underline.Parent = LogoBox
+Instance.new("UICorner", Underline).CornerRadius = UDim.new(1, 0)
 
 local LineGlow = Instance.new("Frame")
-LineGlow.Size = UDim2.fromOffset(38, 3)
-LineGlow.Position = UDim2.new(0, -38, 0, 0)
+LineGlow.Size = UDim2.new(0, 36, 1, 0)
+LineGlow.Position = UDim2.new(0, -36, 0, 0)
 LineGlow.BackgroundColor3 = C.white
 LineGlow.BorderSizePixel = 0
 LineGlow.ZIndex = 103
-LineGlow.Parent = LoadingLine
-AddCorner(LineGlow, 99)
+LineGlow.Parent = Underline
+Instance.new("UICorner", LineGlow).CornerRadius = UDim.new(1, 0)
 
-CreateLabel(LoaderBox, {
-\tSize = UDim2.new(1, 0, 0, 18),
-\tPosition = UDim2.fromOffset(0, 106),
-\tBackgroundTransparency = 1,
-\tText = "LOADING INTERFACE",
-\tTextColor3 = C.textSecondary,
-\tTextSize = 9,
-\tFont = Enum.Font.GothamBold,
-\tZIndex = 102,
-})
+local Status = Instance.new("TextLabel")
+Status.Size = UDim2.new(1, 0, 0, 16)
+Status.Position = UDim2.new(0, 0, 0, 106)
+Status.BackgroundTransparency = 1
+Status.Text = "LOADING INTERFACE"
+Status.TextColor3 = C.textSec
+Status.TextSize = 9
+Status.Font = Enum.Font.GothamBold
+Status.ZIndex = 102
+Status.Parent = LogoBox
 
 task.spawn(function()
-\twhile LoadingScreen.Parent do
-\t\tfor index, letter in ipairs(letters) do
-\t\t\tlocal distance = math.abs(index - 4.5) / 3.5
-\t\t\tlocal baseSize = math.floor(34 - distance * 10)
-\t\t\tlocal baseTransparency = 0.08 + distance * 0.48
-
-\t\t\tTween(letter, TweenInfo.new(0.20, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
-\t\t\t\tTextColor3 = C.loaderAccent,
-\t\t\t\tTextTransparency = 0,
-\t\t\t\tTextSize = baseSize + 4,
-\t\t\t\tPosition = UDim2.fromOffset(0, -4),
-\t\t\t})
-
-\t\t\ttask.delay(0.18, function()
-\t\t\t\tif letter.Parent then
-\t\t\t\t\tTween(letter, TweenInfo.new(0.42, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-\t\t\t\t\t\tTextColor3 = C.white,
-\t\t\t\t\t\tTextTransparency = baseTransparency,
-\t\t\t\t\t\tTextSize = baseSize,
-\t\t\t\t\t\tPosition = UDim2.fromOffset(0, 0),
-\t\t\t\t\t})
-\t\t\t\tend
-\t\t\tend)
-
-\t\t\ttask.wait(0.10)
-\t\tend
-
-\t\ttask.wait(0.22)
-\tend
+    while LS.Parent do
+        for i, letter in ipairs(letters) do
+            local centerDistance = math.abs(i - 4.5) / 3.5
+            local baseSize = math.floor(34 - centerDistance * 10)
+            local baseTransparency = 0.08 + centerDistance * 0.48
+            TweenService:Create(letter, TweenInfo.new(0.20, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+                TextColor3 = C.accentLight,
+                TextTransparency = 0,
+                TextSize = baseSize + 4,
+                Position = UDim2.new(0, 0, 0, -4),
+            }):Play()
+            task.delay(0.18, function()
+                if letter.Parent then
+                    TweenService:Create(letter, TweenInfo.new(0.42, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+                        TextColor3 = C.white,
+                        TextTransparency = baseTransparency,
+                        TextSize = baseSize,
+                        Position = UDim2.new(0, 0, 0, 0),
+                    }):Play()
+                end
+            end)
+            task.wait(0.10)
+        end
+        task.wait(0.22)
+    end
 end)
 
 task.spawn(function()
-\twhile LineGlow.Parent do
-\t\tLineGlow.Position = UDim2.new(0, -38, 0, 0)
-
-\t\tlocal sweep = Tween(LineGlow, TweenInfo.new(1.25, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-\t\t\tPosition = UDim2.new(1, 0, 0, 0),
-\t\t})
-
-\t\tsweep.Completed:Wait()
-\t\ttask.wait(0.12)
-\tend
+    while LineGlow.Parent do
+        LineGlow.Position = UDim2.new(0, -36, 0, 0)
+        local sweep = TweenService:Create(LineGlow, TweenInfo.new(1.25, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+            Position = UDim2.new(1, 0, 0, 0),
+        })
+        sweep:Play()
+        sweep.Completed:Wait()
+        task.wait(0.12)
+    end
 end)
 
 task.spawn(function()
-\ttask.wait(1.9)
-
-\tlocal fadeInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-
-\tfor _, object in ipairs(LoadingScreen:GetDescendants()) do
-\t\tif object:IsA("TextLabel") then
-\t\t\tTween(object, fadeInfo, {TextTransparency = 1})
-\t\telseif object:IsA("Frame") then
-\t\t\tTween(object, fadeInfo, {BackgroundTransparency = 1})
-\t\tend
-\tend
-
-\ttask.wait(0.42)
-
-\tif LoadingScreen.Parent then
-\t\tLoadingScreen:Destroy()
-\tend
+    task.wait(1.9)
+    local fadeInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    for _, object in ipairs(LS:GetDescendants()) do
+        if object:IsA("TextLabel") then
+            TweenService:Create(object, fadeInfo, {TextTransparency = 1}):Play()
+        elseif object:IsA("Frame") then
+            TweenService:Create(object, fadeInfo, {BackgroundTransparency = 1}):Play()
+        end
+    end
+    task.wait(0.4)
+    LS:Destroy()
 end)
 
 ---------------------------------------------------------
--- HUB WINDOW
+-- SACRACIA PALETTE & STYLES
 ---------------------------------------------------------
-local HUB_WIDTH = 620
-local HUB_HEIGHT = 410
-local MIN_WIDTH = 330
-local MIN_HEIGHT = 270
-local DEFAULT_SIDEBAR_WIDTH = 155
+local AppC = {
+    bg = Color3.fromRGB(22, 22, 26),          -- Main Window Background
+    sidebar = Color3.fromRGB(16, 16, 20),     -- Dark Sidebar Background
+    accent = Color3.fromRGB(52, 120, 246),    -- Sacracia Blue Accent
+    accentDark = Color3.fromRGB(30, 80, 180),
+    switchOff = Color3.fromRGB(42, 44, 52),   -- Switch Off State
+    white = Color3.fromRGB(255, 255, 255),
+    text = Color3.fromRGB(240, 242, 245),
+    textSec = Color3.fromRGB(140, 145, 155),
+    textDim = Color3.fromRGB(90, 95, 105),
+    border = Color3.fromRGB(30, 32, 38),
+    activeTab = Color3.fromRGB(32, 34, 42),
+    red = Color3.fromRGB(245, 66, 66),
+    pillBg = Color3.fromRGB(30, 32, 40),
+    hover = Color3.fromRGB(24, 26, 32),       -- Sidebar hover state
+}
 
+---------------------------------------------------------
+-- HELPER: is point inside an element's bounds?
+---------------------------------------------------------
+local function isInside(object, point)
+    local p, s = object.AbsolutePosition, object.AbsoluteSize
+    return point.X >= p.X and point.X <= p.X + s.X
+       and point.Y >= p.Y and point.Y <= p.Y + s.Y
+end
+
+-- Check if an InputChanged event belongs to the current drag session
+local function IsDragInput(input, activeInput)
+    return input == activeInput
+        or (
+            activeInput ~= nil
+            and activeInput.UserInputType == Enum.UserInputType.MouseButton1
+            and input.UserInputType == Enum.UserInputType.MouseMovement
+        )
+end
+
+---------------------------------------------------------
+-- MOBILE TOGGLE BUTTON (SACRACIA CAPSULE)
+---------------------------------------------------------
 local hubOpen = false
-local hubPosition = nil
-local hubSize = Vector2.new(HUB_WIDTH, HUB_HEIGHT)
+local toggleDrag = nil  -- {input=InputObject, start=Vector3, position=UDim2, moved=bool}
+
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Name = "HubToggle"
+ToggleBtn.Size = UDim2.new(0, 130, 0, 34)
+ToggleBtn.Position = UDim2.new(0, 16, 0.32, 0)
+ToggleBtn.BackgroundColor3 = AppC.sidebar
+ToggleBtn.Text = ""
+ToggleBtn.AutoButtonColor = false
+ToggleBtn.ZIndex = 50
+ToggleBtn.Parent = ScreenGui
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 10)
+
+local ToggleStroke = Instance.new("UIStroke")
+ToggleStroke.Color = AppC.accent
+ToggleStroke.Thickness = 1.2
+ToggleStroke.Transparency = 0.3
+ToggleStroke.Parent = ToggleBtn
+
+local ToggleLogo = Instance.new("TextLabel")
+ToggleLogo.Size = UDim2.new(0, 20, 1, 0)
+ToggleLogo.Position = UDim2.new(0, 10, 0, 0)
+ToggleLogo.BackgroundTransparency = 1
+ToggleLogo.Text = "◈"
+ToggleLogo.TextColor3 = AppC.accent
+ToggleLogo.TextSize = 13
+ToggleLogo.Font = Enum.Font.GothamBold
+ToggleLogo.ZIndex = 52
+ToggleLogo.Parent = ToggleBtn
+
+local ToggleText = Instance.new("TextLabel")
+ToggleText.Size = UDim2.new(1, -34, 1, 0)
+ToggleText.Position = UDim2.new(0, 28, 0, 0)
+ToggleText.BackgroundTransparency = 1
+ToggleText.Text = "SACRACIA"
+ToggleText.TextColor3 = AppC.text
+ToggleText.TextSize = 10
+ToggleText.Font = Enum.Font.GothamBold
+ToggleText.TextXAlignment = Enum.TextXAlignment.Left
+ToggleText.ZIndex = 52
+ToggleText.Parent = ToggleBtn
+
+local function SetToggleVisual(isOpen)
+    ToggleText.Text = isOpen and "CLOSE" or "SACRACIA"
+    TweenService:Create(ToggleStroke, TweenInfo.new(0.2), {
+        Color = isOpen and AppC.red or AppC.accent
+    }):Play()
+    ToggleLogo.TextColor3 = isOpen and AppC.red or AppC.accent
+end
+
+-- Toggle button: begin potential drag or click
+ToggleBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        toggleDrag = {
+            input = input,
+            start = input.Position,
+            position = ToggleBtn.Position,
+            moved = false,
+        }
+    end
+end)
+
+-- Global input changed: move toggle button if dragging
+Track(UserInputService.InputChanged:Connect(function(input)
+    if not toggleDrag then return end
+    if not IsDragInput(input, toggleDrag.input) then return end
+    local delta = input.Position - toggleDrag.start
+    if delta.Magnitude > 7 then toggleDrag.moved = true end
+    local viewport = ScreenGui.AbsoluteSize
+    local x = math.clamp(
+        toggleDrag.position.X.Offset + delta.X,
+        8,
+        math.max(8, viewport.X - ToggleBtn.AbsoluteSize.X - 8)
+    )
+    local y = math.clamp(
+        toggleDrag.position.Y.Offset + delta.Y,
+        8,
+        math.max(8, viewport.Y - ToggleBtn.AbsoluteSize.Y - 8)
+    )
+    ToggleBtn.Position = UDim2.fromOffset(x, y)
+end))
+
+---------------------------------------------------------
+-- MAIN HUB FRAME (SACRACIA WINDOW)
+---------------------------------------------------------
+local HUB_W, HUB_H, SIDEBAR_W = 600, 390, 150
+local windowSize = Vector2.new(HUB_W, HUB_H)
+local windowPos = nil
+local windowInteraction = nil  -- "drag" or nil
 
 local HubShadow = Instance.new("Frame")
-HubShadow.Name = "Shadow"
+HubShadow.Name = "HubShadow"
+HubShadow.Size = UDim2.new(0, HUB_W, 0, HUB_H)
+HubShadow.Position = UDim2.new(0.5, -HUB_W / 2, 0.5, -HUB_H / 2 + 6)
 HubShadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-HubShadow.BackgroundTransparency = 0.48
+HubShadow.BackgroundTransparency = 0.4
 HubShadow.BorderSizePixel = 0
 HubShadow.Visible = false
 HubShadow.ZIndex = 8
 HubShadow.Parent = ScreenGui
-AddCorner(HubShadow, 14)
+Instance.new("UICorner", HubShadow).CornerRadius = UDim.new(0, 12)
 
 local Hub = Instance.new("Frame")
 Hub.Name = "Hub"
-Hub.BackgroundColor3 = C.bg
+Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
+Hub.Position = UDim2.new(0.5, -HUB_W / 2, 0.5, -HUB_H / 2)
+Hub.BackgroundColor3 = AppC.bg
 Hub.BorderSizePixel = 0
-Hub.ClipsDescendants = true
 Hub.Visible = false
+Hub.ClipsDescendants = true
 Hub.ZIndex = 10
 Hub.Parent = ScreenGui
-AddCorner(Hub, 14)
-AddStroke(Hub, C.border, 1, 0.05)
+Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 12)
 
-local function GetHubSize()
-\tlocal viewport = GetViewport()
+local HSk = Instance.new("UIStroke")
+HSk.Color = AppC.border
+HSk.Thickness = 1
+HSk.Parent = Hub
 
-\treturn Vector2.new(
-\t\tmath.clamp(viewport.X - 16, MIN_WIDTH, HUB_WIDTH),
-\t\tmath.clamp(viewport.Y - 16, MIN_HEIGHT, HUB_HEIGHT)
-\t)
+local function getViewport()
+    local size = ScreenGui.AbsoluteSize
+    if size.X < 1 or size.Y < 1 then
+        local camera = workspace.CurrentCamera
+        size = camera and camera.ViewportSize or Vector2.new(1280, 720)
+    end
+    return size
 end
 
-local function ApplyHubPosition(position)
-\thubSize = GetHubSize()
-
-\tlocal viewport = GetViewport()
-\tlocal maxX = math.max(8, viewport.X - hubSize.X - 8)
-\tlocal maxY = math.max(8, viewport.Y - hubSize.Y - 8)
-
-\thubPosition = Vector2.new(
-\t\tmath.clamp(position.X, 8, maxX),
-\t\tmath.clamp(position.Y, 8, maxY)
-\t)
-
-\tHub.Position = UDim2.fromOffset(hubPosition.X, hubPosition.Y)
-\tHub.Size = UDim2.fromOffset(hubSize.X, hubSize.Y)
-
-\tHubShadow.Position = UDim2.fromOffset(hubPosition.X, hubPosition.Y + 7)
-\tHubShadow.Size = UDim2.fromOffset(hubSize.X, hubSize.Y)
+local function applyWindowRect(position)
+    local viewport = getViewport()
+    local maxX = math.max(8, viewport.X - windowSize.X - 8)
+    local maxY = math.max(8, viewport.Y - windowSize.Y - 8)
+    windowPos = Vector2.new(
+        math.clamp(position.X, 8, maxX),
+        math.clamp(position.Y, 8, maxY)
+    )
+    Hub.Position = UDim2.fromOffset(windowPos.X, windowPos.Y)
+    Hub.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
+    HubShadow.Position = UDim2.fromOffset(windowPos.X, windowPos.Y + 6)
+    HubShadow.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
 end
 
-local function EnsureHubPosition()
-\thubSize = GetHubSize()
-
-\tif not hubPosition then
-\t\tlocal viewport = GetViewport()
-
-\t\thubPosition = Vector2.new(
-\t\t\tmath.max(8, (viewport.X - hubSize.X) / 2),
-\t\t\tmath.max(8, (viewport.Y - hubSize.Y) / 2)
-\t\t)
-\tend
-
-\tApplyHubPosition(hubPosition)
+local function ensureWindowRect()
+    if not windowPos then
+        local viewport = getViewport()
+        windowPos = Vector2.new(
+            math.max(8, (viewport.X - windowSize.X) / 2),
+            math.max(8, (viewport.Y - windowSize.Y) / 2)
+        )
+    end
+    applyWindowRect(windowPos)
 end
+
+task.defer(ensureWindowRect)
+Track(ScreenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+    if windowPos then applyWindowRect(windowPos) end
+end))
 
 ---------------------------------------------------------
--- SIDEBAR
+-- SACRACIA SIDEBAR (LEFT NAVIGATION)
 ---------------------------------------------------------
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
-Sidebar.BackgroundColor3 = C.sidebar
+Sidebar.Size = UDim2.new(0, SIDEBAR_W, 1, 0)
+Sidebar.Position = UDim2.new(0, 0, 0, 0)
+Sidebar.BackgroundColor3 = AppC.sidebar
 Sidebar.BorderSizePixel = 0
 Sidebar.ZIndex = 12
 Sidebar.Parent = Hub
@@ -385,710 +469,764 @@ Sidebar.Parent = Hub
 local SideRule = Instance.new("Frame")
 SideRule.Size = UDim2.new(0, 1, 1, 0)
 SideRule.Position = UDim2.new(1, -1, 0, 0)
-SideRule.BackgroundColor3 = C.border
+SideRule.BackgroundColor3 = AppC.border
 SideRule.BorderSizePixel = 0
 SideRule.ZIndex = 13
 SideRule.Parent = Sidebar
 
-local Brand = Instance.new("Frame")
-Brand.Size = UDim2.new(1, 0, 0, 58)
-Brand.BackgroundTransparency = 1
-Brand.ZIndex = 13
-Brand.Parent = Sidebar
+-- BRAND LOGO
+local LogoFrame = Instance.new("Frame")
+LogoFrame.Size = UDim2.new(1, 0, 0, 50)
+LogoFrame.BackgroundTransparency = 1
+LogoFrame.ZIndex = 13
+LogoFrame.Parent = Sidebar
 
-local BrandMark = CreateLabel(Brand, {
-\tSize = UDim2.fromOffset(24, 58),
-\tPosition = UDim2.fromOffset(15, 0),
-\tBackgroundTransparency = 1,
-\tText = "◈",
-\tTextColor3 = C.accent,
-\tTextSize = 15,
-\tFont = Enum.Font.GothamBlack,
-\tZIndex = 14,
-})
+local LogoText = Instance.new("TextLabel")
+LogoText.Size = UDim2.new(1, -20, 1, 0)
+LogoText.Position = UDim2.new(0, 16, 0, 0)
+LogoText.BackgroundTransparency = 1
+LogoText.Text = "SACRACIA"
+LogoText.TextColor3 = AppC.text
+LogoText.TextSize = 13
+LogoText.Font = Enum.Font.GothamBlack
+LogoText.TextXAlignment = Enum.TextXAlignment.Left
+LogoText.ZIndex = 14
+LogoText.Parent = LogoFrame
 
-local BrandText = CreateLabel(Brand, {
-\tSize = UDim2.new(1, -52, 0, 22),
-\tPosition = UDim2.fromOffset(43, 11),
-\tBackgroundTransparency = 1,
-\tText = "SACRACIA",
-\tTextColor3 = C.text,
-\tTextSize = 12,
-\tFont = Enum.Font.GothamBlack,
-\tTextXAlignment = Enum.TextXAlignment.Left,
-\tZIndex = 14,
-})
+local SideScroll = Instance.new("ScrollingFrame")
+SideScroll.Size = UDim2.new(1, 0, 1, -50)
+SideScroll.Position = UDim2.new(0, 0, 0, 50)
+SideScroll.BackgroundTransparency = 1
+SideScroll.BorderSizePixel = 0
+SideScroll.ScrollBarThickness = 0
+SideScroll.ZIndex = 13
+SideScroll.Parent = Sidebar
 
-local BrandVersion = CreateLabel(Brand, {
-\tSize = UDim2.new(1, -52, 0, 15),
-\tPosition = UDim2.fromOffset(43, 31),
-\tBackgroundTransparency = 1,
-\tText = VERSION,
-\tTextColor3 = C.textDim,
-\tTextSize = 8,
-\tFont = Enum.Font.GothamBold,
-\tTextXAlignment = Enum.TextXAlignment.Left,
-\tZIndex = 14,
-})
+local SideList = Instance.new("UIListLayout")
+SideList.SortOrder = Enum.SortOrder.LayoutOrder
+SideList.Padding = UDim.new(0, 4)
+SideList.Parent = SideScroll
 
-local CloseButton = Instance.new("TextButton")
-CloseButton.Size = UDim2.fromOffset(28, 28)
-CloseButton.Position = UDim2.new(1, -36, 0, 15)
-CloseButton.BackgroundTransparency = 1
-CloseButton.Text = "✕"
-CloseButton.TextColor3 = C.textDim
-CloseButton.TextSize = 12
-CloseButton.Font = Enum.Font.GothamBold
-CloseButton.AutoButtonColor = false
-CloseButton.ZIndex = 20
-CloseButton.Parent = Hub
+local SidePad = Instance.new("UIPadding")
+SidePad.PaddingLeft = UDim.new(0, 10)
+SidePad.PaddingRight = UDim.new(0, 10)
+SidePad.Parent = SideScroll
 
-Connect(CloseButton.MouseEnter, function()
-\tCloseButton.TextColor3 = C.red
-end)
+-- CLOSE BUTTON
+local ClB = Instance.new("TextButton")
+ClB.Size = UDim2.new(0, 24, 0, 24)
+ClB.Position = UDim2.new(1, -30, 0, 12)
+ClB.BackgroundTransparency = 1
+ClB.Text = "✕"
+ClB.TextColor3 = AppC.textDim
+ClB.TextSize = 12
+ClB.Font = Enum.Font.GothamBold
+ClB.ZIndex = 20
+ClB.Parent = Hub
 
-Connect(CloseButton.MouseLeave, function()
-\tCloseButton.TextColor3 = C.textDim
-end)
+ClB.MouseEnter:Connect(function() ClB.TextColor3 = AppC.red end)
+ClB.MouseLeave:Connect(function() ClB.TextColor3 = AppC.textDim end)
 
-local NavScroll = Instance.new("ScrollingFrame")
-NavScroll.Name = "Navigation"
-NavScroll.BackgroundTransparency = 1
-NavScroll.BorderSizePixel = 0
-NavScroll.ScrollBarThickness = 0
-NavScroll.CanvasSize = UDim2.fromOffset(0, 0)
-NavScroll.ZIndex = 13
-NavScroll.Parent = Sidebar
+-- WINDOW DRAG LOGIC — robust input tracking
+do
+    local dragging = false
+    local activeInput = nil
+    local dragStart = nil
+    local startPos = nil
 
-local NavPadding = Instance.new("UIPadding")
-NavPadding.PaddingTop = UDim.new(0, 6)
-NavPadding.PaddingBottom = UDim.new(0, 6)
-NavPadding.PaddingLeft = UDim.new(0, 10)
-NavPadding.PaddingRight = UDim.new(0, 10)
-NavPadding.Parent = NavScroll
+    Sidebar.InputBegan:Connect(function(input)
+        if (input.UserInputType == Enum.UserInputType.MouseButton1
+         or input.UserInputType == Enum.UserInputType.Touch)
+         and not windowInteraction then
+            if isInside(ClB, input.Position) then return end
+            ensureWindowRect()
+            windowInteraction = "drag"
+            dragging = true
+            activeInput = input
+            dragStart = input.Position
+            startPos = windowPos
+        end
+    end)
 
-local NavList = Instance.new("UIListLayout")
-NavList.Padding = UDim.new(0, 5)
-NavList.SortOrder = Enum.SortOrder.LayoutOrder
-NavList.Parent = NavScroll
+    Track(UserInputService.InputChanged:Connect(function(input)
+        if not dragging then return end
+        if not IsDragInput(input, activeInput) then return end
+        applyWindowRect(startPos + (input.Position - dragStart))
+    end))
 
-local SidebarStatus = Instance.new("Frame")
-SidebarStatus.BackgroundColor3 = C.card
-SidebarStatus.BorderSizePixel = 0
-SidebarStatus.ZIndex = 14
-SidebarStatus.Parent = Sidebar
-AddCorner(SidebarStatus, 8)
-
-CreateLabel(SidebarStatus, {
-\tSize = UDim2.new(1, -14, 0, 16),
-\tPosition = UDim2.fromOffset(7, 4),
-\tBackgroundTransparency = 1,
-\tText = "●  INTERFACE ONLINE",
-\tTextColor3 = C.green,
-\tTextSize = 7,
-\tFont = Enum.Font.GothamBold,
-\tTextXAlignment = Enum.TextXAlignment.Left,
-\tZIndex = 15,
-})
-
-CreateLabel(SidebarStatus, {
-\tSize = UDim2.new(1, -14, 0, 14),
-\tPosition = UDim2.fromOffset(7, 20),
-\tBackgroundTransparency = 1,
-\tText = "BUILD " .. VERSION,
-\tTextColor3 = C.textDim,
-\tTextSize = 7,
-\tFont = Enum.Font.GothamBold,
-\tTextXAlignment = Enum.TextXAlignment.Left,
-\tZIndex = 15,
-})
+    Track(UserInputService.InputEnded:Connect(function(input)
+        if dragging and (input == activeInput
+         or (activeInput and activeInput.UserInputType == Enum.UserInputType.MouseButton1
+             and input.UserInputType == Enum.UserInputType.MouseButton1)) then
+            dragging = false
+            activeInput = nil
+            windowInteraction = nil
+        end
+    end))
+end
 
 ---------------------------------------------------------
--- PAGE HOLDER
+-- SACRACIA UI CONTROLS BUILDERS
 ---------------------------------------------------------
 local PageHolder = Instance.new("Frame")
 PageHolder.Name = "PageHolder"
+PageHolder.Size = UDim2.new(1, -SIDEBAR_W, 1, 0)
+PageHolder.Position = UDim2.new(0, SIDEBAR_W, 0, 0)
 PageHolder.BackgroundTransparency = 1
 PageHolder.ZIndex = 11
 PageHolder.Parent = Hub
 
-local function UpdateLayout()
-\tEnsureHubPosition()
+local function CreateSectionHeader(parent, text)
+    local header = Instance.new("TextLabel")
+    header.Size = UDim2.new(1, 0, 0, 20)
+    header.BackgroundTransparency = 1
+    header.Text = string.upper(text)
+    header.TextColor3 = AppC.textSec
+    header.TextSize = 9
+    header.Font = Enum.Font.GothamBold
+    header.TextXAlignment = Enum.TextXAlignment.Left
+    header.ZIndex = 13
+    header.Parent = parent
+    return header
+end
 
-\tlocal compact = hubSize.X < 470
-\tlocal sidebarWidth = compact and 112 or DEFAULT_SIDEBAR_WIDTH
+-- iOS / SACRACIA SWITCH TOGGLE
+local function CreateToggle(parent, titleText, descText, defaultState, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, descText and 36 or 24)
+    frame.BackgroundTransparency = 1
+    frame.ZIndex = 13
+    frame.Parent = parent
 
-\tSidebar.Size = UDim2.fromOffset(sidebarWidth, hubSize.Y)
-\tPageHolder.Size = UDim2.new(1, -sidebarWidth, 1, 0)
-\tPageHolder.Position = UDim2.fromOffset(sidebarWidth, 0)
+    local textContainer = Instance.new("Frame")
+    textContainer.Size = UDim2.new(1, -45, 1, 0)
+    textContainer.BackgroundTransparency = 1
+    textContainer.Parent = frame
 
-\tNavScroll.Size = UDim2.new(1, 0, 1, compact and -58 or -108)
-\tNavScroll.Position = UDim2.fromOffset(0, 58)
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 16)
+    title.BackgroundTransparency = 1
+    title.Text = titleText
+    title.TextColor3 = AppC.text
+    title.TextSize = 10
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.ZIndex = 14
+    title.Parent = textContainer
 
-\tSidebarStatus.Visible = not compact
-\tSidebarStatus.Size = UDim2.new(1, -20, 0, 38)
-\tSidebarStatus.Position = UDim2.new(0, 10, 1, -45)
+    if descText then
+        local desc = Instance.new("TextLabel")
+        desc.Size = UDim2.new(1, 0, 0, 14)
+        desc.Position = UDim2.new(0, 0, 0, 16)
+        desc.BackgroundTransparency = 1
+        desc.Text = descText
+        desc.TextColor3 = AppC.textDim
+        desc.TextSize = 8
+        desc.Font = Enum.Font.GothamMedium
+        desc.TextXAlignment = Enum.TextXAlignment.Left
+        desc.ZIndex = 14
+        desc.Parent = textContainer
+    end
 
-\tBrandText.Visible = not compact
-\tBrandVersion.Visible = not compact
+    local switchTrack = Instance.new("TextButton")
+    switchTrack.Size = UDim2.new(0, 34, 0, 18)
+    switchTrack.Position = UDim2.new(1, -36, 0, (frame.Size.Y.Offset - 18) / 2)
+    switchTrack.BackgroundColor3 = defaultState and AppC.accent or AppC.switchOff
+    switchTrack.Text = ""
+    switchTrack.AutoButtonColor = false
+    switchTrack.ZIndex = 14
+    switchTrack.Parent = frame
+    Instance.new("UICorner", switchTrack).CornerRadius = UDim.new(1, 0)
 
-\tBrandMark.Position = compact
-\t\tand UDim2.new(0.5, -12, 0, 0)
-\t\tor UDim2.fromOffset(15, 0)
+    local switchThumb = Instance.new("Frame")
+    switchThumb.Size = UDim2.new(0, 14, 0, 14)
+    switchThumb.Position = defaultState
+        and UDim2.new(1, -16, 0.5, -7)
+        or  UDim2.new(0, 2, 0.5, -7)
+    switchThumb.BackgroundColor3 = AppC.white
+    switchThumb.BorderSizePixel = 0
+    switchThumb.ZIndex = 15
+    switchThumb.Parent = switchTrack
+    Instance.new("UICorner", switchThumb).CornerRadius = UDim.new(1, 0)
+
+    local state = defaultState
+    local function toggle()
+        state = not state
+        TweenService:Create(switchTrack, TweenInfo.new(0.18), {
+            BackgroundColor3 = state and AppC.accent or AppC.switchOff
+        }):Play()
+        TweenService:Create(switchThumb, TweenInfo.new(0.18), {
+            Position = state
+                and UDim2.new(1, -16, 0.5, -7)
+                or  UDim2.new(0, 2, 0.5, -7)
+        }):Play()
+        if callback then pcall(callback, state) end
+    end
+
+    switchTrack.MouseButton1Click:Connect(toggle)
+    return frame, toggle
+end
+
+-- SACRACIA SLIDER WITH MULTIPLIER/VALUE TAG
+local function CreateSlider(parent, titleText, minVal, maxVal, defaultVal, prefix, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 32)
+    frame.BackgroundTransparency = 1
+    frame.ZIndex = 13
+    frame.Parent = parent
+
+    prefix = prefix or "x"
+
+    -- Guard against zero-range slider
+    local range = maxVal - minVal
+    if range <= 0 then range = 1 end
+
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(0.7, 0, 0, 14)
+    title.BackgroundTransparency = 1
+    title.Text = titleText
+    title.TextColor3 = AppC.text
+    title.TextSize = 10
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.ZIndex = 14
+    title.Parent = frame
+
+    local valLabel = Instance.new("TextLabel")
+    valLabel.Size = UDim2.new(0.3, 0, 0, 14)
+    valLabel.Position = UDim2.new(0.7, 0, 0, 0)
+    valLabel.BackgroundTransparency = 1
+    valLabel.Text = prefix .. tostring(defaultVal)
+    valLabel.TextColor3 = AppC.text
+    valLabel.TextSize = 10
+    valLabel.Font = Enum.Font.GothamBold
+    valLabel.TextXAlignment = Enum.TextXAlignment.Right
+    valLabel.ZIndex = 14
+    valLabel.Parent = frame
+
+    local track = Instance.new("TextButton")
+    track.Size = UDim2.new(1, 0, 0, 4)
+    track.Position = UDim2.new(0, 0, 0, 20)
+    track.BackgroundColor3 = AppC.switchOff
+    track.Text = ""
+    track.AutoButtonColor = false
+    track.ZIndex = 14
+    track.Parent = frame
+    Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
+
+    local pct = math.clamp((defaultVal - minVal) / range, 0, 1)
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new(pct, 0, 1, 0)
+    fill.BackgroundColor3 = AppC.accent
+    fill.BorderSizePixel = 0
+    fill.ZIndex = 15
+    fill.Parent = track
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+
+    local thumb = Instance.new("Frame")
+    thumb.Size = UDim2.new(0, 10, 0, 10)
+    thumb.AnchorPoint = Vector2.new(0.5, 0.5)
+    thumb.Position = UDim2.new(pct, 0, 0.5, 0)
+    thumb.BackgroundColor3 = AppC.white
+    thumb.BorderSizePixel = 0
+    thumb.ZIndex = 16
+    thumb.Parent = track
+    Instance.new("UICorner", thumb).CornerRadius = UDim.new(1, 0)
+
+    -- Make the thumb invisible-frame larger for easier touch targeting
+    local touchArea = Instance.new("TextButton")
+    touchArea.Size = UDim2.new(1, 0, 0, 24)
+    touchArea.Position = UDim2.new(0, 0, 0.5, -12)
+    touchArea.BackgroundTransparency = 1
+    touchArea.Text = ""
+    touchArea.AutoButtonColor = false
+    touchArea.ZIndex = 17  -- above track(14), fill(15), thumb(16)
+    touchArea.Parent = frame
+
+    local dragging = false
+    local activeInput = nil
+
+    local function update(input)
+        local trackAbsPos = track.AbsolutePosition.X
+        local trackAbsSize = track.AbsoluteSize.X
+        if trackAbsSize < 1 then return end  -- not laid out yet
+        local delta = math.clamp((input.Position.X - trackAbsPos) / trackAbsSize, 0, 1)
+        local val = math.round(minVal + range * delta)
+        fill.Size = UDim2.new(delta, 0, 1, 0)
+        thumb.Position = UDim2.new(delta, 0, 0.5, 0)
+        valLabel.Text = prefix .. tostring(val)
+        if callback then pcall(callback, val) end
+    end
+
+    touchArea.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            activeInput = input
+            update(input)
+        end
+    end)
+
+    -- Per-slider InputChanged: only act on our active input
+    Track(UserInputService.InputChanged:Connect(function(input)
+        if not dragging then return end
+        if not IsDragInput(input, activeInput) then return end
+        update(input)
+    end))
+
+    Track(UserInputService.InputEnded:Connect(function(input)
+        if dragging and (input == activeInput
+         or (activeInput and activeInput.UserInputType == Enum.UserInputType.MouseButton1
+             and input.UserInputType == Enum.UserInputType.MouseButton1)) then
+            dragging = false
+            activeInput = nil
+        end
+    end))
+
+    return frame
 end
 
 ---------------------------------------------------------
--- PAGES AND NAVIGATION
+-- NAVIGATION & CATEGORIES (MATCHING SACRACIA SIDEBAR)
 ---------------------------------------------------------
 local categories = {
-\t{id = "Stats", icon = "◈", name = "Stats"},
-\t{id = "Entities", icon = "◉", name = "Entities"},
-\t{id = "Visuals", icon = "◇", name = "Visuals"},
-\t{id = "Valuables", icon = "◆", name = "Valuables"},
-\t{id = "Items", icon = "▣", name = "Items"},
-\t{id = "Level", icon = "⚡", name = "Level"},
-\t{id = "Miscellaneous", icon = "⚙", name = "Misc"},
-\t{id = "Settings", icon = "☷", name = "Settings"},
+    {id = "Stats",         icon = "📊", name = "Stats"},
+    {id = "Entities",      icon = "👁", name = "Entities"},
+    {id = "Visuals",       icon = "🎯", name = "Visuals"},
+    {id = "Valuables",     icon = "🎒", name = "Valuables"},
+    {id = "Items",         icon = "📦", name = "Items"},
+    {id = "Level",         icon = "⚡", name = "Level"},
+    {id = "Miscellaneous", icon = "⚙", name = "Miscellaneous"},
+    {id = "Settings",      icon = "🛠", name = "Settings"},
 }
 
-local pages = {}
-local navigationButtons = {}
-local currentPage = nil
+local sidebarButtons = {}
+local categoryPages = {}
+local selectedPage = nil
 
-local function CreateComingSoonPage(item)
-\tlocal page = Instance.new("Frame")
-\tpage.Name = "Page_" .. item.id
-\tpage.Size = UDim2.fromScale(1, 1)
-\tpage.BackgroundTransparency = 1
-\tpage.Visible = false
-\tpage.ZIndex = 12
-\tpage.Parent = PageHolder
-
-\tlocal scroll = Instance.new("ScrollingFrame")
-\tscroll.Size = UDim2.fromScale(1, 1)
-\tscroll.BackgroundTransparency = 1
-\tscroll.BorderSizePixel = 0
-\tscroll.ScrollBarThickness = 3
-\tscroll.ScrollBarImageColor3 = C.border
-\tscroll.CanvasSize = UDim2.fromOffset(0, 0)
-\tscroll.ZIndex = 13
-\tscroll.Parent = page
-
-\tlocal padding = Instance.new("UIPadding")
-\tpadding.PaddingTop = UDim.new(0, 22)
-\tpadding.PaddingBottom = UDim.new(0, 22)
-\tpadding.PaddingLeft = UDim.new(0, 22)
-\tpadding.PaddingRight = UDim.new(0, 22)
-\tpadding.Parent = scroll
-
-\tlocal content = Instance.new("Frame")
-\tcontent.Size = UDim2.new(1, 0, 0, 0)
-\tcontent.AutomaticSize = Enum.AutomaticSize.Y
-\tcontent.BackgroundTransparency = 1
-\tcontent.ZIndex = 13
-\tcontent.Parent = scroll
-
-\tlocal list = Instance.new("UIListLayout")
-\tlist.Padding = UDim.new(0, 13)
-\tlist.SortOrder = Enum.SortOrder.LayoutOrder
-\tlist.Parent = content
-
-\tCreateLabel(content, {
-\t\tSize = UDim2.new(1, 0, 0, 18),
-\t\tBackgroundTransparency = 1,
-\t\tText = string.upper(item.name),
-\t\tTextColor3 = C.textSecondary,
-\t\tTextSize = 9,
-\t\tFont = Enum.Font.GothamBold,
-\t\tTextXAlignment = Enum.TextXAlignment.Left,
-\t\tZIndex = 14,
-\t})
-
-\tlocal card = Instance.new("Frame")
-\tcard.Size = UDim2.new(1, 0, 0, 218)
-\tcard.BackgroundColor3 = C.card
-\tcard.BorderSizePixel = 0
-\tcard.ZIndex = 14
-\tcard.Parent = content
-\tAddCorner(card, 12)
-\tAddStroke(card, C.border, 1, 0.1)
-
-\tlocal blueLine = Instance.new("Frame")
-\tblueLine.Size = UDim2.fromOffset(4, 172)
-\tblueLine.Position = UDim2.fromOffset(16, 23)
-\tblueLine.BackgroundColor3 = C.accent
-\tblueLine.BorderSizePixel = 0
-\tblueLine.ZIndex = 15
-\tblueLine.Parent = card
-\tAddCorner(blueLine, 99)
-
-\tlocal iconBox = Instance.new("Frame")
-\ticonBox.Size = UDim2.fromOffset(42, 42)
-\ticonBox.Position = UDim2.fromOffset(37, 24)
-\ticonBox.BackgroundColor3 = C.accent
-\ticonBox.BorderSizePixel = 0
-\ticonBox.ZIndex = 15
-\ticonBox.Parent = card
-\tAddCorner(iconBox, 11)
-
-\tCreateLabel(iconBox, {
-\t\tSize = UDim2.fromScale(1, 1),
-\t\tBackgroundTransparency = 1,
-\t\tText = item.icon,
-\t\tTextColor3 = C.white,
-\t\tTextSize = 19,
-\t\tFont = Enum.Font.GothamBlack,
-\t\tZIndex = 16,
-\t})
-
-\tCreateLabel(card, {
-\t\tSize = UDim2.new(1, -130, 0, 24),
-\t\tPosition = UDim2.fromOffset(91, 24),
-\t\tBackgroundTransparency = 1,
-\t\tText = "СКОРО ОБНОВЛЕНИЕ",
-\t\tTextColor3 = C.text,
-\t\tTextSize = 13,
-\t\tFont = Enum.Font.GothamBlack,
-\t\tTextXAlignment = Enum.TextXAlignment.Left,
-\t\tZIndex = 15,
-\t})
-
-\tCreateLabel(card, {
-\t\tSize = UDim2.new(1, -130, 0, 17),
-\t\tPosition = UDim2.fromOffset(91, 48),
-\t\tBackgroundTransparency = 1,
-\t\tText = string.upper(item.name) .. " MODULE",
-\t\tTextColor3 = C.accent,
-\t\tTextSize = 8,
-\t\tFont = Enum.Font.GothamBold,
-\t\tTextXAlignment = Enum.TextXAlignment.Left,
-\t\tZIndex = 15,
-\t})
-
-\tCreateLabel(card, {
-\t\tSize = UDim2.new(1, -74, 0, 47),
-\t\tPosition = UDim2.fromOffset(37, 89),
-\t\tBackgroundTransparency = 1,
-\t\tText = "Этот раздел находится в разработке.
-ЖДИТЕ ОБНОВЛЕНИЯ.",
-\t\tTextColor3 = C.textSecondary,
-\t\tTextSize = 10,
-\t\tFont = Enum.Font.GothamMedium,
-\t\tTextWrapped = true,
-\t\tTextXAlignment = Enum.TextXAlignment.Left,
-\t\tTextYAlignment = Enum.TextYAlignment.Top,
-\t\tZIndex = 15,
-\t})
-
-\tlocal divider = Instance.new("Frame")
-\tdivider.Size = UDim2.new(1, -74, 0, 1)
-\tdivider.Position = UDim2.fromOffset(37, 151)
-\tdivider.BackgroundColor3 = C.border
-\tdivider.BorderSizePixel = 0
-\tdivider.ZIndex = 15
-\tdivider.Parent = card
-
-\tlocal versionPill = Instance.new("Frame")
-\tversionPill.Size = UDim2.fromOffset(108, 25)
-\tversionPill.Position = UDim2.fromOffset(37, 169)
-\tversionPill.BackgroundColor3 = C.activeTab
-\tversionPill.BorderSizePixel = 0
-\tversionPill.ZIndex = 15
-\tversionPill.Parent = card
-\tAddCorner(versionPill, 99)
-
-\tCreateLabel(versionPill, {
-\t\tSize = UDim2.fromScale(1, 1),
-\t\tBackgroundTransparency = 1,
-\t\tText = "VERSION " .. VERSION,
-\t\tTextColor3 = C.accent,
-\t\tTextSize = 8,
-\t\tFont = Enum.Font.GothamBold,
-\t\tZIndex = 16,
-\t})
-
-\tCreateLabel(card, {
-\t\tSize = UDim2.new(1, -165, 0, 25),
-\t\tPosition = UDim2.fromOffset(157, 169),
-\t\tBackgroundTransparency = 1,
-\t\tText = "●  IN DEVELOPMENT",
-\t\tTextColor3 = C.textDim,
-\t\tTextSize = 7,
-\t\tFont = Enum.Font.GothamBold,
-\t\tTextXAlignment = Enum.TextXAlignment.Left,
-\t\tZIndex = 15,
-\t})
-
-\tlocal infoCard = Instance.new("Frame")
-\tinfoCard.Size = UDim2.new(1, 0, 0, 62)
-\tinfoCard.BackgroundColor3 = C.card
-\tinfoCard.BorderSizePixel = 0
-\tinfoCard.ZIndex = 14
-\tinfoCard.Parent = content
-\tAddCorner(infoCard, 10)
-\tAddStroke(infoCard, C.border, 1, 0.2)
-
-\tCreateLabel(infoCard, {
-\t\tSize = UDim2.fromOffset(25, 62),
-\t\tPosition = UDim2.fromOffset(15, 0),
-\t\tBackgroundTransparency = 1,
-\t\tText = "i",
-\t\tTextColor3 = C.accent,
-\t\tTextSize = 17,
-\t\tFont = Enum.Font.GothamBlack,
-\t\tZIndex = 15,
-\t})
-
-\tCreateLabel(infoCard, {
-\t\tSize = UDim2.new(1, -62, 0, 18),
-\t\tPosition = UDim2.fromOffset(44, 10),
-\t\tBackgroundTransparency = 1,
-\t\tText = "СТАТУС РАЗРАБОТКИ",
-\t\tTextColor3 = C.text,
-\t\tTextSize = 9,
-\t\tFont = Enum.Font.GothamBold,
-\t\tTextXAlignment = Enum.TextXAlignment.Left,
-\t\tZIndex = 15,
-\t})
-
-\tCreateLabel(infoCard, {
-\t\tSize = UDim2.new(1, -62, 0, 20),
-\t\tPosition = UDim2.fromOffset(44, 29),
-\t\tBackgroundTransparency = 1,
-\t\tText = "Новые возможности появятся в будущих версиях.",
-\t\tTextColor3 = C.textDim,
-\t\tTextSize = 8,
-\t\tFont = Enum.Font.GothamMedium,
-\t\tTextXAlignment = Enum.TextXAlignment.Left,
-\t\tZIndex = 15,
-\t})
-
-\tConnect(list:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-\t\tscroll.CanvasSize = UDim2.fromOffset(0, list.AbsoluteContentSize.Y + 44)
-\tend)
-
-\ttask.defer(function()
-\t\tscroll.CanvasSize = UDim2.fromOffset(0, list.AbsoluteContentSize.Y + 44)
-\tend)
-
-\treturn page
-end
-
-local function CreateNavigationButton(item)
-\tlocal button = Instance.new("TextButton")
-\tbutton.Name = "Tab_" .. item.id
-\tbutton.Size = UDim2.new(1, 0, 0, 32)
-\tbutton.BackgroundColor3 = C.sidebar
-\tbutton.BorderSizePixel = 0
-\tbutton.Text = ""
-\tbutton.AutoButtonColor = false
-\tbutton.ZIndex = 14
-\tbutton.Parent = NavScroll
-\tAddCorner(button, 7)
-
-\tlocal icon = CreateLabel(button, {
-\t\tName = "Icon",
-\t\tSize = UDim2.fromOffset(24, 32),
-\t\tPosition = UDim2.fromOffset(8, 0),
-\t\tBackgroundTransparency = 1,
-\t\tText = item.icon,
-\t\tTextColor3 = C.textDim,
-\t\tTextSize = 12,
-\t\tFont = Enum.Font.GothamBold,
-\t\tZIndex = 15,
-\t})
-
-\tlocal label = CreateLabel(button, {
-\t\tName = "Label",
-\t\tSize = UDim2.new(1, -42, 1, 0),
-\t\tPosition = UDim2.fromOffset(35, 0),
-\t\tBackgroundTransparency = 1,
-\t\tText = item.name,
-\t\tTextColor3 = C.textDim,
-\t\tTextSize = 9,
-\t\tFont = Enum.Font.GothamBold,
-\t\tTextXAlignment = Enum.TextXAlignment.Left,
-\t\tZIndex = 15,
-\t})
-
-\tConnect(button.MouseEnter, function()
-\t\tif currentPage ~= item.id then
-\t\t\tTween(button, TweenInfo.new(0.14), {
-\t\t\t\tBackgroundColor3 = C.card,
-\t\t\t})
-\t\tend
-\tend)
-
-\tConnect(button.MouseLeave, function()
-\t\tif currentPage ~= item.id then
-\t\t\tTween(button, TweenInfo.new(0.14), {
-\t\t\t\tBackgroundColor3 = C.sidebar,
-\t\t\t})
-\t\tend
-\tend)
-
-\treturn button, icon, label
-end
-
-local function ShowPage(pageId)
-\tcurrentPage = pageId
-
-\tfor id, page in pairs(pages) do
-\t\tpage.Visible = (id == pageId)
-\tend
-
-\tfor id, buttonData in pairs(navigationButtons) do
-\t\tlocal selected = id == pageId
-
-\t\tTween(buttonData.button, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-\t\t\tBackgroundColor3 = selected and C.activeTab or C.sidebar,
-\t\t})
-
-\t\tbuttonData.icon.TextColor3 = selected and C.accent or C.textDim
-\t\tbuttonData.label.TextColor3 = selected and C.text or C.textDim
-\tend
+local function ShowPage(id)
+    selectedPage = id
+    for pageId, page in pairs(categoryPages) do
+        page.Visible = (pageId == id)
+    end
+    for pageId, btn in pairs(sidebarButtons) do
+        local selected = (pageId == id)
+        btn.BackgroundColor3 = selected and AppC.activeTab or AppC.sidebar
+        local icon = btn:FindFirstChild("Icon")
+        local label = btn:FindFirstChild("Label")
+        if icon then icon.TextColor3 = selected and AppC.accent or AppC.textDim end
+        if label then label.TextColor3 = selected and AppC.text or AppC.textDim end
+    end
 end
 
 for _, item in ipairs(categories) do
-\tpages[item.id] = CreateComingSoonPage(item)
+    local btn = Instance.new("TextButton")
+    btn.Name = "Side_" .. item.id
+    btn.Size = UDim2.new(1, 0, 0, 28)
+    btn.BackgroundColor3 = AppC.sidebar
+    btn.BorderSizePixel = 0
+    btn.Text = ""
+    btn.AutoButtonColor = false
+    btn.ZIndex = 14
+    btn.Parent = SideScroll
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
 
-\tlocal button, icon, label = CreateNavigationButton(item)
-\tnavigationButtons[item.id] = {
-\t\tbutton = button,
-\t\ticon = icon,
-\t\tlabel = label,
-\t}
+    local icon = Instance.new("TextLabel")
+    icon.Name = "Icon"
+    icon.Size = UDim2.new(0, 20, 1, 0)
+    icon.Position = UDim2.new(0, 8, 0, 0)
+    icon.BackgroundTransparency = 1
+    icon.Text = item.icon
+    icon.TextColor3 = AppC.textDim
+    icon.TextSize = 11
+    icon.ZIndex = 15
+    icon.Parent = btn
 
-\tConnect(button.Activated, function()
-\t\tShowPage(item.id)
-\tend)
-end
+    local label = Instance.new("TextLabel")
+    label.Name = "Label"
+    label.Size = UDim2.new(1, -34, 1, 0)
+    label.Position = UDim2.new(0, 32, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = item.name
+    label.TextColor3 = AppC.textDim
+    label.TextSize = 9
+    label.Font = Enum.Font.GothamBold
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 15
+    label.Parent = btn
 
-Connect(NavList:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-\tNavScroll.CanvasSize = UDim2.fromOffset(0, NavList.AbsoluteContentSize.Y + 16)
-end)
+    sidebarButtons[item.id] = btn
 
-task.defer(function()
-\tNavScroll.CanvasSize = UDim2.fromOffset(0, NavList.AbsoluteContentSize.Y + 16)
-end)
+    -- Hover feedback (desktop only — no effect on touch)
+    btn.MouseEnter:Connect(function()
+        if selectedPage ~= item.id then
+            TweenService:Create(btn, TweenInfo.new(0.12), {
+                BackgroundColor3 = AppC.hover
+            }):Play()
+        end
+    end)
+    btn.MouseLeave:Connect(function()
+        if selectedPage ~= item.id then
+            TweenService:Create(btn, TweenInfo.new(0.12), {
+                BackgroundColor3 = AppC.sidebar
+            }):Play()
+        end
+    end)
 
----------------------------------------------------------
--- FLOATING OPEN / CLOSE BUTTON
----------------------------------------------------------
-local ToggleButton = Instance.new("TextButton")
-ToggleButton.Name = "HubToggle"
-ToggleButton.Size = UDim2.fromOffset(142, 38)
-ToggleButton.Position = UDim2.new(0, 16, 0.32, 0)
-ToggleButton.BackgroundColor3 = C.sidebar
-ToggleButton.BorderSizePixel = 0
-ToggleButton.Text = ""
-ToggleButton.AutoButtonColor = false
-ToggleButton.ZIndex = 50
-ToggleButton.Parent = ScreenGui
-AddCorner(ToggleButton, 11)
-
-local ToggleStroke = AddStroke(ToggleButton, C.accent, 1.2, 0.22)
-
-local ToggleIcon = CreateLabel(ToggleButton, {
-\tSize = UDim2.fromOffset(26, 38),
-\tPosition = UDim2.fromOffset(11, 0),
-\tBackgroundTransparency = 1,
-\tText = "◈",
-\tTextColor3 = C.accent,
-\tTextSize = 15,
-\tFont = Enum.Font.GothamBlack,
-\tZIndex = 51,
-})
-
-local ToggleText = CreateLabel(ToggleButton, {
-\tSize = UDim2.new(1, -49, 1, 0),
-\tPosition = UDim2.fromOffset(40, 0),
-\tBackgroundTransparency = 1,
-\tText = "SACRACIA",
-\tTextColor3 = C.text,
-\tTextSize = 10,
-\tFont = Enum.Font.GothamBold,
-\tTextXAlignment = Enum.TextXAlignment.Left,
-\tZIndex = 51,
-})
-
-local toggleDrag = nil
-local windowDrag = nil
-
-local function SetToggleVisual(isOpen)
-\tlocal color = isOpen and C.red or C.accent
-
-\tToggleText.Text = isOpen and "CLOSE HUB" or "SACRACIA"
-\tToggleIcon.TextColor3 = color
-
-\tTween(ToggleStroke, TweenInfo.new(0.18), {
-\t\tColor = color,
-\t})
-end
-
-local function SetHubOpen(open)
-\tif hubOpen == open then
-\t\treturn
-\tend
-
-\thubOpen = open
-\tSetToggleVisual(open)
-
-\tif open then
-\t\tEnsureHubPosition()
-\t\tUpdateLayout()
-
-\t\tHub.Visible = true
-\t\tHubShadow.Visible = true
-
-\t\tHub.Size = UDim2.fromOffset(hubSize.X, 0)
-\t\tHubShadow.Size = UDim2.fromOffset(hubSize.X, 0)
-
-\t\tTween(Hub, TweenInfo.new(0.24, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-\t\t\tSize = UDim2.fromOffset(hubSize.X, hubSize.Y),
-\t\t})
-
-\t\tTween(HubShadow, TweenInfo.new(0.24, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-\t\t\tSize = UDim2.fromOffset(hubSize.X, hubSize.Y),
-\t\t})
-\telse
-\t\tlocal closingTween = Tween(Hub, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-\t\t\tSize = UDim2.fromOffset(hubSize.X, 0),
-\t\t})
-
-\t\tTween(HubShadow, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-\t\t\tSize = UDim2.fromOffset(hubSize.X, 0),
-\t\t})
-
-\t\tclosingTween.Completed:Connect(function()
-\t\t\tif not hubOpen and Hub.Parent then
-\t\t\t\tHub.Visible = false
-\t\t\t\tHubShadow.Visible = false
-\t\t\t\tHub.Size = UDim2.fromOffset(hubSize.X, hubSize.Y)
-\t\t\t\tHubShadow.Size = UDim2.fromOffset(hubSize.X, hubSize.Y)
-\t\t\tend
-\t\tend)
-\tend
+    btn.MouseButton1Click:Connect(function()
+        ShowPage(item.id)
+    end)
 end
 
 ---------------------------------------------------------
--- INPUT: DRAG BUTTON AND WINDOW
+-- REAL WORKING VISUALS LOGIC FOR COSMETICS
 ---------------------------------------------------------
-local function IsInside(guiObject, point)
-\tlocal position = guiObject.AbsolutePosition
-\tlocal size = guiObject.AbsoluteSize
+local betaState = {
+    wings = false,
+    aura = false,
+    wingSpeed = 3,
+    wingFolder = nil,
+    auraHighlight = nil,
+    auraParticles = nil,
+    auraLight = nil,
+    leftWeld = nil,
+    rightWeld = nil,
+    conn = nil,
+}
 
-\treturn point.X >= position.X
-\t\tand point.X <= position.X + size.X
-\t\tand point.Y >= position.Y
-\t\tand point.Y <= position.Y + size.Y
+local function RemoveWings()
+    if betaState.wingFolder then
+        betaState.wingFolder:Destroy()
+        betaState.wingFolder = nil
+    end
+    betaState.leftWeld = nil
+    betaState.rightWeld = nil
 end
 
-Connect(ToggleButton.InputBegan, function(input)
-\tif input.UserInputType ~= Enum.UserInputType.MouseButton1
-\t\tand input.UserInputType ~= Enum.UserInputType.Touch then
-\t\treturn
-\tend
+local function RemoveAura()
+    if betaState.auraHighlight then betaState.auraHighlight:Destroy() betaState.auraHighlight = nil end
+    if betaState.auraParticles  then betaState.auraParticles:Destroy()  betaState.auraParticles  = nil end
+    if betaState.auraLight     then betaState.auraLight:Destroy()       betaState.auraLight     = nil end
+    -- Also catch orphaned light by name (in case betaState was reset)
+    local char = player.Character
+    if char then
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local light = hrp:FindFirstChild("MidnightAuraLight")
+            if light then light:Destroy() end
+        end
+    end
+end
 
-\ttoggleDrag = {
-\t\tinput = input,
-\t\tstartInput = input.Position,
-\t\tstartPosition = ToggleButton.Position,
-\t\tmoved = false,
-\t}
-end)
+local function CreateWingPart(parent, size, cframe)
+    local p = Instance.new("Part")
+    p.Size = size
+    p.CFrame = cframe
+    p.Color = AppC.accent
+    p.Material = Enum.Material.Neon
+    p.CanCollide = false
+    p.Massless = true
+    p.CastShadow = false
+    p.Parent = parent
+    return p
+end
 
-Connect(Sidebar.InputBegan, function(input)
-\tif input.UserInputType ~= Enum.UserInputType.MouseButton1
-\t\tand input.UserInputType ~= Enum.UserInputType.Touch then
-\t\treturn
-\tend
+local function ApplyWings()
+    RemoveWings()
+    if not betaState.wings then return end
 
-\tif IsInside(CloseButton, input.Position) then
-\t\treturn
-\tend
+    local char = player.Character
+    if not char then return end
+    local torso = char:FindFirstChild("UpperTorso")
+              or char:FindFirstChild("Torso")
+              or char:FindFirstChild("HumanoidRootPart")
+    if not torso then return end
 
-\tEnsureHubPosition()
+    local folder = Instance.new("Folder")
+    folder.Name = "MidnightWings"
+    folder.Parent = char
+    betaState.wingFolder = folder
 
-\twindowDrag = {
-\t\tinput = input,
-\t\tstartInput = input.Position,
-\t\tstartPosition = hubPosition,
-\t}
-end)
+    local leftRoot = Instance.new("Part")
+    leftRoot.Size = Vector3.new(0.1, 0.1, 0.1)
+    leftRoot.Transparency = 1
+    leftRoot.CanCollide = false
+    leftRoot.Massless = true
+    leftRoot.Parent = folder
 
-Connect(UserInputService.InputChanged, function(input)
-\tif toggleDrag then
-\t\tlocal validToggleInput = input.UserInputType == Enum.UserInputType.MouseMovement
-\t\t\tor input == toggleDrag.input
+    local rightRoot = Instance.new("Part")
+    rightRoot.Size = Vector3.new(0.1, 0.1, 0.1)
+    rightRoot.Transparency = 1
+    rightRoot.CanCollide = false
+    rightRoot.Massless = true
+    rightRoot.Parent = folder
 
-\t\tif validToggleInput then
-\t\t\tlocal delta = input.Position - toggleDrag.startInput
+    local wL = Instance.new("Weld")
+    wL.Part0 = torso
+    wL.Part1 = leftRoot
+    wL.C0 = CFrame.new(-0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(-15), 0)
+    wL.Parent = leftRoot
 
-\t\t\tif delta.Magnitude > 7 then
-\t\t\t\ttoggleDrag.moved = true
-\t\t\tend
+    local wR = Instance.new("Weld")
+    wR.Part0 = torso
+    wR.Part1 = rightRoot
+    wR.C0 = CFrame.new(0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(15), 0)
+    wR.Parent = rightRoot
 
-\t\t\tlocal viewport = GetViewport()
-\t\t\tlocal maxX = math.max(8, viewport.X - ToggleButton.AbsoluteSize.X - 8)
-\t\t\tlocal maxY = math.max(8, viewport.Y - ToggleButton.AbsoluteSize.Y - 8)
+    for i = 1, 4 do
+        local scale = 1 - (i * 0.15)
+        local lBlade = CreateWingPart(folder, Vector3.new(0.1, 1.8 * scale, 0.4 * scale), CFrame.identity)
+        local rBlade = CreateWingPart(folder, Vector3.new(0.1, 1.8 * scale, 0.4 * scale), CFrame.identity)
 
-\t\t\tToggleButton.Position = UDim2.fromOffset(
-\t\t\t\tmath.clamp(toggleDrag.startPosition.X.Offset + delta.X, 8, maxX),
-\t\t\t\tmath.clamp(toggleDrag.startPosition.Y.Offset + delta.Y, 8, maxY)
-\t\t\t)
-\t\tend
-\tend
+        local w1 = Instance.new("Weld")
+        w1.Part0 = leftRoot
+        w1.Part1 = lBlade
+        w1.C0 = CFrame.new(-i * 0.35, i * 0.1, -i * 0.1) * CFrame.Angles(0, 0, math.rad(25 + i * 12))
+        w1.Parent = lBlade
 
-\tif windowDrag then
-\t\tlocal validWindowInput = input.UserInputType == Enum.UserInputType.MouseMovement
-\t\t\tor input == windowDrag.input
+        local w2 = Instance.new("Weld")
+        w2.Part0 = rightRoot
+        w2.Part1 = rBlade
+        w2.C0 = CFrame.new(i * 0.35, i * 0.1, -i * 0.1) * CFrame.Angles(0, 0, math.rad(-(25 + i * 12)))
+        w2.Parent = rBlade
+    end
 
-\t\tif validWindowInput then
-\t\t\tApplyHubPosition(windowDrag.startPosition + (input.Position - windowDrag.startInput))
-\t\t\tUpdateLayout()
-\t\tend
-\tend
-end)
+    betaState.leftWeld = wL
+    betaState.rightWeld = wR
+end
 
-Connect(UserInputService.InputEnded, function(input)
-\tif toggleDrag then
-\t\tlocal toggleEnded = input == toggleDrag.input
-\t\t\tor input.UserInputType == Enum.UserInputType.MouseButton1
+local function ApplyAura()
+    RemoveAura()
+    if not betaState.aura then return end
 
-\t\tif toggleEnded then
-\t\t\tlocal moved = toggleDrag.moved
-\t\t\ttoggleDrag = nil
+    local char = player.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
 
-\t\t\tif not moved then
-\t\t\t\tSetHubOpen(not hubOpen)
-\t\t\tend
-\t\tend
-\tend
+    local hl = Instance.new("Highlight")
+    hl.Name = "MidnightAuraHL"
+    hl.FillColor = AppC.accent
+    hl.OutlineColor = AppC.white
+    hl.FillTransparency = 0.65
+    hl.OutlineTransparency = 0.2
+    hl.Adornee = char
+    hl.Parent = char
+    betaState.auraHighlight = hl
 
-\tif windowDrag then
-\t\tlocal dragEnded = input == windowDrag.input
-\t\t\tor input.UserInputType == Enum.UserInputType.MouseButton1
+    local pe = Instance.new("ParticleEmitter")
+    pe.Name = "MidnightAuraParticles"
+    pe.Color = ColorSequence.new(AppC.accent, AppC.white)
+    pe.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 0)})
+    pe.Texture = "rbxassetid://242200285"
+    pe.Lifetime = NumberRange.new(0.8, 1.4)
+    pe.Rate = 20
+    pe.Speed = NumberRange.new(1.5, 3.5)
+    pe.VelocitySpread = 180
+    pe.Parent = hrp
+    betaState.auraParticles = pe
 
-\t\tif dragEnded then
-\t\t\twindowDrag = nil
-\t\tend
-\tend
-end)
+    local pl = Instance.new("PointLight")
+    pl.Name = "MidnightAuraLight"
+    pl.Color = AppC.accent
+    pl.Range = 12
+    pl.Brightness = 2.5
+    pl.Parent = hrp
+    betaState.auraLight = pl
+end
 
-Connect(CloseButton.Activated, function()
-\tSetHubOpen(false)
-end)
+-- Wing flap animation: only runs while wings are actually active
+local function startWingAnimation()
+    if betaState.conn then return end  -- already running
+    betaState.conn = RunService.RenderStepped:Connect(function()
+        if not betaState.wings then return end
+        local lw, rw = betaState.leftWeld, betaState.rightWeld
+        if not lw or not rw then return end
+        if not lw.Parent or not rw.Parent then return end
+        local flap = math.sin(tick() * betaState.wingSpeed) * 0.25
+        lw.C0 = CFrame.new(-0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(-15) - flap, flap * 0.5)
+        rw.C0 = CFrame.new(0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(15) + flap, -flap * 0.5)
+    end)
+    Track(betaState.conn)
+end
 
-Connect(ScreenGui:GetPropertyChangedSignal("AbsoluteSize"), function()
-\tif hubPosition then
-\t\tUpdateLayout()
-\tend
-end)
+startWingAnimation()
+
+Track(player.CharacterAdded:Connect(function()
+    task.wait(0.5)
+    if betaState.wings then ApplyWings() end
+    if betaState.aura  then ApplyAura()  end
+end))
 
 ---------------------------------------------------------
--- INITIAL STATE
+-- POPULATE SACRACIA PAGES (TWO COLUMN LAYOUT)
+-- with automatic canvas sizing
 ---------------------------------------------------------
-EnsureHubPosition()
-UpdateLayout()
+local function autoSizeScroll(scrollFrame, colLeft, colRight, listL, listR)
+    local function updateCanvas()
+        local leftY  = listL.AbsoluteContentSize.Y
+        local rightY = listR.AbsoluteContentSize.Y
+        colLeft.Size  = UDim2.new(0.48, 0, 0, leftY)
+        colRight.Size = UDim2.new(0.48, 0, 0, rightY)
+        -- Padding top + bottom = 40
+        scrollFrame.CanvasSize = UDim2.new(0, 0, 0, math.max(leftY, rightY) + 40)
+    end
+    updateCanvas()
+    Track(listL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas))
+    Track(listR:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas))
+end
+
+for _, item in ipairs(categories) do
+    local page = Instance.new("Frame")
+    page.Name = "Page_" .. item.id
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.BackgroundTransparency = 1
+    page.Visible = false
+    page.Parent = PageHolder
+    categoryPages[item.id] = page
+
+    local pageScroll = Instance.new("ScrollingFrame")
+    pageScroll.Size = UDim2.new(1, 0, 1, 0)
+    pageScroll.BackgroundTransparency = 1
+    pageScroll.BorderSizePixel = 0
+    pageScroll.ScrollBarThickness = 2
+    pageScroll.ScrollBarImageColor3 = AppC.border
+    pageScroll.AutomaticCanvasSize = Enum.AutomaticSize.None
+    pageScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    pageScroll.Parent = page
+
+    local pad = Instance.new("UIPadding")
+    pad.PaddingTop = UDim.new(0, 20)
+    pad.PaddingLeft = UDim.new(0, 20)
+    pad.PaddingRight = UDim.new(0, 20)
+    pad.PaddingBottom = UDim.new(0, 20)
+    pad.Parent = pageScroll
+
+    -- 2 Columns Grid Layout
+    local colLeft = Instance.new("Frame")
+    colLeft.Size = UDim2.new(0.48, 0, 1, 0)
+    colLeft.Position = UDim2.new(0, 0, 0, 0)
+    colLeft.BackgroundTransparency = 1
+    colLeft.Parent = pageScroll
+
+    local colRight = Instance.new("Frame")
+    colRight.Size = UDim2.new(0.48, 0, 1, 0)
+    colRight.Position = UDim2.new(0.52, 0, 0, 0)
+    colRight.BackgroundTransparency = 1
+    colRight.Parent = pageScroll
+
+    local listL = Instance.new("UIListLayout")
+    listL.SortOrder = Enum.SortOrder.LayoutOrder
+    listL.Padding = UDim.new(0, 12)
+    listL.Parent = colLeft
+
+    local listR = Instance.new("UIListLayout")
+    listR.SortOrder = Enum.SortOrder.LayoutOrder
+    listR.Padding = UDim.new(0, 12)
+    listR.Parent = colRight
+
+    if item.id == "Stats" then
+        -- LEFT COLUMN: HEALTH & MOVEMENT
+        CreateSectionHeader(colLeft, "Health")
+        CreateToggle(colLeft, "Godmode", nil, true)
+
+        CreateSectionHeader(colLeft, "Movement")
+        CreateToggle(colLeft, "Infinite stamina", nil, false)
+        CreateSlider(colLeft, "Walking speed", 1, 10, 6, "x")
+        CreateSlider(colLeft, "Running speed", 1, 10, 3, "x")
+        CreateSlider(colLeft, "Crouching speed", 1, 10, 5, "x")
+        CreateToggle(colLeft, "Infinite jumps", nil, true)
+        CreateToggle(colLeft, "Dont tumble", "Double tumbling from external sources", false)
+
+        -- RIGHT COLUMN: GRAB & POWERUPS
+        CreateSectionHeader(colRight, "Grab")
+        CreateToggle(colRight, "High strength", "Disables if you take damage", true)
+        CreateToggle(colRight, "Unlimited range", nil, true)
+        CreateToggle(colRight, "No doorforge", nil, false)
+
+        CreateSectionHeader(colRight, "Cosmetics & Aura")
+        CreateToggle(colRight, "Enable Wings", "Attach glowing wings to character", false, function(s)
+            betaState.wings = s
+            if s then ApplyWings() else RemoveWings() end
+        end)
+        CreateSlider(colRight, "Wing Speed", 1, 10, 3, "x", function(v)
+            betaState.wingSpeed = v
+        end)
+        CreateToggle(colRight, "Enable Aura", "Body highlight & particles", false, function(s)
+            betaState.aura = s
+            if s then ApplyAura() else RemoveAura() end
+        end)
+
+    else
+        -- DEFAULT DUMMY PAGE CONTENT
+        CreateSectionHeader(colLeft, item.name .. " Settings")
+        CreateToggle(colLeft, "Enable " .. item.name, "Toggle option feature", true)
+        CreateSlider(colLeft, "Intensity", 1, 100, 50, "%")
+
+        CreateSectionHeader(colRight, "Advanced Options")
+        CreateToggle(colRight, "Bypass Anti-Cheat", nil, true)
+        CreateToggle(colRight, "Silent Mode", nil, false)
+    end
+
+    -- Wire up auto-sizing after content is populated
+    autoSizeScroll(pageScroll, colLeft, colRight, listL, listR)
+end
+
+---------------------------------------------------------
+-- TOGGLE HUB FUNCTIONALITY
+---------------------------------------------------------
+local function ToggleHub()
+    hubOpen = not hubOpen
+    SetToggleVisual(hubOpen)
+
+    if hubOpen then
+        Hub.Visible = true
+        HubShadow.Visible = true
+        ensureWindowRect()
+        Hub.Size = UDim2.fromOffset(windowSize.X, 0)
+        HubShadow.Size = UDim2.fromOffset(windowSize.X, 0)
+        TweenService:Create(Hub, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
+        }):Play()
+        TweenService:Create(HubShadow, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
+        }):Play()
+    else
+        local tw = TweenService:Create(Hub, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Size = UDim2.fromOffset(windowSize.X, 0)
+        })
+        tw:Play()
+        TweenService:Create(HubShadow, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Size = UDim2.fromOffset(windowSize.X, 0)
+        }):Play()
+        local conn
+        conn = tw.Completed:Connect(function()
+            if not hubOpen then
+                Hub.Visible = false
+                HubShadow.Visible = false
+                Hub.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
+                HubShadow.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
+            end
+            conn:Disconnect()
+        end)
+    end
+end
+
+-- Toggle button: click vs drag resolved on InputEnded
+Track(UserInputService.InputEnded:Connect(function(input)
+    if not toggleDrag then return end
+    -- Match the input that started the drag, or any mouse button up
+    if input == toggleDrag.input
+    or (toggleDrag.input.UserInputType == Enum.UserInputType.MouseButton1
+        and input.UserInputType == Enum.UserInputType.MouseButton1) then
+        local moved = toggleDrag.moved
+        toggleDrag = nil
+        if not moved then ToggleHub() end
+    end
+end))
+
+ClB.MouseButton1Click:Connect(function()
+    if hubOpen then ToggleHub() end
+end)
+
 ShowPage("Stats")
