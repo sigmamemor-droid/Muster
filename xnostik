@@ -1,1232 +1,1016 @@
--- linbergz Team MOBILE HUB v15.1 — SACRACIA UI Edition (Improved)
--- Sacracia Style Interface: Dark Minimalist, Vibrant Blue Accents, iOS Switches, Sleek Sliders.
--- Loading Screen animation remains untouched by request.
--- UI-only. Native Roblox Luau; no external libraries.
---
--- IMPROVEMENTS in v15.1:
---   • Connection manager with global cleanup — no leaks on re-run
---   • Robust input tracking for toggle-button drag, window drag, and sliders
---   • Auto-sizing scroll canvas (content never clipped on mobile)
---   • Hover feedback on sidebar buttons
---   • RenderStepped wing animation only runs while wings are active
---   • Slider division-by-zero guard, math.round for integer values
---   • Proper touch + mouse support for all draggable controls
+-- NOVA Mobile UI Kit
+-- Для собственного Roblox-опыта. LocalScript в StarterPlayerScripts.
 
----------------------------------------------------------
--- SERVICES
----------------------------------------------------------
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TeleportService = game:GetService("TeleportService")
 
 local player = Players.LocalPlayer
-if not player then
-    Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
-    player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local previous = playerGui:FindFirstChild("NovaMobileUI")
+if previous then
+\tprevious:Destroy()
 end
 
----------------------------------------------------------
--- CONNECTION MANAGER & GLOBAL CLEANUP
----------------------------------------------------------
-local connections = {}
-
-local function Track(conn)
-    table.insert(connections, conn)
-    return conn
-end
-
-local function Cleanup()
-    for _, conn in ipairs(connections) do
-        pcall(function() conn:Disconnect() end)
-    end
-    connections = {}
-end
-
--- Disconnect previous instance's connections + destroy old GUI
-if _G.MM2HubMobileCleanup then
-    pcall(_G.MM2HubMobileCleanup)
-end
-
-_G.MM2HubMobileCleanup = function()
-    Cleanup()
-    local pg = player:FindFirstChild("PlayerGui")
-    if pg then
-        local old = pg:FindFirstChild("MM2HubMobile")
-        if old then old:Destroy() end
-    end
-    -- Clean up character cosmetics that live under Character, not PlayerGui
-    local char = player:FindFirstChild("Character")
-    if char then
-        local wings = char:FindFirstChild("MidnightWings")
-        if wings then wings:Destroy() end
-        local hl = char:FindFirstChild("MidnightAuraHL")
-        if hl then hl:Destroy() end
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            local pe = hrp:FindFirstChild("MidnightAuraParticles")
-            if pe then pe:Destroy() end
-            local light = hrp:FindFirstChild("MidnightAuraLight")
-            if light then light:Destroy() end
-        end
-    end
-end
-
----------------------------------------------------------
--- CLEANUP / SCREEN GUI
----------------------------------------------------------
-local oldGui = player.PlayerGui:FindFirstChild("MM2HubMobile")
-if oldGui then oldGui:Destroy() end
-
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "MM2HubMobile"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.IgnoreGuiInset = true
-ScreenGui.DisplayOrder = 100
-ScreenGui.Parent = player.PlayerGui
-
----------------------------------------------------------
--- COLOR PALETTE (LOADER SPECIFIC - UNTOUCHED)
----------------------------------------------------------
 local C = {
-    bg = Color3.fromRGB(14, 12, 23),
-    sidebar = Color3.fromRGB(9, 8, 16),
-    surface = Color3.fromRGB(22, 19, 34),
-    elevated = Color3.fromRGB(31, 27, 47),
-    accent = Color3.fromRGB(151, 82, 255),
-    accentLight = Color3.fromRGB(204, 158, 255),
-    white = Color3.fromRGB(255, 255, 255),
-    text = Color3.fromRGB(246, 244, 252),
-    textSec = Color3.fromRGB(174, 165, 198),
-    textDim = Color3.fromRGB(112, 103, 136),
-    red = Color3.fromRGB(255, 93, 111),
-    border = Color3.fromRGB(72, 62, 98),
+\tbg = Color3.fromRGB(10, 13, 22),
+\tpanel = Color3.fromRGB(17, 22, 35),
+\tpanel2 = Color3.fromRGB(23, 30, 47),
+\tcard = Color3.fromRGB(29, 37, 57),
+\tcardHover = Color3.fromRGB(37, 48, 73),
+\taccent = Color3.fromRGB(64, 195, 255),
+\taccent2 = Color3.fromRGB(122, 93, 255),
+\ttext = Color3.fromRGB(244, 248, 255),
+\tsubtext = Color3.fromRGB(158, 174, 203),
+\tdim = Color3.fromRGB(100, 115, 145),
+\tsuccess = Color3.fromRGB(82, 220, 156),
+\tdanger = Color3.fromRGB(255, 97, 114),
+\toff = Color3.fromRGB(68, 79, 105),
 }
 
----------------------------------------------------------
--- LOADING SCREEN — WAVING LOGOTYPE (UNTOUCHED)
----------------------------------------------------------
-local LS = Instance.new("Frame")
-LS.Name = "LoadingScreen"
-LS.Size = UDim2.new(1, 0, 1, 0)
-LS.BackgroundColor3 = C.sidebar
-LS.BorderSizePixel = 0
-LS.ZIndex = 100
-LS.Parent = ScreenGui
+local function make(className, props, parent)
+\tlocal object = Instance.new(className)
 
-local LogoBox = Instance.new("Frame")
-LogoBox.Name = "Loader"
-LogoBox.Size = UDim2.new(0, 300, 0, 150)
-LogoBox.AnchorPoint = Vector2.new(0.5, 0.5)
-LogoBox.Position = UDim2.new(0.5, 0, 0.5, 0)
-LogoBox.BackgroundTransparency = 1
-LogoBox.ZIndex = 101
-LogoBox.Parent = LS
+\tfor property, value in pairs(props or {}) do
+\t\tobject[property] = value
+\tend
 
-local LoaderTitle = Instance.new("TextLabel")
-LoaderTitle.Size = UDim2.new(1, 0, 0, 16)
-LoaderTitle.Position = UDim2.new(0, 0, 0, 5)
-LoaderTitle.BackgroundTransparency = 1
-LoaderTitle.Text = "INITIALIZING"
-LoaderTitle.TextColor3 = C.textDim
-LoaderTitle.TextSize = 9
-LoaderTitle.Font = Enum.Font.GothamBold
-LoaderTitle.ZIndex = 102
-LoaderTitle.Parent = LogoBox
-
-local Word = Instance.new("Frame")
-Word.Name = "AnimatedWord"
-Word.Size = UDim2.new(1, 0, 0, 50)
-Word.Position = UDim2.new(0, 0, 0, 31)
-Word.BackgroundTransparency = 1
-Word.ZIndex = 102
-Word.Parent = LogoBox
-
-local WL = Instance.new("UIListLayout")
-WL.FillDirection = Enum.FillDirection.Horizontal
-WL.HorizontalAlignment = Enum.HorizontalAlignment.Center
-WL.VerticalAlignment = Enum.VerticalAlignment.Center
-WL.Padding = UDim.new(0, -1)
-WL.Parent = Word
-
-local letters = {}
-for index, char in utf8.graphemes("LINBERGZ") do
-    local letter = Instance.new("TextLabel")
-    letter.Name = "Letter" .. tostring(index)
-    letter.Size = UDim2.new(0, 31, 0, 48)
-    letter.BackgroundTransparency = 1
-    letter.Text = char
-    letter.TextColor3 = C.white
-    letter.TextTransparency = 0.32
-    letter.TextSize = 34
-    letter.Font = Enum.Font.GothamBlack
-    letter.ZIndex = 103
-    letter.Parent = Word
-    table.insert(letters, letter)
+\tobject.Parent = parent
+\treturn object
 end
 
-local Underline = Instance.new("Frame")
-Underline.Name = "LoadingLine"
-Underline.Size = UDim2.new(0, 142, 0, 3)
-Underline.AnchorPoint = Vector2.new(0.5, 0)
-Underline.Position = UDim2.new(0.5, 0, 0, 91)
-Underline.BackgroundColor3 = C.elevated
-Underline.BorderSizePixel = 0
-Underline.ClipsDescendants = true
-Underline.ZIndex = 102
-Underline.Parent = LogoBox
-Instance.new("UICorner", Underline).CornerRadius = UDim.new(1, 0)
+local function corner(parent, radius)
+\treturn make("UICorner", {
+\t\tCornerRadius = UDim.new(0, radius),
+\t}, parent)
+end
 
-local LineGlow = Instance.new("Frame")
-LineGlow.Size = UDim2.new(0, 36, 1, 0)
-LineGlow.Position = UDim2.new(0, -36, 0, 0)
-LineGlow.BackgroundColor3 = C.white
-LineGlow.BorderSizePixel = 0
-LineGlow.ZIndex = 103
-LineGlow.Parent = Underline
-Instance.new("UICorner", LineGlow).CornerRadius = UDim.new(1, 0)
+local function stroke(parent, color, thickness, transparency)
+\treturn make("UIStroke", {
+\t\tColor = color,
+\t\tThickness = thickness or 1,
+\t\tTransparency = transparency or 0,
+\t}, parent)
+end
 
-local Status = Instance.new("TextLabel")
-Status.Size = UDim2.new(1, 0, 0, 16)
-Status.Position = UDim2.new(0, 0, 0, 106)
-Status.BackgroundTransparency = 1
-Status.Text = "LOADING INTERFACE"
-Status.TextColor3 = C.textSec
-Status.TextSize = 9
-Status.Font = Enum.Font.GothamBold
-Status.ZIndex = 102
-Status.Parent = LogoBox
+local function tween(object, duration, goals, style, direction)
+\tlocal animation = TweenService:Create(
+\t\tobject,
+\t\tTweenInfo.new(
+\t\t\tduration,
+\t\t\tstyle or Enum.EasingStyle.Quint,
+\t\t\tdirection or Enum.EasingDirection.Out
+\t\t),
+\t\tgoals
+\t)
+\tanimation:Play()
+\treturn animation
+end
 
-task.spawn(function()
-    while LS.Parent do
-        for i, letter in ipairs(letters) do
-            local centerDistance = math.abs(i - 4.5) / 3.5
-            local baseSize = math.floor(34 - centerDistance * 10)
-            local baseTransparency = 0.08 + centerDistance * 0.48
-            TweenService:Create(letter, TweenInfo.new(0.20, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
-                TextColor3 = C.accentLight,
-                TextTransparency = 0,
-                TextSize = baseSize + 4,
-                Position = UDim2.new(0, 0, 0, -4),
-            }):Play()
-            task.delay(0.18, function()
-                if letter.Parent then
-                    TweenService:Create(letter, TweenInfo.new(0.42, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-                        TextColor3 = C.white,
-                        TextTransparency = baseTransparency,
-                        TextSize = baseSize,
-                        Position = UDim2.new(0, 0, 0, 0),
-                    }):Play()
-                end
-            end)
-            task.wait(0.10)
-        end
-        task.wait(0.22)
-    end
+local gui = make("ScreenGui", {
+\tName = "NovaMobileUI",
+\tResetOnSpawn = false,
+\tIgnoreGuiInset = true,
+\tDisplayOrder = 99,
+\tZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+}, playerGui)
+
+local function getScale()
+\tlocal camera = workspace.CurrentCamera
+\tif not camera then
+\t\treturn 1
+\tend
+
+\tlocal viewport = camera.ViewportSize
+\treturn math.clamp(math.min((viewport.X - 24) / 540, (viewport.Y - 30) / 360, 1), 0.62, 1)
+end
+
+local function toast(message, color)
+\tlocal holder = gui:FindFirstChild("ToastHolder")
+\tif not holder then
+\t\treturn
+\tend
+
+\tlocal item = make("Frame", {
+\t\tSize = UDim2.new(0, 260, 0, 46),
+\t\tBackgroundColor3 = C.panel2,
+\t\tBackgroundTransparency = 1,
+\t\tBorderSizePixel = 0,
+\t\tZIndex = 300,
+\t}, holder)
+\tcorner(item, 13)
+\tstroke(item, color or C.accent, 1, 0.35)
+
+\tlocal line = make("Frame", {
+\t\tSize = UDim2.new(0, 4, 1, -14),
+\t\tPosition = UDim2.new(0, 8, 0, 7),
+\t\tBackgroundColor3 = color or C.accent,
+\t\tBorderSizePixel = 0,
+\t\tZIndex = 301,
+\t}, item)
+\tcorner(line, 99)
+
+\tlocal label = make("TextLabel", {
+\t\tSize = UDim2.new(1, -34, 1, 0),
+\t\tPosition = UDim2.new(0, 24, 0, 0),
+\t\tBackgroundTransparency = 1,
+\t\tText = message,
+\t\tTextColor3 = C.text,
+\t\tTextTransparency = 1,
+\t\tTextSize = 11,
+\t\tFont = Enum.Font.GothamMedium,
+\t\tTextXAlignment = Enum.TextXAlignment.Left,
+\t\tZIndex = 301,
+\t}, item)
+
+\ttween(item, 0.22, {BackgroundTransparency = 0})
+\ttween(label, 0.22, {TextTransparency = 0})
+
+\ttask.delay(2.5, function()
+\t\tif not item.Parent then
+\t\t\treturn
+\t\tend
+
+\t\ttween(item, 0.2, {BackgroundTransparency = 1})
+\t\ttween(label, 0.2, {TextTransparency = 1})
+\t\ttask.wait(0.25)
+
+\t\tif item.Parent then
+\t\t\titem:Destroy()
+\t\tend
+\tend)
+end
+
+local toastHolder = make("Frame", {
+\tName = "ToastHolder",
+\tSize = UDim2.new(0, 270, 0, 220),
+\tPosition = UDim2.new(1, -282, 0, 26),
+\tBackgroundTransparency = 1,
+\tZIndex = 299,
+}, gui)
+
+make("UIListLayout", {
+\tPadding = UDim.new(0, 8),
+\tHorizontalAlignment = Enum.HorizontalAlignment.Right,
+\tVerticalAlignment = Enum.VerticalAlignment.Top,
+\tSortOrder = Enum.SortOrder.LayoutOrder,
+}, toastHolder)
+
+-- Floating logo button
+local logoButton = make("TextButton", {
+\tName = "NovaLauncher",
+\tSize = UDim2.new(0, 52, 0, 52),
+\tPosition = UDim2.new(0, 18, 0.32, 0),
+\tBackgroundColor3 = C.accent2,
+\tBorderSizePixel = 0,
+\tText = "",
+\tAutoButtonColor = false,
+\tZIndex = 200,
+}, gui)
+corner(logoButton, 16)
+stroke(logoButton, C.accent, 1.5, 0.15)
+
+local logoGradient = make("UIGradient", {
+\tColor = ColorSequence.new({
+\t\tColorSequenceKeypoint.new(0, C.accent),
+\t\tColorSequenceKeypoint.new(1, C.accent2),
+\t}),
+\tRotation = 35,
+}, logoButton)
+
+make("TextLabel", {
+\tSize = UDim2.new(1, 0, 0, 25),
+\tPosition = UDim2.new(0, 0, 0, 5),
+\tBackgroundTransparency = 1,
+\tText = "N",
+\tTextColor3 = C.text,
+\tTextSize = 24,
+\tFont = Enum.Font.GothamBlack,
+\tZIndex = 201,
+}, logoButton)
+
+make("TextLabel", {
+\tSize = UDim2.new(1, 0, 0, 12),
+\tPosition = UDim2.new(0, 0, 0, 31),
+\tBackgroundTransparency = 1,
+\tText = "NOVA",
+\tTextColor3 = Color3.fromRGB(225, 244, 255),
+\tTextSize = 7,
+\tFont = Enum.Font.GothamBold,
+\tZIndex = 201,
+}, logoButton)
+
+-- Main window
+local main = make("Frame", {
+\tName = "Main",
+\tSize = UDim2.new(0, 540, 0, 360),
+\tAnchorPoint = Vector2.new(0.5, 0.5),
+\tPosition = UDim2.new(0.5, 0, 0.5, 0),
+\tBackgroundColor3 = C.bg,
+\tBorderSizePixel = 0,
+\tClipsDescendants = true,
+\tZIndex = 20,
+}, gui)
+corner(main, 20)
+stroke(main, Color3.fromRGB(65, 83, 120), 1, 0.2)
+
+local scale = make("UIScale", {
+\tScale = getScale(),
+}, main)
+
+local function updateScale()
+\tscale.Scale = getScale()
+end
+
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+\ttask.wait()
+\tupdateScale()
+
+\tlocal camera = workspace.CurrentCamera
+\tif camera then
+\t\tcamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale)
+\tend
 end)
 
-task.spawn(function()
-    while LineGlow.Parent do
-        LineGlow.Position = UDim2.new(0, -36, 0, 0)
-        local sweep = TweenService:Create(LineGlow, TweenInfo.new(1.25, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-            Position = UDim2.new(1, 0, 0, 0),
-        })
-        sweep:Play()
-        sweep.Completed:Wait()
-        task.wait(0.12)
-    end
-end)
+if workspace.CurrentCamera then
+\tworkspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale)
+end
 
-task.spawn(function()
-    task.wait(1.9)
-    local fadeInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    for _, object in ipairs(LS:GetDescendants()) do
-        if object:IsA("TextLabel") then
-            TweenService:Create(object, fadeInfo, {TextTransparency = 1}):Play()
-        elseif object:IsA("Frame") then
-            TweenService:Create(object, fadeInfo, {BackgroundTransparency = 1}):Play()
-        end
-    end
-    task.wait(0.4)
-    LS:Destroy()
-end)
+local opened = true
+local minimized = false
 
----------------------------------------------------------
--- SACRACIA PALETTE & STYLES
----------------------------------------------------------
-local AppC = {
-    bg = Color3.fromRGB(22, 22, 26),          -- Main Window Background
-    sidebar = Color3.fromRGB(16, 16, 20),     -- Dark Sidebar Background
-    accent = Color3.fromRGB(52, 120, 246),    -- Sacracia Blue Accent
-    accentDark = Color3.fromRGB(30, 80, 180),
-    switchOff = Color3.fromRGB(42, 44, 52),   -- Switch Off State
-    white = Color3.fromRGB(255, 255, 255),
-    text = Color3.fromRGB(240, 242, 245),
-    textSec = Color3.fromRGB(140, 145, 155),
-    textDim = Color3.fromRGB(90, 95, 105),
-    border = Color3.fromRGB(30, 32, 38),
-    activeTab = Color3.fromRGB(32, 34, 42),
-    red = Color3.fromRGB(245, 66, 66),
-    pillBg = Color3.fromRGB(30, 32, 40),
-    hover = Color3.fromRGB(24, 26, 32),       -- Sidebar hover state
+local function setWindowVisible(state)
+\topened = state
+\tmain.Visible = state
+
+\tif state then
+\t\tmain.Size = UDim2.new(0, 500, 0, 330)
+\t\tmain.BackgroundTransparency = 0.15
+\t\ttween(main, 0.24, {
+\t\t\tSize = UDim2.new(0, 540, 0, 360),
+\t\t\tBackgroundTransparency = 0,
+\t\t})
+\tend
+end
+
+-- Header
+local header = make("Frame", {
+\tSize = UDim2.new(1, 0, 0, 52),
+\tBackgroundColor3 = C.panel,
+\tBorderSizePixel = 0,
+\tZIndex = 21,
+}, main)
+
+local headerGradient = make("UIGradient", {
+\tColor = ColorSequence.new({
+\t\tColorSequenceKeypoint.new(0, Color3.fromRGB(21, 29, 48)),
+\t\tColorSequenceKeypoint.new(1, C.panel),
+\t}),
+\tRotation = 0,
+}, header)
+
+local brandMark = make("Frame", {
+\tSize = UDim2.new(0, 32, 0, 32),
+\tPosition = UDim2.new(0, 14, 0, 10),
+\tBackgroundColor3 = C.accent2,
+\tBorderSizePixel = 0,
+\tZIndex = 22,
+}, header)
+corner(brandMark, 10)
+
+make("UIGradient", {
+\tColor = ColorSequence.new(C.accent, C.accent2),
+\tRotation = 45,
+}, brandMark)
+
+make("TextLabel", {
+\tSize = UDim2.new(1, 0, 1, 0),
+\tBackgroundTransparency = 1,
+\tText = "N",
+\tTextColor3 = C.text,
+\tTextSize = 18,
+\tFont = Enum.Font.GothamBlack,
+\tZIndex = 23,
+}, brandMark)
+
+make("TextLabel", {
+\tSize = UDim2.new(0, 260, 0, 20),
+\tPosition = UDim2.new(0, 56, 0, 9),
+\tBackgroundTransparency = 1,
+\tText = "NOVA CONTROL CENTER",
+\tTextColor3 = C.text,
+\tTextSize = 13,
+\tFont = Enum.Font.GothamBold,
+\tTextXAlignment = Enum.TextXAlignment.Left,
+\tZIndex = 22,
+}, header)
+
+make("TextLabel", {
+\tSize = UDim2.new(0, 260, 0, 16),
+\tPosition = UDim2.new(0, 56, 0, 27),
+\tBackgroundTransparency = 1,
+\tText = "Mobile interface · personal experience tools",
+\tTextColor3 = C.subtext,
+\tTextSize = 9,
+\tFont = Enum.Font.Gotham,
+\tTextXAlignment = Enum.TextXAlignment.Left,
+\tZIndex = 22,
+}, header)
+
+local minButton = make("TextButton", {
+\tSize = UDim2.new(0, 30, 0, 30),
+\tPosition = UDim2.new(1, -74, 0, 11),
+\tBackgroundColor3 = C.card,
+\tText = "—",
+\tTextColor3 = C.subtext,
+\tTextSize = 15,
+\tFont = Enum.Font.GothamBold,
+\tAutoButtonColor = false,
+\tZIndex = 23,
+}, header)
+corner(minButton, 10)
+
+local closeButton = make("TextButton", {
+\tSize = UDim2.new(0, 30, 0, 30),
+\tPosition = UDim2.new(1, -38, 0, 11),
+\tBackgroundColor3 = C.card,
+\tText = "×",
+\tTextColor3 = C.subtext,
+\tTextSize = 20,
+\tFont = Enum.Font.GothamBold,
+\tAutoButtonColor = false,
+\tZIndex = 23,
+}, header)
+corner(closeButton, 10)
+
+-- Sidebar
+local sidebar = make("Frame", {
+\tSize = UDim2.new(0, 148, 1, -52),
+\tPosition = UDim2.new(0, 0, 0, 52),
+\tBackgroundColor3 = C.panel,
+\tBorderSizePixel = 0,
+\tZIndex = 21,
+}, main)
+
+local navigation = make("ScrollingFrame", {
+\tSize = UDim2.new(1, -14, 1, -22),
+\tPosition = UDim2.new(0, 7, 0, 11),
+\tBackgroundTransparency = 1,
+\tBorderSizePixel = 0,
+\tScrollBarThickness = 0,
+\tAutomaticCanvasSize = Enum.AutomaticSize.Y,
+\tCanvasSize = UDim2.new(),
+\tZIndex = 22,
+}, sidebar)
+
+make("UIListLayout", {
+\tPadding = UDim.new(0, 6),
+\tSortOrder = Enum.SortOrder.LayoutOrder,
+}, navigation)
+
+-- Page area
+local pageHolder = make("Frame", {
+\tSize = UDim2.new(1, -148, 1, -52),
+\tPosition = UDim2.new(0, 148, 0, 52),
+\tBackgroundColor3 = C.bg,
+\tBorderSizePixel = 0,
+\tClipsDescendants = true,
+\tZIndex = 21,
+}, main)
+
+local pages = {}
+local tabs = {}
+
+local function createPage(id)
+\tlocal page = make("ScrollingFrame", {
+\t\tName = id,
+\t\tSize = UDim2.new(1, 0, 1, 0),
+\t\tBackgroundTransparency = 1,
+\t\tBorderSizePixel = 0,
+\t\tScrollBarThickness = 3,
+\t\tScrollBarImageColor3 = C.accent,
+\t\tAutomaticCanvasSize = Enum.AutomaticSize.Y,
+\t\tCanvasSize = UDim2.new(),
+\t\tVisible = false,
+\t\tZIndex = 22,
+\t}, pageHolder)
+
+\tmake("UIPadding", {
+\t\tPaddingTop = UDim.new(0, 14),
+\t\tPaddingBottom = UDim.new(0, 16),
+\t\tPaddingLeft = UDim.new(0, 16),
+\t\tPaddingRight = UDim.new(0, 16),
+\t}, page)
+
+\tmake("UIListLayout", {
+\t\tPadding = UDim.new(0, 9),
+\t\tSortOrder = Enum.SortOrder.LayoutOrder,
+\t}, page)
+
+\tpages[id] = page
+\treturn page
+end
+
+local function selectPage(id)
+\tfor pageId, page in pairs(pages) do
+\t\tpage.Visible = pageId == id
+\tend
+
+\tfor tabId, data in pairs(tabs) do
+\t\tlocal selected = tabId == id
+\t\ttween(data.button, 0.14, {
+\t\t\tBackgroundColor3 = selected and C.card or C.panel,
+\t\t})
+\t\ttween(data.indicator, 0.14, {
+\t\t\tBackgroundTransparency = selected and 0 or 1,
+\t\t})
+\t\tdata.icon.TextColor3 = selected and C.accent or C.subtext
+\t\tdata.label.TextColor3 = selected and C.text or C.subtext
+\tend
+end
+
+local function createTab(id, title, icon)
+\tlocal button = make("TextButton", {
+\t\tSize = UDim2.new(1, 0, 0, 38),
+\t\tBackgroundColor3 = C.panel,
+\t\tBorderSizePixel = 0,
+\t\tText = "",
+\t\tAutoButtonColor = false,
+\t\tZIndex = 23,
+\t}, navigation)
+\tcorner(button, 12)
+
+\tlocal indicator = make("Frame", {
+\t\tSize = UDim2.new(0, 3, 0, 18),
+\t\tPosition = UDim2.new(0, 5, 0.5, -9),
+\t\tBackgroundColor3 = C.accent,
+\t\tBackgroundTransparency = 1,
+\t\tBorderSizePixel = 0,
+\t\tZIndex = 24,
+\t}, button)
+\tcorner(indicator, 99)
+
+\tlocal iconLabel = make("TextLabel", {
+\t\tSize = UDim2.new(0, 32, 1, 0),
+\t\tPosition = UDim2.new(0, 12, 0, 0),
+\t\tBackgroundTransparency = 1,
+\t\tText = icon,
+\t\tTextColor3 = C.subtext,
+\t\tTextSize = 15,
+\t\tFont = Enum.Font.GothamBold,
+\t\tZIndex = 24,
+\t}, button)
+
+\tlocal label = make("TextLabel", {
+\t\tSize = UDim2.new(1, -52, 1, 0),
+\t\tPosition = UDim2.new(0, 45, 0, 0),
+\t\tBackgroundTransparency = 1,
+\t\tText = title,
+\t\tTextColor3 = C.subtext,
+\t\tTextSize = 11,
+\t\tFont = Enum.Font.GothamMedium,
+\t\tTextXAlignment = Enum.TextXAlignment.Left,
+\t\tZIndex = 24,
+\t}, button)
+
+\ttabs[id] = {
+\t\tbutton = button,
+\t\tindicator = indicator,
+\t\ticon = iconLabel,
+\t\tlabel = label,
+\t}
+
+\tbutton.MouseButton1Click:Connect(function()
+\t\tselectPage(id)
+\tend)
+
+\treturn createPage(id)
+end
+
+local UI = {}
+
+function UI.Section(page, text)
+\treturn make("TextLabel", {
+\t\tSize = UDim2.new(1, 0, 0, 22),
+\t\tBackgroundTransparency = 1,
+\t\tText = text,
+\t\tTextColor3 = C.text,
+\t\tTextSize = 13,
+\t\tFont = Enum.Font.GothamBold,
+\t\tTextXAlignment = Enum.TextXAlignment.Left,
+\t\tZIndex = 23,
+\t}, page)
+end
+
+function UI.Info(page, title, description)
+\tlocal frame = make("Frame", {
+\t\tSize = UDim2.new(1, 0, 0, 58),
+\t\tBackgroundColor3 = C.panel2,
+\t\tBorderSizePixel = 0,
+\t\tZIndex = 23,
+\t}, page)
+\tcorner(frame, 14)
+\tstroke(frame, C.accent, 1, 0.72)
+
+\tmake("TextLabel", {
+\t\tSize = UDim2.new(1, -32, 0, 20),
+\t\tPosition = UDim2.new(0, 16, 0, 10),
+\t\tBackgroundTransparency = 1,
+\t\tText = title,
+\t\tTextColor3 = C.text,
+\t\tTextSize = 11,
+\t\tFont = Enum.Font.GothamBold,
+\t\tTextXAlignment = Enum.TextXAlignment.Left,
+\t\tZIndex = 24,
+\t}, frame)
+
+\tmake("TextLabel", {
+\t\tSize = UDim2.new(1, -32, 0, 24),
+\t\tPosition = UDim2.new(0, 16, 0, 28),
+\t\tBackgroundTransparency = 1,
+\t\tText = description,
+\t\tTextColor3 = C.subtext,
+\t\tTextSize = 9,
+\t\tFont = Enum.Font.Gotham,
+\t\tTextWrapped = true,
+\t\tTextXAlignment = Enum.TextXAlignment.Left,
+\t\tZIndex = 24,
+\t}, frame)
+
+\treturn frame
+end
+
+function UI.Button(page, text, callback, color)
+\tlocal button = make("TextButton", {
+\t\tSize = UDim2.new(1, 0, 0, 38),
+\t\tBackgroundColor3 = color or C.card,
+\t\tBorderSizePixel = 0,
+\t\tText = text,
+\t\tTextColor3 = C.text,
+\t\tTextSize = 11,
+\t\tFont = Enum.Font.GothamBold,
+\t\tAutoButtonColor = false,
+\t\tZIndex = 23,
+\t}, page)
+\tcorner(button, 12)
+
+\tbutton.MouseEnter:Connect(function()
+\t\ttween(button, 0.12, {BackgroundColor3 = C.cardHover})
+\tend)
+
+\tbutton.MouseLeave:Connect(function()
+\t\ttween(button, 0.12, {BackgroundColor3 = color or C.card})
+\tend)
+
+\tbutton.MouseButton1Click:Connect(function()
+\t\ttween(button, 0.08, {BackgroundTransparency = 0.28})
+\t\ttask.delay(0.09, function()
+\t\t\tif button.Parent then
+\t\t\t\ttween(button, 0.12, {BackgroundTransparency = 0})
+\t\t\tend
+\t\tend)
+
+\t\tif callback then
+\t\t\tlocal ok, err = pcall(callback)
+\t\t\tif not ok then
+\t\t\t\twarn("NOVA callback error:", err)
+\t\t\t\ttoast("Не удалось выполнить действие", C.danger)
+\t\t\tend
+\t\tend
+\tend)
+
+\treturn button
+end
+
+function UI.Toggle(page, title, subtitle, defaultValue, callback)
+\tlocal frame = make("Frame", {
+\t\tSize = UDim2.new(1, 0, 0, subtitle and 54 or 42),
+\t\tBackgroundColor3 = C.card,
+\t\tBorderSizePixel = 0,
+\t\tZIndex = 23,
+\t}, page)
+\tcorner(frame, 13)
+
+\tmake("TextLabel", {
+\t\tSize = UDim2.new(1, -74, 0, 20),
+\t\tPosition = UDim2.new(0, 14, 0, subtitle and 8 or 11),
+\t\tBackgroundTransparency = 1,
+\t\tText = title,
+\t\tTextColor3 = C.text,
+\t\tTextSize = 11,
+\t\tFont = Enum.Font.GothamMedium,
+\t\tTextXAlignment = Enum.TextXAlignment.Left,
+\t\tZIndex = 24,
+\t}, frame)
+
+\tif subtitle then
+\t\tmake("TextLabel", {
+\t\t\tSize = UDim2.new(1, -74, 0, 15),
+\t\t\tPosition = UDim2.new(0, 14, 0, 28),
+\t\t\tBackgroundTransparency = 1,
+\t\t\tText = subtitle,
+\t\t\tTextColor3 = C.dim,
+\t\t\tTextSize = 9,
+\t\t\tFont = Enum.Font.Gotham,
+\t\t\tTextXAlignment = Enum.TextXAlignment.Left,
+\t\t\tZIndex = 24,
+\t\t}, frame)
+\tend
+
+\tlocal toggle = make("TextButton", {
+\t\tSize = UDim2.new(0, 42, 0, 22),
+\t\tPosition = UDim2.new(1, -56, 0.5, -11),
+\t\tBackgroundColor3 = defaultValue and C.accent or C.off,
+\t\tBorderSizePixel = 0,
+\t\tText = "",
+\t\tAutoButtonColor = false,
+\t\tZIndex = 24,
+\t}, frame)
+\tcorner(toggle, 99)
+
+\tlocal knob = make("Frame", {
+\t\tSize = UDim2.new(0, 16, 0, 16),
+\t\tPosition = defaultValue and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8),
+\t\tBackgroundColor3 = C.text,
+\t\tBorderSizePixel = 0,
+\t\tZIndex = 25,
+\t}, toggle)
+\tcorner(knob, 99)
+
+\tlocal value = defaultValue
+
+\ttoggle.MouseButton1Click:Connect(function()
+\t\tvalue = not value
+
+\t\ttween(toggle, 0.16, {
+\t\t\tBackgroundColor3 = value and C.accent or C.off,
+\t\t})
+
+\t\ttween(knob, 0.16, {
+\t\t\tPosition = value and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8),
+\t\t})
+
+\t\tif callback then
+\t\t\tcallback(value)
+\t\tend
+\tend)
+
+\treturn frame
+end
+
+function UI.Slider(page, title, minValue, maxValue, defaultValue, suffix, callback)
+\tlocal frame = make("Frame", {
+\t\tSize = UDim2.new(1, 0, 0, 58),
+\t\tBackgroundColor3 = C.card,
+\t\tBorderSizePixel = 0,
+\t\tZIndex = 23,
+\t}, page)
+\tcorner(frame, 13)
+
+\tmake("TextLabel", {
+\t\tSize = UDim2.new(0.7, 0, 0, 20),
+\t\tPosition = UDim2.new(0, 14, 0, 8),
+\t\tBackgroundTransparency = 1,
+\t\tText = title,
+\t\tTextColor3 = C.text,
+\t\tTextSize = 11,
+\t\tFont = Enum.Font.GothamMedium,
+\t\tTextXAlignment = Enum.TextXAlignment.Left,
+\t\tZIndex = 24,
+\t}, frame)
+
+\tlocal valueLabel = make("TextLabel", {
+\t\tSize = UDim2.new(0.3, -14, 0, 20),
+\t\tPosition = UDim2.new(0.7, 0, 0, 8),
+\t\tBackgroundTransparency = 1,
+\t\tText = tostring(defaultValue) .. (suffix or ""),
+\t\tTextColor3 = C.accent,
+\t\tTextSize = 11,
+\t\tFont = Enum.Font.GothamBold,
+\t\tTextXAlignment = Enum.TextXAlignment.Right,
+\t\tZIndex = 24,
+\t}, frame)
+
+\tlocal track = make("TextButton", {
+\t\tSize = UDim2.new(1, -28, 0, 5),
+\t\tPosition = UDim2.new(0, 14, 0, 38),
+\t\tBackgroundColor3 = C.off,
+\t\tBorderSizePixel = 0,
+\t\tText = "",
+\t\tAutoButtonColor = false,
+\t\tZIndex = 24,
+\t}, frame)
+\tcorner(track, 99)
+
+\tlocal value = defaultValue
+\tlocal percent = math.clamp((value - minValue) / (maxValue - minValue), 0, 1)
+
+\tlocal fill = make("Frame", {
+\t\tSize = UDim2.new(percent, 0, 1, 0),
+\t\tBackgroundColor3 = C.accent,
+\t\tBorderSizePixel = 0,
+\t\tZIndex = 25,
+\t}, track)
+\tcorner(fill, 99)
+
+\tlocal thumb = make("Frame", {
+\t\tSize = UDim2.new(0, 14, 0, 14),
+\t\tAnchorPoint = Vector2.new(0.5, 0.5),
+\t\tPosition = UDim2.new(percent, 0, 0.5, 0),
+\t\tBackgroundColor3 = C.text,
+\t\tBorderSizePixel = 0,
+\t\tZIndex = 26,
+\t}, track)
+\tcorner(thumb, 99)
+
+\tlocal dragging = false
+
+\tlocal function setValueFromPosition(positionX)
+\t\tlocal newPercent = math.clamp(
+\t\t\t(positionX - track.AbsolutePosition.X) / track.AbsoluteSize.X,
+\t\t\t0,
+\t\t\t1
+\t\t)
+
+\t\tvalue = math.floor(minValue + (maxValue - minValue) * newPercent + 0.5)
+\t\tfill.Size = UDim2.new(newPercent, 0, 1, 0)
+\t\tthumb.Position = UDim2.new(newPercent, 0, 0.5, 0)
+\t\tvalueLabel.Text = tostring(value) .. (suffix or "")
+
+\t\tif callback then
+\t\t\tcallback(value)
+\t\tend
+\tend
+
+\ttrack.InputBegan:Connect(function(input)
+\t\tif input.UserInputType == Enum.UserInputType.MouseButton1
+\t\t\tor input.UserInputType == Enum.UserInputType.Touch then
+\t\t\tdragging = true
+\t\t\tsetValueFromPosition(input.Position.X)
+\t\tend
+\tend)
+
+\tUserInputService.InputChanged:Connect(function(input)
+\t\tif dragging and (
+\t\t\tinput.UserInputType == Enum.UserInputType.MouseMovement
+\t\t\tor input.UserInputType == Enum.UserInputType.Touch
+\t\t) then
+\t\t\tsetValueFromPosition(input.Position.X)
+\t\tend
+\tend)
+
+\tUserInputService.InputEnded:Connect(function(input)
+\t\tif input.UserInputType == Enum.UserInputType.MouseButton1
+\t\t\tor input.UserInputType == Enum.UserInputType.Touch then
+\t\t\tdragging = false
+\t\tend
+\tend)
+
+\treturn frame
+end
+
+-- Safe local visual effect
+local effects = {
+\tglow = false,
+\thighlight = nil,
+\tlight = nil,
 }
 
----------------------------------------------------------
--- HELPER: is point inside an element's bounds?
----------------------------------------------------------
-local function isInside(object, point)
-    local p, s = object.AbsolutePosition, object.AbsoluteSize
-    return point.X >= p.X and point.X <= p.X + s.X
-       and point.Y >= p.Y and point.Y <= p.Y + s.Y
+local function removeGlow()
+\tif effects.highlight then
+\t\teffects.highlight:Destroy()
+\t\teffects.highlight = nil
+\tend
+
+\tif effects.light then
+\t\teffects.light:Destroy()
+\t\teffects.light = nil
+\tend
 end
 
--- Check if an InputChanged event belongs to the current drag session
-local function IsDragInput(input, activeInput)
-    return input == activeInput
-        or (
-            activeInput ~= nil
-            and activeInput.UserInputType == Enum.UserInputType.MouseButton1
-            and input.UserInputType == Enum.UserInputType.MouseMovement
-        )
+local function applyGlow(enabled)
+\tremoveGlow()
+\teffects.glow = enabled
+
+\tif not enabled then
+\t\treturn
+\tend
+
+\tlocal character = player.Character
+\tif not character then
+\t\treturn
+\tend
+
+\tlocal root = character:FindFirstChild("HumanoidRootPart")
+\tif not root then
+\t\treturn
+\tend
+
+\teffects.highlight = make("Highlight", {
+\t\tName = "NovaLocalGlow",
+\t\tAdornee = character,
+\t\tFillColor = C.accent2,
+\t\tOutlineColor = C.accent,
+\t\tFillTransparency = 0.78,
+\t\tOutlineTransparency = 0.18,
+\t\tDepthMode = Enum.HighlightDepthMode.Occluded,
+\t}, character)
+
+\teffects.light = make("PointLight", {
+\t\tName = "NovaLocalLight",
+\t\tColor = C.accent,
+\t\tBrightness = 1.2,
+\t\tRange = 8,
+\t}, root)
 end
 
----------------------------------------------------------
--- MOBILE TOGGLE BUTTON (SACRACIA CAPSULE)
----------------------------------------------------------
-local hubOpen = false
-local toggleDrag = nil  -- {input=InputObject, start=Vector3, position=UDim2, moved=bool}
+player.CharacterAdded:Connect(function()
+\ttask.wait(0.75)
 
-local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Name = "HubToggle"
-ToggleBtn.Size = UDim2.new(0, 130, 0, 34)
-ToggleBtn.Position = UDim2.new(0, 16, 0.32, 0)
-ToggleBtn.BackgroundColor3 = AppC.sidebar
-ToggleBtn.Text = ""
-ToggleBtn.AutoButtonColor = false
-ToggleBtn.ZIndex = 50
-ToggleBtn.Parent = ScreenGui
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 10)
-
-local ToggleStroke = Instance.new("UIStroke")
-ToggleStroke.Color = AppC.accent
-ToggleStroke.Thickness = 1.2
-ToggleStroke.Transparency = 0.3
-ToggleStroke.Parent = ToggleBtn
-
-local ToggleLogo = Instance.new("TextLabel")
-ToggleLogo.Size = UDim2.new(0, 20, 1, 0)
-ToggleLogo.Position = UDim2.new(0, 10, 0, 0)
-ToggleLogo.BackgroundTransparency = 1
-ToggleLogo.Text = "◈"
-ToggleLogo.TextColor3 = AppC.accent
-ToggleLogo.TextSize = 13
-ToggleLogo.Font = Enum.Font.GothamBold
-ToggleLogo.ZIndex = 52
-ToggleLogo.Parent = ToggleBtn
-
-local ToggleText = Instance.new("TextLabel")
-ToggleText.Size = UDim2.new(1, -34, 1, 0)
-ToggleText.Position = UDim2.new(0, 28, 0, 0)
-ToggleText.BackgroundTransparency = 1
-ToggleText.Text = "SACRACIA"
-ToggleText.TextColor3 = AppC.text
-ToggleText.TextSize = 10
-ToggleText.Font = Enum.Font.GothamBold
-ToggleText.TextXAlignment = Enum.TextXAlignment.Left
-ToggleText.ZIndex = 52
-ToggleText.Parent = ToggleBtn
-
-local function SetToggleVisual(isOpen)
-    ToggleText.Text = isOpen and "CLOSE" or "SACRACIA"
-    TweenService:Create(ToggleStroke, TweenInfo.new(0.2), {
-        Color = isOpen and AppC.red or AppC.accent
-    }):Play()
-    ToggleLogo.TextColor3 = isOpen and AppC.red or AppC.accent
-end
-
--- Toggle button: begin potential drag or click
-ToggleBtn.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-    or input.UserInputType == Enum.UserInputType.Touch then
-        toggleDrag = {
-            input = input,
-            start = input.Position,
-            position = ToggleBtn.Position,
-            moved = false,
-        }
-    end
+\tif effects.glow then
+\t\tapplyGlow(true)
+\tend
 end)
 
--- Global input changed: move toggle button if dragging
-Track(UserInputService.InputChanged:Connect(function(input)
-    if not toggleDrag then return end
-    if not IsDragInput(input, toggleDrag.input) then return end
-    local delta = input.Position - toggleDrag.start
-    if delta.Magnitude > 7 then toggleDrag.moved = true end
-    local viewport = ScreenGui.AbsoluteSize
-    local x = math.clamp(
-        toggleDrag.position.X.Offset + delta.X,
-        8,
-        math.max(8, viewport.X - ToggleBtn.AbsoluteSize.X - 8)
-    )
-    local y = math.clamp(
-        toggleDrag.position.Y.Offset + delta.Y,
-        8,
-        math.max(8, viewport.Y - ToggleBtn.AbsoluteSize.Y - 8)
-    )
-    ToggleBtn.Position = UDim2.fromOffset(x, y)
-end))
-
----------------------------------------------------------
--- MAIN HUB FRAME (SACRACIA WINDOW)
----------------------------------------------------------
-local HUB_W, HUB_H, SIDEBAR_W = 600, 390, 150
-local windowSize = Vector2.new(HUB_W, HUB_H)
-local windowPos = nil
-local windowInteraction = nil  -- "drag" or nil
-
-local HubShadow = Instance.new("Frame")
-HubShadow.Name = "HubShadow"
-HubShadow.Size = UDim2.new(0, HUB_W, 0, HUB_H)
-HubShadow.Position = UDim2.new(0.5, -HUB_W / 2, 0.5, -HUB_H / 2 + 6)
-HubShadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-HubShadow.BackgroundTransparency = 0.4
-HubShadow.BorderSizePixel = 0
-HubShadow.Visible = false
-HubShadow.ZIndex = 8
-HubShadow.Parent = ScreenGui
-Instance.new("UICorner", HubShadow).CornerRadius = UDim.new(0, 12)
-
-local Hub = Instance.new("Frame")
-Hub.Name = "Hub"
-Hub.Size = UDim2.new(0, HUB_W, 0, HUB_H)
-Hub.Position = UDim2.new(0.5, -HUB_W / 2, 0.5, -HUB_H / 2)
-Hub.BackgroundColor3 = AppC.bg
-Hub.BorderSizePixel = 0
-Hub.Visible = false
-Hub.ClipsDescendants = true
-Hub.ZIndex = 10
-Hub.Parent = ScreenGui
-Instance.new("UICorner", Hub).CornerRadius = UDim.new(0, 12)
-
-local HSk = Instance.new("UIStroke")
-HSk.Color = AppC.border
-HSk.Thickness = 1
-HSk.Parent = Hub
-
-local function getViewport()
-    local size = ScreenGui.AbsoluteSize
-    if size.X < 1 or size.Y < 1 then
-        local camera = workspace.CurrentCamera
-        size = camera and camera.ViewportSize or Vector2.new(1280, 720)
-    end
-    return size
-end
-
-local function applyWindowRect(position)
-    local viewport = getViewport()
-    local maxX = math.max(8, viewport.X - windowSize.X - 8)
-    local maxY = math.max(8, viewport.Y - windowSize.Y - 8)
-    windowPos = Vector2.new(
-        math.clamp(position.X, 8, maxX),
-        math.clamp(position.Y, 8, maxY)
-    )
-    Hub.Position = UDim2.fromOffset(windowPos.X, windowPos.Y)
-    Hub.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
-    HubShadow.Position = UDim2.fromOffset(windowPos.X, windowPos.Y + 6)
-    HubShadow.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
-end
-
-local function ensureWindowRect()
-    if not windowPos then
-        local viewport = getViewport()
-        windowPos = Vector2.new(
-            math.max(8, (viewport.X - windowSize.X) / 2),
-            math.max(8, (viewport.Y - windowSize.Y) / 2)
-        )
-    end
-    applyWindowRect(windowPos)
-end
-
-task.defer(ensureWindowRect)
-Track(ScreenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-    if windowPos then applyWindowRect(windowPos) end
-end))
-
----------------------------------------------------------
--- SACRACIA SIDEBAR (LEFT NAVIGATION)
----------------------------------------------------------
-local Sidebar = Instance.new("Frame")
-Sidebar.Name = "Sidebar"
-Sidebar.Size = UDim2.new(0, SIDEBAR_W, 1, 0)
-Sidebar.Position = UDim2.new(0, 0, 0, 0)
-Sidebar.BackgroundColor3 = AppC.sidebar
-Sidebar.BorderSizePixel = 0
-Sidebar.ZIndex = 12
-Sidebar.Parent = Hub
-
-local SideRule = Instance.new("Frame")
-SideRule.Size = UDim2.new(0, 1, 1, 0)
-SideRule.Position = UDim2.new(1, -1, 0, 0)
-SideRule.BackgroundColor3 = AppC.border
-SideRule.BorderSizePixel = 0
-SideRule.ZIndex = 13
-SideRule.Parent = Sidebar
-
--- BRAND LOGO
-local LogoFrame = Instance.new("Frame")
-LogoFrame.Size = UDim2.new(1, 0, 0, 50)
-LogoFrame.BackgroundTransparency = 1
-LogoFrame.ZIndex = 13
-LogoFrame.Parent = Sidebar
-
-local LogoText = Instance.new("TextLabel")
-LogoText.Size = UDim2.new(1, -20, 1, 0)
-LogoText.Position = UDim2.new(0, 16, 0, 0)
-LogoText.BackgroundTransparency = 1
-LogoText.Text = "SACRACIA"
-LogoText.TextColor3 = AppC.text
-LogoText.TextSize = 13
-LogoText.Font = Enum.Font.GothamBlack
-LogoText.TextXAlignment = Enum.TextXAlignment.Left
-LogoText.ZIndex = 14
-LogoText.Parent = LogoFrame
-
-local SideScroll = Instance.new("ScrollingFrame")
-SideScroll.Size = UDim2.new(1, 0, 1, -50)
-SideScroll.Position = UDim2.new(0, 0, 0, 50)
-SideScroll.BackgroundTransparency = 1
-SideScroll.BorderSizePixel = 0
-SideScroll.ScrollBarThickness = 0
-SideScroll.ZIndex = 13
-SideScroll.Parent = Sidebar
-
-local SideList = Instance.new("UIListLayout")
-SideList.SortOrder = Enum.SortOrder.LayoutOrder
-SideList.Padding = UDim.new(0, 4)
-SideList.Parent = SideScroll
-
-local SidePad = Instance.new("UIPadding")
-SidePad.PaddingLeft = UDim.new(0, 10)
-SidePad.PaddingRight = UDim.new(0, 10)
-SidePad.Parent = SideScroll
-
--- CLOSE BUTTON
-local ClB = Instance.new("TextButton")
-ClB.Size = UDim2.new(0, 24, 0, 24)
-ClB.Position = UDim2.new(1, -30, 0, 12)
-ClB.BackgroundTransparency = 1
-ClB.Text = "✕"
-ClB.TextColor3 = AppC.textDim
-ClB.TextSize = 12
-ClB.Font = Enum.Font.GothamBold
-ClB.ZIndex = 20
-ClB.Parent = Hub
-
-ClB.MouseEnter:Connect(function() ClB.TextColor3 = AppC.red end)
-ClB.MouseLeave:Connect(function() ClB.TextColor3 = AppC.textDim end)
-
--- WINDOW DRAG LOGIC — robust input tracking
-do
-    local dragging = false
-    local activeInput = nil
-    local dragStart = nil
-    local startPos = nil
-
-    Sidebar.InputBegan:Connect(function(input)
-        if (input.UserInputType == Enum.UserInputType.MouseButton1
-         or input.UserInputType == Enum.UserInputType.Touch)
-         and not windowInteraction then
-            if isInside(ClB, input.Position) then return end
-            ensureWindowRect()
-            windowInteraction = "drag"
-            dragging = true
-            activeInput = input
-            dragStart = input.Position
-            startPos = windowPos
-        end
-    end)
-
-    Track(UserInputService.InputChanged:Connect(function(input)
-        if not dragging then return end
-        if not IsDragInput(input, activeInput) then return end
-        applyWindowRect(startPos + (input.Position - dragStart))
-    end))
-
-    Track(UserInputService.InputEnded:Connect(function(input)
-        if dragging and (input == activeInput
-         or (activeInput and activeInput.UserInputType == Enum.UserInputType.MouseButton1
-             and input.UserInputType == Enum.UserInputType.MouseButton1)) then
-            dragging = false
-            activeInput = nil
-            windowInteraction = nil
-        end
-    end))
-end
-
----------------------------------------------------------
--- SACRACIA UI CONTROLS BUILDERS
----------------------------------------------------------
-local PageHolder = Instance.new("Frame")
-PageHolder.Name = "PageHolder"
-PageHolder.Size = UDim2.new(1, -SIDEBAR_W, 1, 0)
-PageHolder.Position = UDim2.new(0, SIDEBAR_W, 0, 0)
-PageHolder.BackgroundTransparency = 1
-PageHolder.ZIndex = 11
-PageHolder.Parent = Hub
-
-local function CreateSectionHeader(parent, text)
-    local header = Instance.new("TextLabel")
-    header.Size = UDim2.new(1, 0, 0, 20)
-    header.BackgroundTransparency = 1
-    header.Text = string.upper(text)
-    header.TextColor3 = AppC.textSec
-    header.TextSize = 9
-    header.Font = Enum.Font.GothamBold
-    header.TextXAlignment = Enum.TextXAlignment.Left
-    header.ZIndex = 13
-    header.Parent = parent
-    return header
-end
-
--- iOS / SACRACIA SWITCH TOGGLE
-local function CreateToggle(parent, titleText, descText, defaultState, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, descText and 36 or 24)
-    frame.BackgroundTransparency = 1
-    frame.ZIndex = 13
-    frame.Parent = parent
-
-    local textContainer = Instance.new("Frame")
-    textContainer.Size = UDim2.new(1, -45, 1, 0)
-    textContainer.BackgroundTransparency = 1
-    textContainer.Parent = frame
-
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, 0, 0, 16)
-    title.BackgroundTransparency = 1
-    title.Text = titleText
-    title.TextColor3 = AppC.text
-    title.TextSize = 10
-    title.Font = Enum.Font.GothamBold
-    title.TextXAlignment = Enum.TextXAlignment.Left
-    title.ZIndex = 14
-    title.Parent = textContainer
-
-    if descText then
-        local desc = Instance.new("TextLabel")
-        desc.Size = UDim2.new(1, 0, 0, 14)
-        desc.Position = UDim2.new(0, 0, 0, 16)
-        desc.BackgroundTransparency = 1
-        desc.Text = descText
-        desc.TextColor3 = AppC.textDim
-        desc.TextSize = 8
-        desc.Font = Enum.Font.GothamMedium
-        desc.TextXAlignment = Enum.TextXAlignment.Left
-        desc.ZIndex = 14
-        desc.Parent = textContainer
-    end
-
-    local switchTrack = Instance.new("TextButton")
-    switchTrack.Size = UDim2.new(0, 34, 0, 18)
-    switchTrack.Position = UDim2.new(1, -36, 0, (frame.Size.Y.Offset - 18) / 2)
-    switchTrack.BackgroundColor3 = defaultState and AppC.accent or AppC.switchOff
-    switchTrack.Text = ""
-    switchTrack.AutoButtonColor = false
-    switchTrack.ZIndex = 14
-    switchTrack.Parent = frame
-    Instance.new("UICorner", switchTrack).CornerRadius = UDim.new(1, 0)
-
-    local switchThumb = Instance.new("Frame")
-    switchThumb.Size = UDim2.new(0, 14, 0, 14)
-    switchThumb.Position = defaultState
-        and UDim2.new(1, -16, 0.5, -7)
-        or  UDim2.new(0, 2, 0.5, -7)
-    switchThumb.BackgroundColor3 = AppC.white
-    switchThumb.BorderSizePixel = 0
-    switchThumb.ZIndex = 15
-    switchThumb.Parent = switchTrack
-    Instance.new("UICorner", switchThumb).CornerRadius = UDim.new(1, 0)
-
-    local state = defaultState
-    local function toggle()
-        state = not state
-        TweenService:Create(switchTrack, TweenInfo.new(0.18), {
-            BackgroundColor3 = state and AppC.accent or AppC.switchOff
-        }):Play()
-        TweenService:Create(switchThumb, TweenInfo.new(0.18), {
-            Position = state
-                and UDim2.new(1, -16, 0.5, -7)
-                or  UDim2.new(0, 2, 0.5, -7)
-        }):Play()
-        if callback then pcall(callback, state) end
-    end
-
-    switchTrack.MouseButton1Click:Connect(toggle)
-    return frame, toggle
-end
-
--- SACRACIA SLIDER WITH MULTIPLIER/VALUE TAG
-local function CreateSlider(parent, titleText, minVal, maxVal, defaultVal, prefix, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 32)
-    frame.BackgroundTransparency = 1
-    frame.ZIndex = 13
-    frame.Parent = parent
-
-    prefix = prefix or "x"
-
-    -- Guard against zero-range slider
-    local range = maxVal - minVal
-    if range <= 0 then range = 1 end
-
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(0.7, 0, 0, 14)
-    title.BackgroundTransparency = 1
-    title.Text = titleText
-    title.TextColor3 = AppC.text
-    title.TextSize = 10
-    title.Font = Enum.Font.GothamBold
-    title.TextXAlignment = Enum.TextXAlignment.Left
-    title.ZIndex = 14
-    title.Parent = frame
-
-    local valLabel = Instance.new("TextLabel")
-    valLabel.Size = UDim2.new(0.3, 0, 0, 14)
-    valLabel.Position = UDim2.new(0.7, 0, 0, 0)
-    valLabel.BackgroundTransparency = 1
-    valLabel.Text = prefix .. tostring(defaultVal)
-    valLabel.TextColor3 = AppC.text
-    valLabel.TextSize = 10
-    valLabel.Font = Enum.Font.GothamBold
-    valLabel.TextXAlignment = Enum.TextXAlignment.Right
-    valLabel.ZIndex = 14
-    valLabel.Parent = frame
-
-    local track = Instance.new("TextButton")
-    track.Size = UDim2.new(1, 0, 0, 4)
-    track.Position = UDim2.new(0, 0, 0, 20)
-    track.BackgroundColor3 = AppC.switchOff
-    track.Text = ""
-    track.AutoButtonColor = false
-    track.ZIndex = 14
-    track.Parent = frame
-    Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
-
-    local pct = math.clamp((defaultVal - minVal) / range, 0, 1)
-    local fill = Instance.new("Frame")
-    fill.Size = UDim2.new(pct, 0, 1, 0)
-    fill.BackgroundColor3 = AppC.accent
-    fill.BorderSizePixel = 0
-    fill.ZIndex = 15
-    fill.Parent = track
-    Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
-
-    local thumb = Instance.new("Frame")
-    thumb.Size = UDim2.new(0, 10, 0, 10)
-    thumb.AnchorPoint = Vector2.new(0.5, 0.5)
-    thumb.Position = UDim2.new(pct, 0, 0.5, 0)
-    thumb.BackgroundColor3 = AppC.white
-    thumb.BorderSizePixel = 0
-    thumb.ZIndex = 16
-    thumb.Parent = track
-    Instance.new("UICorner", thumb).CornerRadius = UDim.new(1, 0)
-
-    -- Make the thumb invisible-frame larger for easier touch targeting
-    local touchArea = Instance.new("TextButton")
-    touchArea.Size = UDim2.new(1, 0, 0, 24)
-    touchArea.Position = UDim2.new(0, 0, 0.5, -12)
-    touchArea.BackgroundTransparency = 1
-    touchArea.Text = ""
-    touchArea.AutoButtonColor = false
-    touchArea.ZIndex = 17  -- above track(14), fill(15), thumb(16)
-    touchArea.Parent = frame
-
-    local dragging = false
-    local activeInput = nil
-
-    local function update(input)
-        local trackAbsPos = track.AbsolutePosition.X
-        local trackAbsSize = track.AbsoluteSize.X
-        if trackAbsSize < 1 then return end  -- not laid out yet
-        local delta = math.clamp((input.Position.X - trackAbsPos) / trackAbsSize, 0, 1)
-        local val = math.round(minVal + range * delta)
-        fill.Size = UDim2.new(delta, 0, 1, 0)
-        thumb.Position = UDim2.new(delta, 0, 0.5, 0)
-        valLabel.Text = prefix .. tostring(val)
-        if callback then pcall(callback, val) end
-    end
-
-    touchArea.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            activeInput = input
-            update(input)
-        end
-    end)
-
-    -- Per-slider InputChanged: only act on our active input
-    Track(UserInputService.InputChanged:Connect(function(input)
-        if not dragging then return end
-        if not IsDragInput(input, activeInput) then return end
-        update(input)
-    end))
-
-    Track(UserInputService.InputEnded:Connect(function(input)
-        if dragging and (input == activeInput
-         or (activeInput and activeInput.UserInputType == Enum.UserInputType.MouseButton1
-             and input.UserInputType == Enum.UserInputType.MouseButton1)) then
-            dragging = false
-            activeInput = nil
-        end
-    end))
-
-    return frame
-end
-
----------------------------------------------------------
--- NAVIGATION & CATEGORIES (MATCHING SACRACIA SIDEBAR)
----------------------------------------------------------
-local categories = {
-    {id = "Stats",         icon = "📊", name = "Stats"},
-    {id = "Entities",      icon = "👁", name = "Entities"},
-    {id = "Visuals",       icon = "🎯", name = "Visuals"},
-    {id = "Valuables",     icon = "🎒", name = "Valuables"},
-    {id = "Items",         icon = "📦", name = "Items"},
-    {id = "Level",         icon = "⚡", name = "Level"},
-    {id = "Miscellaneous", icon = "⚙", name = "Miscellaneous"},
-    {id = "Settings",      icon = "🛠", name = "Settings"},
-}
-
-local sidebarButtons = {}
-local categoryPages = {}
-local selectedPage = nil
-
-local function ShowPage(id)
-    selectedPage = id
-    for pageId, page in pairs(categoryPages) do
-        page.Visible = (pageId == id)
-    end
-    for pageId, btn in pairs(sidebarButtons) do
-        local selected = (pageId == id)
-        btn.BackgroundColor3 = selected and AppC.activeTab or AppC.sidebar
-        local icon = btn:FindFirstChild("Icon")
-        local label = btn:FindFirstChild("Label")
-        if icon then icon.TextColor3 = selected and AppC.accent or AppC.textDim end
-        if label then label.TextColor3 = selected and AppC.text or AppC.textDim end
-    end
-end
-
-for _, item in ipairs(categories) do
-    local btn = Instance.new("TextButton")
-    btn.Name = "Side_" .. item.id
-    btn.Size = UDim2.new(1, 0, 0, 28)
-    btn.BackgroundColor3 = AppC.sidebar
-    btn.BorderSizePixel = 0
-    btn.Text = ""
-    btn.AutoButtonColor = false
-    btn.ZIndex = 14
-    btn.Parent = SideScroll
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-
-    local icon = Instance.new("TextLabel")
-    icon.Name = "Icon"
-    icon.Size = UDim2.new(0, 20, 1, 0)
-    icon.Position = UDim2.new(0, 8, 0, 0)
-    icon.BackgroundTransparency = 1
-    icon.Text = item.icon
-    icon.TextColor3 = AppC.textDim
-    icon.TextSize = 11
-    icon.ZIndex = 15
-    icon.Parent = btn
-
-    local label = Instance.new("TextLabel")
-    label.Name = "Label"
-    label.Size = UDim2.new(1, -34, 1, 0)
-    label.Position = UDim2.new(0, 32, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = item.name
-    label.TextColor3 = AppC.textDim
-    label.TextSize = 9
-    label.Font = Enum.Font.GothamBold
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 15
-    label.Parent = btn
-
-    sidebarButtons[item.id] = btn
-
-    -- Hover feedback (desktop only — no effect on touch)
-    btn.MouseEnter:Connect(function()
-        if selectedPage ~= item.id then
-            TweenService:Create(btn, TweenInfo.new(0.12), {
-                BackgroundColor3 = AppC.hover
-            }):Play()
-        end
-    end)
-    btn.MouseLeave:Connect(function()
-        if selectedPage ~= item.id then
-            TweenService:Create(btn, TweenInfo.new(0.12), {
-                BackgroundColor3 = AppC.sidebar
-            }):Play()
-        end
-    end)
-
-    btn.MouseButton1Click:Connect(function()
-        ShowPage(item.id)
-    end)
-end
-
----------------------------------------------------------
--- REAL WORKING VISUALS LOGIC FOR COSMETICS
----------------------------------------------------------
-local betaState = {
-    wings = false,
-    aura = false,
-    wingSpeed = 3,
-    wingFolder = nil,
-    auraHighlight = nil,
-    auraParticles = nil,
-    auraLight = nil,
-    leftWeld = nil,
-    rightWeld = nil,
-    conn = nil,
-}
-
-local function RemoveWings()
-    if betaState.wingFolder then
-        betaState.wingFolder:Destroy()
-        betaState.wingFolder = nil
-    end
-    betaState.leftWeld = nil
-    betaState.rightWeld = nil
-end
-
-local function RemoveAura()
-    if betaState.auraHighlight then betaState.auraHighlight:Destroy() betaState.auraHighlight = nil end
-    if betaState.auraParticles  then betaState.auraParticles:Destroy()  betaState.auraParticles  = nil end
-    if betaState.auraLight     then betaState.auraLight:Destroy()       betaState.auraLight     = nil end
-    -- Also catch orphaned light by name (in case betaState was reset)
-    local char = player.Character
-    if char then
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            local light = hrp:FindFirstChild("MidnightAuraLight")
-            if light then light:Destroy() end
-        end
-    end
-end
-
-local function CreateWingPart(parent, size, cframe)
-    local p = Instance.new("Part")
-    p.Size = size
-    p.CFrame = cframe
-    p.Color = AppC.accent
-    p.Material = Enum.Material.Neon
-    p.CanCollide = false
-    p.Massless = true
-    p.CastShadow = false
-    p.Parent = parent
-    return p
-end
-
-local function ApplyWings()
-    RemoveWings()
-    if not betaState.wings then return end
-
-    local char = player.Character
-    if not char then return end
-    local torso = char:FindFirstChild("UpperTorso")
-              or char:FindFirstChild("Torso")
-              or char:FindFirstChild("HumanoidRootPart")
-    if not torso then return end
-
-    local folder = Instance.new("Folder")
-    folder.Name = "MidnightWings"
-    folder.Parent = char
-    betaState.wingFolder = folder
-
-    local leftRoot = Instance.new("Part")
-    leftRoot.Size = Vector3.new(0.1, 0.1, 0.1)
-    leftRoot.Transparency = 1
-    leftRoot.CanCollide = false
-    leftRoot.Massless = true
-    leftRoot.Parent = folder
-
-    local rightRoot = Instance.new("Part")
-    rightRoot.Size = Vector3.new(0.1, 0.1, 0.1)
-    rightRoot.Transparency = 1
-    rightRoot.CanCollide = false
-    rightRoot.Massless = true
-    rightRoot.Parent = folder
-
-    local wL = Instance.new("Weld")
-    wL.Part0 = torso
-    wL.Part1 = leftRoot
-    wL.C0 = CFrame.new(-0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(-15), 0)
-    wL.Parent = leftRoot
-
-    local wR = Instance.new("Weld")
-    wR.Part0 = torso
-    wR.Part1 = rightRoot
-    wR.C0 = CFrame.new(0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(15), 0)
-    wR.Parent = rightRoot
-
-    for i = 1, 4 do
-        local scale = 1 - (i * 0.15)
-        local lBlade = CreateWingPart(folder, Vector3.new(0.1, 1.8 * scale, 0.4 * scale), CFrame.identity)
-        local rBlade = CreateWingPart(folder, Vector3.new(0.1, 1.8 * scale, 0.4 * scale), CFrame.identity)
-
-        local w1 = Instance.new("Weld")
-        w1.Part0 = leftRoot
-        w1.Part1 = lBlade
-        w1.C0 = CFrame.new(-i * 0.35, i * 0.1, -i * 0.1) * CFrame.Angles(0, 0, math.rad(25 + i * 12))
-        w1.Parent = lBlade
-
-        local w2 = Instance.new("Weld")
-        w2.Part0 = rightRoot
-        w2.Part1 = rBlade
-        w2.C0 = CFrame.new(i * 0.35, i * 0.1, -i * 0.1) * CFrame.Angles(0, 0, math.rad(-(25 + i * 12)))
-        w2.Parent = rBlade
-    end
-
-    betaState.leftWeld = wL
-    betaState.rightWeld = wR
-end
-
-local function ApplyAura()
-    RemoveAura()
-    if not betaState.aura then return end
-
-    local char = player.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    local hl = Instance.new("Highlight")
-    hl.Name = "MidnightAuraHL"
-    hl.FillColor = AppC.accent
-    hl.OutlineColor = AppC.white
-    hl.FillTransparency = 0.65
-    hl.OutlineTransparency = 0.2
-    hl.Adornee = char
-    hl.Parent = char
-    betaState.auraHighlight = hl
-
-    local pe = Instance.new("ParticleEmitter")
-    pe.Name = "MidnightAuraParticles"
-    pe.Color = ColorSequence.new(AppC.accent, AppC.white)
-    pe.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 0)})
-    pe.Texture = "rbxassetid://242200285"
-    pe.Lifetime = NumberRange.new(0.8, 1.4)
-    pe.Rate = 20
-    pe.Speed = NumberRange.new(1.5, 3.5)
-    pe.VelocitySpread = 180
-    pe.Parent = hrp
-    betaState.auraParticles = pe
-
-    local pl = Instance.new("PointLight")
-    pl.Name = "MidnightAuraLight"
-    pl.Color = AppC.accent
-    pl.Range = 12
-    pl.Brightness = 2.5
-    pl.Parent = hrp
-    betaState.auraLight = pl
-end
-
--- Wing flap animation: only runs while wings are actually active
-local function startWingAnimation()
-    if betaState.conn then return end  -- already running
-    betaState.conn = RunService.RenderStepped:Connect(function()
-        if not betaState.wings then return end
-        local lw, rw = betaState.leftWeld, betaState.rightWeld
-        if not lw or not rw then return end
-        if not lw.Parent or not rw.Parent then return end
-        local flap = math.sin(tick() * betaState.wingSpeed) * 0.25
-        lw.C0 = CFrame.new(-0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(-15) - flap, flap * 0.5)
-        rw.C0 = CFrame.new(0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(15) + flap, -flap * 0.5)
-    end)
-    Track(betaState.conn)
-end
-
-startWingAnimation()
-
-Track(player.CharacterAdded:Connect(function()
-    task.wait(0.5)
-    if betaState.wings then ApplyWings() end
-    if betaState.aura  then ApplyAura()  end
-end))
-
----------------------------------------------------------
--- POPULATE SACRACIA PAGES (TWO COLUMN LAYOUT)
--- with automatic canvas sizing
----------------------------------------------------------
-local function autoSizeScroll(scrollFrame, colLeft, colRight, listL, listR)
-    local function updateCanvas()
-        local leftY  = listL.AbsoluteContentSize.Y
-        local rightY = listR.AbsoluteContentSize.Y
-        colLeft.Size  = UDim2.new(0.48, 0, 0, leftY)
-        colRight.Size = UDim2.new(0.48, 0, 0, rightY)
-        -- Padding top + bottom = 40
-        scrollFrame.CanvasSize = UDim2.new(0, 0, 0, math.max(leftY, rightY) + 40)
-    end
-    updateCanvas()
-    Track(listL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas))
-    Track(listR:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas))
-end
-
-for _, item in ipairs(categories) do
-    local page = Instance.new("Frame")
-    page.Name = "Page_" .. item.id
-    page.Size = UDim2.new(1, 0, 1, 0)
-    page.BackgroundTransparency = 1
-    page.Visible = false
-    page.Parent = PageHolder
-    categoryPages[item.id] = page
-
-    local pageScroll = Instance.new("ScrollingFrame")
-    pageScroll.Size = UDim2.new(1, 0, 1, 0)
-    pageScroll.BackgroundTransparency = 1
-    pageScroll.BorderSizePixel = 0
-    pageScroll.ScrollBarThickness = 2
-    pageScroll.ScrollBarImageColor3 = AppC.border
-    pageScroll.AutomaticCanvasSize = Enum.AutomaticSize.None
-    pageScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-    pageScroll.Parent = page
-
-    local pad = Instance.new("UIPadding")
-    pad.PaddingTop = UDim.new(0, 20)
-    pad.PaddingLeft = UDim.new(0, 20)
-    pad.PaddingRight = UDim.new(0, 20)
-    pad.PaddingBottom = UDim.new(0, 20)
-    pad.Parent = pageScroll
-
-    -- 2 Columns Grid Layout
-    local colLeft = Instance.new("Frame")
-    colLeft.Size = UDim2.new(0.48, 0, 1, 0)
-    colLeft.Position = UDim2.new(0, 0, 0, 0)
-    colLeft.BackgroundTransparency = 1
-    colLeft.Parent = pageScroll
-
-    local colRight = Instance.new("Frame")
-    colRight.Size = UDim2.new(0.48, 0, 1, 0)
-    colRight.Position = UDim2.new(0.52, 0, 0, 0)
-    colRight.BackgroundTransparency = 1
-    colRight.Parent = pageScroll
-
-    local listL = Instance.new("UIListLayout")
-    listL.SortOrder = Enum.SortOrder.LayoutOrder
-    listL.Padding = UDim.new(0, 12)
-    listL.Parent = colLeft
-
-    local listR = Instance.new("UIListLayout")
-    listR.SortOrder = Enum.SortOrder.LayoutOrder
-    listR.Padding = UDim.new(0, 12)
-    listR.Parent = colRight
-
-    if item.id == "Stats" then
-        -- LEFT COLUMN: HEALTH & MOVEMENT
-        CreateSectionHeader(colLeft, "Health")
-        CreateToggle(colLeft, "Godmode", nil, true)
-
-        CreateSectionHeader(colLeft, "Movement")
-        CreateToggle(colLeft, "Infinite stamina", nil, false)
-        CreateSlider(colLeft, "Walking speed", 1, 10, 6, "x")
-        CreateSlider(colLeft, "Running speed", 1, 10, 3, "x")
-        CreateSlider(colLeft, "Crouching speed", 1, 10, 5, "x")
-        CreateToggle(colLeft, "Infinite jumps", nil, true)
-        CreateToggle(colLeft, "Dont tumble", "Double tumbling from external sources", false)
-
-        -- RIGHT COLUMN: GRAB & POWERUPS
-        CreateSectionHeader(colRight, "Grab")
-        CreateToggle(colRight, "High strength", "Disables if you take damage", true)
-        CreateToggle(colRight, "Unlimited range", nil, true)
-        CreateToggle(colRight, "No doorforge", nil, false)
-
-        CreateSectionHeader(colRight, "Cosmetics & Aura")
-        CreateToggle(colRight, "Enable Wings", "Attach glowing wings to character", false, function(s)
-            betaState.wings = s
-            if s then ApplyWings() else RemoveWings() end
-        end)
-        CreateSlider(colRight, "Wing Speed", 1, 10, 3, "x", function(v)
-            betaState.wingSpeed = v
-        end)
-        CreateToggle(colRight, "Enable Aura", "Body highlight & particles", false, function(s)
-            betaState.aura = s
-            if s then ApplyAura() else RemoveAura() end
-        end)
-
-    else
-        -- DEFAULT DUMMY PAGE CONTENT
-        CreateSectionHeader(colLeft, item.name .. " Settings")
-        CreateToggle(colLeft, "Enable " .. item.name, "Toggle option feature", true)
-        CreateSlider(colLeft, "Intensity", 1, 100, 50, "%")
-
-        CreateSectionHeader(colRight, "Advanced Options")
-        CreateToggle(colRight, "Bypass Anti-Cheat", nil, true)
-        CreateToggle(colRight, "Silent Mode", nil, false)
-    end
-
-    -- Wire up auto-sizing after content is populated
-    autoSizeScroll(pageScroll, colLeft, colRight, listL, listR)
-end
-
----------------------------------------------------------
--- TOGGLE HUB FUNCTIONALITY
----------------------------------------------------------
-local function ToggleHub()
-    hubOpen = not hubOpen
-    SetToggleVisual(hubOpen)
-
-    if hubOpen then
-        Hub.Visible = true
-        HubShadow.Visible = true
-        ensureWindowRect()
-        Hub.Size = UDim2.fromOffset(windowSize.X, 0)
-        HubShadow.Size = UDim2.fromOffset(windowSize.X, 0)
-        TweenService:Create(Hub, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-            Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
-        }):Play()
-        TweenService:Create(HubShadow, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-            Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
-        }):Play()
-    else
-        local tw = TweenService:Create(Hub, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            Size = UDim2.fromOffset(windowSize.X, 0)
-        })
-        tw:Play()
-        TweenService:Create(HubShadow, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            Size = UDim2.fromOffset(windowSize.X, 0)
-        }):Play()
-        local conn
-        conn = tw.Completed:Connect(function()
-            if not hubOpen then
-                Hub.Visible = false
-                HubShadow.Visible = false
-                Hub.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
-                HubShadow.Size = UDim2.fromOffset(windowSize.X, windowSize.Y)
-            end
-            conn:Disconnect()
-        end)
-    end
-end
-
--- Toggle button: click vs drag resolved on InputEnded
-Track(UserInputService.InputEnded:Connect(function(input)
-    if not toggleDrag then return end
-    -- Match the input that started the drag, or any mouse button up
-    if input == toggleDrag.input
-    or (toggleDrag.input.UserInputType == Enum.UserInputType.MouseButton1
-        and input.UserInputType == Enum.UserInputType.MouseButton1) then
-        local moved = toggleDrag.moved
-        toggleDrag = nil
-        if not moved then ToggleHub() end
-    end
-end))
-
-ClB.MouseButton1Click:Connect(function()
-    if hubOpen then ToggleHub() end
+-- Pages
+local homePage = createTab("home", "Главная", "⌂")
+local visualPage = createTab("visual", "Внешний вид", "✦")
+local settingsPage = createTab("settings", "Настройки", "⚙")
+local serverPage = createTab("server", "Сессия", "◉")
+
+UI.Section(homePage, "Добро пожаловать")
+UI.Info(
+\thomePage,
+\t"NOVA Mobile UI",
+\t"Новый интерфейс для твоего собственного Roblox-опыта: чистый дизайн, адаптация под телефон и безопасные локальные настройки."
+)
+
+UI.Section(homePage, "Быстрые действия")
+UI.Button(homePage, "Показать уведомление", function()
+\ttoast("Интерфейс NOVA готов к работе", C.success)
+end, C.accent2)
+
+UI.Button(homePage, "Скопировать название UI", function()
+\tif setclipboard then
+\t\tsetclipboard("NOVA Mobile UI")
+\t\ttoast("Название скопировано", C.success)
+\telse
+\t\ttoast("Буфер обмена недоступен", C.danger)
+\tend
 end)
 
-ShowPage("Stats")
+UI.Section(visualPage, "Локальная косметика")
+UI.Info(
+\tvisualPage,
+\t"Эффект NOVA Glow",
+\t"Подсветка применяется только к твоему персонажу на клиенте. Она не даёт игровых преимуществ."
+)
+
+UI.Toggle(visualPage, "NOVA Glow", "Светящийся контур персонажа", false, function(value)
+\tapplyGlow(value)
+\ttoast(value and "NOVA Glow включён" or "NOVA Glow выключен", value and C.success or C.subtext)
+end)
+
+UI.Section(settingsPage, "Интерфейс")
+UI.Toggle(settingsPage, "Компактный режим", "Уменьшает окно до более компактного вида", false, function(value)
+\tif value then
+\t\tmain.Size = UDim2.new(0, 480, 0, 320)
+\telse
+\t\tmain.Size = UDim2.new(0, 540, 0, 360)
+\tend
+
+\ttoast(value and "Компактный режим включён" or "Обычный размер включён", C.accent)
+end)
+
+UI.Slider(settingsPage, "Прозрачность окна", 0, 65, 0, "%", function(value)
+\tmain.BackgroundTransparency = value / 100
+end)
+
+UI.Slider(settingsPage, "Масштаб интерфейса", 70, 115, 100, "%", function(value)
+\tscale.Scale = math.clamp(getScale() * (value / 100), 0.55, 1.15)
+end)
+
+UI.Section(serverPage, "Сессия")
+UI.Info(
+\tserverPage,
+\t"Управление сессией",
+\t"Действия ниже относятся только к твоему текущему Roblox-опыту."
+)
+
+UI.Button(serverPage, "Переподключиться", function()
+\ttoast("Переподключение...", C.accent)
+\ttask.wait(0.25)
+\tTeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, player)
+end)
+
+UI.Button(serverPage, "Закрыть NOVA UI", function()
+\tgui:Destroy()
+end, C.danger)
+
+-- Window dragging
+local dragging = false
+local dragStart
+local startPosition
+
+header.InputBegan:Connect(function(input)
+\tif input.UserInputType == Enum.UserInputType.MouseButton1
+\t\tor input.UserInputType == Enum.UserInputType.Touch then
+\t\tdragging = true
+\t\tdragStart = input.Position
+\t\tstartPosition = main.Position
+\tend
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+\tif dragging and (
+\t\tinput.UserInputType == Enum.UserInputType.MouseMovement
+\t\tor input.UserInputType == Enum.UserInputType.Touch
+\t) then
+\t\tlocal delta = input.Position - dragStart
+\t\tmain.Position = UDim2.new(
+\t\t\tstartPosition.X.Scale,
+\t\t\tstartPosition.X.Offset + delta.X,
+\t\t\tstartPosition.Y.Scale,
+\t\t\tstartPosition.Y.Offset + delta.Y
+\t\t)
+\tend
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+\tif input.UserInputType == Enum.UserInputType.MouseButton1
+\t\tor input.UserInputType == Enum.UserInputType.Touch then
+\t\tdragging = false
+\tend
+end)
+
+-- Launcher drag and click
+local draggingLauncher = false
+local launcherMoved = false
+local launcherStart
+local launcherPosition
+
+logoButton.InputBegan:Connect(function(input)
+\tif input.UserInputType == Enum.UserInputType.MouseButton1
+\t\tor input.UserInputType == Enum.UserInputType.Touch then
+\t\tdraggingLauncher = true
+\t\tlauncherMoved = false
+\t\tlauncherStart = input.Position
+\t\tlauncherPosition = logoButton.Position
+\tend
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+\tif draggingLauncher and (
+\t\tinput.UserInputType == Enum.UserInputType.MouseMovement
+\t\tor input.UserInputType == Enum.UserInputType.Touch
+\t) then
+\t\tlocal delta = input.Position - launcherStart
+
+\t\tif delta.Magnitude > 6 then
+\t\t\tlauncherMoved = true
+\t\tend
+
+\t\tlogoButton.Position = UDim2.new(
+\t\t\tlauncherPosition.X.Scale,
+\t\t\tlauncherPosition.X.Offset + delta.X,
+\t\t\tlauncherPosition.Y.Scale,
+\t\t\tlauncherPosition.Y.Offset + delta.Y
+\t\t)
+\tend
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+\tif draggingLauncher and (
+\t\tinput.UserInputType == Enum.UserInputType.MouseButton1
+\t\tor input.UserInputType == Enum.UserInputType.Touch
+\t) then
+\t\tdraggingLauncher = false
+\tend
+end)
+
+logoButton.MouseButton1Click:Connect(function()
+\tif launcherMoved then
+\t\treturn
+\tend
+
+\tsetWindowVisible(not opened)
+end)
+
+minButton.MouseButton1Click:Connect(function()
+\tminimized = not minimized
+
+\tif minimized then
+\t\tsetWindowVisible(false)
+\telse
+\t\tsetWindowVisible(true)
+\tend
+end)
+
+closeButton.MouseButton1Click:Connect(function()
+\tsetWindowVisible(false)
+end)
+
+selectPage("home")
+toast("NOVA UI загружен", C.success)
