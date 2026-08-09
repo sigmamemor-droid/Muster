@@ -1,263 +1,1247 @@
-local ui = {
-    dark = true,
-    mouseX = 0,
-    mouseY = 0,
-    activeTab = "Главная",
-    notification = "Добро пожаловать!",
-    pulse = 0
+--!strict
+-- Aurora Mobile UI
+-- LocalScript -> StarterPlayerScripts
+-- Безопасная локальная интерфейсная библиотека для собственной Roblox-игры.
+
+------------------------------------------------------------
+-- SERVICES
+------------------------------------------------------------
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local TeleportService = game:GetService("TeleportService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+------------------------------------------------------------
+-- SETTINGS
+------------------------------------------------------------
+
+local GUI_NAME = "AuroraMobileUI"
+local WINDOW_WIDTH = 560
+local WINDOW_HEIGHT = 380
+
+local Theme = {
+\tBackground = Color3.fromRGB(13, 16, 25),
+\tSurface = Color3.fromRGB(20, 24, 36),
+\tSurfaceHover = Color3.fromRGB(29, 35, 52),
+\tSidebar = Color3.fromRGB(17, 21, 32),
+
+\tAccent = Color3.fromRGB(105, 108, 255),
+\tAccentSoft = Color3.fromRGB(145, 130, 255),
+
+\tText = Color3.fromRGB(242, 244, 255),
+\tTextMuted = Color3.fromRGB(167, 174, 197),
+\tTextDim = Color3.fromRGB(104, 112, 137),
+
+\tStroke = Color3.fromRGB(48, 55, 78),
+\tDanger = Color3.fromRGB(242, 86, 99),
+\tWhite = Color3.fromRGB(255, 255, 255),
 }
 
-local colors = {
-    dark = {
-        bg = {0.055, 0.071, 0.11},
-        sidebar = {0.075, 0.098, 0.15},
-        card = {0.10, 0.13, 0.19},
-        cardHover = {0.13, 0.17, 0.25},
-        text = {0.92, 0.95, 1.0},
-        muted = {0.52, 0.58, 0.69},
-        accent = {0.38, 0.45, 1.0},
-        success = {0.20, 0.83, 0.57},
-        border = {0.18, 0.22, 0.31}
-    },
+local tweenFast = TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local tweenNormal = TweenInfo.new(0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
-    light = {
-        bg = {0.94, 0.96, 0.99},
-        sidebar = {1.0, 1.0, 1.0},
-        card = {1.0, 1.0, 1.0},
-        cardHover = {0.95, 0.97, 1.0},
-        text = {0.10, 0.13, 0.20},
-        muted = {0.40, 0.45, 0.55},
-        accent = {0.30, 0.38, 0.95},
-        success = {0.10, 0.67, 0.40},
-        border = {0.84, 0.87, 0.92}
-    }
+------------------------------------------------------------
+-- CLEANUP
+------------------------------------------------------------
+
+local previous = playerGui:FindFirstChild(GUI_NAME)
+if previous then
+\tprevious:Destroy()
+end
+
+------------------------------------------------------------
+-- HELPERS
+------------------------------------------------------------
+
+local function create<T>(className: string, properties: {[string]: any}): T
+\tlocal instance = Instance.new(className) :: any
+
+\tfor property, value in pairs(properties) do
+\t\tinstance[property] = value
+\tend
+
+\treturn instance
+end
+
+local function addCorner(parent: Instance, radius: number)
+\treturn create("UICorner", {
+\t\tCornerRadius = UDim.new(0, radius),
+\t\tParent = parent,
+\t})
+end
+
+local function addStroke(parent: Instance, color: Color3, thickness: number, transparency: number?)
+\treturn create("UIStroke", {
+\t\tColor = color,
+\t\tThickness = thickness,
+\t\tTransparency = transparency or 0,
+\t\tApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+\t\tParent = parent,
+\t})
+end
+
+local function tween(object: Instance, info: TweenInfo, goal: {[string]: any})
+\tlocal animation = TweenService:Create(object, info, goal)
+\tanimation:Play()
+\treturn animation
+end
+
+local function safeCall(callback: ((...any) -> ())?, ...: any)
+\tif not callback then
+\t\treturn
+\tend
+
+\tlocal success, err = pcall(callback, ...)
+\tif not success then
+\t\twarn("[Aurora UI] Callback error:", err)
+\tend
+end
+
+local function clampWindowPosition(frame: Frame)
+\tlocal camera = workspace.CurrentCamera
+\tif not camera then
+\t\treturn
+\tend
+
+\tlocal viewport = camera.ViewportSize
+\tlocal size = frame.AbsoluteSize
+\tlocal position = frame.AbsolutePosition
+
+\tlocal margin = 10
+\tlocal minX = margin
+\tlocal minY = margin
+\tlocal maxX = math.max(margin, viewport.X - size.X - margin)
+\tlocal maxY = math.max(margin, viewport.Y - size.Y - margin)
+
+\tlocal x = math.clamp(position.X, minX, maxX)
+\tlocal y = math.clamp(position.Y, minY, maxY)
+
+\tframe.Position = UDim2.fromOffset(x + size.X / 2, y + size.Y / 2)
+end
+
+------------------------------------------------------------
+-- ROOT GUI
+------------------------------------------------------------
+
+local screenGui = create("ScreenGui", {
+\tName = GUI_NAME,
+\tResetOnSpawn = false,
+\tIgnoreGuiInset = true,
+\tZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+\tDisplayOrder = 50,
+\tParent = playerGui,
+})
+
+------------------------------------------------------------
+-- LOADER
+------------------------------------------------------------
+
+local loader = create("Frame", {
+\tName = "Loader",
+\tSize = UDim2.fromScale(1, 1),
+\tBackgroundColor3 = Theme.Background,
+\tBorderSizePixel = 0,
+\tZIndex = 100,
+\tParent = screenGui,
+})
+
+local loaderCard = create("Frame", {
+\tSize = UDim2.fromOffset(280, 125),
+\tAnchorPoint = Vector2.new(0.5, 0.5),
+\tPosition = UDim2.fromScale(0.5, 0.5),
+\tBackgroundTransparency = 1,
+\tZIndex = 101,
+\tParent = loader,
+})
+
+local loaderTitle = create("TextLabel", {
+\tSize = UDim2.new(1, 0, 0, 24),
+\tBackgroundTransparency = 1,
+\tText = "AURORA",
+\tTextColor3 = Theme.Text,
+\tTextSize = 30,
+\tFont = Enum.Font.GothamBlack,
+\tZIndex = 102,
+\tParent = loaderCard,
+})
+
+local loaderSub = create("TextLabel", {
+\tSize = UDim2.new(1, 0, 0, 18),
+\tPosition = UDim2.fromOffset(0, 34),
+\tBackgroundTransparency = 1,
+\tText = "MOBILE INTERFACE",
+\tTextColor3 = Theme.TextDim,
+\tTextSize = 10,
+\tFont = Enum.Font.GothamBold,
+\tZIndex = 102,
+\tParent = loaderCard,
+})
+
+local progressBack = create("Frame", {
+\tSize = UDim2.fromOffset(180, 5),
+\tAnchorPoint = Vector2.new(0.5, 0),
+\tPosition = UDim2.new(0.5, 0, 0, 76),
+\tBackgroundColor3 = Theme.Surface,
+\tBorderSizePixel = 0,
+\tZIndex = 102,
+\tParent = loaderCard,
+})
+addCorner(progressBack, 99)
+
+local progressFill = create("Frame", {
+\tSize = UDim2.new(0, 0, 1, 0),
+\tBackgroundColor3 = Theme.Accent,
+\tBorderSizePixel = 0,
+\tZIndex = 103,
+\tParent = progressBack,
+})
+addCorner(progressFill, 99)
+
+tween(progressFill, TweenInfo.new(0.8, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+\tSize = UDim2.fromScale(1, 1),
+})
+
+task.delay(1.05, function()
+\tif not loader.Parent then
+\t\treturn
+\tend
+
+\tfor _, object in ipairs(loader:GetDescendants()) do
+\t\tif object:IsA("TextLabel") then
+\t\t\ttween(object, tweenNormal, { TextTransparency = 1 })
+\t\telseif object:IsA("Frame") then
+\t\t\ttween(object, tweenNormal, { BackgroundTransparency = 1 })
+\t\tend
+\tend
+
+\ttask.wait(0.3)
+
+\tif loader.Parent then
+\t\tloader:Destroy()
+\tend
+end)
+
+------------------------------------------------------------
+-- FLOATING OPEN BUTTON
+------------------------------------------------------------
+
+local windowOpen = true
+
+local floatingButton = create("TextButton", {
+\tName = "OpenButton",
+\tSize = UDim2.fromOffset(48, 48),
+\tPosition = UDim2.new(0, 16, 0.35, 0),
+\tBackgroundColor3 = Theme.Accent,
+\tText = "A",
+\tTextColor3 = Theme.White,
+\tTextSize = 20,
+\tFont = Enum.Font.GothamBlack,
+\tAutoButtonColor = false,
+\tZIndex = 25,
+\tParent = screenGui,
+})
+addCorner(floatingButton, 15)
+addStroke(floatingButton, Theme.AccentSoft, 1.5, 0.15)
+
+local floatDragging = false
+local floatStartInput: InputObject? = nil
+local floatStartPosition = floatingButton.Position
+local floatStartPoint = Vector2.zero
+local floatMoved = false
+
+floatingButton.InputBegan:Connect(function(input)
+\tif input.UserInputType ~= Enum.UserInputType.MouseButton1
+\t\tand input.UserInputType ~= Enum.UserInputType.Touch then
+\t\treturn
+\tend
+
+\tfloatDragging = true
+\tfloatMoved = false
+\tfloatStartInput = input
+\tfloatStartPoint = input.Position
+\tfloatStartPosition = floatingButton.Position
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+\tif not floatDragging then
+\t\treturn
+\tend
+
+\tif input.UserInputType ~= Enum.UserInputType.MouseMovement
+\t\tand input.UserInputType ~= Enum.UserInputType.Touch then
+\t\treturn
+\tend
+
+\tlocal offset = input.Position - floatStartPoint
+\tif offset.Magnitude > 7 then
+\t\tfloatMoved = true
+\tend
+
+\tfloatingButton.Position = UDim2.new(
+\t\tfloatStartPosition.X.Scale,
+\t\tfloatStartPosition.X.Offset + offset.X,
+\t\tfloatStartPosition.Y.Scale,
+\t\tfloatStartPosition.Y.Offset + offset.Y
+\t)
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+\tif not floatDragging or input ~= floatStartInput then
+\t\treturn
+\tend
+
+\tfloatDragging = false
+\tfloatStartInput = nil
+
+\tlocal camera = workspace.CurrentCamera
+\tif camera then
+\t\tlocal viewport = camera.ViewportSize
+\t\tlocal x = math.clamp(floatingButton.AbsolutePosition.X, 8, viewport.X - floatingButton.AbsoluteSize.X - 8)
+\t\tlocal y = math.clamp(floatingButton.AbsolutePosition.Y, 8, viewport.Y - floatingButton.AbsoluteSize.Y - 8)
+\t\tfloatingButton.Position = UDim2.fromOffset(x, y)
+\tend
+end)
+
+------------------------------------------------------------
+-- MAIN WINDOW
+------------------------------------------------------------
+
+local window = create("Frame", {
+\tName = "Window",
+\tSize = UDim2.fromOffset(WINDOW_WIDTH, WINDOW_HEIGHT),
+\tAnchorPoint = Vector2.new(0.5, 0.5),
+\tPosition = UDim2.fromScale(0.5, 0.5),
+\tBackgroundColor3 = Theme.Background,
+\tBorderSizePixel = 0,
+\tClipsDescendants = true,
+\tZIndex = 10,
+\tParent = screenGui,
+})
+addCorner(window, 18)
+addStroke(window, Theme.Stroke, 1, 0)
+
+local scale = create("UIScale", {
+\tScale = 1,
+\tParent = window,
+})
+
+local function updateScale()
+\tlocal camera = workspace.CurrentCamera
+\tif not camera then
+\t\treturn
+\tend
+
+\tlocal viewport = camera.ViewportSize
+\tlocal ratio = math.min(
+\t\t(viewport.X - 20) / WINDOW_WIDTH,
+\t\t(viewport.Y - 20) / WINDOW_HEIGHT,
+\t\t1
+\t)
+
+\tscale.Scale = math.clamp(ratio, 0.58, 1)
+end
+
+local cameraConnection: RBXScriptConnection? = nil
+
+local function bindCamera()
+\tif cameraConnection then
+\t\tcameraConnection:Disconnect()
+\t\tcameraConnection = nil
+\tend
+
+\tlocal camera = workspace.CurrentCamera
+\tif camera then
+\t\tcameraConnection = camera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale)
+\tend
+
+\tupdateScale()
+end
+
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(bindCamera)
+bindCamera()
+
+------------------------------------------------------------
+-- HEADER
+------------------------------------------------------------
+
+local header = create("Frame", {
+\tName = "Header",
+\tSize = UDim2.new(1, 0, 0, 48),
+\tBackgroundColor3 = Theme.Background,
+\tBorderSizePixel = 0,
+\tZIndex = 11,
+\tParent = window,
+})
+
+local brand = create("TextLabel", {
+\tSize = UDim2.new(1, -150, 0, 22),
+\tPosition = UDim2.fromOffset(18, 8),
+\tBackgroundTransparency = 1,
+\tText = "Aurora <font color="rgb(150,155,180)">Mobile</font>",
+\tRichText = true,
+\tTextXAlignment = Enum.TextXAlignment.Left,
+\tTextColor3 = Theme.Text,
+\tTextSize = 15,
+\tFont = Enum.Font.GothamBold,
+\tZIndex = 12,
+\tParent = header,
+})
+
+local subtitle = create("TextLabel", {
+\tSize = UDim2.new(1, -150, 0, 15),
+\tPosition = UDim2.fromOffset(18, 27),
+\tBackgroundTransparency = 1,
+\tText = "LOCAL UI • v1.0",
+\tTextXAlignment = Enum.TextXAlignment.Left,
+\tTextColor3 = Theme.TextDim,
+\tTextSize = 9,
+\tFont = Enum.Font.GothamBold,
+\tZIndex = 12,
+\tParent = header,
+})
+
+local minimizeButton = create("TextButton", {
+\tSize = UDim2.fromOffset(30, 30),
+\tPosition = UDim2.new(1, -74, 0, 9),
+\tBackgroundTransparency = 1,
+\tText = "—",
+\tTextColor3 = Theme.TextMuted,
+\tTextSize = 16,
+\tFont = Enum.Font.GothamBold,
+\tAutoButtonColor = false,
+\tZIndex = 12,
+\tParent = header,
+})
+
+local closeButton = create("TextButton", {
+\tSize = UDim2.fromOffset(30, 30),
+\tPosition = UDim2.new(1, -40, 0, 9),
+\tBackgroundTransparency = 1,
+\tText = "×",
+\tTextColor3 = Theme.TextMuted,
+\tTextSize = 22,
+\tFont = Enum.Font.GothamMedium,
+\tAutoButtonColor = false,
+\tZIndex = 12,
+\tParent = header,
+})
+
+------------------------------------------------------------
+-- WINDOW DRAG
+------------------------------------------------------------
+
+local draggingWindow = false
+local dragInput: InputObject? = nil
+local dragStart = Vector2.zero
+local windowStart = window.Position
+
+header.InputBegan:Connect(function(input)
+\tif input.UserInputType ~= Enum.UserInputType.MouseButton1
+\t\tand input.UserInputType ~= Enum.UserInputType.Touch then
+\t\treturn
+\tend
+
+\tdraggingWindow = true
+\tdragInput = input
+\tdragStart = input.Position
+\twindowStart = window.Position
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+\tif not draggingWindow then
+\t\treturn
+\tend
+
+\tif input.UserInputType ~= Enum.UserInputType.MouseMovement
+\t\tand input.UserInputType ~= Enum.UserInputType.Touch then
+\t\treturn
+\tend
+
+\tlocal delta = input.Position - dragStart
+\twindow.Position = UDim2.new(
+\t\twindowStart.X.Scale,
+\t\twindowStart.X.Offset + delta.X,
+\t\twindowStart.Y.Scale,
+\t\twindowStart.Y.Offset + delta.Y
+\t)
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+\tif draggingWindow and input == dragInput then
+\t\tdraggingWindow = false
+\t\tdragInput = nil
+\t\tclampWindowPosition(window)
+\tend
+end)
+
+------------------------------------------------------------
+-- SIDEBAR + CONTENT
+------------------------------------------------------------
+
+local sidebarWidth = 150
+
+local sidebar = create("Frame", {
+\tSize = UDim2.new(0, sidebarWidth, 1, -48),
+\tPosition = UDim2.fromOffset(0, 48),
+\tBackgroundColor3 = Theme.Sidebar,
+\tBorderSizePixel = 0,
+\tZIndex = 11,
+\tParent = window,
+})
+
+local navigation = create("ScrollingFrame", {
+\tSize = UDim2.new(1, 0, 1, -18),
+\tPosition = UDim2.fromOffset(0, 9),
+\tBackgroundTransparency = 1,
+\tBorderSizePixel = 0,
+\tScrollBarThickness = 0,
+\tCanvasSize = UDim2.new(),
+\tZIndex = 12,
+\tParent = sidebar,
+})
+
+local navigationPadding = create("UIPadding", {
+\tPaddingLeft = UDim.new(0, 9),
+\tPaddingRight = UDim.new(0, 9),
+\tPaddingTop = UDim.new(0, 4),
+\tPaddingBottom = UDim.new(0, 4),
+\tParent = navigation,
+})
+
+local navigationLayout = create("UIListLayout", {
+\tPadding = UDim.new(0, 5),
+\tSortOrder = Enum.SortOrder.LayoutOrder,
+\tParent = navigation,
+})
+
+navigationLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+\tnavigation.CanvasSize = UDim2.fromOffset(0, navigationLayout.AbsoluteContentSize.Y + 12)
+end)
+
+local content = create("Frame", {
+\tSize = UDim2.new(1, -sidebarWidth, 1, -48),
+\tPosition = UDim2.fromOffset(sidebarWidth, 48),
+\tBackgroundColor3 = Theme.Background,
+\tBorderSizePixel = 0,
+\tClipsDescendants = true,
+\tZIndex = 11,
+\tParent = window,
+})
+
+------------------------------------------------------------
+-- UI LIBRARY
+------------------------------------------------------------
+
+local pages: {[string]: ScrollingFrame} = {}
+local tabButtons: {[string]: TextButton} = {}
+local selectedPage = ""
+
+local UI = {}
+
+function UI:SelectPage(id: string)
+\tif not pages[id] then
+\t\treturn
+\tend
+
+\tselectedPage = id
+
+\tfor pageId, page in pairs(pages) do
+\t\tpage.Visible = pageId == id
+\tend
+
+\tfor pageId, button in pairs(tabButtons) do
+\t\tlocal active = pageId == id
+\t\tlocal indicator = button:FindFirstChild("Indicator") :: Frame?
+\t\tlocal label = button:FindFirstChild("Label") :: TextLabel?
+\t\tlocal icon = button:FindFirstChild("Icon") :: TextLabel?
+
+\t\ttween(button, tweenFast, {
+\t\t\tBackgroundColor3 = active and Theme.SurfaceHover or Theme.Sidebar,
+\t\t})
+
+\t\tif indicator then
+\t\t\tindicator.Visible = active
+\t\tend
+
+\t\tif label then
+\t\t\tlabel.TextColor3 = active and Theme.Text or Theme.TextMuted
+\t\tend
+
+\t\tif icon then
+\t\t\ticon.TextColor3 = active and Theme.AccentSoft or Theme.TextDim
+\t\tend
+\tend
+end
+
+function UI:CreatePage(id: string, title: string, iconText: string): ScrollingFrame
+\tlocal tab = create("TextButton", {
+\t\tName = "Tab_" .. id,
+\t\tSize = UDim2.new(1, 0, 0, 38),
+\t\tBackgroundColor3 = Theme.Sidebar,
+\t\tBorderSizePixel = 0,
+\t\tText = "",
+\t\tAutoButtonColor = false,
+\t\tZIndex = 13,
+\t\tParent = navigation,
+\t})
+\taddCorner(tab, 11)
+
+\tlocal indicator = create("Frame", {
+\t\tName = "Indicator",
+\t\tSize = UDim2.fromOffset(3, 17),
+\t\tAnchorPoint = Vector2.new(0, 0.5),
+\t\tPosition = UDim2.new(0, 5, 0.5, 0),
+\t\tBackgroundColor3 = Theme.Accent,
+\t\tBorderSizePixel = 0,
+\t\tVisible = false,
+\t\tZIndex = 14,
+\t\tParent = tab,
+\t})
+\taddCorner(indicator, 99)
+
+\tcreate("TextLabel", {
+\t\tName = "Icon",
+\t\tSize = UDim2.fromOffset(24, 38),
+\t\tPosition = UDim2.fromOffset(13, 0),
+\t\tBackgroundTransparency = 1,
+\t\tText = iconText,
+\t\tTextColor3 = Theme.TextDim,
+\t\tTextSize = 14,
+\t\tFont = Enum.Font.GothamBold,
+\t\tZIndex = 14,
+\t\tParent = tab,
+\t})
+
+\tcreate("TextLabel", {
+\t\tName = "Label",
+\t\tSize = UDim2.new(1, -48, 1, 0),
+\t\tPosition = UDim2.fromOffset(43, 0),
+\t\tBackgroundTransparency = 1,
+\t\tText = title,
+\t\tTextXAlignment = Enum.TextXAlignment.Left,
+\t\tTextColor3 = Theme.TextMuted,
+\t\tTextSize = 11,
+\t\tFont = Enum.Font.GothamMedium,
+\t\tZIndex = 14,
+\t\tParent = tab,
+\t})
+
+\tlocal page = create("ScrollingFrame", {
+\t\tName = "Page_" .. id,
+\t\tSize = UDim2.fromScale(1, 1),
+\t\tBackgroundTransparency = 1,
+\t\tBorderSizePixel = 0,
+\t\tScrollBarThickness = 3,
+\t\tScrollBarImageColor3 = Theme.Stroke,
+\t\tCanvasSize = UDim2.new(),
+\t\tVisible = false,
+\t\tZIndex = 12,
+\t\tParent = content,
+\t})
+
+\tcreate("UIPadding", {
+\t\tPaddingTop = UDim.new(0, 16),
+\t\tPaddingBottom = UDim.new(0, 18),
+\t\tPaddingLeft = UDim.new(0, 16),
+\t\tPaddingRight = UDim.new(0, 16),
+\t\tParent = page,
+\t})
+
+\tlocal layout = create("UIListLayout", {
+\t\tPadding = UDim.new(0, 9),
+\t\tSortOrder = Enum.SortOrder.LayoutOrder,
+\t\tParent = page,
+\t})
+
+\tlayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+\t\tpage.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y + 30)
+\tend)
+
+\ttab.MouseButton1Click:Connect(function()
+\t\tself:SelectPage(id)
+\tend)
+
+\ttabButtons[id] = tab
+\tpages[id] = page
+
+\treturn page
+end
+
+function UI:AddSection(page: ScrollingFrame, text: string)
+\tcreate("TextLabel", {
+\t\tSize = UDim2.new(1, 0, 0, 22),
+\t\tBackgroundTransparency = 1,
+\t\tText = text:upper(),
+\t\tTextColor3 = Theme.TextMuted,
+\t\tTextSize = 10,
+\t\tFont = Enum.Font.GothamBold,
+\t\tTextXAlignment = Enum.TextXAlignment.Left,
+\t\tZIndex = 13,
+\t\tParent = page,
+\t})
+end
+
+function UI:AddInfo(page: ScrollingFrame, title: string, description: string)
+\tlocal card = create("Frame", {
+\t\tSize = UDim2.new(1, 0, 0, 60),
+\t\tBackgroundColor3 = Theme.Surface,
+\t\tBorderSizePixel = 0,
+\t\tZIndex = 13,
+\t\tParent = page,
+\t})
+\taddCorner(card, 13)
+\taddStroke(card, Theme.Stroke, 1, 0.45)
+
+\tcreate("TextLabel", {
+\t\tSize = UDim2.new(1, -24, 0, 19),
+\t\tPosition = UDim2.fromOffset(12, 9),
+\t\tBackgroundTransparency = 1,
+\t\tText = title,
+\t\tTextColor3 = Theme.Text,
+\t\tTextSize = 12,
+\t\tFont = Enum.Font.GothamBold,
+\t\tTextXAlignment = Enum.TextXAlignment.Left,
+\t\tZIndex = 14,
+\t\tParent = card,
+\t})
+
+\tcreate("TextLabel", {
+\t\tSize = UDim2.new(1, -24, 0, 23),
+\t\tPosition = UDim2.fromOffset(12, 28),
+\t\tBackgroundTransparency = 1,
+\t\tText = description,
+\t\tTextWrapped = true,
+\t\tTextColor3 = Theme.TextMuted,
+\t\tTextSize = 10,
+\t\tFont = Enum.Font.Gotham,
+\t\tTextXAlignment = Enum.TextXAlignment.Left,
+\t\tTextYAlignment = Enum.TextYAlignment.Top,
+\t\tZIndex = 14,
+\t\tParent = card,
+\t})
+end
+
+function UI:AddButton(page: ScrollingFrame, text: string, callback: (() -> ())?)
+\tlocal button = create("TextButton", {
+\t\tSize = UDim2.new(1, 0, 0, 38),
+\t\tBackgroundColor3 = Theme.Surface,
+\t\tBorderSizePixel = 0,
+\t\tText = text,
+\t\tTextColor3 = Theme.Text,
+\t\tTextSize = 11,
+\t\tFont = Enum.Font.GothamBold,
+\t\tAutoButtonColor = false,
+\t\tZIndex = 13,
+\t\tParent = page,
+\t})
+\taddCorner(button, 12)
+\taddStroke(button, Theme.Stroke, 1, 0.45)
+
+\tbutton.MouseEnter:Connect(function()
+\t\ttween(button, tweenFast, { BackgroundColor3 = Theme.SurfaceHover })
+\tend)
+
+\tbutton.MouseLeave:Connect(function()
+\t\ttween(button, tweenFast, { BackgroundColor3 = Theme.Surface })
+\tend)
+
+\tbutton.MouseButton1Click:Connect(function()
+\t\ttween(button, tweenFast, { BackgroundColor3 = Theme.Accent })
+
+\t\ttask.delay(0.11, function()
+\t\t\tif button.Parent then
+\t\t\t\ttween(button, tweenNormal, { BackgroundColor3 = Theme.Surface })
+\t\t\tend
+\t\tend)
+
+\t\tsafeCall(callback)
+\tend)
+
+\treturn button
+end
+
+function UI:AddToggle(
+\tpage: ScrollingFrame,
+\ttitle: string,
+\tdescription: string?,
+\tdefaultValue: boolean,
+\tcallback: ((boolean) -> ())?
+)
+\tlocal rowHeight = description and 52 or 42
+
+\tlocal card = create("Frame", {
+\t\tSize = UDim2.new(1, 0, 0, rowHeight),
+\t\tBackgroundColor3 = Theme.Surface,
+\t\tBorderSizePixel = 0,
+\t\tZIndex = 13,
+\t\tParent = page,
+\t})
+\taddCorner(card, 12)
+\taddStroke(card, Theme.Stroke, 1, 0.5)
+
+\tcreate("TextLabel", {
+\t\tSize = UDim2.new(1, -76, 0, 19),
+\t\tPosition = UDim2.fromOffset(12, description and 7 or 12),
+\t\tBackgroundTransparency = 1,
+\t\tText = title,
+\t\tTextColor3 = Theme.Text,
+\t\tTextSize = 11,
+\t\tFont = Enum.Font.GothamMedium,
+\t\tTextXAlignment = Enum.TextXAlignment.Left,
+\t\tZIndex = 14,
+\t\tParent = card,
+\t})
+
+\tif description then
+\t\tcreate("TextLabel", {
+\t\t\tSize = UDim2.new(1, -76, 0, 15),
+\t\t\tPosition = UDim2.fromOffset(12, 27),
+\t\t\tBackgroundTransparency = 1,
+\t\t\tText = description,
+\t\t\tTextColor3 = Theme.TextDim,
+\t\t\tTextSize = 9,
+\t\t\tFont = Enum.Font.Gotham,
+\t\t\tTextXAlignment = Enum.TextXAlignment.Left,
+\t\t\tZIndex = 14,
+\t\t\tParent = card,
+\t\t})
+\tend
+
+\tlocal track = create("TextButton", {
+\t\tSize = UDim2.fromOffset(39, 22),
+\t\tAnchorPoint = Vector2.new(1, 0.5),
+\t\tPosition = UDim2.new(1, -12, 0.5, 0),
+\t\tBackgroundColor3 = defaultValue and Theme.Accent or Theme.Stroke,
+\t\tText = "",
+\t\tAutoButtonColor = false,
+\t\tZIndex = 14,
+\t\tParent = card,
+\t})
+\taddCorner(track, 99)
+
+\tlocal thumb = create("Frame", {
+\t\tSize = UDim2.fromOffset(16, 16),
+\t\tAnchorPoint = Vector2.new(0, 0.5),
+\t\tPosition = defaultValue and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0),
+\t\tBackgroundColor3 = Theme.White,
+\t\tBorderSizePixel = 0,
+\t\tZIndex = 15,
+\t\tParent = track,
+\t})
+\taddCorner(thumb, 99)
+
+\tlocal state = defaultValue
+
+\tlocal function render()
+\t\ttween(track, tweenFast, {
+\t\t\tBackgroundColor3 = state and Theme.Accent or Theme.Stroke,
+\t\t})
+
+\t\ttween(thumb, tweenFast, {
+\t\t\tPosition = state and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0),
+\t\t})
+\tend
+
+\ttrack.MouseButton1Click:Connect(function()
+\t\tstate = not state
+\t\trender()
+\t\tsafeCall(callback, state)
+\tend)
+
+\treturn {
+\t\tGet = function()
+\t\t\treturn state
+\t\tend,
+\t\tSet = function(value: boolean)
+\t\t\tstate = value
+\t\t\trender()
+\t\t\tsafeCall(callback, state)
+\t\tend,
+\t}
+end
+
+function UI:AddSlider(
+\tpage: ScrollingFrame,
+\ttitle: string,
+\tminimum: number,
+\tmaximum: number,
+\tdefaultValue: number,
+\tsuffix: string,
+\tcallback: ((number) -> ())?
+)
+\tlocal card = create("Frame", {
+\t\tSize = UDim2.new(1, 0, 0, 56),
+\t\tBackgroundColor3 = Theme.Surface,
+\t\tBorderSizePixel = 0,
+\t\tZIndex = 13,
+\t\tParent = page,
+\t})
+\taddCorner(card, 12)
+\taddStroke(card, Theme.Stroke, 1, 0.5)
+
+\tcreate("TextLabel", {
+\t\tSize = UDim2.new(0.7, 0, 0, 20),
+\t\tPosition = UDim2.fromOffset(12, 7),
+\t\tBackgroundTransparency = 1,
+\t\tText = title,
+\t\tTextColor3 = Theme.Text,
+\t\tTextSize = 11,
+\t\tFont = Enum.Font.GothamMedium,
+\t\tTextXAlignment = Enum.TextXAlignment.Left,
+\t\tZIndex = 14,
+\t\tParent = card,
+\t})
+
+\tlocal valueLabel = create("TextLabel", {
+\t\tSize = UDim2.new(0.3, -12, 0, 20),
+\t\tPosition = UDim2.new(0.7, 0, 0, 7),
+\t\tBackgroundTransparency = 1,
+\t\tTextColor3 = Theme.AccentSoft,
+\t\tTextSize = 11,
+\t\tFont = Enum.Font.GothamBold,
+\t\tTextXAlignment = Enum.TextXAlignment.Right,
+\t\tZIndex = 14,
+\t\tParent = card,
+\t})
+
+\tlocal track = create("TextButton", {
+\t\tSize = UDim2.new(1, -24, 0, 5),
+\t\tPosition = UDim2.fromOffset(12, 37),
+\t\tBackgroundColor3 = Theme.Stroke,
+\t\tBorderSizePixel = 0,
+\t\tText = "",
+\t\tAutoButtonColor = false,
+\t\tZIndex = 14,
+\t\tParent = card,
+\t})
+\taddCorner(track, 99)
+
+\tlocal fill = create("Frame", {
+\t\tSize = UDim2.new(),
+\t\tBackgroundColor3 = Theme.Accent,
+\t\tBorderSizePixel = 0,
+\t\tZIndex = 15,
+\t\tParent = track,
+\t})
+\taddCorner(fill, 99)
+
+\tlocal thumb = create("Frame", {
+\t\tSize = UDim2.fromOffset(13, 13),
+\t\tAnchorPoint = Vector2.new(0.5, 0.5),
+\t\tBackgroundColor3 = Theme.White,
+\t\tBorderSizePixel = 0,
+\t\tZIndex = 16,
+\t\tParent = track,
+\t})
+\taddCorner(thumb, 99)
+
+\tlocal value = math.clamp(defaultValue, minimum, maximum)
+\tlocal sliderDragging = false
+
+\tlocal function setValue(newValue: number, fireCallback: boolean)
+\t\tvalue = math.clamp(math.floor(newValue + 0.5), minimum, maximum)
+
+\t\tlocal alpha = (value - minimum) / (maximum - minimum)
+\t\tfill.Size = UDim2.new(alpha, 0, 1, 0)
+\t\tthumb.Position = UDim2.new(alpha, 0, 0.5, 0)
+\t\tvalueLabel.Text = tostring(value) .. suffix
+
+\t\tif fireCallback then
+\t\t\tsafeCall(callback, value)
+\t\tend
+\tend
+
+\tlocal function setFromInput(input: InputObject)
+\t\tif track.AbsoluteSize.X <= 0 then
+\t\t\treturn
+\t\tend
+
+\t\tlocal alpha = math.clamp(
+\t\t\t(input.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X,
+\t\t\t0,
+\t\t\t1
+\t\t)
+
+\t\tsetValue(minimum + ((maximum - minimum) * alpha), true)
+\tend
+
+\tsetValue(value, false)
+
+\ttrack.InputBegan:Connect(function(input)
+\t\tif input.UserInputType == Enum.UserInputType.MouseButton1
+\t\t\tor input.UserInputType == Enum.UserInputType.Touch then
+\t\t\tsliderDragging = true
+\t\t\tsetFromInput(input)
+\t\tend
+\tend)
+
+\tUserInputService.InputChanged:Connect(function(input)
+\t\tif not sliderDragging then
+\t\t\treturn
+\t\tend
+
+\t\tif input.UserInputType == Enum.UserInputType.MouseMovement
+\t\t\tor input.UserInputType == Enum.UserInputType.Touch then
+\t\t\tsetFromInput(input)
+\t\tend
+\tend)
+
+\tUserInputService.InputEnded:Connect(function(input)
+\t\tif input.UserInputType == Enum.UserInputType.MouseButton1
+\t\t\tor input.UserInputType == Enum.UserInputType.Touch then
+\t\t\tsliderDragging = false
+\t\tend
+\tend)
+
+\treturn {
+\t\tGet = function()
+\t\t\treturn value
+\t\tend,
+\t\tSet = function(newValue: number)
+\t\t\tsetValue(newValue, true)
+\t\tend,
+\t}
+end
+
+------------------------------------------------------------
+-- LOCAL VISUAL SETTINGS
+------------------------------------------------------------
+
+local visualState = {
+\tenabled = false,
+\thighlight = nil :: Highlight?,
+\tlight = nil :: PointLight?,
 }
 
-local function palette()
-    return ui.dark and colors.dark or colors.light
+local function clearVisualEffect()
+\tif visualState.highlight then
+\t\tvisualState.highlight:Destroy()
+\t\tvisualState.highlight = nil
+\tend
+
+\tif visualState.light then
+\t\tvisualState.light:Destroy()
+\t\tvisualState.light = nil
+\tend
 end
 
-local function inside(x, y, w, h)
-    return ui.mouseX >= x and ui.mouseX <= x + w
-       and ui.mouseY >= y and ui.mouseY <= y + h
+local function applyVisualEffect()
+\tclearVisualEffect()
+
+\tif not visualState.enabled then
+\t\treturn
+\tend
+
+\tlocal character = player.Character
+\tif not character then
+\t\treturn
+\tend
+
+\tlocal root = character:FindFirstChild("HumanoidRootPart")
+\tif not root then
+\t\treturn
+\tend
+
+\tlocal highlight = create("Highlight", {
+\t\tName = "AuroraLocalHighlight",
+\t\tAdornee = character,
+\t\tFillColor = Theme.Accent,
+\t\tOutlineColor = Theme.AccentSoft,
+\t\tFillTransparency = 0.8,
+\t\tOutlineTransparency = 0.15,
+\t\tDepthMode = Enum.HighlightDepthMode.Occluded,
+\t\tParent = character,
+\t})
+
+\tlocal light = create("PointLight", {
+\t\tName = "AuroraLocalLight",
+\t\tColor = Theme.AccentSoft,
+\t\tBrightness = 1.5,
+\t\tRange = 9,
+\t\tShadows = false,
+\t\tParent = root,
+\t})
+
+\tvisualState.highlight = highlight
+\tvisualState.light = light
 end
 
-local function roundedRect(mode, x, y, w, h, r)
-    love.graphics.rectangle(mode, x, y, w, h, r, r)
+player.CharacterAdded:Connect(function()
+\ttask.wait(0.4)
+\tapplyVisualEffect()
+end)
+
+------------------------------------------------------------
+-- PAGES
+------------------------------------------------------------
+
+local homePage = UI:CreatePage("home", "Главная", "⌂")
+local appearancePage = UI:CreatePage("appearance", "Внешний вид", "✦")
+local interfacePage = UI:CreatePage("interface", "Интерфейс", "◈")
+local toolsPage = UI:CreatePage("tools", "Инструменты", "⌁")
+local serverPage = UI:CreatePage("server", "Сервер", "◉")
+local aboutPage = UI:CreatePage("about", "О проекте", "?")
+
+UI:SelectPage("home")
+
+------------------------------------------------------------
+-- HOME
+------------------------------------------------------------
+
+UI:AddSection(homePage, "Добро пожаловать")
+UI:AddInfo(
+\thomePage,
+\t"Aurora Mobile",
+\t"Переписанный мобильный интерфейс: компактный, адаптивный и без пустых игровых функций."
+)
+
+UI:AddSection(homePage, "Быстрые действия")
+UI:AddButton(homePage, "Открыть настройки интерфейса", function()
+\tUI:SelectPage("interface")
+end)
+
+UI:AddButton(homePage, "Открыть настройки внешнего вида", function()
+\tUI:SelectPage("appearance")
+end)
+
+------------------------------------------------------------
+-- APPEARANCE
+------------------------------------------------------------
+
+UI:AddSection(appearancePage, "Локальные эффекты")
+UI:AddInfo(
+\tappearancePage,
+\t"Эти параметры меняют только визуальное представление на вашем клиенте и не дают игрового преимущества."
+)
+
+UI:AddToggle(
+\tappearancePage,
+\t"Локальное свечение",
+\t"Подсветка персонажа и мягкий источник света",
+\tfalse,
+\tfunction(enabled)
+\t\tvisualState.enabled = enabled
+\t\tapplyVisualEffect()
+\tend
+)
+
+UI:AddSection(appearancePage, "Цвет интерфейса")
+UI:AddButton(appearancePage, "Акцент: фиолетовый", function()
+\tTheme.Accent = Color3.fromRGB(105, 108, 255)
+\tTheme.AccentSoft = Color3.fromRGB(145, 130, 255)
+end)
+
+------------------------------------------------------------
+-- INTERFACE
+------------------------------------------------------------
+
+UI:AddSection(interfacePage, "Масштаб")
+UI:AddSlider(
+\tinterfacePage,
+\t"Масштаб окна",
+\t60,
+\t100,
+\t100,
+\t"%",
+\tfunction(value)
+\t\tscale.Scale = value / 100
+\tend
+)
+
+UI:AddSection(interfacePage, "Окно")
+UI:AddButton(interfacePage, "Вернуть окно в центр", function()
+\twindow.Position = UDim2.fromScale(0.5, 0.5)
+\tupdateScale()
+end)
+
+UI:AddButton(interfacePage, "Скрыть интерфейс", function()
+\twindowOpen = false
+\twindow.Visible = false
+end)
+
+------------------------------------------------------------
+-- TOOLS
+------------------------------------------------------------
+
+UI:AddSection(toolsPage, "Локальные инструменты")
+UI:AddInfo(
+\ttoolsPage,
+\t"Здесь оставлены только нейтральные действия интерфейса. Игровая автоматика, вмешательство в других игроков и обход механик не реализованы."
+)
+
+UI:AddButton(toolsPage, "Сбросить локальное свечение", function()
+\tvisualState.enabled = false
+\tclearVisualEffect()
+end)
+
+------------------------------------------------------------
+-- SERVER
+------------------------------------------------------------
+
+UI:AddSection(serverPage, "Подключение")
+UI:AddButton(serverPage, "Переподключиться к серверу", function()
+\tlocal success, err = pcall(function()
+\t\tTeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, player)
+\tend)
+
+\tif not success then
+\t\twarn("[Aurora UI] Rejoin failed:", err)
+\tend
+end)
+
+UI:AddSection(serverPage, "Управление")
+UI:AddButton(serverPage, "Выгрузить интерфейс", function()
+\tif cameraConnection then
+\t\tcameraConnection:Disconnect()
+\t\tcameraConnection = nil
+\tend
+
+\tclearVisualEffect()
+\tscreenGui:Destroy()
+end)
+
+------------------------------------------------------------
+-- ABOUT
+------------------------------------------------------------
+
+UI:AddSection(aboutPage, "Aurora Mobile UI")
+UI:AddInfo(
+\taboutPage,
+\t"Чистая основа для вашего собственного интерфейса Roblox Studio: страницы, кнопки, переключатели, слайдеры, адаптация под экран и безопасные локальные эффекты."
+)
+
+UI:AddSection(aboutPage, "Что исправлено")
+UI:AddInfo(
+\taboutPage,
+\t"Убраны фиктивные функции, исправлена логика drag/click, добавлены границы перемещения, масштабирование окна и безопасная обработка callback-ошибок."
+)
+
+------------------------------------------------------------
+-- OPEN / CLOSE
+------------------------------------------------------------
+
+local function setWindowVisible(visible: boolean)
+\twindowOpen = visible
+\twindow.Visible = visible
 end
 
-local function shadow(x, y, w, h, radius)
-    love.graphics.setColor(0, 0, 0, 0.18)
-    roundedRect("fill", x + 5, y + 7, w, h, radius)
-end
+floatingButton.MouseButton1Click:Connect(function()
+\tif floatMoved then
+\t\tfloatMoved = false
+\t\treturn
+\tend
 
-local function text(value, x, y, font, color)
-    love.graphics.setFont(font)
-    love.graphics.setColor(color)
-    love.graphics.print(value, x, y)
-end
+\tsetWindowVisible(not windowOpen)
+end)
 
-local function card(x, y, w, h, title, value, subtitle, accent)
-    local c = palette()
-    local hover = inside(x, y, w, h)
+minimizeButton.MouseButton1Click:Connect(function()
+\tsetWindowVisible(false)
+end)
 
-    shadow(x, y, w, h, 18)
-    love.graphics.setColor(hover and c.cardHover or c.card)
-    roundedRect("fill", x, y, w, h, 18)
-
-    love.graphics.setColor(c.border)
-    love.graphics.setLineWidth(1)
-    roundedRect("line", x, y, w, h, 18)
-
-    love.graphics.setColor(accent)
-    roundedRect("fill", x + 20, y + 20, 8, 38, 4)
-
-    text(title, x + 42, y + 19, fonts.small, c.muted)
-    text(value, x + 20, y + 70, fonts.big, c.text)
-    text(subtitle, x + 20, y + 123, fonts.small, c.muted)
-end
-
-local function button(x, y, w, h, label, active)
-    local c = palette()
-    local hover = inside(x, y, w, h)
-
-    if active then
-        love.graphics.setColor(c.accent)
-    elseif hover then
-        love.graphics.setColor(c.cardHover)
-    else
-        love.graphics.setColor(0, 0, 0, 0)
-    end
-
-    roundedRect("fill", x, y, w, h, 12)
-
-    local labelColor = active and {1, 1, 1} or c.muted
-    text(label, x + 18, y + 13, fonts.medium, labelColor)
-end
-
-function love.load()
-    love.window.setTitle("Luna Dashboard")
-    love.window.setMode(1180, 720, {
-        resizable = false,
-        vsync = 1
-    })
-
-    fonts = {
-        title = love.graphics.newFont(28),
-        big = love.graphics.newFont(30),
-        medium = love.graphics.newFont(16),
-        small = love.graphics.newFont(13),
-        tiny = love.graphics.newFont(11)
-    }
-
-    love.graphics.setBackgroundColor(0.05, 0.05, 0.08)
-end
-
-function love.update(dt)
-    ui.mouseX, ui.mouseY = love.mouse.getPosition()
-    ui.pulse = ui.pulse + dt
-end
-
-function love.draw()
-    local c = palette()
-    local width, height = love.graphics.getDimensions()
-
-    love.graphics.clear(c.bg)
-
-    -- Левая навигационная панель
-    love.graphics.setColor(c.sidebar)
-    love.graphics.rectangle("fill", 0, 0, 250, height)
-
-    love.graphics.setColor(c.border)
-    love.graphics.setLineWidth(1)
-    love.graphics.line(250, 0, 250, height)
-
-    -- Логотип
-    love.graphics.setColor(c.accent)
-    roundedRect("fill", 28, 30, 42, 42, 13)
-
-    text("L", 41, 37, fonts.title, {1, 1, 1})
-    text("LUNA", 84, 34, fonts.title, c.text)
-    text("Dashboard", 86, 66, fonts.small, c.muted)
-
-    -- Меню
-    text("МЕНЮ", 28, 130, fonts.tiny, c.muted)
-
-    local tabs = {"Главная", "Аналитика", "Сообщения", "Настройки"}
-    for i, tab in ipairs(tabs) do
-        local y = 158 + (i - 1) * 54
-        button(18, y, 214, 42, tab, ui.activeTab == tab)
-    end
-
-    -- Профиль
-    love.graphics.setColor(c.border)
-    love.graphics.line(28, 610, 222, 610)
-
-    love.graphics.setColor(c.success)
-    love.graphics.circle("fill", 49, 650, 20)
-
-    text("Алексей", 82, 630, fonts.medium, c.text)
-    text("Онлайн", 82, 653, fonts.small, c.success)
-
-    -- Основной заголовок
-    text("Добрый вечер, Алексей", 290, 42, fonts.title, c.text)
-    text("Вот что происходит с вашими проектами сегодня.", 290, 80, fonts.medium, c.muted)
-
-    -- Кнопка темы
-    local themeX, themeY = 1030, 38
-    local themeHover = inside(themeX, themeY, 108, 42)
-
-    love.graphics.setColor(themeHover and c.cardHover or c.card)
-    roundedRect("fill", themeX, themeY, 108, 42, 14)
-    love.graphics.setColor(c.border)
-    roundedRect("line", themeX, themeY, 108, 42, 14)
-
-    text(ui.dark and "Светлая" or "Тёмная", themeX + 14, themeY + 13, fonts.small, c.text)
-
-    -- Карточки статистики
-    card(290, 140, 200, 170, "АКТИВНЫЕ ПРОЕКТЫ", "12", "+2 за неделю", c.accent)
-    card(510, 140, 200, 170, "ВЫПОЛНЕНО ЗАДАЧ", "86%", "+14% к прошлому месяцу", c.success)
-    card(730, 140, 200, 170, "ВХОДЯЩИЕ", "24", "8 непрочитанных", {0.96, 0.60, 0.25})
-    card(950, 140, 190, 170, "ВРЕМЯ", "37ч", "На этой неделе", {0.76, 0.42, 0.95})
-
-    -- Большая карточка прогресса
-    shadow(290, 340, 540, 300, 18)
-    love.graphics.setColor(c.card)
-    roundedRect("fill", 290, 340, 540, 300, 18)
-    love.graphics.setColor(c.border)
-    roundedRect("line", 290, 340, 540, 300, 18)
-
-    text("Прогресс по проектам", 315, 368, fonts.medium, c.text)
-    text("Обзор текущих задач", 315, 394, fonts.small, c.muted)
-
-    local projects = {
-        {"Luna Mobile", 0.84, c.accent},
-        {"Brand System", 0.62, {0.76, 0.42, 0.95}},
-        {"Website 2026", 0.38, c.success}
-    }
-
-    for i, project in ipairs(projects) do
-        local y = 445 + (i - 1) * 58
-        local name, progress, color = project[1], project[2], project[3]
-
-        text(name, 315, y, fonts.small, c.text)
-        text(math.floor(progress * 100) .. "%", 754, y, fonts.small, c.muted)
-
-        love.graphics.setColor(c.border)
-        roundedRect("fill", 315, y + 26, 470, 10, 5)
-
-        love.graphics.setColor(color)
-        roundedRect("fill", 315, y + 26, 470 * progress, 10, 5)
-    end
-
-    -- Блок активности
-    shadow(855, 340, 285, 300, 18)
-    love.graphics.setColor(c.card)
-    roundedRect("fill", 855, 340, 285, 300, 18)
-    love.graphics.setColor(c.border)
-    roundedRect("line", 855, 340, 285, 300, 18)
-
-    text("Последняя активность", 880, 368, fonts.medium, c.text)
-
-    local activity = {
-        {"Новый комментарий", "в Luna Mobile", c.accent},
-        {"Задача завершена", "Подготовить макеты", c.success},
-        {"Приглашение", "в Brand System", {0.96, 0.60, 0.25}}
-    }
-
-    for i, item in ipairs(activity) do
-        local y = 425 + (i - 1) * 67
-        local pulse = 0.85 + math.sin(ui.pulse * 2 + i) * 0.15
-
-        love.graphics.setColor(item[3][1], item[3][2], item[3][3], pulse)
-        love.graphics.circle("fill", 892, y + 8, 6)
-
-        text(item[1], 910, y - 3, fonts.small, c.text)
-        text(item[2], 910, y + 18, fonts.tiny, c.muted)
-    end
-
-    -- Статус внизу
-    text(ui.notification, 290, 675, fonts.small, c.muted)
-end
-
-function love.mousepressed(x, y, button)
-    if button ~= 1 then
-        return
-    end
-
-    local tabs = {"Главная", "Аналитика", "Сообщения", "Настройки"}
-
-    for i, tab in ipairs(tabs) do
-        local tabY = 158 + (i - 1) * 54
-
-        if x >= 18 and x <= 232 and y >= tabY and y <= tabY + 42 then
-            ui.activeTab = tab
-            ui.notification = "Открыт раздел: " .. tab
-        end
-    end
-
-    if x >= 1030 and x <= 1138 and y >= 38 and y <= 80 then
-        ui.dark = not ui.dark
-        ui.notification = ui.dark and "Включена тёмная тема" or "Включена светлая тема"
-    end
-end
+closeButton.MouseButton1Click:Connect(function()
+\tsetWindowVisible(false)
+end)
