@@ -1,1474 +1,263 @@
---[[
-    ╔═══════════════════════════════════════════════╗
-    ║          ECLIPSE HUB v1.0 — MOBILE             ║
-    ║          Custom UI Library                     ║
-    ║          Dark Navy · Cyan · Gold               ║
-    ╚═══════════════════════════════════════════════╝
-
-    Полная переработка с нуля:
-    • Собственный логотип-затмение (чистые GUI-фигуры)
-    • Анимированный экран загрузки
-    • Переработанное меню с боковой панелью
-    • Компоненты: Section, Info, Toggle, Slider, Dropdown, Button
-    • Безопасные локальные функции: визуал, скорость, прыжок, FOV
-    • Система очистки ресурсов (Maid)
-    • Адаптивное масштабирование для мобильных устройств
-]]
-
---=======================================================
--- СЕРВИСЫ
---=======================================================
-local Players          = game:GetService("Players")
-local UserInputService  = game:GetService("UserInputService")
-local TweenService      = game:GetService("TweenService")
-local RunService        = game:GetService("RunService")
-local Lighting          = game:GetService("Lighting")
-
-local LocalPlayer = Players.LocalPlayer
-if not LocalPlayer then
-    Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
-    LocalPlayer = Players.LocalPlayer
-end
-
---=======================================================
--- MAID — СИСТЕМА ОЧИСТКИ РЕСУРСОВ
---=======================================================
-local Maid = {}
-Maid.__index = Maid
-
-function Maid.new()
-    return setmetatable({ _items = {} }, Maid)
-end
-
-function Maid:Give(item)
-    table.insert(self._items, item)
-    return item
-end
-
-function Maid:Clean()
-    for _, item in ipairs(self._items) do
-        if typeof(item) == "RBXScriptConnection" then
-            item:Disconnect()
-        elseif typeof(item) == "Instance" then
-            item:Destroy()
-        elseif type(item) == "function" then
-            pcall(item)
-        end
-    end
-    self._items = {}
-end
-
-local maid = Maid.new()
-
---=======================================================
--- ПАЛИТРА ЦВЕТОВ — ECLIPSE THEME
---=======================================================
-local C = {
-    -- Загрузчик
-    loaderBg       = Color3.fromRGB(8, 10, 20),
-    loaderSurface  = Color3.fromRGB(18, 22, 38),
-    loaderGold     = Color3.fromRGB(255, 196, 80),
-    loaderGoldDim  = Color3.fromRGB(180, 140, 50),
-    loaderCyan     = Color3.fromRGB(80, 200, 255),
-
-    -- Основной интерфейс
-    bg             = Color3.fromRGB(12, 14, 22),
-    sidebar        = Color3.fromRGB(16, 18, 28),
-    card           = Color3.fromRGB(20, 23, 34),
-    cardHover      = Color3.fromRGB(26, 30, 42),
-    accent         = Color3.fromRGB(0, 190, 255),    -- Cyan
-    accentDim      = Color3.fromRGB(0, 130, 180),
-    gold           = Color3.fromRGB(255, 196, 80),
-    switchOff      = Color3.fromRGB(38, 42, 55),
-    white          = Color3.fromRGB(255, 255, 255),
-    text           = Color3.fromRGB(235, 238, 245),
-    textSec        = Color3.fromRGB(145, 150, 165),
-    textDim        = Color3.fromRGB(85, 90, 105),
-    red            = Color3.fromRGB(235, 55, 65),
-    green          = Color3.fromRGB(70, 200, 120),
-    border         = Color3.fromRGB(28, 32, 44),
+local ui = {
+    dark = true,
+    mouseX = 0,
+    mouseY = 0,
+    activeTab = "Главная",
+    notification = "Добро пожаловать!",
+    pulse = 0
 }
 
---=======================================================
--- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
---=======================================================
-local function Safe(callback, ...)
-    if not callback then return end
-    local ok, err = pcall(callback, ...)
-    if not ok then warn("[Eclipse Hub] Ошибка в колбэке:", err) end
-end
+local colors = {
+    dark = {
+        bg = {0.055, 0.071, 0.11},
+        sidebar = {0.075, 0.098, 0.15},
+        card = {0.10, 0.13, 0.19},
+        cardHover = {0.13, 0.17, 0.25},
+        text = {0.92, 0.95, 1.0},
+        muted = {0.52, 0.58, 0.69},
+        accent = {0.38, 0.45, 1.0},
+        success = {0.20, 0.83, 0.57},
+        border = {0.18, 0.22, 0.31}
+    },
 
---- Создание экземпляра с свойствами и дочерними элементами
-local function Create(className, props, children)
-    local inst = Instance.new(className)
-    if props then
-        for key, value in pairs(props) do
-            if key ~= "Parent" then
-                inst[key] = value
-            end
-        end
-    end
-    if children then
-        for _, child in ipairs(children) do
-            child.Parent = inst
-        end
-    end
-    if props and props.Parent then
-        inst.Parent = props.Parent
-    end
-    return inst
-end
-
-local function Corner(radius)
-    return Create("UICorner", { CornerRadius = UDim.new(0, radius or 8) })
-end
-
-local function Stroke(color, thickness)
-    return Create("UIStroke", {
-        Color = color or C.border,
-        Thickness = thickness or 1,
-    })
-end
-
---=======================================================
--- ОЧИСТКА СТАРОГО GUI
---=======================================================
-local oldGui = LocalPlayer.PlayerGui:FindFirstChild("EclipseHub")
-if oldGui then oldGui:Destroy() end
-
-local ScreenGui = Create("ScreenGui", {
-    Name = "EclipseHub",
-    ResetOnSpawn = false,
-    ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-    IgnoreGuiInset = true,
-    DisplayOrder = 100,
-})
-ScreenGui.Parent = LocalPlayer.PlayerGui
-maid:Give(ScreenGui)
-
---=======================================================
--- ЭКРАН ЗАГРУЗКИ — ЛОГОТИП-ЗАТМЕНИЕ
---=======================================================
-local LoadingScreen = Create("Frame", {
-    Name = "LoadingScreen",
-    Size = UDim2.new(1, 0, 1, 0),
-    BackgroundColor3 = C.loaderBg,
-    BorderSizePixel = 0,
-    ZIndex = 300,
-    Parent = ScreenGui,
-})
-
--- Градиент фона загрузчика
-local LoaderGradient = Create("Frame", {
-    Size = UDim2.new(0, 400, 0, 400),
-    AnchorPoint = Vector2.new(0.5, 0.5),
-    Position = UDim2.new(0.5, 0, 0.46, 0),
-    BackgroundTransparency = 1,
-    ZIndex = 301,
-    Parent = LoadingScreen,
-})
-
--- Внешнее свечение (солнечная корона)
-local Corona = Create("Frame", {
-    Size = UDim2.new(0, 120, 0, 120),
-    AnchorPoint = Vector2.new(0.5, 0.5),
-    Position = UDim2.new(0.5, 0, 0.5, 0),
-    BackgroundColor3 = C.loaderGold,
-    BackgroundTransparency = 0.3,
-    ZIndex = 302,
-    Parent = LoaderGradient,
-}, {
-    Corner(60),
-    Create("UIStroke", { Color = C.loaderGoldDim, Thickness = 2, Transparency = 0.5 }),
-})
-
--- Свечение короны (пульсация)
-local CoronaGlow = Create("Frame", {
-    Size = UDim2.new(0, 160, 0, 160),
-    AnchorPoint = Vector2.new(0.5, 0.5),
-    Position = UDim2.new(0.5, 0, 0.5, 0),
-    BackgroundColor3 = C.loaderGold,
-    BackgroundTransparency = 0.85,
-    ZIndex = 301,
-    Parent = LoaderGradient,
-}, { Corner(80) })
-
--- Луна (тёмный круг, проходящий по солнцу)
-local Moon = Create("Frame", {
-    Size = UDim2.new(0, 100, 0, 100),
-    AnchorPoint = Vector2.new(0.5, 0.5),
-    Position = UDim2.new(0.5, -80, 0.5, 0),
-    BackgroundColor3 = C.loaderBg,
-    ZIndex = 303,
-    Parent = LoaderGradient,
-}, {
-    Corner(50),
-    Create("UIStroke", { Color = C.loaderCyan, Thickness = 1.5, Transparency = 0.3 }),
-})
-
--- Лучи вокруг короны (вращающиеся)
-local RaysContainer = Create("Frame", {
-    Size = UDim2.new(0, 200, 0, 200),
-    AnchorPoint = Vector2.new(0.5, 0.5),
-    Position = UDim2.new(0.5, 0, 0.5, 0),
-    BackgroundTransparency = 1,
-    ZIndex = 301,
-    Parent = LoaderGradient,
-})
-
-local rayCount = 8
-for i = 1, rayCount do
-    local angle = (i / rayCount) * math.pi * 2
-    local ray = Create("Frame", {
-        Size = UDim2.new(0, 3, 0, 30),
-        AnchorPoint = Vector2.new(0.5, 1),
-        Position = UDim2.new(0.5, math.cos(angle) * 70, 0.5, math.sin(angle) * 70),
-        BackgroundColor3 = C.loaderGold,
-        BackgroundTransparency = 0.6,
-        Rotation = math.deg(angle) - 90,
-        ZIndex = 301,
-        Parent = RaysContainer,
-    }, { Corner(2) })
-end
-
--- Текст логотипа
-local LogoText = Create("TextLabel", {
-    Size = UDim2.new(0, 300, 0, 30),
-    AnchorPoint = Vector2.new(0.5, 0),
-    Position = UDim2.new(0.5, 0, 0.62, 0),
-    BackgroundTransparency = 1,
-    Text = "ECLIPSE",
-    TextColor3 = C.white,
-    TextSize = 28,
-    Font = Enum.Font.GothamBlack,
-    ZIndex = 304,
-    Parent = LoadingScreen,
-})
-
-local LogoSubtitle = Create("TextLabel", {
-    Size = UDim2.new(0, 300, 0, 16),
-    AnchorPoint = Vector2.new(0.5, 0),
-    Position = UDim2.new(0.5, 0, 0.72, 0),
-    BackgroundTransparency = 1,
-    Text = "HUB · MOBILE EDITION",
-    TextColor3 = C.loaderCyan,
-    TextSize = 10,
-    Font = Enum.Font.GothamBold,
-    ZIndex = 304,
-    Parent = LoadingScreen,
-})
-
--- Прогресс-бар
-local ProgressBg = Create("Frame", {
-    Size = UDim2.new(0, 200, 0, 4),
-    AnchorPoint = Vector2.new(0.5, 0),
-    Position = UDim2.new(0.5, 0, 0.82, 0),
-    BackgroundColor3 = C.loaderSurface,
-    BorderSizePixel = 0,
-    ZIndex = 304,
-    Parent = LoadingScreen,
-}, { Corner(2) })
-
-local ProgressFill = Create("Frame", {
-    Size = UDim2.new(0, 0, 1, 0),
-    BackgroundColor3 = C.loaderCyan,
-    BorderSizePixel = 0,
-    ZIndex = 305,
-    Parent = ProgressBg,
-}, { Corner(2) })
-
-local ProgressText = Create("TextLabel", {
-    Size = UDim2.new(0, 300, 0, 12),
-    AnchorPoint = Vector2.new(0.5, 0),
-    Position = UDim2.new(0.5, 0, 0.86, 0),
-    BackgroundTransparency = 1,
-    Text = "Загрузка...",
-    TextColor3 = C.textDim,
-    TextSize = 9,
-    Font = Enum.Font.GothamMedium,
-    ZIndex = 304,
-    Parent = LoadingScreen,
-})
-
--- Анимации загрузчика
-local loadingDone = false
-
--- Вращение лучей
-maid:Give(RunService.RenderStepped:Connect(function()
-    if loadingDone then return end
-    RaysContainer.Rotation = RaysContainer.Rotation + 0.5
-end))
-
--- Пульсация короны
-task.spawn(function()
-    while not loadingDone do
-        TweenService:Create(Corona, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-            BackgroundTransparency = 0.1,
-            Size = UDim2.new(0, 130, 0, 130),
-        }):Play()
-        TweenService:Create(CoronaGlow, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-            BackgroundTransparency = 0.7,
-            Size = UDim2.new(0, 180, 0, 180),
-        }):Play()
-        task.wait(1.2)
-        if loadingDone then break end
-        TweenService:Create(Corona, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-            BackgroundTransparency = 0.35,
-            Size = UDim2.new(0, 120, 0, 120),
-        }):Play()
-        TweenService:Create(CoronaGlow, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-            BackgroundTransparency = 0.88,
-            Size = UDim2.new(0, 160, 0, 160),
-        }):Play()
-        task.wait(1.2)
-    end
-end)
-
--- Движение луны (проход по солнцу)
-task.spawn(function()
-    while not loadingDone do
-        local tween = TweenService:Create(Moon, TweenInfo.new(2.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-            Position = UDim2.new(0.5, 80, 0.5, 0),
-        })
-        tween:Play()
-        tween.Completed:Wait()
-        if loadingDone then break end
-        Moon.Position = UDim2.new(0.5, -80, 0.5, 0)
-        task.wait(0.3)
-    end
-end)
-
--- Анимация прогресс-бара
-task.spawn(function()
-    local steps = {
-        { pct = 0.15, text = "Инициализация..." },
-        { pct = 0.35, text = "Загрузка интерфейса..." },
-        { pct = 0.55, text = "Настройка компонентов..." },
-        { pct = 0.75, text = "Подключение функций..." },
-        { pct = 0.95, text = "Финализация..." },
-        { pct = 1.00, text = "Готово!" },
+    light = {
+        bg = {0.94, 0.96, 0.99},
+        sidebar = {1.0, 1.0, 1.0},
+        card = {1.0, 1.0, 1.0},
+        cardHover = {0.95, 0.97, 1.0},
+        text = {0.10, 0.13, 0.20},
+        muted = {0.40, 0.45, 0.55},
+        accent = {0.30, 0.38, 0.95},
+        success = {0.10, 0.67, 0.40},
+        border = {0.84, 0.87, 0.92}
     }
-    for _, step in ipairs(steps) do
-        TweenService:Create(ProgressFill, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
-            Size = UDim2.new(step.pct, 0, 1, 0),
-        }):Play()
-        ProgressText.Text = step.text
-        task.wait(0.3)
-    end
-    task.wait(0.4)
-    loadingDone = true
-    -- Плавное исчезновение
-    local fadeInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    for _, obj in ipairs(LoadingScreen:GetDescendants()) do
-        if obj:IsA("TextLabel") then
-            TweenService:Create(obj, fadeInfo, { TextTransparency = 1 }):Play()
-        elseif obj:IsA("Frame") then
-            TweenService:Create(obj, fadeInfo, { BackgroundTransparency = 1 }):Play()
-        elseif obj:IsA("UIStroke") then
-            TweenService:Create(obj, fadeInfo, { Transparency = 1 }):Play()
-        end
-    end
-    TweenService:Create(LoadingScreen, fadeInfo, { BackgroundTransparency = 1 }):Play()
-    task.wait(0.6)
-    LoadingScreen:Destroy()
-end)
-
---=======================================================
--- ПЛАВАЮЩАЯ КНОПКА-ПЕРЕКЛЮЧАТЕЛЬ (ЛОГОТИП ECLIPSE)
---=======================================================
-local hubOpen = true
-local toggleDrag = nil
-local toggleSuppressClick = false
-
-local ToggleBtn = Create("Frame", {
-    Name = "EclipseToggle",
-    Size = UDim2.new(0, 44, 0, 44),
-    Position = UDim2.new(0, 16, 0.3, 0),
-    BackgroundColor3 = C.bg,
-    BorderSizePixel = 0,
-    ZIndex = 200,
-    Parent = ScreenGui,
-}, {
-    Corner(12),
-    Stroke(C.accent, 1.5),
-})
-
--- Мини-логотип затмения на кнопке
-local MiniSun = Create("Frame", {
-    Size = UDim2.new(0, 20, 0, 20),
-    AnchorPoint = Vector2.new(0.5, 0.5),
-    Position = UDim2.new(0.5, 0, 0.5, 0),
-    BackgroundColor3 = C.gold,
-    ZIndex = 201,
-    Parent = ToggleBtn,
-}, { Corner(10) })
-
-local MiniMoon = Create("Frame", {
-    Size = UDim2.new(0, 18, 0, 18),
-    AnchorPoint = Vector2.new(0.5, 0.5),
-    Position = UDim2.new(0.5, 0, 0.5, 0),
-    BackgroundColor3 = C.bg,
-    ZIndex = 202,
-    Parent = ToggleBtn,
-}, { Corner(9) })
-
-local ToggleClick = Create("TextButton", {
-    Size = UDim2.new(1, 0, 1, 0),
-    BackgroundTransparency = 1,
-    Text = "",
-    ZIndex = 203,
-    Parent = ToggleBtn,
-})
-
--- Перетаскивание кнопки
-do
-    ToggleClick.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            toggleDrag = {
-                input = input,
-                start = input.Position,
-                position = ToggleBtn.Position,
-                moved = false,
-            }
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if not toggleDrag then return end
-        if input.UserInputType ~= Enum.UserInputType.MouseMovement and input ~= toggleDrag.input then return end
-        local delta = input.Position - toggleDrag.start
-        if delta.Magnitude > 6 then toggleDrag.moved = true end
-        ToggleBtn.Position = UDim2.fromOffset(
-            toggleDrag.position.X.Offset + delta.X,
-            toggleDrag.position.Y.Offset + delta.Y
-        )
-    end)
-    UserInputService.InputEnded:Connect(function(input)
-        if toggleDrag and input == toggleDrag.input then
-            toggleSuppressClick = toggleDrag.moved
-            toggleDrag = nil
-        end
-    end)
-end
-
---=======================================================
--- ГЛАВНОЕ ОКНО HUB
---=======================================================
-local HUB_W, HUB_H = 500, 340
-
-local Main = Create("Frame", {
-    Name = "MainFrame",
-    Size = UDim2.new(0, HUB_W, 0, HUB_H),
-    AnchorPoint = Vector2.new(0.5, 0.5),
-    Position = UDim2.new(0.5, 0, 0.5, 0),
-    BackgroundColor3 = C.bg,
-    BorderSizePixel = 0,
-    ClipsDescendants = true,
-    ZIndex = 10,
-    Parent = ScreenGui,
-}, {
-    Corner(16),
-    Stroke(C.border, 1),
-})
-
--- Адаптивное масштабирование
-local HubScale = Create("UIScale", { Parent = Main })
-local cameraConnection
-
-local function UpdateHubScale()
-    local camera = workspace.CurrentCamera
-    if not camera then return end
-    local vp = camera.ViewportSize
-    local fit = math.min((vp.X - 20) / HUB_W, (vp.Y - 30) / HUB_H, 1)
-    HubScale.Scale = math.clamp(fit, 0.6, 1)
-end
-
-local function BindHubViewport()
-    if cameraConnection then cameraConnection:Disconnect() end
-    local camera = workspace.CurrentCamera
-    if camera then
-        cameraConnection = camera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateHubScale)
-        maid:Give(cameraConnection)
-    end
-    UpdateHubScale()
-end
-workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(BindHubViewport)
-BindHubViewport()
-
---=======================================================
--- ВЕРХНЯЯ ПАНЕЛЬ (HEADER)
---=======================================================
-local Header = Create("Frame", {
-    Name = "Header",
-    Size = UDim2.new(1, 0, 0, 40),
-    BackgroundColor3 = C.bg,
-    BorderSizePixel = 0,
-    ZIndex = 12,
-    Parent = Main,
-})
-
--- Разделительная линия под хедером
-local HeaderLine = Create("Frame", {
-    Size = UDim2.new(1, 0, 0, 1),
-    Position = UDim2.new(0, 0, 1, -1),
-    BackgroundColor3 = C.border,
-    BorderSizePixel = 0,
-    ZIndex = 13,
-    Parent = Header,
-})
-
--- Мини-логотип в хедере
-local HeaderLogo = Create("Frame", {
-    Size = UDim2.new(0, 18, 0, 18),
-    Position = UDim2.new(0, 14, 0.5, -9),
-    BackgroundColor3 = C.gold,
-    BorderSizePixel = 0,
-    ZIndex = 13,
-    Parent = Header,
-}, { Corner(9) })
-
-local HeaderLogoMoon = Create("Frame", {
-    Size = UDim2.new(0, 16, 0, 16),
-    Position = UDim2.new(0, 15, 0.5, -8),
-    BackgroundColor3 = C.bg,
-    BorderSizePixel = 0,
-    ZIndex = 14,
-    Parent = Header,
-}, { Corner(8) })
-
-local Title = Create("TextLabel", {
-    Size = UDim2.new(1, -120, 1, 0),
-    Position = UDim2.new(0, 40, 0, 0),
-    BackgroundTransparency = 1,
-    Text = 'Eclipse Hub <font color="rgb(80,200,255)">v1.0</font>',
-    RichText = true,
-    TextColor3 = C.text,
-    TextSize = 13,
-    Font = Enum.Font.GothamBold,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    ZIndex = 13,
-    Parent = Header,
-})
-
-local CloseBtn = Create("TextButton", {
-    Size = UDim2.new(0, 28, 0, 28),
-    Position = UDim2.new(1, -34, 0, 6),
-    BackgroundTransparency = 1,
-    Text = "✕",
-    TextColor3 = C.textSec,
-    TextSize = 14,
-    Font = Enum.Font.GothamBold,
-    ZIndex = 14,
-    Parent = Header,
-})
-
-local MinBtn = Create("TextButton", {
-    Size = UDim2.new(0, 28, 0, 28),
-    Position = UDim2.new(1, -62, 0, 6),
-    BackgroundTransparency = 1,
-    Text = "—",
-    TextColor3 = C.textSec,
-    TextSize = 13,
-    Font = Enum.Font.GothamBold,
-    ZIndex = 14,
-    Parent = Header,
-})
-
--- Перетаскивание окна
-do
-    local dragging, dragStart, startPos
-    Header.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = Main.Position
-        end
-    end)
-    maid:Give(UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - dragStart
-            Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end))
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
-end
-
---=======================================================
--- БОКОВАЯ ПАНЕЛЬ И НАВИГАЦИЯ
---=======================================================
-local SIDEBAR_W = 130
-
-local Sidebar = Create("Frame", {
-    Name = "Sidebar",
-    Size = UDim2.new(0, SIDEBAR_W, 1, -40),
-    Position = UDim2.new(0, 0, 0, 40),
-    BackgroundColor3 = C.sidebar,
-    BorderSizePixel = 0,
-    ClipsDescendants = true,
-    ZIndex = 12,
-    Parent = Main,
-}, { Corner(14) })
-
-local SideScroll = Create("ScrollingFrame", {
-    Size = UDim2.new(1, 0, 1, -12),
-    Position = UDim2.new(0, 0, 0, 6),
-    BackgroundTransparency = 1,
-    BorderSizePixel = 0,
-    ScrollBarThickness = 0,
-    ZIndex = 13,
-    Parent = Sidebar,
-})
-
-local SideList = Create("UIListLayout", {
-    SortOrder = Enum.SortOrder.LayoutOrder,
-    Padding = UDim.new(0, 4),
-    Parent = SideScroll,
-})
-
-local SidePad = Create("UIPadding", {
-    PaddingLeft = UDim.new(0, 8),
-    PaddingRight = UDim.new(0, 8),
-    Parent = SideScroll,
-})
-
-SideList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    SideScroll.CanvasSize = UDim2.new(0, 0, 0, SideList.AbsoluteContentSize.Y + 12)
-end)
-
---=======================================================
--- ДЕРЖАТЕЛЬ СТРАНИЦ
---=======================================================
-local PageHolder = Create("Frame", {
-    Name = "PageHolder",
-    Size = UDim2.new(1, -SIDEBAR_W, 1, -40),
-    Position = UDim2.new(0, SIDEBAR_W, 0, 40),
-    BackgroundColor3 = C.bg,
-    ClipsDescendants = true,
-    ZIndex = 11,
-    Parent = Main,
-}, { Corner(14) })
-
-local tabs = {}
-local pages = {}
-
-local function SelectTab(tabId)
-    for id, page in pairs(pages) do
-        page.Visible = (id == tabId)
-    end
-    for id, btn in pairs(tabs) do
-        local selected = (id == tabId)
-        TweenService:Create(btn, TweenInfo.new(0.15), {
-            BackgroundColor3 = selected and C.card or C.sidebar,
-        }):Play()
-        local label = btn:FindFirstChild("TabLabel")
-        local icon = btn:FindFirstChild("TabIcon")
-        local bar = btn:FindFirstChild("Indicator")
-        if label then
-            TweenService:Create(label, TweenInfo.new(0.15), {
-                TextColor3 = selected and C.text or C.textSec,
-            }):Play()
-        end
-        if icon then
-            TweenService:Create(icon, TweenInfo.new(0.15), {
-                TextColor3 = selected and C.accent or C.textSec,
-            }):Play()
-        end
-        if bar then bar.Visible = selected end
-    end
-end
-
-local function CreateTab(id, name, iconText)
-    local btn = Create("TextButton", {
-        Name = "Tab_" .. id,
-        Size = UDim2.new(1, 0, 0, 34),
-        BackgroundColor3 = C.sidebar,
-        Text = "",
-        AutoButtonColor = false,
-        ZIndex = 14,
-        Parent = SideScroll,
-    }, {
-        Corner(10),
-    })
-
-    local indicator = Create("Frame", {
-        Name = "Indicator",
-        Size = UDim2.new(0, 3, 0, 18),
-        Position = UDim2.new(0, 4, 0.5, -9),
-        BackgroundColor3 = C.accent,
-        BorderSizePixel = 0,
-        Visible = false,
-        ZIndex = 15,
-        Parent = btn,
-    }, { Corner(1.5) })
-
-    local icon = Create("TextLabel", {
-        Name = "TabIcon",
-        Size = UDim2.new(0, 22, 1, 0),
-        Position = UDim2.new(0, 12, 0, 0),
-        BackgroundTransparency = 1,
-        Text = iconText or "⚙",
-        TextColor3 = C.textSec,
-        TextSize = 13,
-        Font = Enum.Font.GothamMedium,
-        ZIndex = 15,
-        Parent = btn,
-    })
-
-    local label = Create("TextLabel", {
-        Name = "TabLabel",
-        Size = UDim2.new(1, -40, 1, 0),
-        Position = UDim2.new(0, 36, 0, 0),
-        BackgroundTransparency = 1,
-        Text = name,
-        TextColor3 = C.textSec,
-        TextSize = 11,
-        Font = Enum.Font.GothamMedium,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 15,
-        Parent = btn,
-    })
-
-    local pageScroll = Create("ScrollingFrame", {
-        Name = "Page_" .. id,
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        ScrollBarThickness = 3,
-        ScrollBarImageColor3 = C.border,
-        Visible = false,
-        Parent = PageHolder,
-    })
-
-    local pageList = Create("UIListLayout", {
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        Padding = UDim.new(0, 8),
-        Parent = pageScroll,
-    })
-
-    local pagePad = Create("UIPadding", {
-        PaddingTop = UDim.new(0, 12),
-        PaddingLeft = UDim.new(0, 14),
-        PaddingRight = UDim.new(0, 14),
-        PaddingBottom = UDim.new(0, 14),
-        Parent = pageScroll,
-    })
-
-    pageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        pageScroll.CanvasSize = UDim2.new(0, 0, 0, pageList.AbsoluteContentSize.Y + 24)
-    end)
-
-    tabs[id] = btn
-    pages[id] = pageScroll
-
-    btn.MouseButton1Click:Connect(function()
-        SelectTab(id)
-    end)
-
-    return pageScroll
-end
-
---=======================================================
--- БИЛДЕРЫ КОМПОНЕНТОВ
---=======================================================
-local UI = {}
-
-function UI.AddSection(page, text)
-    Create("TextLabel", {
-        Size = UDim2.new(1, 0, 0, 22),
-        BackgroundTransparency = 1,
-        Text = text,
-        TextColor3 = C.text,
-        TextSize = 13,
-        Font = Enum.Font.GothamBold,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 13,
-        Parent = page,
-    })
-end
-
-function UI.AddInfo(page, text)
-    local frame = Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 42),
-        BackgroundColor3 = C.card,
-        BorderSizePixel = 0,
-        ZIndex = 13,
-        Parent = page,
-    }, {
-        Corner(12),
-        Stroke(C.border, 1),
-    })
-
-    Create("TextLabel", {
-        Size = UDim2.new(1, -24, 1, -12),
-        Position = UDim2.new(0, 12, 0, 6),
-        BackgroundTransparency = 1,
-        Text = text,
-        TextColor3 = C.textSec,
-        TextSize = 10,
-        Font = Enum.Font.Gotham,
-        TextWrapped = true,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        TextYAlignment = Enum.TextYAlignment.Center,
-        ZIndex = 14,
-        Parent = frame,
-    })
-end
-
-function UI.AddToggle(page, titleText, subText, defaultState, callback)
-    local frameHeight = subText and 48 or 38
-    local frame = Create("Frame", {
-        Size = UDim2.new(1, 0, 0, frameHeight),
-        BackgroundColor3 = C.card,
-        BorderSizePixel = 0,
-        ZIndex = 13,
-        Parent = page,
-    }, {
-        Corner(12),
-        Stroke(C.border, 1),
-    })
-
-    Create("TextLabel", {
-        Size = UDim2.new(1, -64, 0, 20),
-        Position = UDim2.new(0, 12, 0, subText and 7 or 10),
-        BackgroundTransparency = 1,
-        Text = titleText,
-        TextColor3 = C.text,
-        TextSize = 11,
-        Font = Enum.Font.GothamMedium,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 14,
-        Parent = frame,
-    })
-
-    if subText then
-        Create("TextLabel", {
-            Size = UDim2.new(1, -64, 0, 14),
-            Position = UDim2.new(0, 12, 0, 26),
-            BackgroundTransparency = 1,
-            Text = subText,
-            TextColor3 = C.textDim,
-            TextSize = 9,
-            Font = Enum.Font.Gotham,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            ZIndex = 14,
-            Parent = frame,
-        })
-    end
-
-    local switchTrack = Create("TextButton", {
-        Size = UDim2.new(0, 38, 0, 20),
-        Position = UDim2.new(1, -50, 0.5, -10),
-        BackgroundColor3 = defaultState and C.accent or C.switchOff,
-        Text = "",
-        AutoButtonColor = false,
-        ZIndex = 14,
-        Parent = frame,
-    }, { Corner(10) })
-
-    local switchThumb = Create("Frame", {
-        Size = UDim2.new(0, 14, 0, 14),
-        Position = defaultState and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7),
-        BackgroundColor3 = C.white,
-        BorderSizePixel = 0,
-        ZIndex = 15,
-        Parent = switchTrack,
-    }, { Corner(7) })
-
-    local state = defaultState
-    switchTrack.MouseButton1Click:Connect(function()
-        state = not state
-        TweenService:Create(switchTrack, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = state and C.accent or C.switchOff,
-        }):Play()
-        TweenService:Create(switchThumb, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
-            Position = state and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7),
-        }):Play()
-        Safe(callback, state)
-    end)
-end
-
-function UI.AddDropdown(page, titleText, options, defaultOption, callback)
-    local frame = Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 38),
-        BackgroundColor3 = C.card,
-        ClipsDescendants = true,
-        BorderSizePixel = 0,
-        ZIndex = 13,
-        Parent = page,
-    }, {
-        Corner(12),
-        Stroke(C.border, 1),
-    })
-
-    Create("TextLabel", {
-        Size = UDim2.new(0.5, 0, 0, 38),
-        Position = UDim2.new(0, 12, 0, 0),
-        BackgroundTransparency = 1,
-        Text = titleText,
-        TextColor3 = C.text,
-        TextSize = 11,
-        Font = Enum.Font.GothamMedium,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 14,
-        Parent = frame,
-    })
-
-    local selector = Create("TextButton", {
-        Size = UDim2.new(0, 130, 0, 26),
-        Position = UDim2.new(1, -140, 0, 6),
-        BackgroundColor3 = C.bg,
-        Text = (defaultOption or options[1] or "") .. "  ▼",
-        TextColor3 = C.text,
-        TextSize = 10,
-        Font = Enum.Font.GothamBold,
-        ZIndex = 14,
-        Parent = frame,
-    }, {
-        Corner(10),
-        Stroke(C.border, 1),
-    })
-
-    local isOpen = false
-    selector.MouseButton1Click:Connect(function()
-        isOpen = not isOpen
-        local targetH = isOpen and (38 + #options * 26 + 6) or 38
-        TweenService:Create(frame, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-            Size = UDim2.new(1, 0, 0, targetH),
-        }):Play()
-    end)
-
-    for i, opt in ipairs(options) do
-        local optBtn = Create("TextButton", {
-            Size = UDim2.new(1, -24, 0, 24),
-            Position = UDim2.new(0, 12, 0, 38 + (i - 1) * 26),
-            BackgroundColor3 = C.sidebar,
-            Text = opt,
-            TextColor3 = C.textSec,
-            TextSize = 10,
-            Font = Enum.Font.GothamMedium,
-            ZIndex = 15,
-            Parent = frame,
-        }, { Corner(9) })
-
-        optBtn.MouseButton1Click:Connect(function()
-            selector.Text = opt .. "  ▼"
-            isOpen = false
-            TweenService:Create(frame, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-                Size = UDim2.new(1, 0, 0, 38),
-            }):Play()
-            Safe(callback, opt)
-        end)
-    end
-end
-
-function UI.AddSlider(page, titleText, minVal, maxVal, defaultVal, prefix, callback)
-    local frame = Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 46),
-        BackgroundColor3 = C.card,
-        BorderSizePixel = 0,
-        ZIndex = 13,
-        Parent = page,
-    }, {
-        Corner(12),
-        Stroke(C.border, 1),
-    })
-
-    prefix = prefix or ""
-
-    Create("TextLabel", {
-        Size = UDim2.new(0.7, 0, 0, 18),
-        Position = UDim2.new(0, 12, 0, 7),
-        BackgroundTransparency = 1,
-        Text = titleText,
-        TextColor3 = C.text,
-        TextSize = 11,
-        Font = Enum.Font.GothamMedium,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 14,
-        Parent = frame,
-    })
-
-    local valLabel = Create("TextLabel", {
-        Size = UDim2.new(0.3, -12, 0, 18),
-        Position = UDim2.new(0.7, 0, 0, 7),
-        BackgroundTransparency = 1,
-        Text = prefix .. tostring(defaultVal),
-        TextColor3 = C.accent,
-        TextSize = 11,
-        Font = Enum.Font.GothamBold,
-        TextXAlignment = Enum.TextXAlignment.Right,
-        ZIndex = 14,
-        Parent = frame,
-    })
-
-    local track = Create("TextButton", {
-        Size = UDim2.new(1, -24, 0, 4),
-        Position = UDim2.new(0, 12, 0, 32),
-        BackgroundColor3 = C.switchOff,
-        Text = "",
-        AutoButtonColor = false,
-        ZIndex = 14,
-        Parent = frame,
-    }, { Corner(2) })
-
-    local pct = (defaultVal - minVal) / (maxVal - minVal)
-    local fill = Create("Frame", {
-        Size = UDim2.new(pct, 0, 1, 0),
-        BackgroundColor3 = C.accent,
-        BorderSizePixel = 0,
-        ZIndex = 15,
-        Parent = track,
-    }, { Corner(2) })
-
-    local thumb = Create("Frame", {
-        Size = UDim2.new(0, 12, 0, 12),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(pct, 0, 0.5, 0),
-        BackgroundColor3 = C.white,
-        BorderSizePixel = 0,
-        ZIndex = 16,
-        Parent = track,
-    }, { Corner(6) })
-
-    local dragging = false
-    local function update(input)
-        local rel = math.clamp((input.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-        local val = math.floor(minVal + (maxVal - minVal) * rel)
-        fill.Size = UDim2.new(rel, 0, 1, 0)
-        thumb.Position = UDim2.new(rel, 0, 0.5, 0)
-        valLabel.Text = prefix .. tostring(val)
-        Safe(callback, val)
-    end
-
-    track.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            update(input)
-        end
-    end)
-    maid:Give(UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            update(input)
-        end
-    end))
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
-end
-
-function UI.AddButton(page, titleText, callback)
-    local btn = Create("TextButton", {
-        Size = UDim2.new(1, 0, 0, 34),
-        BackgroundColor3 = C.card,
-        Text = titleText,
-        TextColor3 = C.text,
-        TextSize = 11,
-        Font = Enum.Font.GothamBold,
-        ZIndex = 14,
-        Parent = page,
-    }, {
-        Corner(12),
-        Stroke(C.border, 1),
-    })
-
-    btn.MouseButton1Click:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = C.accent,
-        }):Play()
-        task.delay(0.12, function()
-            if btn.Parent then
-                TweenService:Create(btn, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
-                    BackgroundColor3 = C.card,
-                }):Play()
-            end
-        end)
-        Safe(callback)
-    end)
-end
-
---=======================================================
--- ЛОГИКА ВИЗУАЛЬНЫХ ЭФФЕКТОВ (КРЫЛЬЯ И АУРА)
---=======================================================
-local fxState = {
-    wings = false,
-    aura = false,
-    trail = false,
-    wingSpeed = 3,
-    wingFolder = nil,
-    leftWeld = nil,
-    rightWeld = nil,
-    auraHighlight = nil,
-    auraParticles = nil,
-    auraLight = nil,
-    trailAtt = nil,
-    trail = nil,
-    wingConn = nil,
 }
 
-local function RemoveWings()
-    if fxState.wingFolder then
-        fxState.wingFolder:Destroy()
-        fxState.wingFolder = nil
-    end
-    fxState.leftWeld = nil
-    fxState.rightWeld = nil
+local function palette()
+    return ui.dark and colors.dark or colors.light
 end
 
-local function RemoveAura()
-    if fxState.auraHighlight then fxState.auraHighlight:Destroy() fxState.auraHighlight = nil end
-    if fxState.auraParticles then fxState.auraParticles:Destroy() fxState.auraParticles = nil end
-    if fxState.auraLight then fxState.auraLight:Destroy() fxState.auraLight = nil end
+local function inside(x, y, w, h)
+    return ui.mouseX >= x and ui.mouseX <= x + w
+       and ui.mouseY >= y and ui.mouseY <= y + h
 end
 
-local function RemoveTrail()
-    if fxState.trail then fxState.trail:Destroy() fxState.trail = nil end
-    if fxState.trailAtt then fxState.trailAtt:Destroy() fxState.trailAtt = nil end
+local function roundedRect(mode, x, y, w, h, r)
+    love.graphics.rectangle(mode, x, y, w, h, r, r)
 end
 
-local function CreateWingPart(parent, size, color)
-    return Create("Part", {
-        Size = size,
-        Color = color,
-        Material = Enum.Material.Neon,
-        CanCollide = false,
-        Massless = true,
-        CastShadow = false,
-        Parent = parent,
-    })
+local function shadow(x, y, w, h, radius)
+    love.graphics.setColor(0, 0, 0, 0.18)
+    roundedRect("fill", x + 5, y + 7, w, h, radius)
 end
 
-local function ApplyWings()
-    RemoveWings()
-    if not fxState.wings then return end
+local function text(value, x, y, font, color)
+    love.graphics.setFont(font)
+    love.graphics.setColor(color)
+    love.graphics.print(value, x, y)
+end
 
-    local char = LocalPlayer.Character
-    if not char then return end
-    local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("HumanoidRootPart")
-    if not torso then return end
+local function card(x, y, w, h, title, value, subtitle, accent)
+    local c = palette()
+    local hover = inside(x, y, w, h)
 
-    local folder = Create("Folder", { Name = "EclipseWings", Parent = char })
-    fxState.wingFolder = folder
+    shadow(x, y, w, h, 18)
+    love.graphics.setColor(hover and c.cardHover or c.card)
+    roundedRect("fill", x, y, w, h, 18)
 
-    local leftRoot = Create("Part", {
-        Size = Vector3.new(0.1, 0.1, 0.1),
-        Transparency = 1,
-        CanCollide = false,
-        Massless = true,
-        Parent = folder,
-    })
+    love.graphics.setColor(c.border)
+    love.graphics.setLineWidth(1)
+    roundedRect("line", x, y, w, h, 18)
 
-    local rightRoot = Create("Part", {
-        Size = Vector3.new(0.1, 0.1, 0.1),
-        Transparency = 1,
-        CanCollide = false,
-        Massless = true,
-        Parent = folder,
-    })
+    love.graphics.setColor(accent)
+    roundedRect("fill", x + 20, y + 20, 8, 38, 4)
 
-    local wL = Create("Weld", { Part0 = torso, Part1 = leftRoot,
-        C0 = CFrame.new(-0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(-15), 0),
-        Parent = leftRoot })
+    text(title, x + 42, y + 19, fonts.small, c.muted)
+    text(value, x + 20, y + 70, fonts.big, c.text)
+    text(subtitle, x + 20, y + 123, fonts.small, c.muted)
+end
 
-    local wR = Create("Weld", { Part0 = torso, Part1 = rightRoot,
-        C0 = CFrame.new(0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(15), 0),
-        Parent = rightRoot })
+local function button(x, y, w, h, label, active)
+    local c = palette()
+    local hover = inside(x, y, w, h)
 
-    for i = 1, 4 do
-        local scale = 1 - (i * 0.15)
-        local lBlade = CreateWingPart(folder, Vector3.new(0.1, 1.8 * scale, 0.4 * scale), C.accent)
-        local rBlade = CreateWingPart(folder, Vector3.new(0.1, 1.8 * scale, 0.4 * scale), C.gold)
-
-        Create("Weld", { Part0 = leftRoot, Part1 = lBlade,
-            C0 = CFrame.new(-i * 0.35, i * 0.1, -i * 0.1) * CFrame.Angles(0, 0, math.rad(25 + i * 12)),
-            Parent = lBlade })
-
-        Create("Weld", { Part0 = rightRoot, Part1 = rBlade,
-            C0 = CFrame.new(i * 0.35, i * 0.1, -i * 0.1) * CFrame.Angles(0, 0, math.rad(-(25 + i * 12))),
-            Parent = rBlade })
+    if active then
+        love.graphics.setColor(c.accent)
+    elseif hover then
+        love.graphics.setColor(c.cardHover)
+    else
+        love.graphics.setColor(0, 0, 0, 0)
     end
 
-    fxState.leftWeld = wL
-    fxState.rightWeld = wR
+    roundedRect("fill", x, y, w, h, 12)
+
+    local labelColor = active and {1, 1, 1} or c.muted
+    text(label, x + 18, y + 13, fonts.medium, labelColor)
 end
 
-local function ApplyAura()
-    RemoveAura()
-    if not fxState.aura then return end
-
-    local char = LocalPlayer.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    fxState.auraHighlight = Create("Highlight", {
-        Name = "EclipseAuraHL",
-        FillColor = C.accent,
-        OutlineColor = C.gold,
-        FillTransparency = 0.65,
-        OutlineTransparency = 0.2,
-        Adornee = char,
-        Parent = char,
+function love.load()
+    love.window.setTitle("Luna Dashboard")
+    love.window.setMode(1180, 720, {
+        resizable = false,
+        vsync = 1
     })
 
-    fxState.auraParticles = Create("ParticleEmitter", {
-        Name = "EclipseAuraParticles",
-        Color = ColorSequence.new(C.accent, C.gold),
-        Size = NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 0.3),
-            NumberSequenceKeypoint.new(1, 0),
-        }),
-        Texture = "rbxassetid://242200285",
-        Lifetime = NumberRange.new(0.8, 1.4),
-        Rate = 20,
-        Speed = NumberRange.new(1.5, 3.5),
-        VelocitySpread = 180,
-        Parent = hrp,
-    })
+    fonts = {
+        title = love.graphics.newFont(28),
+        big = love.graphics.newFont(30),
+        medium = love.graphics.newFont(16),
+        small = love.graphics.newFont(13),
+        tiny = love.graphics.newFont(11)
+    }
 
-    fxState.auraLight = Create("PointLight", {
-        Color = C.accent,
-        Range = 12,
-        Brightness = 2.5,
-        Parent = hrp,
-    })
+    love.graphics.setBackgroundColor(0.05, 0.05, 0.08)
 end
 
-local function ApplyTrail()
-    RemoveTrail()
-    if not fxState.trail then return end
-
-    local char = LocalPlayer.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    fxState.trailAtt = Create("Attachment", {
-        Name = "EclipseTrailAtt",
-        Position = Vector3.new(0, -3, 0),
-        Parent = hrp,
-    })
-
-    fxState.trail = Create("Trail", {
-        Name = "EclipseTrail",
-        Attachment0 = fxState.trailAtt,
-        Attachment1 = fxState.trailAtt,
-        Lifetime = 0.5,
-        Color = ColorSequence.new(C.accent, C.gold),
-        Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 0),
-            NumberSequenceKeypoint.new(1, 1),
-        }),
-        Enabled = true,
-        Parent = hrp,
-    })
+function love.update(dt)
+    ui.mouseX, ui.mouseY = love.mouse.getPosition()
+    ui.pulse = ui.pulse + dt
 end
 
--- Анимация взмахов крыльев
-fxState.wingConn = RunService.RenderStepped:Connect(function()
-    if fxState.wings and fxState.leftWeld and fxState.rightWeld
-       and fxState.leftWeld.Parent and fxState.rightWeld.Parent then
-        local flap = math.sin(tick() * fxState.wingSpeed) * 0.25
-        fxState.leftWeld.C0 = CFrame.new(-0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(-15) - flap, flap * 0.5)
-        fxState.rightWeld.C0 = CFrame.new(0.4, 0.5, 0.6) * CFrame.Angles(0, math.rad(15) + flap, -flap * 0.5)
+function love.draw()
+    local c = palette()
+    local width, height = love.graphics.getDimensions()
+
+    love.graphics.clear(c.bg)
+
+    -- Левая навигационная панель
+    love.graphics.setColor(c.sidebar)
+    love.graphics.rectangle("fill", 0, 0, 250, height)
+
+    love.graphics.setColor(c.border)
+    love.graphics.setLineWidth(1)
+    love.graphics.line(250, 0, 250, height)
+
+    -- Логотип
+    love.graphics.setColor(c.accent)
+    roundedRect("fill", 28, 30, 42, 42, 13)
+
+    text("L", 41, 37, fonts.title, {1, 1, 1})
+    text("LUNA", 84, 34, fonts.title, c.text)
+    text("Dashboard", 86, 66, fonts.small, c.muted)
+
+    -- Меню
+    text("МЕНЮ", 28, 130, fonts.tiny, c.muted)
+
+    local tabs = {"Главная", "Аналитика", "Сообщения", "Настройки"}
+    for i, tab in ipairs(tabs) do
+        local y = 158 + (i - 1) * 54
+        button(18, y, 214, 42, tab, ui.activeTab == tab)
     end
-end)
-maid:Give(fxState.wingConn)
 
--- Повторное применение при возрождении
-maid:Give(LocalPlayer.CharacterAdded:Connect(function()
-    task.wait(0.5)
-    if fxState.wings then ApplyWings() end
-    if fxState.aura then ApplyAura() end
-    if fxState.trail then ApplyTrail() end
-end))
+    -- Профиль
+    love.graphics.setColor(c.border)
+    love.graphics.line(28, 610, 222, 610)
 
---=======================================================
--- СОСТОЯНИЕ ИГРОКА
---=======================================================
-local playerState = {
-    walkSpeed = 16,
-    jumpPower = 50,
-    fov = 70,
-}
+    love.graphics.setColor(c.success)
+    love.graphics.circle("fill", 49, 650, 20)
 
-local function ApplyPlayerSettings()
-    local char = LocalPlayer.Character
-    if not char then return end
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if hum then
-        hum.WalkSpeed = playerState.walkSpeed
-        hum.JumpPower = playerState.jumpPower
+    text("Алексей", 82, 630, fonts.medium, c.text)
+    text("Онлайн", 82, 653, fonts.small, c.success)
+
+    -- Основной заголовок
+    text("Добрый вечер, Алексей", 290, 42, fonts.title, c.text)
+    text("Вот что происходит с вашими проектами сегодня.", 290, 80, fonts.medium, c.muted)
+
+    -- Кнопка темы
+    local themeX, themeY = 1030, 38
+    local themeHover = inside(themeX, themeY, 108, 42)
+
+    love.graphics.setColor(themeHover and c.cardHover or c.card)
+    roundedRect("fill", themeX, themeY, 108, 42, 14)
+    love.graphics.setColor(c.border)
+    roundedRect("line", themeX, themeY, 108, 42, 14)
+
+    text(ui.dark and "Светлая" or "Тёмная", themeX + 14, themeY + 13, fonts.small, c.text)
+
+    -- Карточки статистики
+    card(290, 140, 200, 170, "АКТИВНЫЕ ПРОЕКТЫ", "12", "+2 за неделю", c.accent)
+    card(510, 140, 200, 170, "ВЫПОЛНЕНО ЗАДАЧ", "86%", "+14% к прошлому месяцу", c.success)
+    card(730, 140, 200, 170, "ВХОДЯЩИЕ", "24", "8 непрочитанных", {0.96, 0.60, 0.25})
+    card(950, 140, 190, 170, "ВРЕМЯ", "37ч", "На этой неделе", {0.76, 0.42, 0.95})
+
+    -- Большая карточка прогресса
+    shadow(290, 340, 540, 300, 18)
+    love.graphics.setColor(c.card)
+    roundedRect("fill", 290, 340, 540, 300, 18)
+    love.graphics.setColor(c.border)
+    roundedRect("line", 290, 340, 540, 300, 18)
+
+    text("Прогресс по проектам", 315, 368, fonts.medium, c.text)
+    text("Обзор текущих задач", 315, 394, fonts.small, c.muted)
+
+    local projects = {
+        {"Luna Mobile", 0.84, c.accent},
+        {"Brand System", 0.62, {0.76, 0.42, 0.95}},
+        {"Website 2026", 0.38, c.success}
+    }
+
+    for i, project in ipairs(projects) do
+        local y = 445 + (i - 1) * 58
+        local name, progress, color = project[1], project[2], project[3]
+
+        text(name, 315, y, fonts.small, c.text)
+        text(math.floor(progress * 100) .. "%", 754, y, fonts.small, c.muted)
+
+        love.graphics.setColor(c.border)
+        roundedRect("fill", 315, y + 26, 470, 10, 5)
+
+        love.graphics.setColor(color)
+        roundedRect("fill", 315, y + 26, 470 * progress, 10, 5)
     end
-    local camera = workspace.CurrentCamera
-    if camera then
-        camera.FieldOfView = playerState.fov
+
+    -- Блок активности
+    shadow(855, 340, 285, 300, 18)
+    love.graphics.setColor(c.card)
+    roundedRect("fill", 855, 340, 285, 300, 18)
+    love.graphics.setColor(c.border)
+    roundedRect("line", 855, 340, 285, 300, 18)
+
+    text("Последняя активность", 880, 368, fonts.medium, c.text)
+
+    local activity = {
+        {"Новый комментарий", "в Luna Mobile", c.accent},
+        {"Задача завершена", "Подготовить макеты", c.success},
+        {"Приглашение", "в Brand System", {0.96, 0.60, 0.25}}
+    }
+
+    for i, item in ipairs(activity) do
+        local y = 425 + (i - 1) * 67
+        local pulse = 0.85 + math.sin(ui.pulse * 2 + i) * 0.15
+
+        love.graphics.setColor(item[3][1], item[3][2], item[3][3], pulse)
+        love.graphics.circle("fill", 892, y + 8, 6)
+
+        text(item[1], 910, y - 3, fonts.small, c.text)
+        text(item[2], 910, y + 18, fonts.tiny, c.muted)
     end
+
+    -- Статус внизу
+    text(ui.notification, 290, 675, fonts.small, c.muted)
 end
 
-maid:Give(LocalPlayer.CharacterAdded:Connect(function()
-    task.wait(0.5)
-    ApplyPlayerSettings()
-end))
-
---=======================================================
--- СОЗДАНИЕ ВКЛАДОК И КОНТЕНТА
---=======================================================
-local homePage     = CreateTab("Home", "Главная", "⌂")
-local visualsPage  = CreateTab("Visuals", "Визуал", "✦")
-local playerPage   = CreateTab("Player", "Игрок", "☻")
-local statsPage    = CreateTab("Stats", "Статистика", "▣")
-local serverPage   = CreateTab("Server", "Сервер", "◉")
-local settingsPage = CreateTab("Settings", "Настройки", "⚙")
-
-SelectTab("Home")
-
-----------------------------------------
--- ГЛАВНАЯ
-----------------------------------------
-UI.AddSection(homePage, "Добро пожаловать")
-UI.AddInfo(homePage, "Eclipse Hub — компактное меню для мобильных устройств. Выберите раздел слева для доступа к функциям.")
-UI.AddSection(homePage, "О программе")
-UI.AddInfo(homePage, "Версия: 1.0 | Тема: Eclipse Dark | Все функции работают локально и безопасны для использования.")
-UI.AddSection(homePage, "Сообщество")
-UI.AddButton(homePage, "Скопировать ссылку Discord", function()
-    if setclipboard then
-        setclipboard("https://discord.gg/eclipse")
-    end
-end)
-
-----------------------------------------
--- ВИЗУАЛ
-----------------------------------------
-UI.AddSection(visualsPage, "Косметика персонажа")
-UI.AddInfo(visualsPage, "Визуальные эффекты работают локально и видны только вам. Эффекты применяются при возрождении.")
-UI.AddSection(visualsPage, "Крылья")
-UI.AddToggle(visualsPage, "Включить крылья", "3D неоновые крылья (cyan + gold)", false, function(s)
-    fxState.wings = s
-    ApplyWings()
-end)
-UI.AddSlider(visualsPage, "Скорость взмахов", 1, 10, 3, "x", function(v)
-    fxState.wingSpeed = v
-end)
-UI.AddSection(visualsPage, "Аура")
-UI.AddToggle(visualsPage, "Включить ауру", "Подсветка тела, частицы, источник света", false, function(s)
-    fxState.aura = s
-    ApplyAura()
-end)
-UI.AddSection(visualsPage, "След")
-UI.AddToggle(visualsPage, "Включить след", "Цветной след при движении", false, function(s)
-    fxState.trail = s
-    ApplyTrail()
-end)
-
-----------------------------------------
--- ИГРОК
-----------------------------------------
-UI.AddSection(playerPage, "Характеристики")
-UI.AddInfo(playerPage, "Настройки применяются к текущему персонажу и обновляются при возрождении. Используйте в своих мирах.")
-UI.AddSlider(playerPage, "Скорость ходьбы", 16, 120, 16, "", function(v)
-    playerState.walkSpeed = v
-    local char = LocalPlayer.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if hum then hum.WalkSpeed = v end
-end)
-UI.AddSlider(playerPage, "Сила прыжка", 50, 200, 50, "", function(v)
-    playerState.jumpPower = v
-    local char = LocalPlayer.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if hum then hum.JumpPower = v end
-end)
-UI.AddSection(playerPage, "Камера")
-UI.AddSlider(playerPage, "Поле зрения (FOV)", 50, 120, 70, "°", function(v)
-    playerState.fov = v
-    local camera = workspace.CurrentCamera
-    if camera then camera.FieldOfView = v end
-end)
-
-----------------------------------------
--- СТАТИСТИКА
-----------------------------------------
-UI.AddSection(statsPage, "Информация о игре")
-UI.AddInfo(statsPage, "Текущая игра: " .. (game.Name or "Неизвестно"))
-UI.AddInfo(statsPage, "Place ID: " .. tostring(game.PlaceId))
-UI.AddInfo(statsPage, "Job ID: " .. tostring(game.JobId))
-UI.AddSection(statsPage, "Игроки на сервере")
-UI.AddInfo(statsPage, "Количество игроков: " .. #Players:GetPlayers())
-UI.AddSection(statsPage, "Ваш профиль")
-UI.AddInfo(statsPage, "Имя: " .. LocalPlayer.Name)
-UI.AddInfo(statsPage, "User ID: " .. tostring(LocalPlayer.UserId))
-UI.AddButton(statsPage, "Обновить статистику", function()
-    -- Перезагрузка страницы через переключение вкладок
-    SelectTab("Home")
-    task.wait(0.1)
-    SelectTab("Stats")
-end)
-
-----------------------------------------
--- СЕРВЕР
-----------------------------------------
-UI.AddSection(serverPage, "Управление сервером")
-UI.AddButton(serverPage, "Перезайти на сервер", function()
-    game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
-end)
-UI.AddButton(serverPage, "Покинуть игру", function()
-    game:Shutdown()
-end)
-UI.AddSection(serverPage, "Список игроков")
-UI.AddButton(serverPage, "Скопировать Job ID", function()
-    if setclipboard then setclipboard(tostring(game.JobId)) end
-end)
-
-----------------------------------------
--- НАСТРОЙКИ
-----------------------------------------
-UI.AddSection(settingsPage, "Интерфейс")
-UI.AddInfo(settingsPage, "Окно можно перетаскивать за верхнюю панель. Кнопка-логотип также перетаскивается.")
-UI.AddSection(settingsPage, "Управление")
-UI.AddToggle(settingsPage, "Показывать кнопку-логотип", nil, true, function(s)
-    ToggleBtn.Visible = s
-end)
-UI.AddToggle(settingsPage, "Поверх всех окон", nil, true, function(s)
-    ScreenGui.DisplayOrder = s and 100 or 1
-end)
-UI.AddSection(settingsPage, "Действия")
-UI.AddButton(settingsPage, "Выгрузить интерфейс", function()
-    maid:Clean()
-end)
-UI.AddButton(settingsPage, "Сбросить позицию окна", function()
-    Main.Position = UDim2.new(0.5, 0, 0.5, 0)
-end)
-
---=======================================================
--- ПЕРЕКЛЮЧЕНИЕ ОКНА HUB
---=======================================================
-local function ToggleHub()
-    hubOpen = not hubOpen
-    Main.Visible = hubOpen
-end
-
-ToggleClick.MouseButton1Click:Connect(function()
-    if toggleSuppressClick then
-        toggleSuppressClick = false
+function love.mousepressed(x, y, button)
+    if button ~= 1 then
         return
     end
-    ToggleHub()
-end)
 
-CloseBtn.MouseButton1Click:Connect(ToggleHub)
-MinBtn.MouseButton1Click:Connect(ToggleHub)
+    local tabs = {"Главная", "Аналитика", "Сообщения", "Настройки"}
 
---=======================================================
--- ЗАВЕРШЕНИЕ
---=======================================================
--- Применяем настройки игрока при запуске
-task.spawn(function()
-    task.wait(1)
-    ApplyPlayerSettings()
-end)
+    for i, tab in ipairs(tabs) do
+        local tabY = 158 + (i - 1) * 54
 
-print("[Eclipse Hub] Загрузка завершена. v1.0")
+        if x >= 18 and x <= 232 and y >= tabY and y <= tabY + 42 then
+            ui.activeTab = tab
+            ui.notification = "Открыт раздел: " .. tab
+        end
+    end
+
+    if x >= 1030 and x <= 1138 and y >= 38 and y <= 80 then
+        ui.dark = not ui.dark
+        ui.notification = ui.dark and "Включена тёмная тема" or "Включена светлая тема"
+    end
+end
