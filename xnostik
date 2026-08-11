@@ -1,99 +1,472 @@
--- Compact left-side menu (working in studio & game)
+-- Компактное меню Roblox без библиотек
+-- Помести этот LocalScript в StarterPlayer > StarterPlayerScripts
+
 local Players = game:GetService("Players")
-local Replicated = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
--- Ждём игрока
 local player = Players.LocalPlayer
-if not player then
-    Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
-    player = Players.LocalPlayer
-end
+local playerGui = player:WaitForChild("PlayerGui")
 
--- Ждём загрузки игрока и его GUI
-repeat wait() until player and player:IsA("Player") and player.PlayerGui
+local old = playerGui:FindFirstChild("CompactMenu")
+if old then old:Destroy() end
 
--- Создаём GUI
-local gui = Instance.new("ScreenGui")
-gui.Name = "CompactLeftMenu"
-gui.ResetOnSpawn = false
-gui.IgnoreGuiInset = true
-gui.DisplayOrder = 50
-gui.Parent = player.PlayerGui
-
--- Цвета
-local bg = Color3.fromRGB(18,18,20)
-local itemBg = Color3.fromRGB(26,26,28)
-local hoverColor = Color3.fromRGB(40,40,44)
-local accent = Color3.fromRGB(98,165,255)
-local textColor = Color3.fromRGB(235,235,240)
-
--- Меню
-local items = {
-    { id = "Home",     name = "Главная",   icon = "rbxassetid://9614426862"  },
-    { id = "Chat",     name = "Чат",       icon = "rbxassetid://14714446"    },
-    { id = "Store",    name = "Магазин",   icon = "rbxassetid://6031075933"  },
-    { id = "Teleport", name = "Телепорт",  icon = "rbxassetid://10149699300" },
-    { id = "Settings", name = "Настройки", icon = "rbxassetid://6031075938"  },
+local COLORS = {
+	Background = Color3.fromRGB(14, 16, 22),
+	Sidebar = Color3.fromRGB(18, 21, 29),
+	Surface = Color3.fromRGB(24, 28, 38),
+	SurfaceHover = Color3.fromRGB(31, 36, 48),
+	Accent = Color3.fromRGB(107, 92, 255),
+	AccentSoft = Color3.fromRGB(39, 36, 72),
+	Text = Color3.fromRGB(240, 242, 248),
+	Muted = Color3.fromRGB(139, 147, 166),
+	Stroke = Color3.fromRGB(43, 48, 62),
+	Success = Color3.fromRGB(71, 215, 153),
 }
 
-local menuWidth = 58
-local iconSize = 40
-local spacing = 8
+-- Проверенные ID Lucide-иконок Roblox
+local ICONS = {
+	Home = "rbxassetid://10723407389",
+	Player = "rbxassetid://10747373176",
+	Shield = "rbxassetid://10734951847",
+	Settings = "rbxassetid://10734950309",
+	Info = "rbxassetid://10723415903",
+	Close = "rbxassetid://10747384394",
+}
 
--- RemoteEvent (если нужен для сервера)
-local event = Replicated:FindFirstChild("MenuClicked")
-if not event then
-    event = Instance.new("RemoteEvent")
-    event.Name = "MenuClicked"
-    event.Parent = Replicated
+local function new(className, properties)
+	local object = Instance.new(className)
+	for property, value in pairs(properties or {}) do
+		object[property] = value
+	end
+	return object
 end
 
--- Главный фрейм
-local frame = Instance.new("Frame")
-frame.Name = "LeftMenu"
-frame.Size = UDim2.new(0, menuWidth, 0, (#items * (iconSize + spacing)) + spacing)
-frame.Position = UDim2.new(0, 8, 0.5, -((#items * (iconSize + spacing)) + spacing)/2)
-frame.BackgroundColor3 = bg
-frame.BorderSizePixel = 0
-frame.Parent = gui
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
-
--- Список
-local list = Instance.new("UIListLayout")
-list.FillDirection = Enum.FillDirection.Vertical
-list.HorizontalAlignment = Enum.HorizontalAlignment.Center
-list.VerticalAlignment = Enum.VerticalAlignment.Top
-list.Padding = UDim.new(0, spacing)
-list.Parent = frame
-
--- Создаём кнопки
-for _, item in ipairs(items) do
-    local btn = Instance.new("ImageButton")
-    btn.Name = item.id
-    btn.Size = UDim2.new(0, iconSize, 0, iconSize)
-    btn.BackgroundColor3 = itemBg
-    btn.BorderSizePixel = 0
-    btn.Image = item.icon
-    btn.ImageColor3 = textColor
-    btn.ScaleType = Enum.ScaleType.Fit
-    btn.Parent = frame
-    
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
-    
-    -- Ховер
-    btn.MouseEnter:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = hoverColor}):Play()
-    end)
-    btn.MouseLeave:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = itemBg}):Play()
-    end)
-    
-    -- Клик
-    btn.MouseButton1Click:Connect(function()
-        event:FireServer(item.id)
-        print("Кликнут: " .. item.name)
-    end)
+local function corner(parent, radius)
+	new("UICorner", {
+		CornerRadius = UDim.new(0, radius),
+		Parent = parent,
+	})
 end
 
-print("Чит-меню загружено!")
+local function stroke(parent, color, transparency, thickness)
+	new("UIStroke", {
+		Color = color or COLORS.Stroke,
+		Transparency = transparency or 0,
+		Thickness = thickness or 1,
+		Parent = parent,
+	})
+end
+
+local function tween(object, properties, duration)
+	TweenService:Create(
+		object,
+		TweenInfo.new(duration or 0.18, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+		properties
+	):Play()
+end
+
+local gui = new("ScreenGui", {
+	Name = "CompactMenu",
+	IgnoreGuiInset = true,
+	ResetOnSpawn = false,
+	ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+	Parent = playerGui,
+})
+
+local shadow = new("ImageLabel", {
+	Name = "Shadow",
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.5),
+	Size = UDim2.fromOffset(616, 396),
+	BackgroundTransparency = 1,
+	Image = "rbxassetid://6014261993",
+	ImageColor3 = Color3.new(0, 0, 0),
+	ImageTransparency = 0.35,
+	ScaleType = Enum.ScaleType.Slice,
+	SliceCenter = Rect.new(49, 49, 450, 450),
+	Parent = gui,
+})
+
+local main = new("Frame", {
+	Name = "Main",
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.5),
+	Size = UDim2.fromOffset(580, 360),
+	BackgroundColor3 = COLORS.Background,
+	BorderSizePixel = 0,
+	ClipsDescendants = true,
+	Parent = gui,
+})
+corner(main, 14)
+stroke(main, COLORS.Stroke, 0.15, 1)
+
+local sidebar = new("Frame", {
+	Name = "Sidebar",
+	Size = UDim2.new(0, 72, 1, 0),
+	BackgroundColor3 = COLORS.Sidebar,
+	BorderSizePixel = 0,
+	Parent = main,
+})
+
+new("Frame", {
+	AnchorPoint = Vector2.new(1, 0),
+	Position = UDim2.new(1, 0, 0, 0),
+	Size = UDim2.new(0, 1, 1, 0),
+	BackgroundColor3 = COLORS.Stroke,
+	BorderSizePixel = 0,
+	Parent = sidebar,
+})
+
+local logo = new("TextLabel", {
+	Position = UDim2.fromOffset(14, 15),
+	Size = UDim2.fromOffset(44, 44),
+	BackgroundColor3 = COLORS.Accent,
+	BorderSizePixel = 0,
+	Font = Enum.Font.GothamBold,
+	Text = "V",
+	TextColor3 = Color3.new(1, 1, 1),
+	TextSize = 20,
+	Parent = sidebar,
+})
+corner(logo, 12)
+
+local navigation = new("Frame", {
+	Position = UDim2.fromOffset(12, 79),
+	Size = UDim2.new(1, -24, 1, -91),
+	BackgroundTransparency = 1,
+	Parent = sidebar,
+})
+new("UIListLayout", {
+	Padding = UDim.new(0, 9),
+	HorizontalAlignment = Enum.HorizontalAlignment.Center,
+	SortOrder = Enum.SortOrder.LayoutOrder,
+	Parent = navigation,
+})
+
+local topbar = new("Frame", {
+	Position = UDim2.fromOffset(73, 0),
+	Size = UDim2.new(1, -73, 0, 67),
+	BackgroundTransparency = 1,
+	Active = true,
+	Parent = main,
+})
+
+local pageTitle = new("TextLabel", {
+	Position = UDim2.fromOffset(22, 14),
+	Size = UDim2.new(1, -80, 0, 24),
+	BackgroundTransparency = 1,
+	Font = Enum.Font.GothamBold,
+	Text = "Главная",
+	TextColor3 = COLORS.Text,
+	TextSize = 18,
+	TextXAlignment = Enum.TextXAlignment.Left,
+	Parent = topbar,
+})
+
+local pageSubtitle = new("TextLabel", {
+	Position = UDim2.fromOffset(22, 38),
+	Size = UDim2.new(1, -80, 0, 17),
+	BackgroundTransparency = 1,
+	Font = Enum.Font.Gotham,
+	Text = "Панель управления",
+	TextColor3 = COLORS.Muted,
+	TextSize = 11,
+	TextXAlignment = Enum.TextXAlignment.Left,
+	Parent = topbar,
+})
+
+local closeButton = new("ImageButton", {
+	AnchorPoint = Vector2.new(1, 0),
+	Position = UDim2.new(1, -15, 0, 16),
+	Size = UDim2.fromOffset(34, 34),
+	BackgroundColor3 = COLORS.Surface,
+	BorderSizePixel = 0,
+	Image = ICONS.Close,
+	ImageColor3 = COLORS.Muted,
+	ImageTransparency = 0.05,
+	Parent = topbar,
+})
+corner(closeButton, 9)
+
+local content = new("Frame", {
+	Position = UDim2.fromOffset(93, 67),
+	Size = UDim2.new(1, -113, 1, -87),
+	BackgroundTransparency = 1,
+	ClipsDescendants = true,
+	Parent = main,
+})
+
+local pages = {}
+local tabButtons = {}
+local activeTab
+
+local TAB_DATA = {
+	{Name = "Home", Title = "Главная", Subtitle = "Панель управления", Icon = ICONS.Home},
+	{Name = "Player", Title = "Игрок", Subtitle = "Параметры персонажа", Icon = ICONS.Player},
+	{Name = "Security", Title = "Защита", Subtitle = "Безопасность и приватность", Icon = ICONS.Shield},
+	{Name = "Settings", Title = "Настройки", Subtitle = "Внешний вид и управление", Icon = ICONS.Settings},
+	{Name = "Info", Title = "Информация", Subtitle = "Сведения о проекте", Icon = ICONS.Info},
+}
+
+local function createPage(name)
+	local page = new("ScrollingFrame", {
+		Name = name,
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ScrollBarThickness = 2,
+		ScrollBarImageColor3 = COLORS.Accent,
+		CanvasSize = UDim2.fromOffset(0, 0),
+		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+		Visible = false,
+		Parent = content,
+	})
+	new("UIListLayout", {
+		Padding = UDim.new(0, 10),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		Parent = page,
+	})
+	new("UIPadding", {
+		PaddingRight = UDim.new(0, 5),
+		PaddingBottom = UDim.new(0, 5),
+		Parent = page,
+	})
+	pages[name] = page
+	return page
+end
+
+local function createCard(page, title, description)
+	local card = new("Frame", {
+		Size = UDim2.new(1, -5, 0, 76),
+		BackgroundColor3 = COLORS.Surface,
+		BorderSizePixel = 0,
+		Parent = page,
+	})
+	corner(card, 11)
+	stroke(card, COLORS.Stroke, 0.35, 1)
+
+	new("TextLabel", {
+		Position = UDim2.fromOffset(16, 13),
+		Size = UDim2.new(1, -32, 0, 20),
+		BackgroundTransparency = 1,
+		Font = Enum.Font.GothamSemibold,
+		Text = title,
+		TextColor3 = COLORS.Text,
+		TextSize = 13,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Parent = card,
+	})
+	new("TextLabel", {
+		Position = UDim2.fromOffset(16, 37),
+		Size = UDim2.new(1, -32, 0, 28),
+		BackgroundTransparency = 1,
+		Font = Enum.Font.Gotham,
+		Text = description,
+		TextColor3 = COLORS.Muted,
+		TextSize = 11,
+		TextWrapped = true,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Top,
+		Parent = card,
+	})
+	return card
+end
+
+local function createToggle(page, title, description, defaultValue, callback)
+	local card = createCard(page, title, description)
+	local enabled = defaultValue == true
+
+	local toggle = new("TextButton", {
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, -16, 0.5, 0),
+		Size = UDim2.fromOffset(42, 24),
+		BackgroundColor3 = enabled and COLORS.Accent or Color3.fromRGB(48, 53, 67),
+		BorderSizePixel = 0,
+		Text = "",
+		Parent = card,
+	})
+	corner(toggle, 12)
+
+	local knob = new("Frame", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = enabled and UDim2.new(1, -12, 0.5, 0) or UDim2.new(0, 12, 0.5, 0),
+		Size = UDim2.fromOffset(18, 18),
+		BackgroundColor3 = Color3.new(1, 1, 1),
+		BorderSizePixel = 0,
+		Parent = toggle,
+	})
+	corner(knob, 9)
+
+	local function set(value)
+		enabled = value
+		tween(toggle, {BackgroundColor3 = enabled and COLORS.Accent or Color3.fromRGB(48, 53, 67)})
+		tween(knob, {Position = enabled and UDim2.new(1, -12, 0.5, 0) or UDim2.new(0, 12, 0.5, 0)})
+		if callback then callback(enabled) end
+	end
+
+	toggle.MouseButton1Click:Connect(function()
+		set(not enabled)
+	end)
+	return set
+end
+
+local function selectTab(name)
+	if activeTab == name then return end
+	activeTab = name
+
+	for tabName, page in pairs(pages) do
+		page.Visible = tabName == name
+	end
+
+	for tabName, elements in pairs(tabButtons) do
+		local selected = tabName == name
+		tween(elements.Button, {
+			BackgroundColor3 = selected and COLORS.AccentSoft or COLORS.Sidebar,
+			BackgroundTransparency = selected and 0 or 1,
+		})
+		tween(elements.Icon, {
+			ImageColor3 = selected and Color3.new(1, 1, 1) or COLORS.Muted,
+		})
+		tween(elements.Indicator, {
+			BackgroundTransparency = selected and 0 or 1,
+			Size = selected and UDim2.fromOffset(3, 22) or UDim2.fromOffset(3, 8),
+		})
+	end
+
+	for _, data in ipairs(TAB_DATA) do
+		if data.Name == name then
+			pageTitle.Text = data.Title
+			pageSubtitle.Text = data.Subtitle
+			break
+		end
+	end
+end
+
+for index, data in ipairs(TAB_DATA) do
+	createPage(data.Name)
+	local button = new("ImageButton", {
+		Name = data.Name,
+		LayoutOrder = index,
+		Size = UDim2.fromOffset(46, 46),
+		BackgroundColor3 = COLORS.Sidebar,
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Image = "",
+		Parent = navigation,
+	})
+	corner(button, 11)
+
+	local icon = new("ImageLabel", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(20, 20),
+		BackgroundTransparency = 1,
+		Image = data.Icon,
+		ImageColor3 = COLORS.Muted,
+		ScaleType = Enum.ScaleType.Fit,
+		Parent = button,
+	})
+
+	local indicator = new("Frame", {
+		AnchorPoint = Vector2.new(0, 0.5),
+		Position = UDim2.new(0, -12, 0.5, 0),
+		Size = UDim2.fromOffset(3, 8),
+		BackgroundColor3 = COLORS.Accent,
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Parent = button,
+	})
+	corner(indicator, 2)
+
+	tabButtons[data.Name] = {Button = button, Icon = icon, Indicator = indicator}
+	button.MouseEnter:Connect(function()
+		if activeTab ~= data.Name then tween(icon, {ImageColor3 = COLORS.Text}) end
+	end)
+	button.MouseLeave:Connect(function()
+		if activeTab ~= data.Name then tween(icon, {ImageColor3 = COLORS.Muted}) end
+	end)
+	button.MouseButton1Click:Connect(function() selectTab(data.Name) end)
+end
+
+-- Демонстрационное содержимое. Здесь можно подключать свою игровую логику.
+createCard(pages.Home, "Добро пожаловать, " .. player.DisplayName, "Компактное меню готово. Выбери раздел слева, чтобы открыть нужные параметры.")
+createToggle(pages.Home, "Уведомления", "Показывать игровые уведомления", true, function(value)
+	print("Уведомления:", value)
+end)
+createToggle(pages.Home, "Быстрый режим", "Уменьшает количество визуальных эффектов", false, function(value)
+	print("Быстрый режим:", value)
+end)
+
+createCard(pages.Player, "Профиль", "Имя: " .. player.Name .. "  •  UserId: " .. player.UserId)
+createToggle(pages.Player, "Отображать имя", "Показывать имя над персонажем", true)
+createToggle(pages.Player, "След камеры", "Плавное движение камеры за персонажем", false)
+
+createCard(pages.Security, "Состояние", "Защита активна, подозрительных действий не обнаружено.")
+createToggle(pages.Security, "Приватный режим", "Скрывает дополнительную информацию профиля", false)
+createToggle(pages.Security, "Подтверждения", "Спрашивать перед важными действиями", true)
+
+createCard(pages.Settings, "Интерфейс", "Настрой параметры отображения меню.")
+createToggle(pages.Settings, "Плавные анимации", "Использовать мягкие переходы интерфейса", true)
+createToggle(pages.Settings, "Компактный вид", "Уменьшить отступы элементов", false)
+
+createCard(pages.Info, "Compact UI", "Автономный интерфейс без сторонних библиотек. Версия 1.0")
+createCard(pages.Info, "Управление", "RightShift — скрыть или показать меню. Верхнюю панель можно перетаскивать мышью.")
+
+selectTab("Home")
+
+-- Перетаскивание окна
+local dragging = false
+local dragStart
+local startPosition
+
+local function updateDrag(input)
+	local delta = input.Position - dragStart
+	main.Position = UDim2.new(
+		startPosition.X.Scale, startPosition.X.Offset + delta.X,
+		startPosition.Y.Scale, startPosition.Y.Offset + delta.Y
+	)
+	shadow.Position = main.Position
+end
+
+topbar.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPosition = main.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then dragging = false end
+		end)
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		updateDrag(input)
+	end
+end)
+
+local menuVisible = true
+local function setMenuVisible(value)
+	menuVisible = value
+	main.Visible = value
+	shadow.Visible = value
+end
+
+closeButton.MouseEnter:Connect(function()
+	tween(closeButton, {BackgroundColor3 = Color3.fromRGB(60, 34, 42)})
+	tween(closeButton, {ImageColor3 = Color3.fromRGB(255, 118, 132)})
+end)
+closeButton.MouseLeave:Connect(function()
+	tween(closeButton, {BackgroundColor3 = COLORS.Surface})
+	tween(closeButton, {ImageColor3 = COLORS.Muted})
+end)
+closeButton.MouseButton1Click:Connect(function()
+	setMenuVisible(false)
+end)
+
+UserInputService.InputBegan:Connect(function(input, processed)
+	if not processed and input.KeyCode == Enum.KeyCode.RightShift then
+		setMenuVisible(not menuVisible)
+	end
+end)
