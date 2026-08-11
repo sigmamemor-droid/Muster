@@ -1,46 +1,55 @@
--- Compact left-side menu (safe UI) — place into StarterPlayerScripts
+-- Compact left-side menu (working in studio & game)
 local Players = game:GetService("Players")
 local Replicated = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
-local player = Players.LocalPlayer
-if not player then Players:GetPropertyChangedSignal("LocalPlayer"):Wait(); player = Players.LocalPlayer end
 
--- ScreenGui
+-- Ждём игрока
+local player = Players.LocalPlayer
+if not player then
+    Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
+    player = Players.LocalPlayer
+end
+
+-- Ждём загрузки игрока и его GUI
+repeat wait() until player and player:IsA("Player") and player.PlayerGui
+
+-- Создаём GUI
 local gui = Instance.new("ScreenGui")
 gui.Name = "CompactLeftMenu"
 gui.ResetOnSpawn = false
 gui.IgnoreGuiInset = true
 gui.DisplayOrder = 50
-gui.Parent = player:WaitForChild("PlayerGui")
+gui.Parent = player.PlayerGui
 
--- Colors (compact/dark)
+-- Цвета
 local bg = Color3.fromRGB(18,18,20)
 local itemBg = Color3.fromRGB(26,26,28)
 local hoverColor = Color3.fromRGB(40,40,44)
 local accent = Color3.fromRGB(98,165,255)
 local textColor = Color3.fromRGB(235,235,240)
 
--- Menu config (public icon decals)
+-- Меню
 local items = {
-	{ id = "Home",     name = "Главная",   icon = "rbxassetid://9614426862"  }, -- Home icon
-	{ id = "Chat",     name = "Чат",       icon = "rbxassetid://14714446"    }, -- Chat bubble
-	{ id = "Store",    name = "Магазин",   icon = "rbxassetid://6031075933"  }, -- Shop/bag
-	{ id = "Teleport", name = "Телепорт",  icon = "rbxassetid://10149699300" }, -- Teleport icon
-	{ id = "Settings", name = "Настройки", icon = "rbxassetid://6031075938"  }, -- Gear/settings
+    { id = "Home",     name = "Главная",   icon = "rbxassetid://9614426862"  },
+    { id = "Chat",     name = "Чат",       icon = "rbxassetid://14714446"    },
+    { id = "Store",    name = "Магазин",   icon = "rbxassetid://6031075933"  },
+    { id = "Teleport", name = "Телепорт",  icon = "rbxassetid://10149699300" },
+    { id = "Settings", name = "Настройки", icon = "rbxassetid://6031075938"  },
 }
+
 local menuWidth = 58
 local iconSize = 40
 local spacing = 8
 
--- RemoteEvent (optional)
+-- RemoteEvent (если нужен для сервера)
 local event = Replicated:FindFirstChild("MenuClicked")
 if not event then
-	event = Instance.new("RemoteEvent")
-	event.Name = "MenuClicked"
-	event.Parent = Replicated
+    event = Instance.new("RemoteEvent")
+    event.Name = "MenuClicked"
+    event.Parent = Replicated
 end
 
--- Container frame
+-- Главный фрейм
 local frame = Instance.new("Frame")
 frame.Name = "LeftMenu"
 frame.Size = UDim2.new(0, menuWidth, 0, (#items * (iconSize + spacing)) + spacing)
@@ -50,4 +59,41 @@ frame.BorderSizePixel = 0
 frame.Parent = gui
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
 
-local list = Instance.new("UIListLayout",
+-- Список
+local list = Instance.new("UIListLayout")
+list.FillDirection = Enum.FillDirection.Vertical
+list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+list.VerticalAlignment = Enum.VerticalAlignment.Top
+list.Padding = UDim.new(0, spacing)
+list.Parent = frame
+
+-- Создаём кнопки
+for _, item in ipairs(items) do
+    local btn = Instance.new("ImageButton")
+    btn.Name = item.id
+    btn.Size = UDim2.new(0, iconSize, 0, iconSize)
+    btn.BackgroundColor3 = itemBg
+    btn.BorderSizePixel = 0
+    btn.Image = item.icon
+    btn.ImageColor3 = textColor
+    btn.ScaleType = Enum.ScaleType.Fit
+    btn.Parent = frame
+    
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
+    
+    -- Ховер
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = hoverColor}):Play()
+    end)
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = itemBg}):Play()
+    end)
+    
+    -- Клик
+    btn.MouseButton1Click:Connect(function()
+        event:FireServer(item.id)
+        print("Кликнут: " .. item.name)
+    end)
+end
+
+print("Чит-меню загружено!")
